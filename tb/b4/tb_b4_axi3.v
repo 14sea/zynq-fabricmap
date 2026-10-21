@@ -46,14 +46,16 @@ module tb_b4_axi3;
     initial begin if ($test$plusargs("VERBOSE")) verbose = 1; #3000000; $display("WATCHDOG: the AXI3 bench did not finish (fails so far %0d)", fails); $finish; end
     always @(posedge clk) if (bvalid && bready) responses = responses + 1;
     task check(input cond, input [255:0] what); begin if (!cond) begin fails = fails + 1; $display("FAIL: %0s [rdata=%h t=%0t]", what, last_rdata, $time); end end endtask
+    // the shim's AWREADY / ARREADY / WREADY are combinational in the cycle the VALID is presented: sample them after the
+    // combinational settle (#1) in the same cycle, not after the edge that already completed the handshake
     task wr(input [15:0] a, input [31:0] d); begin
-        @(negedge clk); awaddr = {16'h4000, a}; wdata = d; awvalid = 1; while (!awready) @(negedge clk);
-        @(negedge clk); awvalid = 0; wvalid = 1; while (!wready) @(negedge clk);
+        @(negedge clk); awaddr = {16'h4000, a}; wdata = d; awvalid = 1; #1; while (!awready) begin @(negedge clk); #1; end
+        @(negedge clk); awvalid = 0; wvalid = 1; #1; while (!wready) begin @(negedge clk); #1; end
         @(negedge clk); wvalid = 0; while (!bvalid) @(negedge clk); last_bresp = bresp; @(negedge clk);
         if (verbose) $display("  wr %h <= %h resp %0d t=%0t", a, d, last_bresp, $time);
     end endtask
     task rd(input [15:0] a); begin
-        @(negedge clk); araddr = {16'h4000, a}; arvalid = 1; while (!arready) @(negedge clk);
+        @(negedge clk); araddr = {16'h4000, a}; arvalid = 1; #1; while (!arready) begin @(negedge clk); #1; end
         @(negedge clk); arvalid = 0; while (!rvalid) @(negedge clk); last_rdata = rdata; @(negedge clk);
         if (verbose) $display("  rd %h => %h t=%0t", a, last_rdata, $time);
     end endtask
@@ -70,8 +72,8 @@ module tb_b4_axi3;
         wr(16'h2000, 32'h200); wait_engine;
         // the backpressure case through the shim: the INIT_REQ write, BREADY held low
         r0 = responses;
-        @(negedge clk); bready = 0; awaddr = 32'h40002000; wdata = 32'h400; awvalid = 1; while (!awready) @(negedge clk);
-        @(negedge clk); awvalid = 0; wvalid = 1; while (!wready) @(negedge clk);
+        @(negedge clk); bready = 0; awaddr = 32'h40002000; wdata = 32'h400; awvalid = 1; #1; while (!awready) begin @(negedge clk); #1; end
+        @(negedge clk); awvalid = 0; wvalid = 1; #1; while (!wready) begin @(negedge clk); #1; end
         @(negedge clk); wvalid = 0; while (!bvalid) @(negedge clk);
         repeat (QUIET) @(negedge clk);
         check(bvalid == 1 && bready == 0, "the shim still holds the write response for the master after the quiet window");
@@ -79,7 +81,7 @@ module tb_b4_axi3;
         bready = 1; repeat (2) @(negedge clk);
         check(responses == r0 + 1, "exactly one response delivered");
         // a read presented during the window: stalled at the PS side, served after
-        @(negedge clk); araddr = 32'h40002004; arvalid = 1; while (!arready) @(negedge clk);
+        @(negedge clk); araddr = 32'h40002004; arvalid = 1; #1; while (!arready) begin @(negedge clk); #1; end
         @(negedge clk); arvalid = 0; while (!rvalid) @(negedge clk); last_rdata = rdata; @(negedge clk);
         check(last_rdata[9] == 1 || last_rdata[10] == 1, "the read was served with a coherent status after the window");
         wait_engine; rd(16'h2020); check(last_rdata[7:0] == 1, "exactly one event");

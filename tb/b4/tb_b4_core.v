@@ -29,6 +29,7 @@ module tb_b4_core;
     b4_target_slice target (.slice_clk(slice_clk), .ce(slice_ce), .sr(slice_sr), .d(slice_d), .q(slice_q), .gsr(gsr_drive));
 
     integer fails = 0, log_fd;
+    initial begin #20000000; $display("WATCHDOG: scenario %0s did not finish (fails so far %0d)", scenario, fails); $display("TB_FAIL %0s (watchdog)", scenario); $finish; end
     reg [1:0] last_bresp, last_rresp; reg [31:0] last_rdata;
     reg [255:0] scenario;
     task check(input cond, input [255:0] what); begin
@@ -318,6 +319,22 @@ module tb_b4_core;
             rd(16'h2020); check(last_rdata[7:0] == 1, "exactly one event, after the response was taken");
             rd(16'h2004); check(last_rdata[9] == 1, "init_done");
             mark("backpressure_done");
+        end
+        "read_at_launch": begin
+            // a poll presented at every offset around the launch cycle: with the gate's masking it is held and served
+            // after the event; an unmasked register file would accept it just before the GSR and lose it (the watchdog)
+            provision(KEY_A); target.genome = FIX0_GENOME;
+            for (k = 0; k < 6; k = k + 1) begin
+                case (k) 0: p = VALID1; 1: p = VALID2; 2: p = VALID3; 3: p = VALID4; 4: p = VALID5; default: p = VALID6; endcase
+                stage(p); arm; wait_gate; pre_sample;
+                wr(16'h2000, 32'h400);
+                repeat (ASSERT_DELAY - 2 + k) @(negedge clk);
+                araddr = 16'h2004; arvalid = 1; while (!arready) @(negedge clk);
+                @(negedge clk); arvalid = 0; while (!rvalid) @(negedge clk); last_rdata = rdata; @(negedge clk);
+                wait_engine; rd(16'h2020); check(last_rdata[7:0] == 2 * k + 1, "one init event, the poll served");
+                rd(16'h2004); check(last_rdata[9] == 1, "init_done");
+                cleanup; restore_event; close;
+            end
         end
         "read_during_window": begin
             // a read presented while the window is open is stalled by the gate and served afterwards; nothing is lost

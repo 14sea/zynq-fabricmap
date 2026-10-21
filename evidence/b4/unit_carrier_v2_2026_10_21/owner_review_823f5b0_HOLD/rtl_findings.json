@@ -1,0 +1,32 @@
+{
+  "owner_p9": {
+    "exit": 0,
+    "output": "OWNER P9 base_Q=00 (base INIT was FF at step 0)\nOWNER P9 init_count_before_close=1\nTB_PASS owner_p9\n/home/test/zynq_fabricmap/build/wip/owner_review_823f5b0_2026_10_21/tb_owner_probes.v:289: $finish called at 5820000 (1ps)\n",
+    "stderr": "",
+    "finding_reproduced": true
+  },
+  "owner_open_close": {
+    "exit": 0,
+    "output": "OWNER premature_close status=00005900\nOWNER premature_close held_inputs=00000500\nOWNER premature_close next_arm_status=00004944\nTB_PASS owner_open_close\n/home/test/zynq_fabricmap/build/wip/owner_review_823f5b0_2026_10_21/tb_owner_probes.v:289: $finish called at 8440000 (1ps)\n",
+    "stderr": "",
+    "finding_reproduced": true
+  },
+  "owner_axi_backpressure": {
+    "exit": 0,
+    "output": "OWNER held_response before_GSR bvalid=1 bready=0\nOWNER held_response after_GSR bvalid=0 bready=0\nOWNER held_response init_count=1\nTB_PASS owner_axi_backpressure\n/home/test/zynq_fabricmap/build/wip/owner_review_823f5b0_2026_10_21/tb_owner_probes.v:289: $finish called at 4800000 (1ps)\n",
+    "stderr": "",
+    "finding_reproduced": true
+  },
+  "owner_step_snapshot": {
+    "exit": 0,
+    "output": "OWNER step_snapshot actual_inputs=000005a5 expected_clock=0\nOWNER step_snapshot actual_Q=a5 expected_held_INIT=FF\nTB_PASS owner_step_snapshot\n/home/test/zynq_fabricmap/build/wip/owner_review_823f5b0_2026_10_21/tb_owner_probes.v:289: $finish called at 5260000 (1ps)\n",
+    "stderr": "",
+    "finding_reproduced": true
+  },
+  "owner_busy_close": {
+    "exit": 0,
+    "output": "OWNER busy_close status=00230b34\nTB_PASS owner_busy_close\n/home/test/zynq_fabricmap/build/wip/owner_review_823f5b0_2026_10_21/tb_owner_probes.v:289: $finish called at 5280000 (1ps)\n",
+    "stderr": "",
+    "finding_reproduced": true
+  }
+}

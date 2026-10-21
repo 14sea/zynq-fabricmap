@@ -49,3 +49,9 @@ builds/b1/build.stdout
 # iverilog products of sim/b1/run.sh
 sim/b1/out/
 build/hostapp_b2/
+
+# B4 carrier v2: Vivado checkpoints, tool stdout and bench outputs are regenerated, not tracked (the evidence directory archives what the review needs)
+builds/b4/*.dcp
+builds/b4/*.stdout
+builds/b4/b4_core_funcsim.v
+sim/b4/out/

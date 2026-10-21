@@ -31,7 +31,8 @@ module tb_b4_unisim;
         .CFGCLK(), .CFGMCLK(), .EOS(), .PREQ(), .CLK(1'b0), .GSR(gsr_drive), .GTS(1'b0), .KEYCLEARB(1'b1), .PACK(1'b0),
         .USRCCLKO(1'b0), .USRCCLKTS(1'b1), .USRDONEO(1'b1), .USRDONETS(1'b1));
 
-    integer fails = 0; reg [1:0] last_bresp, last_rresp; reg [31:0] last_rdata;
+    integer fails = 0; reg [1:0] last_bresp, last_rresp; reg [31:0] last_rdata; reg verbose = 0;
+    initial begin if ($test$plusargs("VERBOSE")) verbose = 1; #4000000; $display("WATCHDOG: the vendor bench did not finish (fails so far %0d)", fails); $display("TB_FAIL unisim (watchdog)"); $finish; end
     realtime gsr_on; integer pulses = 0; realtime widths [0:7];
     always @(posedge glbl.GSR) gsr_on = $realtime;
     always @(negedge glbl.GSR) if ($realtime > 150) begin widths[pulses] = $realtime - gsr_on; pulses = pulses + 1; end
@@ -39,10 +40,12 @@ module tb_b4_unisim;
     task wr(input [15:0] a, input [31:0] d); begin
         @(negedge clk); awaddr = a; wdata = d; awvalid = 1; wvalid = 1; while (!(awready && wready)) @(negedge clk);
         @(negedge clk); awvalid = 0; wvalid = 0; while (!bvalid) @(negedge clk); last_bresp = bresp; @(negedge clk);
+        if (verbose) $display("  wr %h <= %h resp %0d t=%0t", a, d, last_bresp, $time);
     end endtask
     task rd(input [15:0] a); begin
         @(negedge clk); araddr = a; arvalid = 1; while (!arready) @(negedge clk);
         @(negedge clk); arvalid = 0; while (!rvalid) @(negedge clk); last_rdata = rdata; last_rresp = rresp; @(negedge clk);
+        if (verbose) $display("  rd %h => %h resp %0d t=%0t", a, last_rdata, last_rresp, $time);
     end endtask
     task stage(input [767:0] p); integer i; begin for (i = 0; i < 24; i = i + 1) wr(16'h2100 + 4*i, p[(23-i)*32 +: 32]); end endtask
     task provision(input [127:0] k); integer j; begin for (j = 0; j < 4; j = j + 1) wr(16'h2160 + 4*j, k[(3-j)*32 +: 32]); wr(16'h2000, 32'h100); end endtask

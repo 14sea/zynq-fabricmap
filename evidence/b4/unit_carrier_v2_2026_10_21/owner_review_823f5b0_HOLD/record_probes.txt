@@ -1,0 +1,101 @@
+{
+  "nested_instrument_answer_bits": {
+    "findings": [],
+    "accepted": true
+  },
+  "nested_init_parameters_answer_bits": {
+    "findings": [],
+    "accepted": true
+  },
+  "wrong_instrument_variant": {
+    "findings": [],
+    "accepted": true
+  },
+  "empty_complete_steps": {
+    "findings": [],
+    "accepted": true
+  },
+  "invalid_complete_preinit_sample": {
+    "findings": [],
+    "accepted": true
+  },
+  "wrong_step_kind_and_timing": {
+    "findings": [],
+    "accepted": true
+  },
+  "wrong_predecessor_shape": {
+    "findings": [],
+    "accepted": true
+  },
+  "same_O_after_sorted_JSON_roundtrip": {
+    "findings": [
+      "step 0: keys ['ce', 'clock_after', 'clock_before', 'd', 'edge', 'kind', 'prev_event', 'q_after', 'q_before', 'sr', 'step']"
+    ],
+    "same_canonical_digest": true
+  },
+  "malformed_O_list": {
+    "exception": "AttributeError: 'list' object has no attribute 'get'"
+  },
+  "boolean_fitness": {
+    "findings": []
+  },
+  "short_target_silently_truncates_mask": {
+    "mask_cells": 2,
+    "target_cells": 1,
+    "fitness": 1
+  },
+  "closed_X_with_null_samples_nonidle_and_extra_key": {
+    "findings": []
+  },
+  "session_open_with_missing_digest_values": {
+    "findings": []
+  },
+  "producer_seals_X_before_CLOSE": {
+    "status": "closed",
+    "idle_status": 0,
+    "findings": [],
+    "CLOSE_present_in_trace": false
+  },
+  "rejected_step_removed_from_O_stimulus": {
+    "attempted_set_steps": 3,
+    "O_set_steps_in_stimulus": 2,
+    "retained_observation_steps_including_init": 3,
+    "fault": {
+      "code": "not_realisable",
+      "phase_reached": "P5",
+      "step_reached": 2
+    },
+    "rejected_word": 16825600,
+    "last_O_stimulus": {
+      "kind": "set",
+      "clock": 0,
+      "ce": 0,
+      "sr": 0,
+      "d": 165
+    }
+  },
+  "before_any_sample_fault_still_has_fabricated_init_step": {
+    "status": "invalid",
+    "fault": {
+      "code": "not_armed",
+      "phase_reached": "P2",
+      "step_reached": null
+    },
+    "steps": [
+      {
+        "step": 0,
+        "kind": "init",
+        "prev_event": "none",
+        "clock_before": 0,
+        "clock_after": 0,
+        "edge": null,
+        "ce": 0,
+        "sr": 0,
+        "d": 0,
+        "q_before": null,
+        "q_after": null
+      }
+    ],
+    "initial_present": false
+  }
+}

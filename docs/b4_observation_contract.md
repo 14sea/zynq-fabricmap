@@ -422,9 +422,12 @@ session and every interruption window keep their own evidence** (5.7).
 **The session-opening record (the bootstrap).** Before anything is signed — after the sha-gated carrier load and the identity page
 (B1Q's preamble) — the runner writes `session_open = {instrument, startup_readback_sha256, base_frames_reference_sha256, status}`:
 `startup_readback_sha256` is link 3's readback of the fabric **as loaded**, taken then; `base_frames_reference_sha256` is the
-**trusted input**: the base-frame content of the pinned carrier (the target frames the carrier manifest records as blank in the
-base — `frame_table_sha256`, `target_frames_nonzero_words`, the bitstream digest), pinned in the instrument manifest before the
-session, derived from no record of the session. `status = "open"` only when the two are equal; otherwise `"refused"` — **the
+**trusted input**: the **frame-content** digest of the loaded carrier's target frames as the carrier manifest records them per
+frame (for v2 the natural build, `CEUSEDMUX = SRUSEDMUX = 1` — `docs/b4_carrier_v2.md` section 3), pinned in the instrument
+manifest before the session, derived from no record of the session. *(Clarification of 2026-10-21, the owner's permission on
+`823f5b0`: the reference is the loaded image's frame content in the readback's own hash domain — not a frame-table digest, not a
+bitstream-file digest, and not the signed base genome 0 the session root then writes as a candidate, which differs from the loaded
+image in exactly the mux bits. Nothing of the task, the model, the method, the thresholds or the evidence changes.)* `status = "open"` only when the two are equal; otherwise `"refused"` — **the
 session does not open, no root is signed, nothing follows**, and the refused record is retained as a non-success record. The
 root's mechanism-(c) pre-event readback binds to `session_open.startup_readback_sha256` (5.4's table), and the root's `O` names
 the record it binds to in `init_event.parameters.session_open_sha256`; the root never references its own later `X`, and a

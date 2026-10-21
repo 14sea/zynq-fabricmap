@@ -19,7 +19,7 @@
    "runs": [
     [
      "flow",
-     "TB_FAIL flow (125)",
+     "TB_FAIL flow (172)",
      0
     ]
    ]
@@ -43,12 +43,12 @@
    "runs": [
     [
      "flow",
-     "TB_FAIL flow (12)",
+     "TB_FAIL flow (18)",
      0
     ],
     [
      "a5",
-     "TB_FAIL a5 (3)",
+     "TB_FAIL a5 (5)",
      0
     ]
    ]
@@ -86,6 +86,11 @@
      "fault_double_arm",
      "TB_FAIL fault_double_arm (4)",
      0
+    ],
+    [
+     "a5_wrong_context",
+     "TB_FAIL a5_wrong_context (2)",
+     0
     ]
    ]
   },
@@ -108,7 +113,7 @@
    "runs": [
     [
      "a5",
-     "TB_FAIL a5 (2)",
+     "TB_FAIL a5 (7)",
      0
     ]
    ]
@@ -150,19 +155,142 @@
    ]
   },
   {
+   "id": "M13",
+   "file": "rtl/b4/b4_engine.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "open_close_refused",
+     "TB_FAIL open_close_refused (4)",
+     0
+    ],
+    [
+     "p9",
+     "TB_FAIL p9 (2)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M14",
+   "file": "rtl/b4/b4_engine.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "step_atomic",
+     "TB_FAIL step_atomic (2)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M15",
+   "file": "rtl/b4/b4_axil.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "busy_refused",
+     "TB_FAIL busy_refused (2)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M16",
+   "file": "rtl/b4/b4_axil.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "regs",
+     "TB_FAIL regs (1)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M17",
+   "file": "rtl/b4/b4_engine.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "backpressure",
+     "TB_FAIL backpressure (2)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M18",
+   "file": "rtl/b4/b4_axi_gate.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "read_at_launch",
+     "TB_FAIL read_at_launch (watchdog)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M19",
+   "file": "rtl/b4/b4_engine.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "p9_ok",
+     "TB_FAIL p9_ok (1)",
+     0
+    ],
+    [
+     "flow",
+     "TB_FAIL flow (6)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M20",
+   "file": "rtl/b4/b4_engine.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "a5",
+     "TB_FAIL a5 (1)",
+     0
+    ],
+    [
+     "open_close_refused",
+     "TB_PASS open_close_refused",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M21",
+   "file": "rtl/b4/b4_engine.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "unisim",
+     "TB_FAIL unisim (1)",
+     0
+    ]
+   ]
+  },
+  {
    "id": "H01",
    "file": "host/b4carrier_records.py",
    "status": "KILLED",
    "runs": [
     [
      "tests.test_b4carrier_records",
-     10,
+     13,
      true,
      1,
      [
-      "Ran 10 tests in 0.008s",
+      "Ran 13 tests in 0.012s",
       "",
-      "FAILED (failures=2)"
+      "FAILED (failures=5)"
      ]
     ]
    ]
@@ -174,13 +302,13 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     10,
+     13,
      true,
      1,
      [
-      "Ran 10 tests in 0.008s",
+      "Ran 13 tests in 0.013s",
       "",
-      "FAILED (failures=2)"
+      "FAILED (failures=5)"
      ]
     ]
    ]
@@ -192,11 +320,11 @@
    "runs": [
     [
      "tests.test_b4carrier_regmap",
-     9,
+     11,
      true,
      1,
      [
-      "Ran 9 tests in 0.002s",
+      "Ran 11 tests in 0.002s",
       "",
       "FAILED (failures=1)"
      ]
@@ -210,13 +338,13 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     10,
+     13,
      true,
      1,
      [
-      "Ran 10 tests in 0.005s",
+      "Ran 13 tests in 0.010s",
       "",
-      "FAILED (failures=3)"
+      "FAILED (failures=6)"
      ]
     ]
    ]
@@ -228,11 +356,11 @@
    "runs": [
     [
      "tests.test_b4carrier_regmap",
-     9,
+     11,
      true,
      1,
      [
-      "Ran 9 tests in 0.002s",
+      "Ran 11 tests in 0.002s",
       "",
       "FAILED (failures=1)"
      ]
@@ -246,20 +374,92 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     10,
+     13,
      true,
      1,
      [
-      "Ran 10 tests in 0.008s",
+      "Ran 13 tests in 0.012s",
       "",
-      "FAILED (failures=2)"
+      "FAILED (failures=4)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H07",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     13,
+     true,
+     1,
+     [
+      "Ran 13 tests in 0.012s",
+      "",
+      "FAILED (failures=5)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H08",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     13,
+     true,
+     1,
+     [
+      "Ran 13 tests in 0.012s",
+      "",
+      "FAILED (failures=5)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H09",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     13,
+     true,
+     1,
+     [
+      "Ran 13 tests in 0.012s",
+      "",
+      "FAILED (failures=5)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H10",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     13,
+     true,
+     1,
+     [
+      "Ran 13 tests in 0.012s",
+      "",
+      "FAILED (failures=5)"
      ]
     ]
    ]
   }
  ],
  "summary": {
-  "KILLED": 18,
+  "KILLED": 31,
   "SURVIVED": 0,
   "EDIT-MISS": 0,
   "NOT-RUN": 0

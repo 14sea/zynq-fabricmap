@@ -1,4 +1,4 @@
-# B4 — the carrier v2 engineering unit (host-only, 2026-10-21) — delivered for the owner's review
+# B4 — the carrier v2 engineering unit (host-only, 2026-10-21) — resubmitted after the owner's HOLD on `823f5b0` (section 8)
 
 **What this unit is.** The engineering unit the owner authorised on 2026-10-21 after the 2c-obs closure (`36e012c`): design,
 RTL, bench, XDC / isolation, the host build and verification; the initialisation mechanism selected, the sampling path, the MMIO
@@ -6,7 +6,10 @@ interface, the session-opening and the O / F / X flow built to the accepted obse
 the success and the fault paths; A1–A8 split into host-verified and board-only. One submission for one review. The branch
 `b4-carrier-v2` from `36e012c`; nothing pushed or merged.
 
-**The design document is `docs/b4_carrier_v2.md`**; its section 0 is the unit's finding (one CE / SR / CLK pin per slice against
+**Round 2.** The first delivery `823f5b0` was held by the owner (R1–R5); section 8 of this README records the repair, finding by
+finding, and the verification of the repaired unit. Sections 1–7 describe the unit as it now is.
+
+**The design document is `docs/b4_carrier_v2.md`** (v0.2); its section 0 is the unit's finding (one CE / SR / CLK pin per slice against
 the per-element `ce` / `sr` vectors of task-v0.2 and the model), its section 2 the mechanism selection, its section 7 the A1–A8
 table, its section 8 the unresolved items. This README is the unit's record: what was delivered, how it was verified, what the
 numbers are, and what was not done.
@@ -15,13 +18,13 @@ numbers are, and what was not done.
 
 | area | files |
 |---|---|
-| RTL | `rtl/b4/b4_top.v`, `b4_core.v`, `b4_axil.v`, `b4_gate.v`, `b4_engine.v`, `b4_gsr_reg.v`, `b4_slot_ram.v`, `b4_target_slice.v` (+ `rtl/b1/p3_siphash.v` and `vivado/carrier/carrier_axi3_lite.v` by reference, unchanged) |
-| bench | `tb/b4/b4_target_slice_model.v`, `tb/b4/gen_b4_fixture.py`, `tb/b4/b4_fixture.vh` (generated), `tb/b4/tb_b4_core.v`, `tb/b4/tb_b4_unisim.v`, `sim/b4/run.sh` |
-| build | `vivado/b4/b4.xdc`, `vivado/b4/build_b4.tcl`, `vivado/b4/resume_b4.tcl`, `vivado/b4/isolation_checks_b4.tcl`; `builds/b4/b4.bit`, `b4_build.json`, `b4_carrier_manifest.json`, `isolation.txt`, `timing.rpt`, `post_synth_util.rpt`, `post_route_util.rpt` (the checkpoints and the Vivado stdout are not committed; the stdout is archived here under `build/`) |
+| RTL | `rtl/b4/b4_top.v`, `b4_core.v`, `b4_axil.v`, `b4_gate.v`, `b4_engine.v`, `b4_axi_gate.v`, `b4_gsr_reg.v`, `b4_slot_ram.v`, `b4_gsr_ram32.v`, `b4_target_slice.v` (+ `rtl/b1/p3_siphash.v` and `vivado/carrier/carrier_axi3_lite.v` by reference, unchanged) |
+| bench | `tb/b4/b4_target_slice_model.v`, `tb/b4/gen_b4_fixture.py`, `tb/b4/b4_fixture.vh` (generated), `tb/b4/tb_b4_core.v` (21 scenarios), `tb/b4/tb_b4_unisim.v` (run over the RTL core and over the netlist), `tb/b4/tb_b4_axi3.v` (the PS path through the pinned shim), `sim/b4/run.sh` |
+| build | `vivado/b4/b4.xdc`, `vivado/b4/build_b4.tcl`, `vivado/b4/resume_b4.tcl`, `vivado/b4/isolation_checks_b4.tcl`, `vivado/b4/netlist_core.tcl`; `builds/b4/b4.bit`, `b4_build.json`, `b4_carrier_manifest.json`, `b4_core_funcsim.json`, `isolation.txt`, `timing.rpt`, `post_synth_util.rpt`, `post_route_util.rpt` (the checkpoints, the Vivado stdout and the 1.4 MB netlist are regenerated and ignored by `.gitignore`; the stdout and the netlist's record are archived here under `build/`) |
 | host | `host/b4carrier_regmap.py` (the register table, the CTRL bits, the fault names, the STEP_IN packing and realisability), `host/b4carrier_records.py` (O / F / X / session_open from a register trace; the carrier-branch validator), `host/b4carrier_manifest.py` (the 21 addresses read from the bitstream) |
 | tests | `tests/test_b4carrier_regmap.py`, `tests/test_b4carrier_records.py`, `tests/test_b4carrier_benches.py` |
 | documents | `docs/b4_carrier_v2.md`; `docs/b4_architecture.md` §13 (one row) and §14 (one line) |
-| this directory | `verification.txt` (every check in a fresh process), `bench/` (the 12 + 1 scenario results and the 12 register traces the records are built from), `build/` (the Vivado stdout of the build and of the resume, the manifest), `mutants/` (the battery, its script, its outputs) |
+| this directory | `verification.txt` (every check in a fresh process; round 1 then round 2), `bench/` (the 21 + 3 scenario results and the 21 register traces the records are built from), `build/` (the Vivado stdout of the builds, the netlist synthesis, the manifest, the netlist record), `mutants/` (the battery, its script, its outputs), `owner_review_823f5b0_HOLD/` (the owner's review of round 1, 30 files, byte for byte, `SHA256SUMS` verified) |
 
 ## 2. The design in five lines
 
@@ -118,3 +121,33 @@ integration; P9's base-state witness form; the link and manifest fields of the r
 meaning in every configuration. Not done: no board, no production run, no change to `b4/`, the pinned B1–B3 surfaces, the
 hypothesis, the thresholds, the archives or any decision; no push, no merge. The evidence-proportionality rule of 2026-10-20
 applies: the battery is complete for this first delivery; a correction round would run the affected scenarios / modules.
+
+## 8. Round 2 — the owner's HOLD on `823f5b0` (R1–R5), answered in the same unit
+
+The review is archived in `owner_review_823f5b0_HOLD/`. Its independent baseline (20 tests, 14 benches, 3 pin tests, 21
+addresses, the shared-pin finding against AMD UG474) is accepted as the starting point; its five reproductions are scenarios of
+`tb/b4/tb_b4_core.v` now, with the repaired expectations; nothing under `b4/`, the pinned surfaces, the hypothesis, the task,
+the thresholds or the archives changed (`verification.txt`, the protected-path diff since `fceedd6` is empty).
+
+| finding | what was wrong at `823f5b0` | the repair | verified by |
+|---|---|---|---|
+| **R1** P9 missing; permissive close | no event on the restored base in the current transaction; `CLOSE` accepted without cleanup, `idle` shown with held inputs, the next ARM accepted | `RESTORE_INIT` (CTRL bit 14): the current transaction's event on the restored base, the sample into `BASE_STATE` (0x203C), `gsr_count + 1`; a normal `CLOSE` only after `restore_done` (else F_SEQUENCE); `CLOSE_INJECTION` (bit 15) the explicit A5 exception persisting `injection_open`; the next ARM must carry the A5 flag (bit 7) and only then (else F_SEQUENCE, both directions); `idle` = engine idle ∧ ¬armed ∧ ¬injection_open ∧ inputs and clock 0; the host's `X` takes `base_state_sample` from `BASE_STATE`, never from a caller | `p9`, `p9_ok`, `open_close_refused`, `a5`, `a5_wrong_context`, `a5_flag_without_injection`, `flow` (two events per transaction), `unisim` (RTL and netlist: the base-state sample = INIT on the vendor FDPEs), `axi3`; records: a closed `X` requires `idle_status = 1`, `transaction_close` refuses an unclosed transaction |
+| **R2** GSR lost an outstanding AXI response | the pulse was scheduled eight cycles after the request regardless of the bus; BREADY = 0 lost the write response | `b4_axi_gate` in front of the pinned shim (`b4_top`) and at the core's Lite port: while an event is pending nothing new is accepted (the master holds its VALID); the engine launches only after ASSERT_DELAY consecutive cycles with nothing outstanding (AW→B, AR→last R, no response pending) on either path | `backpressure` (the response held for the master through the window, one event after it is taken, exactly one response), `read_during_window`, `read_at_launch` (a poll at every offset around the launch cycle), the same backpressure and stalled read THROUGH THE SHIM in `tb_b4_axi3`; mutant M18 (the gate's masking removed) killed by `read_at_launch` |
+| **R3** STEP not atomic; busy commands vanished | the engine read `STEP_IN` live in different cycles; a CTRL write while busy was answered OKAY and dropped | the accepted STEP is latched (`cmd`) and only the latched copy is applied; one CTRL acceptance rule in the register file — exactly one operation, known bits, the A5 flag with arm only, engine and gate idle, otherwise SLVERR and nothing changes; the inputs the engine APPLIED are recorded per sample (`SLOT_IN_READ`, 0x2040) and the host builds the steps from them | `step_atomic` (the staged next word changes nothing of the running step; the applied-input record = the accepted command), `busy_refused` (CLOSE and STEP during a step SLVERR; one step applied), `regs` (combined, flag-only, unknown-bit and empty commands SLVERR); mutants M14–M16 |
+| **R4** records not the claimed contract | closure only at the top level; empty complete steps, null samples, wrong kinds / types / variant, a non-idle closed `X`, a null `session_open` accepted; dictionary order compared; a list raised; a boolean fitness, a short target; `X` sealed before CLOSE; the refused step dropped from the stimulus; a fabricated init step; no source / task / link binding | `host/b4carrier_records.py` rewritten in three layers: structure (closed, typed schemas at every level; order-independent; the applied steps held to the declared stimulus, which is an input kept whole; the q chain; the phase-dependent invalid `O`; a faulted `X`; a strict `session_open`; malformed input a finding), binding to a trusted context (instrument and VARIANT, session, declared stimulus, planned configuration, nonce, the previous close, mechanism (b)'s frame invariance, the task digest), the chain (session_open open → root → each predecessor naming the previous close); the builder reads the carrier's samples, applied inputs and `BASE_STATE`, fabricates no step or sample, refuses to close an unclosed transaction; `fitness` validates the task's dimensions and refuses an invalid observation | `tests/test_b4carrier_records.py`: every owner counterexample refused by name (the VARIANT one by the binding layer), the sorted-JSON round trip, the six-fixture chain from the bench traces (the four flip-flop fixtures at all three layers; the first pre-init sample and the latch fixtures' x5FF cells refused as the model's null — D1), the refused step kept in the stimulus with the prefix acquired, `X` not sealable before CLOSE, J2 `injection_open` / J3 `a5_injection`; mutants H01–H10 |
+| **R5** the vendor bench did not model the implemented pulse generator | the pulse counter was flip-flops that silicon's GSR resets (40 ns in the RTL model, 0.1 ns with vendor FDCEs) | the generator is LUTRAM: a thermometer word in `RAM32X1S` loaded by `fire` and shifting itself (`11 → 01 → 00`); no flip-flop holds the pulse; a thermometer and not a binary count because the binary `2 → 1` glitched the resolved global net for a delta cycle (found on the vendor bench; a hazard on an asynchronous reset net); the vendor bench runs over the RTL core AND over a GSR-aware post-synthesis out-of-context netlist of the core (`vivado/b4/netlist_core.tcl`; a `write_verilog -cell` of the implemented top left the cell's constants undriven, `b4_core_funcsim.json` records the chosen netlist: 1970 flip-flops, 278 RAM32X1S), measuring the pulse on `glbl.GSR` | `unisim` on both: TB_PASS with `GSR_PULSE_WIDTHS_NS 40.0 40.0 40.0` (PULSE = 2 clocks) on every event; mutant M21 (PULSE = 1) killed on the vendor bench |
+| the owner's further points | the bootstrap reference was B1-shaped; A7 overstated; A3 / A6 overstated; (c) overstated; the checkout not clean | the loaded image's frame content (its own hash domain) distinct from the signed base genome 0 — `docs/b4_carrier_v2.md` §3 and the contract's 5.5 clarification; A7 = the declared table vs the RTL, not a firmware's accesses; A3 / A6 marked partial with what is missing; (c) = no guaranteed independent restore; `.gitignore` for the regenerated outputs | `docs/b4_carrier_v2.md` §§2, 3, 7; `docs/b4_observation_contract.md` 5.5 |
+
+**Verification of the repaired unit** (`verification.txt`, round 2, fresh processes): 21 core scenarios + the vendor bench over
+the RTL core + the PS path through the shim + the vendor bench over the netlist — **25 × TB_PASS**, the GSR pulse 40 ns on every
+event on both vendor benches; `tests/test_b4carrier_regmap` (11) + `tests/test_b4carrier_records` (13) + `tests/test_b4carrier_benches`
+(1) — **Ran 25 … OK**; the rebuilt bitstream routed, WNS +7.426 ns, target 12 / flush 0, RAM32X1S 278 (no flip-flop in the store),
+STARTUPE2 1, ICAPE2 0; the 21 addresses at their expected values; the B1 pin test OK; the protected paths unchanged. **The mutant
+battery**: 21 RTL + 10 host mutants, **31 / 31 killed**, 0 survived, 0 EDIT-MISS, 0 NOT-RUN (M18 first survived against
+`backpressure` / `read_during_window`, which pass without the masking; `read_at_launch` was written for what the masking is for
+and kills it — recorded in `mutants/run_mutants.py`). What was NOT rerun: the full B1–B4 regression (nothing of it touched),
+the production verifiers, any model or board observation.
+
+**What stays as it was.** The finding of section 5 (one CE / SR / CLK per slice) and its protocol consequence for the owner;
+the unresolved items of `docs/b4_carrier_v2.md` §8 (A8 and the release skew on silicon, the firmware, the PCAP integration,
+the B4Q plan); no task, model, K9, threshold, archive or decision changed; nothing pushed or merged.

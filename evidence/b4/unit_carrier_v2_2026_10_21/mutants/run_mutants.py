@@ -31,7 +31,7 @@ MUTANTS = [
  ('M15', 'rtl/b4/b4_axil.v', "wire ctrl_accept = ctrl_one && ctrl_known && ctrl_a5_ok && !engine_busy && !gate_busy;", "wire ctrl_accept = ctrl_one && ctrl_known && ctrl_a5_ok;", 'bench', ['busy_refused']),
  ('M16', 'rtl/b4/b4_axil.v', "wire ctrl_one = (ctrl_ops != 9'd0) && ((ctrl_ops & (ctrl_ops - 9'd1)) == 9'd0);", "wire ctrl_one = (ctrl_ops != 9'd0);", 'bench', ['regs']),
  ('M17', 'rtl/b4/b4_engine.v', "if (!bus_quiet) cnt <= 8'd0;\n                else if", "if (1'b0) cnt <= 8'd0;\n                else if", 'bench', ['backpressure']),
- ('M18', 'rtl/b4/b4_axi_gate.v', "assign s_awvalid = m_awvalid && !stall;  assign m_awready = s_awready && !stall;", "assign s_awvalid = m_awvalid;  assign m_awready = s_awready;", 'bench', ['backpressure', 'read_during_window']),
+ ('M18', 'rtl/b4/b4_axi_gate.v', "assign s_arvalid = m_arvalid && !stall;  assign m_arready = s_arready && !stall;", "assign s_arvalid = m_arvalid;  assign m_arready = s_arready;", 'bench', ['read_at_launch']),   # a first version removed the AW masking and survived backpressure / read_during_window: those pass without the stall; read_at_launch is the scenario the stall exists for
  ('M19', 'rtl/b4/b4_engine.v', "if (restoring) begin\n                        base_we <= 1'b1; base_d <= q_live;", "if (restoring) begin\n                        base_we <= 1'b1; base_d <= ~q_live;", 'bench', ['p9_ok', 'flow']),
  ('M20', 'rtl/b4/b4_engine.v', "assign idle = (state == S_IDLE) && !armed && !injection_open && (in_live[24:0] == 25'd0);", "assign idle = (state == S_IDLE) && !armed;", 'bench', ['a5', 'open_close_refused']),
  ('M21', 'rtl/b4/b4_engine.v', "wire [3:0] pulse_d = fire ? ((4'd1 << PULSE) - 4'd1) : (pulse_cnt >> 1);", "wire [3:0] pulse_d = fire ? 4'd1 : (pulse_cnt >> 1);", 'unisim', ['unisim']),
@@ -61,7 +61,7 @@ with tempfile.TemporaryDirectory(prefix='b4carrier_mutants_') as td:
             results.append({'id': mid, 'file': rel, 'status': 'EDIT-MISS', 'occurrences': n}); continue
         f.write_text(text.replace(old, new))
         try:
-            if kind == 'unisim':
+            if kind == 'unisim':   # the vendor bench with the RTL core and glbl (the LUTRAM pulse)
                 p = subprocess.run(['bash', '-c', f'cd {T} && python3 -B tb/b4/gen_b4_fixture.py >/dev/null && iverilog -g2012 -I tb/b4 -o sim/b4/out/mu.vvp -y /home/test/Xilinx/2025.2/data/verilog/src/unisims /home/test/Xilinx/2025.2/data/verilog/src/glbl.v rtl/b1/p3_siphash.v rtl/b4/b4_gsr_reg.v rtl/b4/b4_slot_ram.v rtl/b4/b4_gsr_ram32.v rtl/b4/b4_axi_gate.v rtl/b4/b4_axil.v rtl/b4/b4_gate.v rtl/b4/b4_engine.v rtl/b4/b4_core.v rtl/b4/b4_target_slice.v tb/b4/tb_b4_unisim.v && vvp -N sim/b4/out/mu.vvp 2>&1 | grep -E "^TB_" | tail -1'], capture_output=True, text=True, timeout=600)
                 outs = [('unisim', p.stdout.strip(), p.returncode)]
                 ran = outs[0][1].startswith('TB_'); killed = ran and outs[0][1].startswith('TB_FAIL')

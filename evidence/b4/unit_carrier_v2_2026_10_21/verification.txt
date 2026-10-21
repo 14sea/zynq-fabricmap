@@ -66,3 +66,70 @@ cbf5f95ce41471bc0bc7a252dae394831955f1dbb4b7f7c740abd76f7cc003a6  builds/b4/b4.b
 4e6c9275274237bdf527a120ffb2ade438cf791fabfdfff07644c614eb708ea6  builds/b4/b4_build.json
 5d1d76bdf5820c2c52c6fbccd9e9da4a5e6efeec35f2ccb80722b4107ee43ae0  builds/b4/b4_carrier_manifest.json
 fbf421ceffcb0c12c3281c432058f4d2826d87daeba35ee5bc8220323f008c93  builds/b4/isolation.txt
+
+=== ROUND 2 — fresh-process verification after the owner's HOLD on 823f5b0, 2026-10-21T14:37:40Z, tree bf54a3b + working changes, branch b4-carrier-v2 ===
+
+--- bash sim/b4/run.sh (21 core scenarios, the vendor bench over the RTL core and over the GSR-aware netlist, the PS path through the shim)
+tb_p3_siphash (verbatim): TB_PASS
+tb_b4_core regs:                TB_PASS regs
+tb_b4_core flow:                TB_PASS flow
+tb_b4_core fault_not_armed:     TB_PASS fault_not_armed
+tb_b4_core fault_nokey:         TB_PASS fault_nokey
+tb_b4_core fault_unsigned:      TB_PASS fault_unsigned
+tb_b4_core fault_wrong_commit:  TB_PASS fault_wrong_commit
+tb_b4_core fault_wrong_key:     TB_PASS fault_wrong_key
+tb_b4_core fault_sequence:      TB_PASS fault_sequence
+tb_b4_core fault_double_arm:    TB_PASS fault_double_arm
+tb_b4_core fault_realisable:    TB_PASS fault_realisable
+tb_b4_core a5:                  TB_PASS a5
+tb_b4_core a5_persist:          TB_PASS a5_persist
+tb_b4_core a5_wrong_context:    TB_PASS a5_wrong_context
+tb_b4_core a5_flag_without_injection: TB_PASS a5_flag_without_injection
+tb_b4_core open_close_refused:  TB_PASS open_close_refused
+tb_b4_core p9:                  TB_PASS p9
+tb_b4_core p9_ok:               TB_PASS p9_ok
+tb_b4_core busy_refused:        TB_PASS busy_refused
+tb_b4_core step_atomic:         TB_PASS step_atomic
+tb_b4_core backpressure:        TB_PASS backpressure
+tb_b4_core read_during_window:  TB_PASS read_during_window
+tb_b4_core read_at_launch:      TB_PASS read_at_launch
+GSR_PULSE_WIDTHS_NS 40.0 40.0 40.0
+tb_b4_unisim (RTL core):     TB_PASS unisim
+tb_b4_axi3 (shim):           TB_PASS axi3
+GSR_PULSE_WIDTHS_NS 40.0 40.0 40.0
+tb_b4_unisim (NETLIST core): TB_PASS unisim
+exit: 0
+
+--- python3 -B -m unittest tests.test_b4carrier_regmap tests.test_b4carrier_records tests.test_b4carrier_benches
+.........................
+----------------------------------------------------------------------
+Ran 25 tests in 12.390s
+
+OK
+exit: 0
+
+--- python3 -B host/b4carrier_manifest.py builds/b4/b4.bit
+0x00400a1f/52/19   ff_init       D5FF  value 0 expected 0
+0x00400a1f/52/26   ff_init       DFF   value 0 expected 0
+mismatches: none
+exit: 0
+
+--- python3 -B -m unittest tests.test_b1_pins
+Ran 3 tests in 0.107s
+
+OK
+exit: 0
+
+--- git diff --name-only fceedd6 HEAD -- <protected paths> (and the working tree)
+(none)
+
+--- the mutant battery (mutants/mutants.txt, run hermetically on a temporary copy)
+summary {'KILLED': 31, 'SURVIVED': 0, 'EDIT-MISS': 0, 'NOT-RUN': 0}
+
+--- sha256 of the build artefacts
+52f2ea56fddd6268ce6a3b5adcf9aede9d1ab953dc8d1e75b653054524178745  builds/b4/b4.bit
+6ab45b8c418271b98e4df5ae7f745757f4f4397ff6cb500dbedc53d0d7ef7645  builds/b4/b4_build.json
+102d4898a7eabf240963cf4106f95539e76a955b107034485e9d34f302ce389a  builds/b4/b4_carrier_manifest.json
+cb5993951aa77aea523156456864d27da2c0a812d0eb1ce6fc6f110175a2c760  builds/b4/isolation.txt
+a1fc5a38f33d73530c01314af4e555a682ca19c3b152a59d5623aa596fc62992  builds/b4/b4_core_funcsim.json
+d591fd18107627fdf90ddd1d1203ba0f7c61d68c03a9c38f850aea0b4acd2b04  builds/b4/b4_core_funcsim.v
