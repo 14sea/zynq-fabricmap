@@ -1,7 +1,7 @@
 [
  {
   "name": "startup_corrupt",
-  "wall_s": 0.22,
+  "wall_s": 0.206,
   "records": [],
   "chain_findings": [
    "chain: the session did not open"
@@ -17,7 +17,7 @@
  },
  {
   "name": "pre_event_corrupt",
-  "wall_s": 1.737,
+  "wall_s": 1.843,
   "records": [
    {
     "seq": 1,
@@ -82,7 +82,7 @@
  },
  {
   "name": "post_event_corrupt",
-  "wall_s": 1.703,
+  "wall_s": 1.773,
   "records": [
    {
     "seq": 1,
@@ -149,7 +149,7 @@
  },
  {
   "name": "base_readback_corrupt",
-  "wall_s": 2.124,
+  "wall_s": 2.296,
   "records": [
    {
     "seq": 1,
@@ -226,7 +226,7 @@
  },
  {
   "name": "step_in_slverr",
-  "wall_s": 1.702,
+  "wall_s": 1.784,
   "records": [
    {
     "seq": 1,
@@ -284,8 +284,208 @@
   "halted": "transaction 2: no observation sealed (STOP_AXI: a write of the pinned map answered SLVERR (the register is not what this side meant to stage))"
  },
  {
+  "name": "nonce_read_slverr",
+  "wall_s": 1.276,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     101
+    ],
+    "pcap_range": [
+     204,
+     204
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 22860,
+  "status": 1,
+  "phase": "P1",
+  "reason": "STOP_AXI: a read of the pinned map answered SLVERR",
+  "want_phase": "P1",
+  "o": false,
+  "x": null,
+  "signed_in_tx": 0,
+  "ctrl_writes_in_tx": [],
+  "dma_submits_in_tx": 0,
+  "writes_after_the_refused_read": 0,
+  "refused_read_seen": true,
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_AXI: a read of the pinned map answered SLVERR) \u2014 nothing further is signed without a ruling",
+  "halted": "transaction 2: no observation sealed (STOP_AXI: a read of the pinned map answered SLVERR)"
+ },
+ {
+  "name": "heartbeat_read_slverr",
+  "wall_s": 1.837,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P3",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     157
+    ],
+    "pcap_range": [
+     204,
+     258
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 29684,
+  "status": 1,
+  "phase": "P3",
+  "reason": "STOP_AXI: a read of the pinned map answered SLVERR",
+  "want_phase": "P3",
+  "o": false,
+  "x": null,
+  "signed_in_tx": 1,
+  "ctrl_writes_in_tx": [
+   "0x40",
+   "0x200"
+  ],
+  "dma_submits_in_tx": 26,
+  "writes_after_the_refused_read": 0,
+  "refused_read_seen": true,
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_AXI: a read of the pinned map answered SLVERR) \u2014 nothing further is signed without a ruling",
+  "halted": "transaction 2: no observation sealed (STOP_AXI: a read of the pinned map answered SLVERR)"
+ },
+ {
+  "name": "devc_ctrl_read_slverr",
+  "wall_s": 1.614,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P2",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     150
+    ],
+    "pcap_range": [
+     204,
+     204
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 25046,
+  "status": 1,
+  "phase": "P2",
+  "reason": "STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence",
+  "want_phase": "P2",
+  "o": false,
+  "x": null,
+  "signed_in_tx": 1,
+  "ctrl_writes_in_tx": [
+   "0x40"
+  ],
+  "dma_submits_in_tx": 0,
+  "writes_after_the_refused_read": 0,
+  "refused_read_seen": true,
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence) \u2014 nothing further is signed without a ruling",
+  "halted": "transaction 2: no observation sealed (STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence)"
+ },
+ {
   "name": "valid",
-  "wall_s": 3.725,
+  "wall_s": 3.732,
   "records": [
    {
     "seq": 1,
@@ -377,7 +577,7 @@
  },
  {
   "name": "a5",
-  "wall_s": 4.284,
+  "wall_s": 4.223,
   "records": [
    {
     "seq": 1,
@@ -492,7 +692,7 @@
  },
  {
   "name": "a5_persist",
-  "wall_s": 4.37,
+  "wall_s": 4.279,
   "records": [
    {
     "seq": 1,
@@ -607,7 +807,7 @@
  },
  {
   "name": "a8_cross",
-  "wall_s": 4.787,
+  "wall_s": 4.666,
   "records": [
    {
     "seq": 1,
@@ -722,7 +922,7 @@
  },
  {
   "name": "a2_pairs",
-  "wall_s": 4.635,
+  "wall_s": 4.579,
   "records": [
    {
     "seq": 1,
@@ -904,7 +1104,7 @@
  },
  {
   "name": "not_realisable",
-  "wall_s": 1.824,
+  "wall_s": 1.773,
   "records": [
    {
     "seq": 1,
@@ -963,7 +1163,7 @@
  },
  {
   "name": "wrong_key",
-  "wall_s": 0.357,
+  "wall_s": 0.353,
   "records": [
    {
     "seq": 1,
@@ -1000,7 +1200,7 @@
  },
  {
   "name": "notary_refuses",
-  "wall_s": 1.347,
+  "wall_s": 1.204,
   "records": [
    {
     "seq": 1,
@@ -1058,7 +1258,7 @@
  },
  {
   "name": "dma_never",
-  "wall_s": 6.15,
+  "wall_s": 6.073,
   "records": [
    {
     "seq": 1,
@@ -1117,7 +1317,7 @@
  },
  {
   "name": "latch_unmodelled",
-  "wall_s": 2.096,
+  "wall_s": 2.093,
   "records": [
    {
     "seq": 1,
@@ -1213,7 +1413,7 @@
  },
  {
   "name": "interrupt",
-  "wall_s": 1.414,
+  "wall_s": 1.407,
   "records": [
    {
     "seq": 1,

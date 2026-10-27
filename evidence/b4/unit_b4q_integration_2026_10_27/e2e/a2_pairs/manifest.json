@@ -2,23 +2,23 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-host-a2_pairs",
- "generated_utc": "2026-10-27T20:40:26Z",
+ "generated_utc": "2026-10-27T21:50:12Z",
  "emulated": true,
  "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
  "instrument": {
   "variant": "42340001",
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
-  "image_sha256": "5f7489d7650786ba8400db41650417a01f91b1e93e22d889d83a4f60e12e6ee4"
+  "image_sha256": "61c0e2711bb08db1ae557c968fb1cef5933e0c7e041ff30c4475e580a8afc52c"
  },
  "executing_side": {
   "binary": "build/b4q_firmware/b4q_host",
-  "sha256": "5f7489d7650786ba8400db41650417a01f91b1e93e22d889d83a4f60e12e6ee4",
+  "sha256": "61c0e2711bb08db1ae557c968fb1cef5933e0c7e041ff30c4475e580a8afc52c",
   "build": {
    "compiler": "/usr/bin/cc",
    "version": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
    "flags": "-std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion",
    "binaries": {
-    "b4q_host": "5f7489d7650786ba8400db41650417a01f91b1e93e22d889d83a4f60e12e6ee4",
+    "b4q_host": "61c0e2711bb08db1ae557c968fb1cef5933e0c7e041ff30c4475e580a8afc52c",
     "b4q_derive_twin": "15da92797a3bd25c5f6499600c04b5610e936442bc297b690679fff64da48906"
    }
   }
@@ -245,6 +245,8 @@
   "fault_injections": {
    "refuse_writes": [],
    "corrupt_frame_reads": [],
+   "refuse_reads": [],
+   "refuse_mem_reads": [],
    "note": "the bench's declared fault injections \u2014 a SIMULATION, never evidence that hardware refused or corrupted anything"
   }
  },
@@ -390,6 +392,10 @@
  "open_trace_range": [
   0,
   12
+ ],
+ "open_pcap_range": [
+  0,
+  48
  ],
  "halted": "transaction 5: O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
  "qualification_plan": {

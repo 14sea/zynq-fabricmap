@@ -90,8 +90,9 @@ Prerequisite (the owner's P3 of the second review): `test_b4q_schema`'s schema-a
 schema suite) or that one test skips — the owner's first full invocation saw exactly that skip and then passed the test alone.
 
 The nine suites this unit touches or depends on: `test_b4q_derive` 8, `test_b4q_emu` 7, `test_b4q_schema` 5, `test_b4q_view` 6,
-`test_b4q_firmware` 5, `test_b4q_session` 9, `test_b4carrier_records` 18, `test_b4carrier_regmap` 11, `test_b4carrier_benches` 1 (the
-iverilog benches) — **70 OK, no skip** (65 at the first delivery; the five added by the repair are named in section 9). The frozen B4 battery (`b4/tests`, 332 tests) unchanged and green (section 5's file; `b4/` is
+`test_b4q_firmware` 5, `test_b4q_session` 10, `test_b4carrier_records` 18, `test_b4carrier_regmap` 11, `test_b4carrier_benches` 1 (the
+iverilog benches) — **71 OK, no skip** (65 at the first delivery; five added by the first repair, section 9; one by the second, section 10),
+run in the stated order (the benches first). The frozen B4 battery (`b4/tests`, 332 tests) unchanged and green (section 5's file; `b4/` is
 byte-identical to `main`, `import_check.txt` 59 entries equal).
 
 ## 6. Findings for the owner at the first delivery (historical, 2026-10-27; each with its disposition — none is an open present-tense state)

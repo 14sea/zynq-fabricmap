@@ -1,0 +1,67 @@
+{
+ "name": "devc_ctrl_read_slverr",
+ "wall_s": 1.614,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 1,
+   "phase": "P2",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    97,
+    150
+   ],
+   "pcap_range": [
+    204,
+    204
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 25046,
+ "status": 1,
+ "phase": "P2",
+ "reason": "STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence",
+ "want_phase": "P2",
+ "o": false,
+ "x": null,
+ "signed_in_tx": 1,
+ "ctrl_writes_in_tx": [
+  "0x40"
+ ],
+ "dma_submits_in_tx": 0,
+ "writes_after_the_refused_read": 0,
+ "refused_read_seen": true,
+ "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence) \u2014 nothing further is signed without a ruling",
+ "halted": "transaction 2: no observation sealed (STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence)"
+}
