@@ -1,4 +1,4 @@
-# B4 — the executed unit of the exploration `b4-sim-5` (one batch, one decision: **complete, no-go**; 2026-10-27)
+# B4 — the executed unit of the exploration `b4-sim-5` (one batch, one decision: **complete, no-go**; 2026-10-27) — **CLOSED: the owner's PASS on `9577654` (section 9)**
 
 **What this unit is.** The one execution of the S = 32 exploration `b4-sim-5` under protocol v0.3.0 (task-v0.3, the slice-wide CE ½ / SR ¼
 stimulus) that the owner's review of `ae7fc35` (PASS, 2026-10-27, section 4 — archived in `owner_review_ae7fc35_PASS/`) authorised, run as
@@ -18,7 +18,8 @@ replacement label, no tuning, no gate, no RTL or board work.
 | commit 1 **`d1e0e2cc33e9cdfbdf65270a89277599a17ccd74`** | the archive `evidence/b4/sim/b4-sim-5_20261027T170605Z/` exactly as the tool wrote it: 771 files, 200 300 381 bytes, nothing else | `b4_sim_verify.py` deep, fresh process: clean (`sim_verify.txt`) | Git-blob check 771 / 771 equal (`blob_digest_check_commit1.txt`) |
 | commit 2 **`61733c55e49ed39737f537eae4f01aaf700f8ca4`** | the decision `evidence/b4/gonogo/b4-sim-5_20261027T171342Z/` (`gonogo.json`, `gonogo.md`) exactly as written, nothing else | `b4_gonogo.py decide` on the clean tree at commit 1; `b4_gonogo.py verify` deep, fresh process: clean (`gonogo_verify.txt`) | Git-blob check 2 / 2 equal (`blob_digest_check_commit2.txt`) |
 | commit 3 (this directory) | the unit record: this README, the run and decision headers / outputs / exit records, the operator's stop script and output, the inventory re-run at the start, the two verification outputs, the two blob checks, the owner's review of `ae7fc35` byte for byte (`SOURCE.txt`) | — | — |
-| the documentation commit after it | `docs/b4_architecture.md` §13 / §14 and the plan's status note with the owner's three non-blocking precisions (section 7; the review's section 3 says they go into the executed unit's ordinary documentation, after the execution) | — | — |
+| the documentation commit `9577654` | `docs/b4_architecture.md` §13 / §14 and the plan's status note with the owner's three non-blocking precisions (section 7; the review's section 3 says they go into the executed unit's ordinary documentation, after the execution) | — | — |
+| the closure commit (documents only) | the owner's PASS review of `9577654` archived in `owner_review_9577654_PASS/`; the two P3 wordings of section 9; the unit marked closed | — | — |
 
 **Two HEADs, kept apart (plan §1.2, §5.4).** The batch's `manifest.json` and `sim_report.json` record `head = ae7fc35…` (what the batch read).
 The decision's `gonogo.json` records `head = d1e0e2c…` (commit 1 — the policy tool refuses a dirty tree, and an uncommitted archive is an
@@ -125,14 +126,18 @@ threshold on the sign test's p, not the alpha of a formal scientific test").
 (n = 32 and median 0.0 at every budget; the population variances are in `gonogo.json`.)
 
 **What these numbers are and are not.** The sign test is the fixed policy statistic at one pre-named budget; the per-budget rows are
-descriptive and none of them is a second test — in particular the p 0.0327 at B = 96 is **not** a result and no budget is re-picked (plan
-§3.1, §9.4). The K9 (b′) medians ≥ 0.50 mean the conditional-coverage precondition of the policy was met, under the v0.3.0 applicability —
+descriptive and none of them is a second test — in particular the p 0.0327 at B = 96 is **a descriptive reported result, not a
+pre-specified decision criterion and not a basis for choosing another budget** (plan §3.1, §9.4; the owner's P3 of the closing review): it is
+kept and described, and it does not override the no-go. The K9 (b′) medians ≥ 0.50 mean the conditional-coverage precondition of the policy was met, under the v0.3.0 applicability —
 `sr_kind` at exactly the threshold 0.5 with 25 of 32 seeds carrying a positive control; they are not a result about the all-panel coverage:
 the all-panel medians `ff_srval` 0.4167 and `sr_kind` 0.25 are below 0.5. This is the first archive under task-v0.3 and the first with a
 positive mean and positives > negatives at B = 64 (`b4-sim-3` 10 / 12 / 10, p 0.738; `b4-gate-1` 56 / 95 / 49, p 0.9995; `b4-sim-4` 7 / 13 / 12,
 p 0.9423 — all under other tasks and refused by name by this tool); the plan predicted no outcome and this README draws no conclusion from
-the four beyond what the policy wrote. No production / exploration estimate of coverage is claimed by this unit either: the K9 medians are
-the policy's precondition values of one S = 32 archive.
+the four beyond what the policy wrote. **This archive is the first task-v0.3 production exploration, and its K9 values are the empirical
+coverage summaries — estimates on the fixed panel over its 32 planned seeds — under both estimands, with the positive-control counts
+beside them** (the owner's P3 of the closing review): limited to this model, task, panel, grid and procedure; not silicon coverage
+estimates, not a general coverage guarantee, and not a formal K9 gate PASS (the all-seven positive-control fraction 25 / 32 = 0.78125 is
+below the unchanged formal K9(a) reference 0.90; no gate was run).
 
 ## 6. The disposition (plan §3.1 row "complete", §3.2 row "no-go")
 
@@ -164,3 +169,35 @@ No push, no merge (`main` is still `a243ee8`; `b4-task-v03` is still `ae7fc35`);
 no change to any program, table, threshold, hypothesis, old archive, receipt, seed record or verdict (`b4/` is byte-identical to `e20e12b`
 at every commit of this unit); no `b4-gate-2` plan; no RTL, 2d, routing, purchasing or board work. The unit is returned whole for the
 owner's review.
+
+## 9. Closure — the owner's PASS on `9577654` (2026-10-27)
+
+The review is archived in `owner_review_9577654_PASS/` (8 checksummed files plus `SHA256SUMS`, verified after the copy; `SOURCE.txt`).
+**PASS: the execution unit is accepted; the fixed §9.4 decision no-go is the decision of record.** The owner's independent verification: both
+fresh-process deep verifiers exit 0 with empty findings; the archive commit's parent is the authorised execution HEAD `ae7fc35`, the decision
+commit's parent and recorded HEAD `d1e0e2c`, the protocol digest `5bba53c7…`; 771 / 771 and 2 / 2 committed blobs equal; 45 repository inputs
+and 28 tool digests matched at the recorded HEAD's blobs, 6 external UNISIM inputs matched; the copied authorisation package 9 / 9 equal;
+57 568 ledger fitness values recalculated from the retained grids and every per-budget best curve agreeing; all ten budgets' Ω − R statistics
+agreeing (B = 64: 9 / 7 / 16, mean 0.03125, d 0.011027027284780772, p 0.4018096923828125); K9 37 888 comparison rows recomputed, both
+applicability tallies and the seven medians agreeing, all-seven positive controls 25 / 32; K10 13 440 units recomputed, 32 / 32 interacting;
+K7 medians 2, 4, 5, 6, 8, 10, 14, 16.5, 19.5, 21; 4 pin tests OK; the pool 2 690 → 2 755 with 65 distinct new values and zero overlap; the
+seed-derivation guards called 0 times. The reviewer performed no derivation, batch, observation, tracked edit, commit, push, merge or board
+operation.
+
+**The owner's reading (the review's section 2).** At the pre-fixed B = 64 positives exceed negatives but p exceeds the cost threshold: the
+coverage component of this cost policy is satisfied and its sign-test component is not, so no-go is the correct recorded decision; equality
+at `sr_kind` = 0.5 is allowed. The medians are not a formal K9 gate PASS (25 / 32 = 0.78125 below the K9(a) reference 0.90; no gate run). The
+first positive B = 64 descriptive sign / mean under a new task establishes no gain, reverses no earlier decision and licenses no pooling
+across methods. The verifier establishes internal consistency and source binding, not the truth of the observation source or physical-model
+agreement.
+
+**Closure edits (documents only, as the review's section 3 allows; nothing rerun):** the review archived; this section, the heading and the
+commit table; the two P3 wordings in section 5 — (1) the categorical "no production / exploration estimate of coverage is claimed" replaced by
+the limited positive description (this archive's K9 values are the empirical coverage summaries on the fixed panel over 32 planned seeds,
+with their claim limits); (2) B = 96's p described as a descriptive reported result, not a pre-specified decision criterion or a basis for
+choosing another budget; `docs/b4_architecture.md` §13 marks the unit accepted and closed.
+
+**Authority after the PASS.** The label is consumed by its durable records; the cost-policy route to `b4-gate-2` stops here. **No rerun,
+alternate label, next protocol, changed task / operator / grouping / threshold, `b4-gate-2` execution, push / merge, RTL / firmware, 2d,
+routing or board work is authorised.** A later undertaking needs its own concrete engineering or scientific purpose and scope; no negative
+scientific proposition follows from this cost-policy stop. The preregistration remains unfrozen.
