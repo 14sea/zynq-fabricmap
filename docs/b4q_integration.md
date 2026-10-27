@@ -1,4 +1,4 @@
-# B4Q — the host-only observation integration (DRAFT v0.2, 2026-10-28; v0.1 held by the owner's review of `3723b91`, R1–R5 repaired — section 5a): the executing side, the PCAP links, the schemas and adapters, the offline end-to-end transaction
+# B4Q — the host-only observation integration (v0.3, **accepted and closed — the owner's PASS on `a41f573`, 2026-10-27**; v0.1 held by the owner's review of `3723b91`, R1–R5 repaired — section 5a; v0.2 held by the review of `6f62b6a`, the R1–R3 residuals repaired — section 5b): the executing side, the PCAP links, the schemas and adapters, the offline end-to-end transaction
 
 > **Authorisation.** The owner's disposition of 2026-10-27 (`build/wip/owner_next_b4q_2026_10_27/README.md`, section 4; archived in
 > `evidence/b4/unit_b4q_integration_2026_10_27/owner_ruling_2026_10_27/`): one complete host-only engineering unit whose purpose is "an
@@ -7,6 +7,12 @@
 > power, provisioning, PCAP loading, 2d, routing, production seed derivation, search, gate, parameter sweeps, protocol / task / operator /
 > threshold changes, carrier RTL changes, push / merge. The plan is `docs/b4q_plan.md`; this page is the design record of what was built,
 > what it proves and what it cannot.
+>
+> **Closure.** The owner's PASS on `a41f573` (archived in `evidence/b4/unit_b4q_integration_2026_10_27/owner_review_a41f573_PASS/`) accepts
+> this unit as the complete host-only engineering unit and the plan as host-side qualification preparation; it establishes the host-side
+> sequence, arithmetic, record and verifier contracts on the fixtures and counterexamples only — no physical PCAP link, write-set safety,
+> composition, GSR / A8 / timing, silicon agreement or qualification; the no-go results stand. The next authorised unit is the host-only
+> PS-image preparation (the unit README's section 11).
 
 ## 0. The one sentence
 

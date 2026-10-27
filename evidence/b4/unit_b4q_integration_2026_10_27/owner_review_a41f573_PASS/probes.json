@@ -1,0 +1,348 @@
+{
+  "baseline": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "session": [],
+    "qualification": {
+      "findings": [],
+      "a5": [],
+      "a8": [],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/baseline: clean=True agree=True session=[] chain=0 a7=0 qualification=[]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "old_drop_final_tx": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "tx_004: declared in the manifest, not present",
+    "session": [],
+    "qualification": null,
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/old_drop_final_tx: REFUSED \u2014 tx_004: declared in the manifest, not present\n",
+    "stderr": ""
+  },
+  "old_change_A5_verdict": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "session": [
+      "qualification: A5[0]: the retained conclusion (pass) is not the one recomputed from the records (fail) in full"
+    ],
+    "qualification": {
+      "findings": [
+        "A5[0]: the retained conclusion (pass) is not the one recomputed from the records (fail) in full"
+      ],
+      "a5": [
+        {
+          "recomputed": "fail",
+          "stored": "pass"
+        }
+      ],
+      "a8": [],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/old_change_A5_verdict: clean=False agree=False session=['qualification: A5[0]: the retained conclusion (pass) is not the one recomputed from the records (fail) in full'] chain=0 a7=0 qualification=['A5[0]: the retained conclusion (pass) is not the one recomputed from the records (fail) in full']\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X injection_open | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "old_change_A8_verdict": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "session": [
+      "qualification: A8[0] AFF: the retained conclusion (row 5) is not the one recomputed from the records (row 2) in full"
+    ],
+    "qualification": {
+      "findings": [
+        "A8[0] AFF: the retained conclusion (row 5) is not the one recomputed from the records (row 2) in full"
+      ],
+      "a5": [],
+      "a8": [
+        {
+          "AFF": {
+            "recomputed": "both demonstrated",
+            "stored": "neither demonstrated"
+          },
+          "BFF": {
+            "recomputed": "neither demonstrated",
+            "stored": "neither demonstrated"
+          }
+        }
+      ],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/old_change_A8_verdict: clean=False agree=False session=['qualification: A8[0] AFF: the retained conclusion (row 5) is not the one recomputed from the records (row 2) in full'] chain=0 a7=0 qualification=['A8[0] AFF: the retained conclusion (row 5) is not the one recomputed from the records (row 2) in full']\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "pcap_internal_gap": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "session": [
+      "completeness: tx_002 does not start where the previous record ended in the PCAP log (205 vs 204): an interval is unowned or shared"
+    ],
+    "qualification": {
+      "findings": [],
+      "a5": [],
+      "a8": [],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/pcap_internal_gap: clean=False agree=False session=['completeness: tx_002 does not start where the previous record ended in the PCAP log (205 vs 204): an interval is unowned or shared'] chain=0 a7=0 qualification=[]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "A8_element_label": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "session": [
+      "qualification: A8[0]: the qualified element 'AFF' is not among the index's elements",
+      "qualification: A8[0]: element 'A5FF' / index 0 is not the mapping's element order"
+    ],
+    "qualification": {
+      "findings": [
+        "A8[0]: the qualified element 'AFF' is not among the index's elements",
+        "A8[0]: element 'A5FF' / index 0 is not the mapping's element order"
+      ],
+      "a5": [],
+      "a8": [
+        {
+          "BFF": {
+            "recomputed": "neither demonstrated",
+            "stored": "neither demonstrated"
+          },
+          "A5FF": {
+            "recomputed": "both demonstrated",
+            "stored": "both demonstrated"
+          }
+        }
+      ],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/A8_element_label: clean=False agree=False session=[\"qualification: A8[0]: the qualified element 'AFF' is not among the index's elements\", \"qualification: A8[0]: element 'A5FF' / index 0 is not the mapping's element order\"] chain=0 a7=0 qualification=[\"A8[0]: the qualified element 'AFF' is not among the index's elements\", \"A8[0]: element 'A5FF' / index 0 is not the mapping's element order\"]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "A8_background_bits": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "session": [
+      "qualification: A8[0]: the declared varied bits {'ff_init': 0, 'ff_srval': 1} are not the mapping's addresses of (AFF, ff_init / ff_srval) {'ff_init': 13, 'ff_srval': 8}",
+      "qualification: A8[0]: corner 00's record does not observe the declared background outside the varied bits",
+      "qualification: A8[0]: corner 01's record does not observe the declared background outside the varied bits",
+      "qualification: A8[0]: corner 10's record does not observe the declared background outside the varied bits",
+      "qualification: A8[0]: corner 11's record does not observe the declared background outside the varied bits"
+    ],
+    "qualification": {
+      "findings": [
+        "A8[0]: the declared varied bits {'ff_init': 0, 'ff_srval': 1} are not the mapping's addresses of (AFF, ff_init / ff_srval) {'ff_init': 13, 'ff_srval': 8}",
+        "A8[0]: corner 00's record does not observe the declared background outside the varied bits",
+        "A8[0]: corner 01's record does not observe the declared background outside the varied bits",
+        "A8[0]: corner 10's record does not observe the declared background outside the varied bits",
+        "A8[0]: corner 11's record does not observe the declared background outside the varied bits"
+      ],
+      "a5": [],
+      "a8": [
+        {
+          "AFF": {
+            "recomputed": "both demonstrated",
+            "stored": "both demonstrated"
+          },
+          "BFF": {
+            "recomputed": "neither demonstrated",
+            "stored": "neither demonstrated"
+          }
+        }
+      ],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/A8_background_bits: clean=False agree=False session=[\"qualification: A8[0]: the declared varied bits {'ff_init': 0, 'ff_srval': 1} are not the mapping's addresses of (AFF, ff_init / ff_srval) {'ff_init': 13, 'ff_srval': 8}\", \"qualification: A8[0]: corner 00's record does not observe the declared background outside the varied bits\", \"qualification: A8[0]: corner 01's record does not observe the declared background outside the varied bits\", \"qualification: A8[0]: corner 10's record does not observe the declared background outside the varied bits\", \"qualification: A8[0]: corner 11's record does not observe the declared background outside the varied bits\"] chain=0 a7=0 qualification=[\"A8[0]: the declared varied bits {'ff_init': 0, 'ff_srval': 1} are not the mapping's addresses of (AFF, ff_init / ff_srval) {'ff_init': 13, 'ff_srval': 8}\", \"A8[0]: corner 00's record does not observe the declared background outside the varied bits\", \"A8[0]: corner 01's record does not observe the declared background outside the varied bits\", \"A8[0]: corner 10's record does not observe the declared background outside the varied bits\", \"A8[0]: corner 11's record does not observe the declared background outside the varied bits\"]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "A8_partial_conclusion_binding": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "session": [
+      "qualification: A8[0] AFF: the retained conclusion (row 2) is not the one recomputed from the records (row 2) in full"
+    ],
+    "qualification": {
+      "findings": [
+        "A8[0] AFF: the retained conclusion (row 2) is not the one recomputed from the records (row 2) in full"
+      ],
+      "a5": [],
+      "a8": [
+        {
+          "AFF": {
+            "recomputed": "both demonstrated",
+            "stored": "both demonstrated"
+          },
+          "BFF": {
+            "recomputed": "neither demonstrated",
+            "stored": "neither demonstrated"
+          }
+        }
+      ],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/A8_partial_conclusion_binding: clean=False agree=False session=['qualification: A8[0] AFF: the retained conclusion (row 2) is not the one recomputed from the records (row 2) in full'] chain=0 a7=0 qualification=['A8[0] AFF: the retained conclusion (row 2) is not the one recomputed from the records (row 2) in full']\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "A2_semantic_label": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "session": [
+      "qualification: A2[0] ff_init: the two endpoints do not differ exactly in the bit(s) of one (ff_init) address (they differ at ['0x00400a01/52/7'])"
+    ],
+    "qualification": {
+      "findings": [
+        "A2[0] ff_init: the two endpoints do not differ exactly in the bit(s) of one (ff_init) address (they differ at ['0x00400a01/52/7'])"
+      ],
+      "a5": [],
+      "a8": [],
+      "a2": [
+        {
+          "semantic": "ff_init",
+          "recomputed": "differs",
+          "stored": "differs"
+        },
+        {
+          "semantic": "storage_kind",
+          "recomputed": "not_assessable",
+          "stored": "not_assessable"
+        }
+      ]
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/A2_semantic_label: clean=False agree=False session=[\"qualification: A2[0] ff_init: the two endpoints do not differ exactly in the bit(s) of one (ff_init) address (they differ at ['0x00400a01/52/7'])\"] chain=32 a7=0 qualification=[\"A2[0] ff_init: the two endpoints do not differ exactly in the bit(s) of one (ff_init) address (they differ at ['0x00400a01/52/7'])\"]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 31 agrees=True\n",
+    "stderr": ""
+  },
+  "manifest_list": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "manifest.json: not a b4q_session manifest object",
+    "session": [],
+    "qualification": null,
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/manifest_list: REFUSED \u2014 manifest.json: not a b4q_session manifest object\n",
+    "stderr": ""
+  },
+  "record_list": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "tx_001/record.json: not a JSON object",
+    "session": [],
+    "qualification": null,
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/record_list: REFUSED \u2014 tx_001/record.json: not a JSON object\n",
+    "stderr": ""
+  },
+  "ctx_list": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "tx_001/ctx.json: not a JSON object",
+    "session": [],
+    "qualification": null,
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/ctx_list: REFUSED \u2014 tx_001/ctx.json: not a JSON object\n",
+    "stderr": ""
+  },
+  "nested_binary_missing": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "manifest.executing_side.binary: missing or not a str",
+    "session": [],
+    "qualification": null,
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_round3_ut4zzex4/build/owner_review_probes/nested_binary_missing: REFUSED \u2014 manifest.executing_side.binary: missing or not a str\n",
+    "stderr": ""
+  },
+  "nonce_read_slverr": {
+    "injected": 1,
+    "signatures": 0,
+    "firmware_status": 1,
+    "reason": "STOP_AXI: a read of the pinned map answered SLVERR",
+    "ctrl_words": [
+      256
+    ],
+    "init_req_word": 1024,
+    "arm_word": 64,
+    "findings": [
+      "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ]
+  },
+  "heartbeat_read_slverr": {
+    "injected": 1,
+    "signatures": 1,
+    "firmware_status": 1,
+    "reason": "STOP_AXI: a read of the pinned map answered SLVERR",
+    "ctrl_words": [
+      256,
+      64,
+      512
+    ],
+    "init_req_word": 1024,
+    "arm_word": 64,
+    "findings": [
+      "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ]
+  },
+  "A7": {
+    "valid": [],
+    "alien_source": [
+      "DMA submission 0: not one of the four legal transactions \u2014 source 0xdead0001 / length 534 is not an envelope, a readback command or the cleanup (src 0xdead0001, dst 0xffffffff, 534/0)"
+    ],
+    "missing_hold_tag": [
+      "DMA submission 0: not one of the four legal transactions \u2014 a write to the PCAP endpoint without the HOLD tag on its source (src 0x10400000, dst 0xffffffff, 534/0)"
+    ],
+    "unaligned_offset": [
+      "DMA submission 0: not one of the four legal transactions \u2014 the source 0x10400003 is not word-aligned (src 0x10400003, dst 0xffffffff, 534/0)"
+    ]
+  },
+  "raw_config": {
+    "float": {
+      "schema_findings": [
+        "$.config.0x00400a00/52/16: not of type integer"
+      ],
+      "adapter": "M-raw: not an instance of the raw schema: $.config.0x00400a00/52/16: not of type integer"
+    },
+    "bool": {
+      "schema_findings": [
+        "$.config.0x00400a00/52/16: not of type integer"
+      ],
+      "adapter": "M-raw: not an instance of the raw schema: $.config.0x00400a00/52/16: not of type integer"
+    },
+    "out_of_range": {
+      "schema_findings": [
+        "$.config.0x00400a00/52/16: above the maximum 1"
+      ],
+      "adapter": "M-raw: not an instance of the raw schema: $.config.0x00400a00/52/16: above the maximum 1"
+    }
+  },
+  "A5_missing_X": {
+    "verdict": "not_demonstrated",
+    "why": "J1's transaction close with its cleanup witness is absent: the post-init projection cannot be compared",
+    "per_element": null
+  }
+}
