@@ -42,15 +42,45 @@
    "role": "host twin driver",
    "sha256": "0c5f726def1a5068ab758a0360a85aca197ea0265a1323f759e393bd3b4c264d"
   },
+  "firmware/b4q/b4q_hal.h": {
+   "kind": "new",
+   "note": "the five calls through which the transaction logic reaches the outside world (MMIO read / write, the notary, the event sink).",
+   "role": "the injected transport",
+   "sha256": "3081bb5869e63c1658ed541aa7f290218eeea46b1d4292041c31788020fcd013"
+  },
+  "firmware/b4q/b4q_host_main.c": {
+   "kind": "new",
+   "note": "the line protocol on stdin / stdout to host/b4q_session.py and the command loop; not a board image.",
+   "role": "host driver",
+   "sha256": "38f3eadf3e03f9d35b8ce4f7aa6b5c3accffa967929fbab3aefd403dd0490fdc"
+  },
   "firmware/b4q/b4q_regmap.h": {
    "generator": "host/b4q_gen_regmap.py",
    "kind": "generated",
    "note": "from host/b4carrier_regmap.py, the one register table of record.",
    "sha256": "aecebb92744c4a5a4d27d1f5a8b5a8f84e336442121261554dbd086f87d3e7ce"
+  },
+  "firmware/b4q/b4q_tx.c": {
+   "kind": "new",
+   "note": "the transaction logic: the allowlist at the accessor, bounded polls of STATUS / FAULT, the four legal DMA transactions, link 2 / link 3, fail-closed stops; derived nothing from firmware/b1/b1_app.c textually \u2014 the same discipline (the DMA tuples, the sentinel prefill, the link-2 re-read, the settle condition) re-expressed for the v2 register map.",
+   "role": "the executing side",
+   "sha256": "500ac5f847a5861e5b26cc2a81e91c43c3148288ac8206b74dbc428238eb82e3"
+  },
+  "firmware/b4q/b4q_tx.h": {
+   "kind": "new",
+   "note": "the session opening and the transaction (P1-P10, A5 J2 / J3) on the carrier v2 register map; the result structs.",
+   "role": "the executing side",
+   "sha256": "5dfbe89abc450f8bffb765c5c3a3ae5600ca4f873a30cae1db07d677d5b8e712"
+  },
+  "firmware/b4q/build.sh": {
+   "kind": "new",
+   "note": "make host + twin and the build record (compiler path / version / flags / binary digests) in build/b4q_firmware/build.json.",
+   "role": "build",
+   "sha256": "da9bd8c158745dbf5315dad6be7886e21a5857b0fa41e57555a2a832a03286dc"
   }
  },
  "schema": "b4q_firmware_import",
  "schema_version": "1.0.0",
- "scope": "firmware/b4q: the B4Q executing side, host-built; nothing cross-compiled into an image",
+ "scope": "firmware/b4q: the B4Q executing side, host-built; nothing cross-compiled into an image (a compile-only check of the pure units with the pinned cross toolchain is in the Makefile)",
  "source": "firmware/b1 (the B1 image's pure units, themselves copied from zynq-psoracle 689dde1 per firmware/b1/IMPORT.json)"
 }

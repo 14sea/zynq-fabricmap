@@ -1,0 +1,88 @@
+{
+ "verdict": "fail",
+ "why": "persistence after initialisation; the differing positions are the finding",
+ "injection_witness": {
+  "arrived": true,
+  "c1_initial_q": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "c2_initial_q": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "injected_state": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "differing_positions": [
+  {
+   "step": 0,
+   "element": 0,
+   "c1": 1,
+   "c2": 0
+  },
+  {
+   "step": 0,
+   "element": 1,
+   "c1": 1,
+   "c2": 0
+  },
+  {
+   "step": 0,
+   "element": 2,
+   "c1": 1,
+   "c2": 0
+  },
+  {
+   "step": 0,
+   "element": 3,
+   "c1": 1,
+   "c2": 0
+  },
+  {
+   "step": 0,
+   "element": 4,
+   "c1": 1,
+   "c2": 0
+  },
+  {
+   "step": 0,
+   "element": 5,
+   "c1": 1,
+   "c2": 0
+  },
+  {
+   "step": 0,
+   "element": 6,
+   "c1": 1,
+   "c2": 0
+  },
+  {
+   "step": 0,
+   "element": 7,
+   "c1": 1,
+   "c2": 0
+  }
+ ],
+ "limit": "a pass establishes that THIS specified state does not reach the next record; not that no leftover state can"
+}

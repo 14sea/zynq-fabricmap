@@ -1,0 +1,336 @@
+{
+ "schema": "b4q_session",
+ "schema_version": "1.0.0",
+ "label": "B4Q-host-a5",
+ "generated_utc": "2026-10-27T19:34:21Z",
+ "emulated": true,
+ "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
+ "instrument": {
+  "variant": "42340001",
+  "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "image_sha256": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec"
+ },
+ "executing_side": {
+  "binary": "build/b4q_firmware/b4q_host",
+  "sha256": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec",
+  "build": {
+   "compiler": "/usr/bin/cc",
+   "version": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+   "flags": "-std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion",
+   "binaries": {
+    "b4q_host": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec",
+    "b4q_derive_twin": "15da92797a3bd25c5f6499600c04b5610e936442bc297b690679fff64da48906"
+   }
+  }
+ },
+ "loaded_frames_reference_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+ "base_readback_reference_sha256": "ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7",
+ "write_set": {
+  "bitstream": "builds/b4/b4.bit",
+  "bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "build_record": "builds/b4/b4_build.json",
+  "idcode": "0x03722093",
+  "carrier_manifest": "builds/b4/b4_carrier_manifest.json",
+  "carrier_manifest_bitstream_sha256": "52f2ea56fddd6268ce6a3b5adcf9aede9d1ab953dc8d1e75b653054524178745",
+  "carrier_manifest_file_digest_matches": false,
+  "carrier_manifest_column_frames_differing": [
+   "0x00400a02",
+   "0x00400a03",
+   "0x00400a04",
+   "0x00400a05",
+   "0x00400a06",
+   "0x00400a07",
+   "0x00400a08",
+   "0x00400a09",
+   "0x00400a0a",
+   "0x00400a0b",
+   "0x00400a0c",
+   "0x00400a0d",
+   "0x00400a0e",
+   "0x00400a0f",
+   "0x00400a10",
+   "0x00400a11",
+   "0x00400a12",
+   "0x00400a13",
+   "0x00400a16",
+   "0x00400a17",
+   "0x00400a18",
+   "0x00400a19"
+  ],
+  "envelopes": [
+   {
+    "far_set": "0x00400a00",
+    "targets": [
+     "0x00400a00",
+     "0x00400a01",
+     "0x00400a02",
+     "0x00400a03"
+    ],
+    "flush": "0x00400a04"
+   },
+   {
+    "far_set": "0x00400a1c",
+    "targets": [
+     "0x00400a1c",
+     "0x00400a1d",
+     "0x00400a1e",
+     "0x00400a1f"
+    ],
+    "flush": "0x00400a20"
+   }
+  ],
+  "target_fars": [
+   "0x00400a00",
+   "0x00400a01",
+   "0x00400a02",
+   "0x00400a03",
+   "0x00400a1c",
+   "0x00400a1d",
+   "0x00400a1e",
+   "0x00400a1f"
+  ],
+  "flush_fars": [
+   "0x00400a04",
+   "0x00400a20"
+  ],
+  "whitelist": [
+   {
+    "bit": 0,
+    "far": "0x00400a00",
+    "word": 52,
+    "bit_in_word": 16
+   },
+   {
+    "bit": 1,
+    "far": "0x00400a01",
+    "word": 51,
+    "bit_in_word": 7
+   },
+   {
+    "bit": 2,
+    "far": "0x00400a01",
+    "word": 51,
+    "bit_in_word": 19
+   },
+   {
+    "bit": 3,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 3
+   },
+   {
+    "bit": 4,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 7
+   },
+   {
+    "bit": 5,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 15
+   },
+   {
+    "bit": 6,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 19
+   },
+   {
+    "bit": 7,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 23
+   },
+   {
+    "bit": 8,
+    "far": "0x00400a1e",
+    "word": 51,
+    "bit_in_word": 12
+   },
+   {
+    "bit": 9,
+    "far": "0x00400a1e",
+    "word": 51,
+    "bit_in_word": 30
+   },
+   {
+    "bit": 10,
+    "far": "0x00400a1e",
+    "word": 52,
+    "bit_in_word": 0
+   },
+   {
+    "bit": 11,
+    "far": "0x00400a1e",
+    "word": 52,
+    "bit_in_word": 1
+   },
+   {
+    "bit": 12,
+    "far": "0x00400a1e",
+    "word": 52,
+    "bit_in_word": 18
+   },
+   {
+    "bit": 13,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 3
+   },
+   {
+    "bit": 14,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 6
+   },
+   {
+    "bit": 15,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 22
+   },
+   {
+    "bit": 16,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 28
+   },
+   {
+    "bit": 17,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 1
+   },
+   {
+    "bit": 18,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 9
+   },
+   {
+    "bit": 19,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 19
+   },
+   {
+    "bit": 20,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 26
+   }
+  ],
+  "base_frame_sha256": {
+   "0x00400a00": "83ea11e246f4beb9ceb66684eb64408088e3a1fafaeb0cda3c21f5446d3b5859",
+   "0x00400a01": "2d705f7fbb987efe04cd5bd23195d9b0de7b55ca4a2caecaaeacffa5e692ae28",
+   "0x00400a02": "0dff7b369a72b99746a29eed6537b9ae18d90903050de9cc7f0d71876b63cc03",
+   "0x00400a03": "72ed9a71c4070863a17688ff7ccab7029494a8e499720cb6aa72ba9877f6527e",
+   "0x00400a1c": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "0x00400a1d": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "0x00400a1e": "1746621f0f6e2a2a9e4ff88f9a055c1aabebe9a20dd1cd2a27ed47dcc79fb280",
+   "0x00400a1f": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "0x00400a04": "d6e51aae5cb3e4aab20921655785af00ae1bc68f4094b9a753d90b9716ac3b00",
+   "0x00400a20": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+  },
+  "base_genome_of_loaded_image": 24,
+  "loaded_image_target_frames_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+  "note": "the loaded image is the natural build (CEUSEDMUX = SRUSEDMUX = 1); the signed base genome 0 differs from it in exactly those two bits and their frames' ECC",
+  "header_sha256": "2e296151a14dd083383393cad40b1ed1e4c8ae2089ebab3d67c8d9b6ea2e644e",
+  "generator": "host/b4q_gen_data.py"
+ },
+ "timing": {
+  "assert_delay": 8,
+  "release": 16,
+  "sample_offset": 4,
+  "settle": 4,
+  "hold": 4,
+  "pulse": 2
+ },
+ "hypothesis": {
+  "path": "b4/hypothesis/ff_behaviour_v0.3.json",
+  "sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "version": "0.3.0"
+ },
+ "mapping": {
+  "site": "SLICE_X2Y25",
+  "certificate": "gate_runs/run_2026_08_05_ff/certificate.json",
+  "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+ },
+ "notary": {
+  "key_id": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+  "contract": "zero tables, no attestation (fixture key)"
+ },
+ "backend": {
+  "power_on": "init",
+  "nonce_seed": "9e3779b97f4a7c15",
+  "devc_faults": {}
+ },
+ "records": [
+  {
+   "seq": 1,
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": []
+  },
+  {
+   "seq": 2,
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": []
+  },
+  {
+   "seq": 3,
+   "kind": "inject",
+   "genome_hex": "000018",
+   "o": true,
+   "f": false,
+   "x": "injection_open",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": []
+  },
+  {
+   "seq": 4,
+   "kind": "a5",
+   "genome_hex": "000018",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": []
+  },
+  {
+   "seq": 5,
+   "kind": "normal",
+   "genome_hex": "000000",
+   "o": true,
+   "f": true,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": []
+  }
+ ],
+ "notary_deny": [],
+ "interrupted": null,
+ "chain_findings": [],
+ "accesses": 89211,
+ "trace_events": 622
+}

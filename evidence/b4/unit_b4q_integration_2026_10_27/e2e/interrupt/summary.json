@@ -1,0 +1,43 @@
+{
+ "name": "interrupt",
+ "wall_s": 1.349,
+ "records": [
+  {
+   "seq": 1,
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": []
+  },
+  {
+   "seq": 2,
+   "kind": "normal",
+   "genome_hex": "000000",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 5,
+   "phase": "?",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 25858,
+ "status": 5,
+ "interrupted": {
+  "after_accesses": 3000,
+  "last_request": "R 10300048"
+ },
+ "o": false,
+ "findings": [
+  "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+ ]
+}

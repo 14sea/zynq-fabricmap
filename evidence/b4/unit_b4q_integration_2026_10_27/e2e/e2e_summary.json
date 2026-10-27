@@ -1,0 +1,689 @@
+[
+ {
+  "name": "valid",
+  "wall_s": 3.781,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 3,
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 4,
+    "kind": "normal",
+    "genome_hex": "02011d",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 77749
+ },
+ {
+  "name": "a5",
+  "wall_s": 4.365,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 3,
+    "kind": "inject",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "injection_open",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 4,
+    "kind": "a5",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 5,
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 89211,
+  "a5": "pass",
+  "a5_why": "this adversarial state arrived and was cleared by the initialisation"
+ },
+ {
+  "name": "a5_persist",
+  "wall_s": 4.341,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 3,
+    "kind": "inject",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "injection_open",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 4,
+    "kind": "a5",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 5,
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 89211,
+  "a5": "fail",
+  "a5_why": "persistence after initialisation; the differing positions are the finding"
+ },
+ {
+  "name": "a8_cross",
+  "wall_s": 4.633,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 3,
+    "kind": "normal",
+    "genome_hex": "000118",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 4,
+    "kind": "normal",
+    "genome_hex": "002018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 5,
+    "kind": "normal",
+    "genome_hex": "002118",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 96298,
+  "a8_AFF": "both demonstrated",
+  "a8_BFF": "neither demonstrated"
+ },
+ {
+  "name": "a2_pairs",
+  "wall_s": 4.629,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 3,
+    "kind": "normal",
+    "genome_hex": "000010",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 4,
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 5,
+    "kind": "normal",
+    "genome_hex": "000400",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [
+     "O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[1].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[2].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[2].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[3].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[7].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[8].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[8].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[9].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[9].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[10].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[10].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[11].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[11].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[12].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[12].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[13].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[13].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[14].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[14].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[4]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[1].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[2].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[2].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[3].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[7].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[8].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[8].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[9].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[9].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[10].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[10].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[11].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[11].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[12].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[12].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[13].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[13].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[14].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[14].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: a malformed record; the chain ends here"
+  ],
+  "accesses": 96118,
+  "a2": {
+   "ce_mode": "differs",
+   "storage_kind": "not_assessable"
+  }
+ },
+ {
+  "name": "not_realisable",
+  "wall_s": 1.715,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": null,
+    "o_status": "invalid",
+    "executing_side_status": 1,
+    "phase": "P5",
+    "findings": [
+     "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)"
+    ]
+   },
+   {
+    "seq": 3,
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": null,
+    "o_status": "invalid",
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)",
+     "bound: bound: O.seq does not follow the previous close"
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[1]: no transaction close; the chain ends here"
+  ],
+  "accesses": 34359,
+  "invalid_phase": "P5",
+  "invalid_code": "not_realisable",
+  "after_status": 1,
+  "after_reason": "STOP_ARM: the gate refused (FAULT latched)"
+ },
+ {
+  "name": "wrong_key",
+  "wall_s": 0.368,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": null,
+    "o_status": "invalid",
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)"
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[0]: no transaction close; the chain ends here"
+  ],
+  "accesses": 4665,
+  "root_status": 1,
+  "root_reason": "STOP_ARM: the gate refused (FAULT latched)",
+  "o_status": "invalid",
+  "o_phase": "P1"
+ },
+ {
+  "name": "notary_refuses",
+  "wall_s": 1.214,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 22860,
+  "status": 1,
+  "reason": "STOP_SIGN: the notary refused the candidate",
+  "o": false,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ },
+ {
+  "name": "dma_never",
+  "wall_s": 5.955,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P2",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 126677,
+  "status": 1,
+  "phase": "P2",
+  "reason": "STOP_DMA: DEVCFG D_P_DONE never asserted",
+  "o": false,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ },
+ {
+  "name": "latch_unmodelled",
+  "wall_s": 2.066,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000450",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [
+     "O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[1].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[2].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[2].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[3].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[7].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[1]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[1].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[2].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[2].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[3].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[7].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: a malformed record; the chain ends here"
+  ],
+  "accesses": 41155,
+  "status": 0,
+  "o_status": "complete",
+  "findings": [
+   "O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+   "O: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "O: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+  ],
+  "unmodelled_reads": 10
+ },
+ {
+  "name": "interrupt",
+  "wall_s": 1.349,
+  "records": [
+   {
+    "seq": 1,
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": []
+   },
+   {
+    "seq": 2,
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 5,
+    "phase": "?",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 25858,
+  "status": 5,
+  "interrupted": {
+   "after_accesses": 3000,
+   "last_request": "R 10300048"
+  },
+  "o": false,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ }
+]

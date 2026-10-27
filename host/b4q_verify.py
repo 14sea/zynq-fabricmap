@@ -44,7 +44,14 @@ def canon(o) -> str:
 
 
 def jl(p: Path) -> list:
-    return [json.loads(l) for l in p.read_text().splitlines() if l.strip()] if p.is_file() else []
+    """A JSON-lines file, plain or gzip-compressed beside it (the archived evidence keeps the large access logs compressed)."""
+    import gzip
+    if p.is_file():
+        return [json.loads(l) for l in p.read_text().splitlines() if l.strip()]
+    gz = p.with_suffix(p.suffix + ".gz")
+    if gz.is_file():
+        return [json.loads(l) for l in gzip.open(gz, "rt").read().splitlines() if l.strip()]
+    return []
 
 
 def verify(d: Path, repo_root: Path = R) -> dict:

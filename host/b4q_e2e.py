@@ -46,6 +46,10 @@ DEMO = [(1, 1, 0, 0x00), (0, 1, 0, 0x00),                  # 1 K0 (edge), 2
         (1, 1, 0, 0x00), (0, 1, 0, 0x00),                  # 10 P1 (edge, d = 0), 11
         (0, 1, 1, 0xFF), (1, 1, 1, 0xFF), (0, 1, 0, 0xFF)]  # 12 SR level, 13 R1 (edge, d = 1 under SR), 14
 DEMO_PARTS = {"K0": 1, "K1": 3, "P0": 5, "R0": 8, "P1": 10, "R1": 13}
+# the A2 demonstration of the ce_mode row: a capture of 0 under CE, then a capture attempted with CE LOW — a tied-high CE captures the 1,
+# a driven CE blocks it (under the DEMO stimulus CE is asserted throughout, so the ce_mode bit has nothing to show there)
+CE_DEMO = [(1, 1, 0, 0x00), (0, 1, 0, 0x00), (1, 0, 0, 0xFF), (0, 0, 0, 0xFF)]
+A2_STIMULI = {"ce_mode": CE_DEMO, "storage_kind": DEMO}
 BIT_INIT_AFF, BIT_SRVAL_AFF = 13, 8
 
 
@@ -109,7 +113,7 @@ def scenario_a2(s: ss.Session) -> dict:
     s.open(); s.transaction("root", 0, stim([]))
     rows = {}
     for sem, g0, g1 in (("ce_mode", 0x000000, 0x000010), ("storage_kind", 0x000000, 0x000400)):
-        a = s.transaction("normal", g0, stim(DEMO)); b = s.transaction("normal", g1, stim(DEMO))
+        a = s.transaction("normal", g0, stim(A2_STIMULI[sem])); b = s.transaction("normal", g1, stim(A2_STIMULI[sem]))
         rows[sem] = ql.a2_row(a["o"] if not a["findings"] else None, b["o"] if not b["findings"] else None)
         rows[sem]["g0_findings"], rows[sem]["g1_findings"] = a["findings"], b["findings"]
     (s.out / "a2_rows.json").write_text(json.dumps(rows, indent=1) + "\n")

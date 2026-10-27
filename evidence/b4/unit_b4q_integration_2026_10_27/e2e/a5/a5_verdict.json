@@ -1,0 +1,39 @@
+{
+ "verdict": "pass",
+ "why": "this adversarial state arrived and was cleared by the initialisation",
+ "injection_witness": {
+  "arrived": true,
+  "c1_initial_q": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "c2_initial_q": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "injected_state": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "differing_positions": [],
+ "limit": "a pass establishes that THIS specified state does not reach the next record; not that no leftover state can"
+}

@@ -1,0 +1,279 @@
+{
+ "commit": "868ef17aca5f378c90e496a0a04a93bb804824d0cee15ba007d000dea419d031",
+ "config": [
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "config_sha256": "1fd868f21a0c67cbbff60f593b341b2a6a5d5a097e71e8d8470ce14459435916",
+ "elements": [
+  "AFF",
+  "A5FF",
+  "BFF",
+  "B5FF",
+  "CFF",
+  "C5FF",
+  "DFF",
+  "D5FF"
+ ],
+ "fabric_readback_sha256_post_event": "868ef17aca5f378c90e496a0a04a93bb804824d0cee15ba007d000dea419d031",
+ "fabric_readback_sha256_pre_event": "868ef17aca5f378c90e496a0a04a93bb804824d0cee15ba007d000dea419d031",
+ "init_event": {
+  "mechanism": "gsr_startupe2",
+  "parameters": {
+   "assert_delay": 8,
+   "gsr_count_after": 5,
+   "pre_init_cleanup": false,
+   "pulse_clocks": 2
+  }
+ },
+ "initial": {
+  "ce": 0,
+  "clock": 0,
+  "context": "idle",
+  "d": 0,
+  "q": [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "sr": 0
+ },
+ "instrument": {
+  "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "image_sha256": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec",
+  "variant": "42340001"
+ },
+ "nonce": "64f0eeb9026e6076",
+ "predecessor": {
+  "close_sha256": "c5ae2e354949d305d09153afe29ec85218df1624dc80506bf6cfb6463716d146",
+  "kind": "closed",
+  "seq": 2
+ },
+ "schema": "ff_observation_carrier",
+ "schema_version": "1.0.0",
+ "seq": 3,
+ "session": "B4Q-host-a2_pairs",
+ "staging_readback_sha256": "868ef17aca5f378c90e496a0a04a93bb804824d0cee15ba007d000dea419d031",
+ "status": "complete",
+ "steps": [
+  {
+   "ce": 0,
+   "clock_after": 0,
+   "clock_before": 0,
+   "d": 0,
+   "edge": null,
+   "kind": "init",
+   "prev_event": "none",
+   "q_after": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "q_before": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "sr": 0,
+   "step": 0
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 0,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "init",
+   "q_after": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "q_before": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "sr": 0,
+   "step": 1
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 0,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "q_before": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "sr": 0,
+   "step": 2
+  },
+  {
+   "ce": 0,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 255,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "q_before": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "sr": 0,
+   "step": 3
+  },
+  {
+   "ce": 0,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 255,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "q_before": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "sr": 0,
+   "step": 4
+  }
+ ],
+ "stimulus": [
+  {
+   "kind": "init"
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 0,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 0,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 0,
+   "clock": 1,
+   "d": 255,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 0,
+   "clock": 0,
+   "d": 255,
+   "kind": "set",
+   "sr": 0
+  }
+ ],
+ "stimulus_sha256": "8fabe1640092d6e921147fb5436644d422464f7a29ddca486c655bd2916940c5",
+ "timing": {
+  "hold": 4,
+  "release": 16,
+  "sample_offset": 4,
+  "settle": 4
+ }
+}

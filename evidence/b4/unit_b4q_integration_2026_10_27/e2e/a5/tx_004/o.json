@@ -1,0 +1,393 @@
+{
+ "commit": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+ "config": [
+  0,
+  0,
+  0,
+  1,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "config_sha256": "14de2c5d2cf33f8711f5511c1d1266118455016fe10d8ff41829a6d0fa121ea5",
+ "elements": [
+  "AFF",
+  "A5FF",
+  "BFF",
+  "B5FF",
+  "CFF",
+  "C5FF",
+  "DFF",
+  "D5FF"
+ ],
+ "fabric_readback_sha256_post_event": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+ "fabric_readback_sha256_pre_event": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+ "init_event": {
+  "mechanism": "gsr_startupe2",
+  "parameters": {
+   "assert_delay": 8,
+   "gsr_count_after": 6,
+   "pre_init_cleanup": true,
+   "pulse_clocks": 2
+  }
+ },
+ "initial": {
+  "ce": 1,
+  "clock": 1,
+  "context": "a5_injection",
+  "d": 0,
+  "q": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "sr": 0
+ },
+ "instrument": {
+  "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "image_sha256": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec",
+  "variant": "42340001"
+ },
+ "nonce": "7b07ce91e5906136",
+ "predecessor": {
+  "close_sha256": "b51ca46f1964fe885ee9d329cc43090503063f48c7f4c27ba82bd5bf20f736f6",
+  "kind": "a5_injection",
+  "seq": 3
+ },
+ "schema": "ff_observation_carrier",
+ "schema_version": "1.0.0",
+ "seq": 4,
+ "session": "B4Q-host-a5",
+ "staging_readback_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+ "status": "complete",
+ "steps": [
+  {
+   "ce": 0,
+   "clock_after": 0,
+   "clock_before": 0,
+   "d": 0,
+   "edge": null,
+   "kind": "init",
+   "prev_event": "none",
+   "q_after": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "q_before": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "sr": 0,
+   "step": 0
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 51,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "init",
+   "q_after": [
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+   ],
+   "q_before": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "sr": 0,
+   "step": 1
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 51,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+   ],
+   "q_before": [
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+   ],
+   "sr": 0,
+   "step": 2
+  },
+  {
+   "ce": 0,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 204,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+   ],
+   "q_before": [
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+   ],
+   "sr": 0,
+   "step": 3
+  },
+  {
+   "ce": 0,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 0,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "q_before": [
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+   ],
+   "sr": 255,
+   "step": 4
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 15,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0
+   ],
+   "q_before": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "sr": 0,
+   "step": 5
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 15,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "q_before": [
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0
+   ],
+   "sr": 255,
+   "step": 6
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 85,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+    1,
+    0
+   ],
+   "q_before": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "sr": 0,
+   "step": 7
+  }
+ ],
+ "stimulus": [
+  {
+   "kind": "init"
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 51,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 51,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 0,
+   "clock": 1,
+   "d": 204,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 0,
+   "clock": 0,
+   "d": 0,
+   "kind": "set",
+   "sr": 255
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 15,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 15,
+   "kind": "set",
+   "sr": 255
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 85,
+   "kind": "set",
+   "sr": 0
+  }
+ ],
+ "stimulus_sha256": "a8748493d2e816a3ba327a98b69419362fdafa71041335481694a4225bcce153",
+ "timing": {
+  "hold": 4,
+  "release": 16,
+  "sample_offset": 4,
+  "settle": 4
+ }
+}
