@@ -1,0 +1,56 @@
+{
+ "files": {
+  "firmware/b4q/IMPORT.json": {
+   "kind": "new",
+   "role": "this table"
+  },
+  "firmware/b4q/Makefile": {
+   "kind": "new",
+   "note": "host builds only (twin, host, xcheck) into the top-level ignored build/; no image.",
+   "role": "build",
+   "sha256": "c6bfa76df50d2533390781cbcdb8c559104889a4719d2207fb1d5cf71d2fa856"
+  },
+  "firmware/b4q/b4q_data.h": {
+   "generator": "host/b4q_gen_data.py",
+   "kind": "generated",
+   "note": "the write set and the loaded image's frames (builds/b4/b4.bit at b4_build.json's digest); held equal to a fresh generation.",
+   "sha256": "2e296151a14dd083383393cad40b1ed1e4c8ae2089ebab3d67c8d9b6ea2e644e"
+  },
+  "firmware/b4q/b4q_data.json": {
+   "generator": "host/b4q_gen_data.py",
+   "kind": "generated",
+   "note": "the reviewable record of the write set, the base frame digests and the stale-manifest finding.",
+   "sha256": "6e2078d012b33c0a344a7f184a79b1f04a0f8a5c49cc3864a18ea3aa9cc38dec"
+  },
+  "firmware/b4q/b4q_derive.c": {
+   "base": "firmware/b1/p3_derive.c",
+   "base_sha256": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
+   "kind": "derived",
+   "note": "DERIVED: sha256 / hex / CRC / frame ECC / stream builder and parser / frames hash / readback and cleanup commands / nonce step VERBATIM (tests/test_b4q_derive.py holds each function's text); the genome codec rewritten for 21 bits in one word; base64url and the identity page removed (unused).",
+   "sha256": "63c2206b8e43b393ac33ca90da429b40c4c2e2bc167248d61012c3ddbd44f4d6"
+  },
+  "firmware/b4q/b4q_derive.h": {
+   "base": "firmware/b1/p3_derive.h",
+   "base_sha256": "38ee462f8b242bac2adc140ed3ca45dd86ce232415a65f00dc1b92d24100f091",
+   "kind": "derived",
+   "note": "DERIVED: the counts (8 target frames, 2 envelopes, 21 genome bits, 1 word); the identity-page and base64 declarations removed.",
+   "sha256": "65f55a81948730f04b24ec35c32ed19abf3f38c4b9c67fcd24d25067543a3c69"
+  },
+  "firmware/b4q/b4q_derive_twin.c": {
+   "kind": "new",
+   "note": "the parity driver of tests/test_b4q_derive.py.",
+   "role": "host twin driver",
+   "sha256": "0c5f726def1a5068ab758a0360a85aca197ea0265a1323f759e393bd3b4c264d"
+  },
+  "firmware/b4q/b4q_regmap.h": {
+   "generator": "host/b4q_gen_regmap.py",
+   "kind": "generated",
+   "note": "from host/b4carrier_regmap.py, the one register table of record.",
+   "sha256": "aecebb92744c4a5a4d27d1f5a8b5a8f84e336442121261554dbd086f87d3e7ce"
+  }
+ },
+ "schema": "b4q_firmware_import",
+ "schema_version": "1.0.0",
+ "scope": "firmware/b4q: the B4Q executing side, host-built; nothing cross-compiled into an image",
+ "source": "firmware/b1 (the B1 image's pure units, themselves copied from zynq-psoracle 689dde1 per firmware/b1/IMPORT.json)"
+}

@@ -1,0 +1,479 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ff_observation_view_v1.schema.json",
+ "title": "the logical observation view (contract 3.1) \u2014 built by an adapter, never written by a source",
+ "x-contract": "every field is tagged R (retained as the source wrote it), D (derived by the reader) or A (absent in the representation); a D field is never presented as something the source wrote",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "schema",
+  "schema_version",
+  "source",
+  "provenance",
+  "config_vector",
+  "genome",
+  "config_sha256_raw",
+  "stimulus",
+  "stimulus_sha256",
+  "elements",
+  "pre_init_state",
+  "steps",
+  "q_grid_sha256",
+  "record_sha256"
+ ],
+ "properties": {
+  "schema": {
+   "const": "ff_observation_view"
+  },
+  "schema_version": {
+   "const": "1.0.0"
+  },
+  "source": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "representation"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "model",
+      "carrier"
+     ]
+    },
+    "representation": {
+     "enum": [
+      "M-raw",
+      "M-ledger",
+      "M-target",
+      "M-memo",
+      "C-O"
+     ]
+    }
+   }
+  },
+  "provenance": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": [
+      "object",
+      "null"
+     ]
+    }
+   }
+  },
+  "config_vector": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": "array",
+     "minItems": 21,
+     "maxItems": 21,
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+     }
+    }
+   }
+  },
+  "genome": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
+  },
+  "config_sha256_raw": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R"
+     ]
+    },
+    "value": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "value",
+      "encoding"
+     ],
+     "properties": {
+      "value": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      },
+      "encoding": {
+       "enum": [
+        "raw-dict-default",
+        "proj-dict-canonical",
+        "list-canonical"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "stimulus": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": [
+      "array",
+      "null"
+     ]
+    }
+   }
+  },
+  "stimulus_sha256": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    }
+   }
+  },
+  "elements": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": "array",
+     "minItems": 8,
+     "maxItems": 8,
+     "items": {
+      "enum": [
+       "AFF",
+       "A5FF",
+       "BFF",
+       "B5FF",
+       "CFF",
+       "C5FF",
+       "DFF",
+       "D5FF"
+      ]
+     }
+    }
+   }
+  },
+  "pre_init_state": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "context",
+      "clock",
+      "ce",
+      "sr",
+      "d",
+      "q"
+     ],
+     "properties": {
+      "context": {
+       "enum": [
+        "idle",
+        "a5_injection"
+       ]
+      },
+      "clock": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "ce": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "sr": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "d": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 255
+      },
+      "q": {
+       "type": "array",
+       "minItems": 8,
+       "maxItems": 8,
+       "items": {
+        "type": [
+         "integer",
+         "null"
+        ],
+        "minimum": 0,
+        "maximum": 1
+       }
+      }
+     }
+    }
+   }
+  },
+  "steps": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "step",
+       "kind",
+       "prev_event",
+       "clock_before",
+       "clock_after",
+       "edge",
+       "ce",
+       "sr",
+       "d",
+       "q_before",
+       "q_after",
+       "derived_keys"
+      ],
+      "properties": {
+       "step": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "kind": {
+        "enum": [
+         "init",
+         "set"
+        ]
+       },
+       "prev_event": {
+        "enum": [
+         "none",
+         "init",
+         "edge",
+         "level"
+        ]
+       },
+       "clock_before": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "clock_after": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "edge": {
+        "enum": [
+         "rising",
+         "falling",
+         null
+        ]
+       },
+       "ce": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "sr": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "d": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "q_before": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": [
+          "integer",
+          "null"
+         ],
+         "minimum": 0,
+         "maximum": 1
+        }
+       },
+       "q_after": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": [
+          "integer",
+          "null"
+         ],
+         "minimum": 0,
+         "maximum": 1
+        }
+       },
+       "derived_keys": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "q_grid_sha256": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    }
+   }
+  },
+  "record_sha256": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind",
+    "value"
+   ],
+   "properties": {
+    "kind": {
+     "enum": [
+      "R",
+      "D",
+      "A"
+     ]
+    },
+    "value": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "[0-9a-f]{64}"
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,214 @@
+{
+ "bitstream": "builds/b4/b4.bit",
+ "bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+ "build_record": "builds/b4/b4_build.json",
+ "idcode": "0x03722093",
+ "carrier_manifest": "builds/b4/b4_carrier_manifest.json",
+ "carrier_manifest_bitstream_sha256": "52f2ea56fddd6268ce6a3b5adcf9aede9d1ab953dc8d1e75b653054524178745",
+ "carrier_manifest_file_digest_matches": false,
+ "carrier_manifest_column_frames_differing": [
+  "0x00400a02",
+  "0x00400a03",
+  "0x00400a04",
+  "0x00400a05",
+  "0x00400a06",
+  "0x00400a07",
+  "0x00400a08",
+  "0x00400a09",
+  "0x00400a0a",
+  "0x00400a0b",
+  "0x00400a0c",
+  "0x00400a0d",
+  "0x00400a0e",
+  "0x00400a0f",
+  "0x00400a10",
+  "0x00400a11",
+  "0x00400a12",
+  "0x00400a13",
+  "0x00400a16",
+  "0x00400a17",
+  "0x00400a18",
+  "0x00400a19"
+ ],
+ "envelopes": [
+  {
+   "far_set": "0x00400a00",
+   "targets": [
+    "0x00400a00",
+    "0x00400a01",
+    "0x00400a02",
+    "0x00400a03"
+   ],
+   "flush": "0x00400a04"
+  },
+  {
+   "far_set": "0x00400a1c",
+   "targets": [
+    "0x00400a1c",
+    "0x00400a1d",
+    "0x00400a1e",
+    "0x00400a1f"
+   ],
+   "flush": "0x00400a20"
+  }
+ ],
+ "target_fars": [
+  "0x00400a00",
+  "0x00400a01",
+  "0x00400a02",
+  "0x00400a03",
+  "0x00400a1c",
+  "0x00400a1d",
+  "0x00400a1e",
+  "0x00400a1f"
+ ],
+ "flush_fars": [
+  "0x00400a04",
+  "0x00400a20"
+ ],
+ "whitelist": [
+  {
+   "bit": 0,
+   "far": "0x00400a00",
+   "word": 52,
+   "bit_in_word": 16
+  },
+  {
+   "bit": 1,
+   "far": "0x00400a01",
+   "word": 51,
+   "bit_in_word": 7
+  },
+  {
+   "bit": 2,
+   "far": "0x00400a01",
+   "word": 51,
+   "bit_in_word": 19
+  },
+  {
+   "bit": 3,
+   "far": "0x00400a01",
+   "word": 52,
+   "bit_in_word": 3
+  },
+  {
+   "bit": 4,
+   "far": "0x00400a01",
+   "word": 52,
+   "bit_in_word": 7
+  },
+  {
+   "bit": 5,
+   "far": "0x00400a01",
+   "word": 52,
+   "bit_in_word": 15
+  },
+  {
+   "bit": 6,
+   "far": "0x00400a01",
+   "word": 52,
+   "bit_in_word": 19
+  },
+  {
+   "bit": 7,
+   "far": "0x00400a01",
+   "word": 52,
+   "bit_in_word": 23
+  },
+  {
+   "bit": 8,
+   "far": "0x00400a1e",
+   "word": 51,
+   "bit_in_word": 12
+  },
+  {
+   "bit": 9,
+   "far": "0x00400a1e",
+   "word": 51,
+   "bit_in_word": 30
+  },
+  {
+   "bit": 10,
+   "far": "0x00400a1e",
+   "word": 52,
+   "bit_in_word": 0
+  },
+  {
+   "bit": 11,
+   "far": "0x00400a1e",
+   "word": 52,
+   "bit_in_word": 1
+  },
+  {
+   "bit": 12,
+   "far": "0x00400a1e",
+   "word": 52,
+   "bit_in_word": 18
+  },
+  {
+   "bit": 13,
+   "far": "0x00400a1f",
+   "word": 51,
+   "bit_in_word": 3
+  },
+  {
+   "bit": 14,
+   "far": "0x00400a1f",
+   "word": 51,
+   "bit_in_word": 6
+  },
+  {
+   "bit": 15,
+   "far": "0x00400a1f",
+   "word": 51,
+   "bit_in_word": 22
+  },
+  {
+   "bit": 16,
+   "far": "0x00400a1f",
+   "word": 51,
+   "bit_in_word": 28
+  },
+  {
+   "bit": 17,
+   "far": "0x00400a1f",
+   "word": 52,
+   "bit_in_word": 1
+  },
+  {
+   "bit": 18,
+   "far": "0x00400a1f",
+   "word": 52,
+   "bit_in_word": 9
+  },
+  {
+   "bit": 19,
+   "far": "0x00400a1f",
+   "word": 52,
+   "bit_in_word": 19
+  },
+  {
+   "bit": 20,
+   "far": "0x00400a1f",
+   "word": 52,
+   "bit_in_word": 26
+  }
+ ],
+ "base_frame_sha256": {
+  "0x00400a00": "83ea11e246f4beb9ceb66684eb64408088e3a1fafaeb0cda3c21f5446d3b5859",
+  "0x00400a01": "2d705f7fbb987efe04cd5bd23195d9b0de7b55ca4a2caecaaeacffa5e692ae28",
+  "0x00400a02": "0dff7b369a72b99746a29eed6537b9ae18d90903050de9cc7f0d71876b63cc03",
+  "0x00400a03": "72ed9a71c4070863a17688ff7ccab7029494a8e499720cb6aa72ba9877f6527e",
+  "0x00400a1c": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+  "0x00400a1d": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+  "0x00400a1e": "1746621f0f6e2a2a9e4ff88f9a055c1aabebe9a20dd1cd2a27ed47dcc79fb280",
+  "0x00400a1f": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+  "0x00400a04": "d6e51aae5cb3e4aab20921655785af00ae1bc68f4094b9a753d90b9716ac3b00",
+  "0x00400a20": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+ },
+ "base_genome_of_loaded_image": 24,
+ "loaded_image_target_frames_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+ "note": "the loaded image is the natural build (CEUSEDMUX = SRUSEDMUX = 1); the signed base genome 0 differs from it in exactly those two bits and their frames' ECC",
+ "header_sha256": "2e296151a14dd083383393cad40b1ed1e4c8ae2089ebab3d67c8d9b6ea2e644e",
+ "generator": "host/b4q_gen_data.py"
+}

@@ -1,0 +1,2656 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ff_observation_carrier_v1.schema.json",
+ "title": "O \u2014 the carrier observation (contract 4.2)",
+ "x-contract": "docs/b4_observation_contract.md 4.1\u20134.3: closed at every level; a complete O carries every phase's fields; an invalid O exactly the fields of the phases completed before the stop, the stop phase's optional; the code validator host/b4carrier_records.validate_observation is the authority \u2014 this file is the reviewable artefact held to it",
+ "oneOf": [
+  {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema",
+    "schema_version",
+    "instrument",
+    "session",
+    "seq",
+    "nonce",
+    "predecessor",
+    "config",
+    "config_sha256",
+    "stimulus",
+    "stimulus_sha256",
+    "elements",
+    "init_event",
+    "timing",
+    "steps",
+    "status",
+    "commit",
+    "staging_readback_sha256",
+    "fabric_readback_sha256_pre_event",
+    "initial",
+    "fabric_readback_sha256_post_event"
+   ],
+   "properties": {
+    "schema": {
+     "const": "ff_observation_carrier"
+    },
+    "schema_version": {
+     "const": "1.0.0"
+    },
+    "instrument": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "variant",
+      "carrier_sha256",
+      "image_sha256"
+     ],
+     "properties": {
+      "variant": {
+       "type": "string",
+       "pattern": "[0-9a-f]{8}"
+      },
+      "carrier_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      },
+      "image_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      }
+     }
+    },
+    "session": {
+     "type": "string",
+     "pattern": ".{1,64}"
+    },
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "nonce": {
+     "type": "string",
+     "pattern": "[0-9a-f]{16}"
+    },
+    "predecessor": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "kind",
+      "seq",
+      "close_sha256"
+     ],
+     "properties": {
+      "kind": {
+       "enum": [
+        "session_root",
+        "closed",
+        "a5_injection"
+       ]
+      },
+      "seq": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      },
+      "close_sha256": {
+       "oneOf": [
+        {
+         "type": "string",
+         "pattern": "[0-9a-f]{64}"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     }
+    },
+    "config": {
+     "type": "array",
+     "minItems": 21,
+     "maxItems": 21,
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+     }
+    },
+    "config_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "stimulus": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "oneOf": [
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind"
+        ],
+        "properties": {
+         "kind": {
+          "const": "init"
+         }
+        }
+       },
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind",
+         "clock",
+         "ce",
+         "sr",
+         "d"
+        ],
+        "properties": {
+         "kind": {
+          "const": "set"
+         },
+         "clock": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "ce": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "sr": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "d": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         }
+        }
+       }
+      ]
+     }
+    },
+    "stimulus_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "elements": {
+     "type": "array",
+     "minItems": 8,
+     "maxItems": 8,
+     "items": {
+      "enum": [
+       "AFF",
+       "A5FF",
+       "BFF",
+       "B5FF",
+       "CFF",
+       "C5FF",
+       "DFF",
+       "D5FF"
+      ]
+     }
+    },
+    "init_event": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "mechanism",
+      "parameters"
+     ],
+     "properties": {
+      "mechanism": {
+       "enum": [
+        "gsr_startupe2"
+       ]
+      },
+      "parameters": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "assert_delay",
+        "pulse_clocks",
+        "gsr_count_after",
+        "pre_init_cleanup"
+       ],
+       "properties": {
+        "assert_delay": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pulse_clocks": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 15
+        },
+        "gsr_count_after": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pre_init_cleanup": {
+         "type": "boolean"
+        }
+       }
+      }
+     }
+    },
+    "timing": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "settle",
+      "hold",
+      "release",
+      "sample_offset"
+     ],
+     "properties": {
+      "settle": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "hold": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "release": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      },
+      "sample_offset": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      }
+     }
+    },
+    "steps": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "step",
+       "kind",
+       "prev_event",
+       "clock_before",
+       "clock_after",
+       "edge",
+       "ce",
+       "sr",
+       "d",
+       "q_before",
+       "q_after"
+      ],
+      "properties": {
+       "step": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "kind": {
+        "enum": [
+         "init",
+         "set"
+        ]
+       },
+       "prev_event": {
+        "enum": [
+         "none",
+         "init",
+         "edge",
+         "level"
+        ]
+       },
+       "clock_before": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "clock_after": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "edge": {
+        "enum": [
+         "rising",
+         "falling",
+         null
+        ]
+       },
+       "ce": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "sr": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "d": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "q_before": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       },
+       "q_after": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       }
+      }
+     }
+    },
+    "status": {
+     "const": "complete"
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "staging_readback_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "fabric_readback_sha256_pre_event": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "initial": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "context",
+      "clock",
+      "ce",
+      "sr",
+      "d",
+      "q"
+     ],
+     "properties": {
+      "context": {
+       "enum": [
+        "idle",
+        "a5_injection"
+       ]
+      },
+      "clock": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "ce": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "sr": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "d": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 255
+      },
+      "q": {
+       "type": "array",
+       "minItems": 8,
+       "maxItems": 8,
+       "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       }
+      }
+     }
+    },
+    "fabric_readback_sha256_post_event": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    }
+   }
+  },
+  {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema",
+    "schema_version",
+    "instrument",
+    "session",
+    "seq",
+    "nonce",
+    "predecessor",
+    "config",
+    "config_sha256",
+    "stimulus",
+    "stimulus_sha256",
+    "elements",
+    "init_event",
+    "timing",
+    "steps",
+    "status",
+    "fault"
+   ],
+   "properties": {
+    "schema": {
+     "const": "ff_observation_carrier"
+    },
+    "schema_version": {
+     "const": "1.0.0"
+    },
+    "instrument": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "variant",
+      "carrier_sha256",
+      "image_sha256"
+     ],
+     "properties": {
+      "variant": {
+       "type": "string",
+       "pattern": "[0-9a-f]{8}"
+      },
+      "carrier_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      },
+      "image_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      }
+     }
+    },
+    "session": {
+     "type": "string",
+     "pattern": ".{1,64}"
+    },
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "nonce": {
+     "type": "string",
+     "pattern": "[0-9a-f]{16}"
+    },
+    "predecessor": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "kind",
+      "seq",
+      "close_sha256"
+     ],
+     "properties": {
+      "kind": {
+       "enum": [
+        "session_root",
+        "closed",
+        "a5_injection"
+       ]
+      },
+      "seq": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      },
+      "close_sha256": {
+       "oneOf": [
+        {
+         "type": "string",
+         "pattern": "[0-9a-f]{64}"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     }
+    },
+    "config": {
+     "type": "array",
+     "minItems": 21,
+     "maxItems": 21,
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+     }
+    },
+    "config_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "stimulus": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "oneOf": [
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind"
+        ],
+        "properties": {
+         "kind": {
+          "const": "init"
+         }
+        }
+       },
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind",
+         "clock",
+         "ce",
+         "sr",
+         "d"
+        ],
+        "properties": {
+         "kind": {
+          "const": "set"
+         },
+         "clock": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "ce": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "sr": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "d": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         }
+        }
+       }
+      ]
+     }
+    },
+    "stimulus_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "elements": {
+     "type": "array",
+     "minItems": 8,
+     "maxItems": 8,
+     "items": {
+      "enum": [
+       "AFF",
+       "A5FF",
+       "BFF",
+       "B5FF",
+       "CFF",
+       "C5FF",
+       "DFF",
+       "D5FF"
+      ]
+     }
+    },
+    "init_event": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "mechanism",
+      "parameters"
+     ],
+     "properties": {
+      "mechanism": {
+       "enum": [
+        "gsr_startupe2"
+       ]
+      },
+      "parameters": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "assert_delay",
+        "pulse_clocks",
+        "gsr_count_after",
+        "pre_init_cleanup"
+       ],
+       "properties": {
+        "assert_delay": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pulse_clocks": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 15
+        },
+        "gsr_count_after": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pre_init_cleanup": {
+         "type": "boolean"
+        }
+       }
+      }
+     }
+    },
+    "timing": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "settle",
+      "hold",
+      "release",
+      "sample_offset"
+     ],
+     "properties": {
+      "settle": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "hold": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "release": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      },
+      "sample_offset": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      }
+     }
+    },
+    "steps": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "step",
+       "kind",
+       "prev_event",
+       "clock_before",
+       "clock_after",
+       "edge",
+       "ce",
+       "sr",
+       "d",
+       "q_before",
+       "q_after"
+      ],
+      "properties": {
+       "step": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "kind": {
+        "enum": [
+         "init",
+         "set"
+        ]
+       },
+       "prev_event": {
+        "enum": [
+         "none",
+         "init",
+         "edge",
+         "level"
+        ]
+       },
+       "clock_before": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "clock_after": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "edge": {
+        "enum": [
+         "rising",
+         "falling",
+         null
+        ]
+       },
+       "ce": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "sr": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "d": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "q_before": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       },
+       "q_after": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       }
+      }
+     }
+    },
+    "status": {
+     "const": "invalid"
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "staging_readback_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "fault": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "code",
+      "phase_reached",
+      "step_reached"
+     ],
+     "properties": {
+      "code": {
+       "enum": [
+        "not_armed",
+        "not_realisable",
+        "sequence",
+        "slot_overflow",
+        "arm_nokey",
+        "arm_auth",
+        "premature_operation"
+       ]
+      },
+      "phase_reached": {
+       "const": "P1"
+      },
+      "step_reached": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema",
+    "schema_version",
+    "instrument",
+    "session",
+    "seq",
+    "nonce",
+    "predecessor",
+    "config",
+    "config_sha256",
+    "stimulus",
+    "stimulus_sha256",
+    "elements",
+    "init_event",
+    "timing",
+    "steps",
+    "status",
+    "commit",
+    "staging_readback_sha256",
+    "fault"
+   ],
+   "properties": {
+    "schema": {
+     "const": "ff_observation_carrier"
+    },
+    "schema_version": {
+     "const": "1.0.0"
+    },
+    "instrument": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "variant",
+      "carrier_sha256",
+      "image_sha256"
+     ],
+     "properties": {
+      "variant": {
+       "type": "string",
+       "pattern": "[0-9a-f]{8}"
+      },
+      "carrier_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      },
+      "image_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      }
+     }
+    },
+    "session": {
+     "type": "string",
+     "pattern": ".{1,64}"
+    },
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "nonce": {
+     "type": "string",
+     "pattern": "[0-9a-f]{16}"
+    },
+    "predecessor": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "kind",
+      "seq",
+      "close_sha256"
+     ],
+     "properties": {
+      "kind": {
+       "enum": [
+        "session_root",
+        "closed",
+        "a5_injection"
+       ]
+      },
+      "seq": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      },
+      "close_sha256": {
+       "oneOf": [
+        {
+         "type": "string",
+         "pattern": "[0-9a-f]{64}"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     }
+    },
+    "config": {
+     "type": "array",
+     "minItems": 21,
+     "maxItems": 21,
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+     }
+    },
+    "config_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "stimulus": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "oneOf": [
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind"
+        ],
+        "properties": {
+         "kind": {
+          "const": "init"
+         }
+        }
+       },
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind",
+         "clock",
+         "ce",
+         "sr",
+         "d"
+        ],
+        "properties": {
+         "kind": {
+          "const": "set"
+         },
+         "clock": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "ce": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "sr": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "d": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         }
+        }
+       }
+      ]
+     }
+    },
+    "stimulus_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "elements": {
+     "type": "array",
+     "minItems": 8,
+     "maxItems": 8,
+     "items": {
+      "enum": [
+       "AFF",
+       "A5FF",
+       "BFF",
+       "B5FF",
+       "CFF",
+       "C5FF",
+       "DFF",
+       "D5FF"
+      ]
+     }
+    },
+    "init_event": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "mechanism",
+      "parameters"
+     ],
+     "properties": {
+      "mechanism": {
+       "enum": [
+        "gsr_startupe2"
+       ]
+      },
+      "parameters": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "assert_delay",
+        "pulse_clocks",
+        "gsr_count_after",
+        "pre_init_cleanup"
+       ],
+       "properties": {
+        "assert_delay": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pulse_clocks": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 15
+        },
+        "gsr_count_after": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pre_init_cleanup": {
+         "type": "boolean"
+        }
+       }
+      }
+     }
+    },
+    "timing": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "settle",
+      "hold",
+      "release",
+      "sample_offset"
+     ],
+     "properties": {
+      "settle": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "hold": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "release": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      },
+      "sample_offset": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      }
+     }
+    },
+    "steps": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "step",
+       "kind",
+       "prev_event",
+       "clock_before",
+       "clock_after",
+       "edge",
+       "ce",
+       "sr",
+       "d",
+       "q_before",
+       "q_after"
+      ],
+      "properties": {
+       "step": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "kind": {
+        "enum": [
+         "init",
+         "set"
+        ]
+       },
+       "prev_event": {
+        "enum": [
+         "none",
+         "init",
+         "edge",
+         "level"
+        ]
+       },
+       "clock_before": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "clock_after": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "edge": {
+        "enum": [
+         "rising",
+         "falling",
+         null
+        ]
+       },
+       "ce": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "sr": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "d": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "q_before": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       },
+       "q_after": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       }
+      }
+     }
+    },
+    "status": {
+     "const": "invalid"
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "staging_readback_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "fabric_readback_sha256_pre_event": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "fault": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "code",
+      "phase_reached",
+      "step_reached"
+     ],
+     "properties": {
+      "code": {
+       "enum": [
+        "not_armed",
+        "not_realisable",
+        "sequence",
+        "slot_overflow",
+        "arm_nokey",
+        "arm_auth",
+        "premature_operation"
+       ]
+      },
+      "phase_reached": {
+       "const": "P2"
+      },
+      "step_reached": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema",
+    "schema_version",
+    "instrument",
+    "session",
+    "seq",
+    "nonce",
+    "predecessor",
+    "config",
+    "config_sha256",
+    "stimulus",
+    "stimulus_sha256",
+    "elements",
+    "init_event",
+    "timing",
+    "steps",
+    "status",
+    "commit",
+    "staging_readback_sha256",
+    "fabric_readback_sha256_pre_event",
+    "fault"
+   ],
+   "properties": {
+    "schema": {
+     "const": "ff_observation_carrier"
+    },
+    "schema_version": {
+     "const": "1.0.0"
+    },
+    "instrument": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "variant",
+      "carrier_sha256",
+      "image_sha256"
+     ],
+     "properties": {
+      "variant": {
+       "type": "string",
+       "pattern": "[0-9a-f]{8}"
+      },
+      "carrier_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      },
+      "image_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      }
+     }
+    },
+    "session": {
+     "type": "string",
+     "pattern": ".{1,64}"
+    },
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "nonce": {
+     "type": "string",
+     "pattern": "[0-9a-f]{16}"
+    },
+    "predecessor": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "kind",
+      "seq",
+      "close_sha256"
+     ],
+     "properties": {
+      "kind": {
+       "enum": [
+        "session_root",
+        "closed",
+        "a5_injection"
+       ]
+      },
+      "seq": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      },
+      "close_sha256": {
+       "oneOf": [
+        {
+         "type": "string",
+         "pattern": "[0-9a-f]{64}"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     }
+    },
+    "config": {
+     "type": "array",
+     "minItems": 21,
+     "maxItems": 21,
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+     }
+    },
+    "config_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "stimulus": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "oneOf": [
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind"
+        ],
+        "properties": {
+         "kind": {
+          "const": "init"
+         }
+        }
+       },
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind",
+         "clock",
+         "ce",
+         "sr",
+         "d"
+        ],
+        "properties": {
+         "kind": {
+          "const": "set"
+         },
+         "clock": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "ce": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "sr": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "d": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         }
+        }
+       }
+      ]
+     }
+    },
+    "stimulus_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "elements": {
+     "type": "array",
+     "minItems": 8,
+     "maxItems": 8,
+     "items": {
+      "enum": [
+       "AFF",
+       "A5FF",
+       "BFF",
+       "B5FF",
+       "CFF",
+       "C5FF",
+       "DFF",
+       "D5FF"
+      ]
+     }
+    },
+    "init_event": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "mechanism",
+      "parameters"
+     ],
+     "properties": {
+      "mechanism": {
+       "enum": [
+        "gsr_startupe2"
+       ]
+      },
+      "parameters": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "assert_delay",
+        "pulse_clocks",
+        "gsr_count_after",
+        "pre_init_cleanup"
+       ],
+       "properties": {
+        "assert_delay": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pulse_clocks": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 15
+        },
+        "gsr_count_after": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pre_init_cleanup": {
+         "type": "boolean"
+        }
+       }
+      }
+     }
+    },
+    "timing": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "settle",
+      "hold",
+      "release",
+      "sample_offset"
+     ],
+     "properties": {
+      "settle": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "hold": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "release": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      },
+      "sample_offset": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      }
+     }
+    },
+    "steps": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "step",
+       "kind",
+       "prev_event",
+       "clock_before",
+       "clock_after",
+       "edge",
+       "ce",
+       "sr",
+       "d",
+       "q_before",
+       "q_after"
+      ],
+      "properties": {
+       "step": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "kind": {
+        "enum": [
+         "init",
+         "set"
+        ]
+       },
+       "prev_event": {
+        "enum": [
+         "none",
+         "init",
+         "edge",
+         "level"
+        ]
+       },
+       "clock_before": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "clock_after": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "edge": {
+        "enum": [
+         "rising",
+         "falling",
+         null
+        ]
+       },
+       "ce": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "sr": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "d": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "q_before": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       },
+       "q_after": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       }
+      }
+     }
+    },
+    "status": {
+     "const": "invalid"
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "staging_readback_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "fabric_readback_sha256_pre_event": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "initial": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "context",
+      "clock",
+      "ce",
+      "sr",
+      "d",
+      "q"
+     ],
+     "properties": {
+      "context": {
+       "enum": [
+        "idle",
+        "a5_injection"
+       ]
+      },
+      "clock": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "ce": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "sr": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "d": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 255
+      },
+      "q": {
+       "type": "array",
+       "minItems": 8,
+       "maxItems": 8,
+       "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       }
+      }
+     }
+    },
+    "fault": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "code",
+      "phase_reached",
+      "step_reached"
+     ],
+     "properties": {
+      "code": {
+       "enum": [
+        "not_armed",
+        "not_realisable",
+        "sequence",
+        "slot_overflow",
+        "arm_nokey",
+        "arm_auth",
+        "premature_operation"
+       ]
+      },
+      "phase_reached": {
+       "const": "P3"
+      },
+      "step_reached": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema",
+    "schema_version",
+    "instrument",
+    "session",
+    "seq",
+    "nonce",
+    "predecessor",
+    "config",
+    "config_sha256",
+    "stimulus",
+    "stimulus_sha256",
+    "elements",
+    "init_event",
+    "timing",
+    "steps",
+    "status",
+    "commit",
+    "staging_readback_sha256",
+    "fabric_readback_sha256_pre_event",
+    "initial",
+    "fault"
+   ],
+   "properties": {
+    "schema": {
+     "const": "ff_observation_carrier"
+    },
+    "schema_version": {
+     "const": "1.0.0"
+    },
+    "instrument": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "variant",
+      "carrier_sha256",
+      "image_sha256"
+     ],
+     "properties": {
+      "variant": {
+       "type": "string",
+       "pattern": "[0-9a-f]{8}"
+      },
+      "carrier_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      },
+      "image_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      }
+     }
+    },
+    "session": {
+     "type": "string",
+     "pattern": ".{1,64}"
+    },
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "nonce": {
+     "type": "string",
+     "pattern": "[0-9a-f]{16}"
+    },
+    "predecessor": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "kind",
+      "seq",
+      "close_sha256"
+     ],
+     "properties": {
+      "kind": {
+       "enum": [
+        "session_root",
+        "closed",
+        "a5_injection"
+       ]
+      },
+      "seq": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      },
+      "close_sha256": {
+       "oneOf": [
+        {
+         "type": "string",
+         "pattern": "[0-9a-f]{64}"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     }
+    },
+    "config": {
+     "type": "array",
+     "minItems": 21,
+     "maxItems": 21,
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+     }
+    },
+    "config_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "stimulus": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "oneOf": [
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind"
+        ],
+        "properties": {
+         "kind": {
+          "const": "init"
+         }
+        }
+       },
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind",
+         "clock",
+         "ce",
+         "sr",
+         "d"
+        ],
+        "properties": {
+         "kind": {
+          "const": "set"
+         },
+         "clock": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "ce": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "sr": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "d": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         }
+        }
+       }
+      ]
+     }
+    },
+    "stimulus_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "elements": {
+     "type": "array",
+     "minItems": 8,
+     "maxItems": 8,
+     "items": {
+      "enum": [
+       "AFF",
+       "A5FF",
+       "BFF",
+       "B5FF",
+       "CFF",
+       "C5FF",
+       "DFF",
+       "D5FF"
+      ]
+     }
+    },
+    "init_event": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "mechanism",
+      "parameters"
+     ],
+     "properties": {
+      "mechanism": {
+       "enum": [
+        "gsr_startupe2"
+       ]
+      },
+      "parameters": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "assert_delay",
+        "pulse_clocks",
+        "gsr_count_after",
+        "pre_init_cleanup"
+       ],
+       "properties": {
+        "assert_delay": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pulse_clocks": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 15
+        },
+        "gsr_count_after": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pre_init_cleanup": {
+         "type": "boolean"
+        }
+       }
+      }
+     }
+    },
+    "timing": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "settle",
+      "hold",
+      "release",
+      "sample_offset"
+     ],
+     "properties": {
+      "settle": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "hold": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "release": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      },
+      "sample_offset": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      }
+     }
+    },
+    "steps": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "step",
+       "kind",
+       "prev_event",
+       "clock_before",
+       "clock_after",
+       "edge",
+       "ce",
+       "sr",
+       "d",
+       "q_before",
+       "q_after"
+      ],
+      "properties": {
+       "step": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "kind": {
+        "enum": [
+         "init",
+         "set"
+        ]
+       },
+       "prev_event": {
+        "enum": [
+         "none",
+         "init",
+         "edge",
+         "level"
+        ]
+       },
+       "clock_before": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "clock_after": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "edge": {
+        "enum": [
+         "rising",
+         "falling",
+         null
+        ]
+       },
+       "ce": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "sr": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "d": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "q_before": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       },
+       "q_after": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       }
+      }
+     }
+    },
+    "status": {
+     "const": "invalid"
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "staging_readback_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "fabric_readback_sha256_pre_event": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "initial": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "context",
+      "clock",
+      "ce",
+      "sr",
+      "d",
+      "q"
+     ],
+     "properties": {
+      "context": {
+       "enum": [
+        "idle",
+        "a5_injection"
+       ]
+      },
+      "clock": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "ce": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "sr": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "d": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 255
+      },
+      "q": {
+       "type": "array",
+       "minItems": 8,
+       "maxItems": 8,
+       "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       }
+      }
+     }
+    },
+    "fabric_readback_sha256_post_event": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "fault": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "code",
+      "phase_reached",
+      "step_reached"
+     ],
+     "properties": {
+      "code": {
+       "enum": [
+        "not_armed",
+        "not_realisable",
+        "sequence",
+        "slot_overflow",
+        "arm_nokey",
+        "arm_auth",
+        "premature_operation"
+       ]
+      },
+      "phase_reached": {
+       "const": "P4"
+      },
+      "step_reached": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema",
+    "schema_version",
+    "instrument",
+    "session",
+    "seq",
+    "nonce",
+    "predecessor",
+    "config",
+    "config_sha256",
+    "stimulus",
+    "stimulus_sha256",
+    "elements",
+    "init_event",
+    "timing",
+    "steps",
+    "status",
+    "commit",
+    "staging_readback_sha256",
+    "fabric_readback_sha256_pre_event",
+    "initial",
+    "fabric_readback_sha256_post_event",
+    "fault"
+   ],
+   "properties": {
+    "schema": {
+     "const": "ff_observation_carrier"
+    },
+    "schema_version": {
+     "const": "1.0.0"
+    },
+    "instrument": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "variant",
+      "carrier_sha256",
+      "image_sha256"
+     ],
+     "properties": {
+      "variant": {
+       "type": "string",
+       "pattern": "[0-9a-f]{8}"
+      },
+      "carrier_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      },
+      "image_sha256": {
+       "type": "string",
+       "pattern": "[0-9a-f]{64}"
+      }
+     }
+    },
+    "session": {
+     "type": "string",
+     "pattern": ".{1,64}"
+    },
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "nonce": {
+     "type": "string",
+     "pattern": "[0-9a-f]{16}"
+    },
+    "predecessor": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "kind",
+      "seq",
+      "close_sha256"
+     ],
+     "properties": {
+      "kind": {
+       "enum": [
+        "session_root",
+        "closed",
+        "a5_injection"
+       ]
+      },
+      "seq": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      },
+      "close_sha256": {
+       "oneOf": [
+        {
+         "type": "string",
+         "pattern": "[0-9a-f]{64}"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     }
+    },
+    "config": {
+     "type": "array",
+     "minItems": 21,
+     "maxItems": 21,
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+     }
+    },
+    "config_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "stimulus": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "oneOf": [
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind"
+        ],
+        "properties": {
+         "kind": {
+          "const": "init"
+         }
+        }
+       },
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "kind",
+         "clock",
+         "ce",
+         "sr",
+         "d"
+        ],
+        "properties": {
+         "kind": {
+          "const": "set"
+         },
+         "clock": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "ce": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "sr": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "d": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         }
+        }
+       }
+      ]
+     }
+    },
+    "stimulus_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "elements": {
+     "type": "array",
+     "minItems": 8,
+     "maxItems": 8,
+     "items": {
+      "enum": [
+       "AFF",
+       "A5FF",
+       "BFF",
+       "B5FF",
+       "CFF",
+       "C5FF",
+       "DFF",
+       "D5FF"
+      ]
+     }
+    },
+    "init_event": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "mechanism",
+      "parameters"
+     ],
+     "properties": {
+      "mechanism": {
+       "enum": [
+        "gsr_startupe2"
+       ]
+      },
+      "parameters": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "assert_delay",
+        "pulse_clocks",
+        "gsr_count_after",
+        "pre_init_cleanup"
+       ],
+       "properties": {
+        "assert_delay": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pulse_clocks": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 15
+        },
+        "gsr_count_after": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 255
+        },
+        "pre_init_cleanup": {
+         "type": "boolean"
+        }
+       }
+      }
+     }
+    },
+    "timing": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "settle",
+      "hold",
+      "release",
+      "sample_offset"
+     ],
+     "properties": {
+      "settle": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "hold": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 15
+      },
+      "release": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      },
+      "sample_offset": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 255
+      }
+     }
+    },
+    "steps": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "step",
+       "kind",
+       "prev_event",
+       "clock_before",
+       "clock_after",
+       "edge",
+       "ce",
+       "sr",
+       "d",
+       "q_before",
+       "q_after"
+      ],
+      "properties": {
+       "step": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "kind": {
+        "enum": [
+         "init",
+         "set"
+        ]
+       },
+       "prev_event": {
+        "enum": [
+         "none",
+         "init",
+         "edge",
+         "level"
+        ]
+       },
+       "clock_before": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "clock_after": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "edge": {
+        "enum": [
+         "rising",
+         "falling",
+         null
+        ]
+       },
+       "ce": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "sr": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "d": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+       },
+       "q_before": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       },
+       "q_after": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1
+        }
+       }
+      }
+     }
+    },
+    "status": {
+     "const": "invalid"
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "staging_readback_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "fabric_readback_sha256_pre_event": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "initial": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "context",
+      "clock",
+      "ce",
+      "sr",
+      "d",
+      "q"
+     ],
+     "properties": {
+      "context": {
+       "enum": [
+        "idle",
+        "a5_injection"
+       ]
+      },
+      "clock": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "ce": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "sr": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "d": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 255
+      },
+      "q": {
+       "type": "array",
+       "minItems": 8,
+       "maxItems": 8,
+       "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       }
+      }
+     }
+    },
+    "fabric_readback_sha256_post_event": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "fault": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "code",
+      "phase_reached",
+      "step_reached"
+     ],
+     "properties": {
+      "code": {
+       "enum": [
+        "not_armed",
+        "not_realisable",
+        "sequence",
+        "slot_overflow",
+        "arm_nokey",
+        "arm_auth",
+        "premature_operation"
+       ]
+      },
+      "phase_reached": {
+       "const": "P5"
+      },
+      "step_reached": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0
+      }
+     }
+    }
+   }
+  }
+ ]
+}

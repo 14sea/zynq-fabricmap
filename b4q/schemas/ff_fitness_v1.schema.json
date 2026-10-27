@@ -1,0 +1,34 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ff_fitness_v1.schema.json",
+ "title": "F \u2014 the fitness (contract 4.2)",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "schema",
+  "schema_version",
+  "observation_sha256",
+  "task_digest",
+  "fitness"
+ ],
+ "properties": {
+  "schema": {
+   "const": "ff_fitness"
+  },
+  "schema_version": {
+   "const": "1.0.0"
+  },
+  "observation_sha256": {
+   "type": "string",
+   "pattern": "[0-9a-f]{64}"
+  },
+  "task_digest": {
+   "type": "string",
+   "pattern": "[0-9a-f]{64}"
+  },
+  "fitness": {
+   "type": "integer",
+   "minimum": 0
+  }
+ }
+}

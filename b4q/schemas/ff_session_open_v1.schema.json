@@ -1,0 +1,60 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ff_session_open_v1.schema.json",
+ "title": "the session-opening record (contract 5.5)",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "schema",
+  "schema_version",
+  "instrument",
+  "startup_readback_sha256",
+  "base_frames_reference_sha256",
+  "status"
+ ],
+ "properties": {
+  "schema": {
+   "const": "ff_session_open"
+  },
+  "schema_version": {
+   "const": "1.0.0"
+  },
+  "instrument": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "variant",
+    "carrier_sha256",
+    "image_sha256"
+   ],
+   "properties": {
+    "variant": {
+     "type": "string",
+     "pattern": "[0-9a-f]{8}"
+    },
+    "carrier_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "image_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    }
+   }
+  },
+  "startup_readback_sha256": {
+   "type": "string",
+   "pattern": "[0-9a-f]{64}"
+  },
+  "base_frames_reference_sha256": {
+   "type": "string",
+   "pattern": "[0-9a-f]{64}"
+  },
+  "status": {
+   "enum": [
+    "open",
+    "refused"
+   ]
+  }
+ }
+}

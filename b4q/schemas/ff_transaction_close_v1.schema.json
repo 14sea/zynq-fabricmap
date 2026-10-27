@@ -1,0 +1,320 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ff_transaction_close_v1.schema.json",
+ "title": "X \u2014 the transaction close (contract 4.2, 5.6, 5.7)",
+ "oneOf": [
+  {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema",
+    "schema_version",
+    "observation_sha256",
+    "seq",
+    "idle_status",
+    "status",
+    "cleanup",
+    "base_readback_sha256",
+    "base_state_sample"
+   ],
+   "properties": {
+    "schema": {
+     "const": "ff_transaction_close"
+    },
+    "schema_version": {
+     "const": "1.0.0"
+    },
+    "observation_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "idle_status": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 1
+    },
+    "status": {
+     "const": "closed"
+    },
+    "cleanup": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "steps",
+      "final_q"
+     ],
+     "properties": {
+      "steps": {
+       "type": "array",
+       "minItems": 1,
+       "maxItems": 1,
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "clock_before",
+         "clock_after",
+         "edge",
+         "ce",
+         "sr",
+         "d",
+         "q_after"
+        ],
+        "properties": {
+         "clock_before": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "clock_after": {
+          "const": 0
+         },
+         "edge": {
+          "enum": [
+           "falling",
+           null
+          ]
+         },
+         "ce": {
+          "const": 0
+         },
+         "sr": {
+          "const": 0
+         },
+         "d": {
+          "const": 0
+         },
+         "q_after": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 1
+          }
+         }
+        }
+       }
+      },
+      "final_q": {
+       "type": "array",
+       "minItems": 8,
+       "maxItems": 8,
+       "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       }
+      }
+     }
+    },
+    "base_readback_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "base_state_sample": {
+     "type": "array",
+     "minItems": 8,
+     "maxItems": 8,
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+     }
+    }
+   }
+  },
+  {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema",
+    "schema_version",
+    "observation_sha256",
+    "seq",
+    "idle_status",
+    "status"
+   ],
+   "properties": {
+    "schema": {
+     "const": "ff_transaction_close"
+    },
+    "schema_version": {
+     "const": "1.0.0"
+    },
+    "observation_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "idle_status": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 1
+    },
+    "status": {
+     "const": "injection_open"
+    }
+   }
+  },
+  {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema",
+    "schema_version",
+    "observation_sha256",
+    "seq",
+    "idle_status",
+    "status",
+    "fault"
+   ],
+   "properties": {
+    "schema": {
+     "const": "ff_transaction_close"
+    },
+    "schema_version": {
+     "const": "1.0.0"
+    },
+    "observation_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "idle_status": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 1
+    },
+    "status": {
+     "const": "faulted"
+    },
+    "cleanup": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "steps",
+      "final_q"
+     ],
+     "properties": {
+      "steps": {
+       "type": "array",
+       "minItems": 1,
+       "maxItems": 1,
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "clock_before",
+         "clock_after",
+         "edge",
+         "ce",
+         "sr",
+         "d",
+         "q_after"
+        ],
+        "properties": {
+         "clock_before": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "clock_after": {
+          "const": 0
+         },
+         "edge": {
+          "enum": [
+           "falling",
+           null
+          ]
+         },
+         "ce": {
+          "const": 0
+         },
+         "sr": {
+          "const": 0
+         },
+         "d": {
+          "const": 0
+         },
+         "q_after": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 1
+          }
+         }
+        }
+       }
+      },
+      "final_q": {
+       "type": "array",
+       "minItems": 8,
+       "maxItems": 8,
+       "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1
+       }
+      }
+     }
+    },
+    "base_readback_sha256": {
+     "type": "string",
+     "pattern": "[0-9a-f]{64}"
+    },
+    "base_state_sample": {
+     "type": "array",
+     "minItems": 8,
+     "maxItems": 8,
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+     }
+    },
+    "fault": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "code",
+      "phase_reached"
+     ],
+     "properties": {
+      "code": {
+       "enum": [
+        "not_armed",
+        "not_realisable",
+        "sequence",
+        "slot_overflow",
+        "arm_nokey",
+        "arm_auth"
+       ]
+      },
+      "phase_reached": {
+       "enum": [
+        "P7",
+        "P9",
+        "P10"
+       ]
+      }
+     }
+    }
+   }
+  }
+ ]
+}
