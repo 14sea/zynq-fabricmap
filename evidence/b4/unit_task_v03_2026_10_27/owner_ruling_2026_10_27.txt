@@ -1,0 +1,48 @@
+The owner's rulings of 2026-10-27, AS RELAYED by the user in the working session (a transcription of the pasted text, not an
+exported file; the user's own framing lines omitted; nothing else altered). Two messages.
+
+--- message 1 (the ruling on the carrier v2 finding, after the PASS on bf17574) ---
+
+我也選 1。這次有明確的新理由：讓刺激符合實體硬體，而非為了改善先前的負向數字。 架構 §9.4 允許有獨立理由與裁定的新研究，並非永久禁止修訂。
+
+共用 CE／SR／CLK 的限制也與 AMD UG474 一致。但共用控制輸入，不代表八個元件的 INIT／SRVAL 合併成一個值；後者仍須分別保留。
+
+先校正三點：
+
+- 不是重跑 sim-4。 sim-4 與其 no-go 原樣保留；新版本若進入探索，須使用新 label、預先固定方法，不能沿用已消耗的名稱。
+- 不預設要重寫模型狀態機。 優先把正式刺激與模型輸入域收斂成 slice-wide CE／SR，核對 uniform 輸入下的行為，再決定必要修改。
+- 不能預期修完就有 map 收益。 新刺激可能改變 K9 覆蓋與搜尋表現；兩者都需要重新量測。
+
+我的裁定：可以直接開始一個完整的 host-only 修訂工程單位，做完再整批交審，不必另交範圍草案。 範圍包含：
+
+1. task-v0.3 的刺激規則、模型輸入契約，以及與 carrier 格式的明確對應。
+2. K9 比較集／適用性的必要修訂、與舊口徑的差異及資料影響披露。
+3. protocol identity、舊 archive 重驗路徑，以及必要的文件、工具、fixtures、回歸與端到端驗證。
+
+本單位不因既有結果改 operator、收益門檻或統計公式；確有必要變更時，具名提出理由。測試使用 mechanics fixtures；正式 seed 推導與探索留到工具驗收後裁定。
+
+第 2 條現在不適合：除了大量步驟不可實現，N／B* 等仍未解，不能直接凍結完整 prereg。第 3 條可作日後的資源決策，但目前只能說「指定 protocol 未達判準」，不能把 B4-FF 整類結成科學否定結果。
+
+板上、production 探索／gate、push／merge 不包含在這次授權內。
+
+--- message 2 (the two scope questions answered, the stimulus distribution fixed) ---
+
+可以。先做 carrier v2 的純文件結案 commit，接著直接開新分支完成 task-v0.3 工程單位，整批交審，不必再等一次範圍批准。
+
+兩題一併裁定：
+
+1. 允許窄幅更新觀測契約為 v0.6。 修訂 §2.2、版本指標及必要交叉引用；保留 task-v0.2 的歷史說明。共同文法與 carrier 格式仍用 8-bit ce／sr，task-v0.3 只產生 0x00／0xFF，明寫這是單一控制值的廣播。A1–A8、交易順序、INIT／SRVAL、恢復與取樣要求不變。
+2. 新版本的 go／no-go 列放進本單位，同步文件與機器表。 沿用完整政策：S=32 全部完成、B=64、單尾 sign-test p≤0.20 且正例多於負例，七個條件 coverage 中位數均≥0.50；資料不完整則無決定。這個 p 門檻是工程成本政策，別稱為正式科學檢定的 α。執行計畫只引用已固定規則，不再選門檻。
+
+刺激分佈也現在固定：
+
+- 每個 set step：CE 以 ½ 機率為高，SR 以 ¼ 機率為高，兩者獨立，再各自廣播。
+- D 的規則、K、search／holdout 長度、mask、weights、T-i 選法維持。
+- 64／80 由實際計分格數驗算；planted target 的可達性另外驗證，不能把 ceiling 與可達性混為一談。
+- 如發現上述選擇有實質矛盾，具名提出，不自行改到結果較好。
+
+b4-sim-5 可先登記為保留名稱，不推導任何值。舊 archive 仍須在各自記錄的版本重驗；新 verifier 不負責通用跨版相容。
+
+你的其餘補充接受。carrier RTL／regmap 保持原樣，首交依比例完成測試、battery 與 mechanics 端到端驗證。正式 seed 推導、探索／gate、板上、push／merge 不在本次授權內。
+
+--- the user's instruction with the second message: no step-by-step approval; the whole unit done, then discussed together ---

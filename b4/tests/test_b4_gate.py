@@ -662,7 +662,7 @@ class TheJudge(unittest.TestCase):
         self.assertEqual(sim.standing_for("b4-sim-3"), sim.STANDING); self.assertEqual(sim.standing_for("b4-mech-1"), sim.STANDING)
         self.assertEqual(sim.standing_for("b4-gate-1"), sim.STANDING_GATE); self.assertNotEqual(sim.STANDING_GATE, sim.STANDING)
         self.assertIn("not a gate verdict", sim.STANDING_GATE); self.assertIn("b4_gate.py", sim.STANDING_GATE)
-        self.assertIn("protocol v0.2.0", sim.STANDING); self.assertIn("(b')", sim.STANDING)
+        self.assertIn("protocol v0.3.0", sim.STANDING); self.assertIn("task-v0.3", sim.STANDING); self.assertIn("(b')", sim.STANDING)
         self.assertTrue(any(bp.RECORD_SCHEMAS["b4_sim_report"][0] in x for x in sc.report_findings(json.loads(SIM3_REPORT.read_bytes()))), "the committed v0.1.16 report is another schema version: not this tool's")
 
     def test_the_synthetic_summary_s_own_findings(self):
