@@ -11,9 +11,11 @@
  *   <- "SIGN <genome_hex8> <nonce_hex16>" / -> "OK <24 words hex8>" | "REFUSED <why>"
  *   <- "EV ..." / "MARK ..."                                          events (informational)
  *   <- "RESULT {...}"                                                  the outcome of OPEN / TX, one JSON line
+ * The command parser and the RESULT writers are the shared pure unit b4q_cmd.c (the board application uses the same).
  * Nothing here is a board image. */
 #include "b4q_tx.h"
 #include "b4q_hal.h"
+#include "b4q_cmd.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,73 +66,30 @@ int b4q_sign(const char *genome_hex, const char *nonce_hex, uint32_t words[24])
 
 void b4q_emit(const char *line) { printf("%s\n", line); fflush(stdout); }
 
-static void print_tx(const b4q_tx_result *r)
+static char g_json[8192];
+
+static void print_json(const char *tag, size_t n)
 {
-    int i;
-    printf("RESULT {\"status\": %d, \"phase\": \"%s\", \"reason\": \"%s\", \"fault_code\": %u, \"commit\": \"%s\", \"staged\": \"%s\", \"stream\": \"%s\", "
-           "\"pre_event\": \"%s\", \"post_event\": \"%s\", \"base_staged\": \"%s\", \"base_readback\": \"%s\", \"n_slots\": %d, \"slot_q\": [",
-           r->status, r->phase, r->reason ? r->reason : "", (unsigned)r->fault_code, r->commit_hex, r->staged_hex, r->stream_hex, r->pre_event_hex, r->post_event_hex,
-           r->base_staged_hex, r->base_readback_hex, r->n_slots);
-    for (i = 0; i < r->n_slots; i++) printf("%s%u", i ? ", " : "", (unsigned)r->slot_q[i]);
-    printf("], \"slot_in\": [");
-    for (i = 0; i < r->n_slots; i++) printf("%s%u", i ? ", " : "", (unsigned)r->slot_in[i]);
-    printf("], \"in_live_pre\": %u, \"witness_after_init\": %u, \"witness_after_restore\": %u, \"heartbeat_before\": %u, \"heartbeat_after\": %u, "
-           "\"base_state\": %u, \"status_final\": %u, \"steps_applied\": %d, \"has_fitness\": %d, \"fitness\": %d, \"task_digest\": \"%s\", "
-           "\"nonce_before\": \"%016llx\", \"nonce_after\": \"%016llx\"}\n",
-           (unsigned)r->in_live_pre, (unsigned)r->witness_after_init, (unsigned)r->witness_after_restore, (unsigned)r->heartbeat_before, (unsigned)r->heartbeat_after,
-           (unsigned)r->base_state, (unsigned)r->status_final, r->steps_applied, r->has_fitness, r->fitness, r->task_digest,
-           (unsigned long long)r->nonce_before, (unsigned long long)r->nonce_after);
-    fflush(stdout);
+    if (n == 0) { printf("RESULT {\"status\": 3, \"reason\": \"result too long\"}\n"); fflush(stdout); return; }
+    printf("%s %s\n", tag, g_json); fflush(stdout);
 }
 
 int main(void)
 {
     static char cmd[8192];
+    static b4q_tx_command c;
     while (fgets(cmd, sizeof cmd, stdin)) {
         cmd[strcspn(cmd, "\r\n")] = 0;
         if (strcmp(cmd, "QUIT") == 0) break;
         if (strcmp(cmd, "OPEN") == 0) {
             b4q_open_result o;
             b4q_session_open(&o);
-            printf("RESULT {\"status\": %d, \"reason\": \"%s\", \"idcode\": %u, \"variant\": %u, \"timing\": %u, \"witness\": %u, \"status_word\": %u, "
-                   "\"heartbeat\": %u, \"nonce\": \"%016llx\", \"startup_readback\": \"%s\"}\n",
-                   o.status, o.reason ? o.reason : "", (unsigned)o.idcode, (unsigned)o.variant, (unsigned)o.timing, (unsigned)o.witness, (unsigned)o.status_word,
-                   (unsigned)o.heartbeat, (unsigned long long)o.nonce, o.startup_readback_hex);
-            fflush(stdout);
+            print_json("RESULT", b4q_open_json(&o, g_json, sizeof g_json));
         } else if (strncmp(cmd, "TX ", 3) == 0) {
-            static uint32_t steps[B4Q_MAX_STEPS];
-            static b4q_task task;
             b4q_tx_result r;
-            char kindname[16];
-            unsigned long long g;
-            int n = 0, i, pos = 0, k;
-            b4q_kind kind;
-            memset(&task, 0, sizeof task);
-            if (sscanf(cmd + 3, "%15s %llx %d%n", kindname, &g, &n, &pos) != 3) { printf("RESULT {\"status\": 3, \"reason\": \"malformed TX\"}\n"); fflush(stdout); continue; }
-            kind = strcmp(kindname, "root") == 0 ? B4Q_KIND_ROOT : strcmp(kindname, "inject") == 0 ? B4Q_KIND_INJECT : strcmp(kindname, "a5") == 0 ? B4Q_KIND_A5 : B4Q_KIND_NORMAL;
-            k = 3 + pos;
-            for (i = 0; i < n && i < B4Q_MAX_STEPS; i++) {
-                unsigned long long w; int q = 0;
-                if (sscanf(cmd + k, "%llx%n", &w, &q) != 1) break;
-                steps[i] = (uint32_t)w; k += q;
-            }
-            {
-                const char *t = strstr(cmd, " TASK ");
-                if (t) {
-                    int m = 0, q = 0, j;
-                    if (sscanf(t + 6, "%64s %d%n", task.digest, &m, &q) == 2 && m <= B4Q_MAX_MASK) {
-                        const char *p = t + 6 + q;
-                        for (j = 0; j < m; j++) {
-                            int s, e, tv, w, qq = 0;
-                            if (sscanf(p, "%d %d %d %d%n", &s, &e, &tv, &w, &qq) != 4) break;
-                            task.step[j] = (uint8_t)s; task.elem[j] = (uint8_t)e; task.target[j] = (uint8_t)tv; task.weight[j] = (uint16_t)w; p += qq;
-                        }
-                        task.n = j;
-                    }
-                }
-            }
-            b4q_transaction((uint32_t)g, steps, n, kind, task.n ? &task : NULL, &r);
-            print_tx(&r);
+            if (b4q_parse_tx(cmd, &c) != 0) { printf("RESULT {\"status\": 3, \"reason\": \"malformed TX\"}\n"); fflush(stdout); continue; }
+            b4q_transaction(c.genome, c.steps, c.n_steps, c.kind, c.task.n ? &c.task : NULL, &r);
+            print_json("RESULT", b4q_tx_json(&r, g_json, sizeof g_json));
         } else {
             printf("RESULT {\"status\": 3, \"reason\": \"unknown command\"}\n"); fflush(stdout);
         }

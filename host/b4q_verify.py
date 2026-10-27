@@ -175,6 +175,8 @@ def load_archive(d: Path) -> dict:
     if not isinstance(so_doc, dict) or not isinstance(so_doc.get("record"), dict) or not isinstance(so_doc.get("findings"), list):
         raise ArchiveRefusal("session_open.json: not {record, findings, ...}")
     _fields(so_doc["record"], "session_open.record", {"status": str, "instrument": dict, "base_frames_reference_sha256": str, "startup_readback_sha256": str})
+    _need(isinstance(so_doc.get("executing_side"), dict), "session_open.executing_side: missing or not an object")
+    _fields(so_doc["executing_side"], "session_open.executing_side", {"status": int})
     _need(all(isinstance(m, str) for m in so_doc["findings"]), "session_open.findings: not strings")
     if not isinstance(notary, list) or not all(isinstance(e, dict) for e in notary):
         raise ArchiveRefusal("notary_log.json: not a list of objects")
@@ -305,6 +307,8 @@ def verify(d: Path, repo_root: Path = R) -> dict:
             S.append(ss.STARTUP_MISMATCH)
     else:
         S.append("session_open: no startup readback group in the PCAP log before the first record")
+    if so_doc["executing_side"]["status"] != 0:                            # the executing side's own refusal, as the session records it
+        S.append(f"session_open: the executing side refused to open: {so_doc['executing_side'].get('reason')}")
     if so["status"] != "open" and not so_doc.get("findings"):
         S.append("session_open: refused, and the session recorded no finding")
     # the stored session findings

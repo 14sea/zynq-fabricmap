@@ -1,4 +1,4 @@
-# B4Q — the carrier v2 qualification session: the plan (DRAFT v0.2, documents only, 2026-10-28; v0.1 held by the owner's review of `3723b91`, R3 — §4.1 / §4.2 added, P1 / P3 closed)
+# B4Q — the carrier v2 qualification session: the plan (DRAFT v0.3, documents only, 2026-10-28; v0.2 accepted with the integration unit — the owner's PASS on `a41f573`; v0.3 names the PS image, P2 built host-only — `docs/b4q_image.md`)
 
 > **Standing.** The reviewable plan the owner's disposition of 2026-10-27 asked for (deliverable 4 of its section 4): "the limited
 > qualification claim; exact fixed demonstration vectors, A5 c′ and witnesses, main / x5FF A8 crosses and reference-validity rules,
@@ -226,12 +226,22 @@ pair-set; B4's eight frames and two readbacks per candidate are of the same kind
 2d's provisioning of `F8B3` (the control plane, the `role`, the current-limited supply's **measurement** — a design intention with no
 measurement evidence, architecture §11) precedes the bring-up stage and is its own ruling per step.
 
+**The handoffs, made explicit (the PS-image unit, 2026-10-28).** The image that the bring-up loads is `b4q_app.bin` as pinned by the
+build evidence (its sha256 and the IDENT's `app_image_sha_lo32` echo must agree); the session token and the page are the runner's
+acts before `go`; the key is provisioned by the signer principal under a `provisioning P3-K` ruling (the image never touches the
+key window: `firmware/b4q/target/b4q_psmap.c`). Still pending before any bring-up, each its own authority: 2d's provisioning of
+F8B3 with the supply's measurement (P4); FCLK0 at 50 MHz and the acceptance regression touched on the board (P4); the write-set /
+composition authority of §5 (the bring-up's ruling); F8B3's PERIPHCLK (the watchdog's period is B1's 17A6 pin until measured);
+the UART, the DMA / PCAP path and the exception path on the device (`docs/b4q_image.md` §4). Then the bring-up (P5) under its own
+execution plan and ruling pair, then the qualification on 17A6 (P6). None of these is met by the image's existence; the no-go
+results of gate-1 / sim-4 / sim-5 stand; no N / B\* / prediction / session size is chosen and 2c is not frozen by this build.
+
 ## 8. Prerequisites, in order — none met by this unit
 
 | # | prerequisite | who |
 |---|---|---|
 | P1 | ~~the carrier manifest regenerated~~ — **done in the repair** (a narrow metadata correction from the committed `b4.bit`, the old manifest archived with the comparison: `evidence/b4/unit_b4q_integration_2026_10_27/manifest_regeneration/`); it certifies no composition, routing isolation, live rewriting or device | — |
-| P2 | **the board image**: the executing side (`firmware/b4q/b4q_tx.c`) integrated with a BSP, the console notary (B1's rel-v4 wire or a successor), the watchdog, the MMU attributes of the buffers, the sha-gated load; cross-compiled with the pinned toolchain; its build evidence (B1's `bsp/build.sh` / `build_evidence.json` form); A7 on its accesses re-run with the real transport | a later host unit |
+| P2 | **the board image — BUILT, host-only (the PS-image unit, `docs/b4q_image.md`): `b4q_app.bin` from the accepted executing side under the board application, B1's BSP, the console notary (b4q-v1 framing with the instrument's CRC / base64url), the watchdog, the MMU attributes of the buffers, the exception-to-stop path; cross-compiled with the pinned toolchain, two clean builds byte-identical, every input by hash (`evidence/b4/unit_b4q_image_2026_10_28/build_evidence.json`); A7 on its accesses re-run on the host harness. NOT MET as a board prerequisite until a device shows it: the image has never been loaded; the sha-gated load, the UART, the real DMA / PCAP, the watchdog's clock are the bring-up's (§7) | the image: done host-side; its on-device demonstration: the F8B3 bring-up |
 | P3 | ~~a host-recorded fault code for link failures~~ — **decided by the HOLD review**: such a stop leaves no `O`; the session keeps a named host non-success result and latches the stop (§4.2) | — |
 | P4 | 2d: `F8B3` provisioned; the supply measured; FCLK0 at 50 MHz; the acceptance regression on the board touched | the 2d rulings |
 | P5 | the bring-up session on `F8B3` (§7) with its own label and ruling pair; the write-set authority of §5 taken there | the owner |

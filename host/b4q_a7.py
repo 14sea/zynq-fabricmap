@@ -24,6 +24,9 @@ AXIL = (R / "rtl/b4/b4_axil.v").read_text()
 DEVC_REGS = {bk.DEVCFG_CTRL: "CTRL", bk.DEVCFG_INT_STS: "INT_STS", bk.DEVCFG_DMA_SRC_ADDR: "DMA_SRC_ADDR", bk.DEVCFG_DMA_DEST_ADDR: "DMA_DEST_ADDR",
              bk.DEVCFG_DMA_SRC_LEN: "DMA_SRC_LEN", bk.DEVCFG_DMA_DEST_LEN: "DMA_DEST_LEN"}
 BUFFERS = {"CMD_BUF": (bk.CMD_BUF, 4 * fr.READBACK_CMD_WORDS), "DST_BUF": (bk.DST_BUF, 4 * fr.READBACK_WORDS), "WR_BUF": (bk.WR_BUF, len(fr.ENVELOPES) * 4 * fr.STREAM_WORDS)}
+# the identity page (the host writes it before `go`; the board application READS it: never a write from the program — the PS-image unit)
+PAGE_ADDR, PAGE_BYTES = 0x10440000, 4 * 24
+READ_ONLY_REGIONS = {"PAGE": (PAGE_ADDR, PAGE_BYTES)}
 STREAM_BYTES = 4 * fr.STREAM_WORDS
 # the four legal DMA transactions, as FULL tuples (both endpoints, both lengths, the HOLD tag, the alignment): a submission is
 # classified from its actual registers — the log's `kind` label is never authority (the owner's R4 of 2026-10-27)
@@ -102,7 +105,15 @@ def check(accesses: list, pcap_log: list | None = None) -> dict:
                     d[name] = d.get(name, 0) + 1
                     break
             else:
-                touched["other"].append((op, addr))
+                for name, (base, size) in READ_ONLY_REGIONS.items():
+                    if base <= addr < base + size:
+                        if op == "rd":
+                            touched["buffer_reads"][name] = touched["buffer_reads"].get(name, 0) + 1
+                        else:
+                            findings.append(f"write of {addr:#010x}: the {name} region is the host's (read-only for the program)")
+                        break
+                else:
+                    touched["other"].append((op, addr))
     # (i) / (ii): the carrier window
     for off in sorted(touched["carrier_reads"]):
         if off not in rd_rtl:

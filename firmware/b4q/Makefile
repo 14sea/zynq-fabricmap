@@ -14,24 +14,41 @@ CFLAGS  ?= -std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-protot
 BUILD   ?= $(abspath $(CURDIR)/../../build/b4q_firmware)
 XGCC    ?= /home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1/bin/arm-none-eabi-gcc
 
-.PHONY: twin host xcheck clean
+.PHONY: twin host apphost wiretwin xcheck clean
 twin: $(BUILD)/b4q_derive_twin
 host: $(BUILD)/b4q_host
+apphost: $(BUILD)/b4q_apphost
+wiretwin: $(BUILD)/b4q_wire_twin
+
+APP_SRCS = target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c b4q_tx.c b4q_derive.c b4q_cmd.c
+APP_HDRS = target/b4q_app.h target/b4q_wire.h target/b4q_psmap.h target/b4q_console.h target/b4q_platform.h b4q_tx.h b4q_hal.h b4q_derive.h b4q_data.h b4q_regmap.h b4q_cmd.h
+# the host harness waits in COUNTS of console polls like the board; the board's counts are the defaults in b4q_app.h, the harness's
+# are small so that a silent host is a fast test, never a measured time on either
+APP_HOST_BOUNDS = -DB4Q_APP_IDLE_POLLS=400000u -DB4Q_APP_REPLY_POLLS=200000u -DB4Q_APP_HB_EVERY=50000u
+
+$(BUILD)/b4q_apphost: target/b4q_app_host.c $(APP_SRCS) $(APP_HDRS)
+	@mkdir -p $(BUILD)
+	$(CC) $(CFLAGS) -D_POSIX_C_SOURCE=200809L $(APP_HOST_BOUNDS) -I. -Itarget -o $@ target/b4q_app_host.c $(APP_SRCS)
+
+$(BUILD)/b4q_wire_twin: target/b4q_wire_twin.c target/b4q_wire.c target/b4q_wire.h target/b4q_psmap.c target/b4q_psmap.h b4q_regmap.h b4q_derive.h
+	@mkdir -p $(BUILD)
+	$(CC) $(CFLAGS) -I. -Itarget -o $@ target/b4q_wire_twin.c target/b4q_wire.c target/b4q_psmap.c
 
 $(BUILD)/b4q_derive_twin: b4q_derive_twin.c b4q_derive.c b4q_derive.h b4q_data.h
 	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) -o $@ b4q_derive_twin.c b4q_derive.c
 
-$(BUILD)/b4q_host: b4q_host_main.c b4q_tx.c b4q_derive.c b4q_tx.h b4q_hal.h b4q_derive.h b4q_data.h b4q_regmap.h
+$(BUILD)/b4q_host: b4q_host_main.c b4q_tx.c b4q_derive.c b4q_cmd.c b4q_tx.h b4q_hal.h b4q_derive.h b4q_data.h b4q_regmap.h b4q_cmd.h
 	@mkdir -p $(BUILD)
-	$(CC) $(CFLAGS) -o $@ b4q_host_main.c b4q_tx.c b4q_derive.c
+	$(CC) $(CFLAGS) -o $@ b4q_host_main.c b4q_tx.c b4q_derive.c b4q_cmd.c
 
 xcheck:
 	@mkdir -p $(BUILD)/xcheck
 	@if [ -x "$(XGCC)" ]; then \
 	  $(XGCC) -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -std=c99 -O2 -Wall -Wextra -Werror -c b4q_derive.c -o $(BUILD)/xcheck/b4q_derive.o && \
 	  $(XGCC) -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -std=c99 -O2 -Wall -Wextra -Werror -c b4q_tx.c -o $(BUILD)/xcheck/b4q_tx.o && \
-	  echo "xcheck: b4q_derive.c and b4q_tx.c compile for cortex-a9 (objects only; no image, no link, no BSP)"; \
+	  for u in b4q_cmd.c target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c; do $(XGCC) -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -std=c99 -O2 -Wall -Wextra -Werror -I. -Itarget -c $$u -o $(BUILD)/xcheck/$$(basename $$u).o || exit 1; done && \
+	  echo "xcheck: b4q_derive.c, b4q_tx.c, b4q_cmd.c and the target's pure units compile for cortex-a9 (objects only; the image is bsp/build.sh's)"; \
 	else echo "xcheck: cross toolchain absent at $(XGCC)"; exit 2; fi
 
 clean:

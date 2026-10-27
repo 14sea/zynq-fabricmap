@@ -28,6 +28,7 @@ import b4carrier_regmap as rm  # noqa: E402
 import b4q_backend as bk  # noqa: E402
 import b4q_frames as fr  # noqa: E402
 import b4q_notary as nt  # noqa: E402
+import b4q_schema as sc  # noqa: E402
 import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
 
@@ -197,15 +198,23 @@ class Session:
         if self.session_open is not None:
             raise SessionRefusal("the session is already opened (or refused): one opening per session")
         self._send("OPEN")
-        r = self.serve()
+        return self._opened(self.serve())
+
+    def _opened(self, r: dict) -> dict:
+        """The session-opening record and its findings from the executing side's opening result (host-only: the RESULT of OPEN;
+        the console session: the IDENT line's `open` object)."""
         self.open_result = r
         so = rec.session_open(self.instrument, r.get("startup_readback") or "", self.loaded_reference)
         # the host's own view of the startup readback: the PCAP log's last read_frame group (the backend's store, FAR-ordered)
         host_view = [e for e in self.backend.pcap_log if e.get("pcap") == "read_frame"]
         host_hash = host_view[-1]["target_frames_hash"] if host_view else None
-        findings = rec.validate_session_open(so)
+        # the opening's findings, worded exactly as the verifier recomputes them (its agreement rule compares the strings): the record's
+        # validators and schema, the host's view of the readback, the executing side's own refusal
+        findings = [f"session_open: {m}" for m in rec.validate_session_open(so) + sc.validate_named(so, "ff_session_open_v1")]
+        if host_hash is None:
+            findings.append("session_open: no startup readback group in the PCAP log before the first record")
         if r.get("status") != 0:
-            findings.append(f"the executing side refused to open: {r.get('reason')}")
+            findings.append(f"session_open: the executing side refused to open: {r.get('reason')}")
         if host_hash is not None and host_hash != r.get("startup_readback"):
             findings.append(STARTUP_MISMATCH)
         self.session_open = {"record": so, "findings": findings, "executing_side": r, "host_view_target_frames_hash": host_hash}
