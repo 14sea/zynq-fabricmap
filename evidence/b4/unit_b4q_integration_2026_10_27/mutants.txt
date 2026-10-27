@@ -1,4 +1,4 @@
-B4Q mutant battery — 2026-10-27T19:34:53Z HEAD 39b3e9c
+B4Q mutant battery — 2026-10-27T19:39:52Z HEAD b4e540a
 BASELINE valid: green
 BASELINE wrong_key: green
 BASELINE tamper: green
@@ -23,7 +23,7 @@ P4 KILLED — the verifier skips A7: A7 findings []
 P5 SURVIVED — the realisability rule of the validator removed: refused
 P6 KILLED — the VARIANT binding removed: another VARIANT was accepted as the v2 carrier
 P7 SURVIVED — the key-window finding of A7 removed: found
-P8 KILLED — an invalid O's phase always P5: Ran 18 tests in 0.057s FAILED
+P8 KILLED — an invalid O's phase always P5: Ran 18 tests in 0.053s FAILED
 C9+C10 KILLED — the link-2 comparison removed AND a staged word corrupted: the corrupted candidate is written: no transaction close: the transaction is not closed: no completed CLOSE / CLOSE_INJECTION and no fault after the observation; no transaction close: no transacti
 P2+C6 KILLED — the session no longer holds the fitness AND the executing side's is off by one: the verifier must still find it and the two must disagree: F: the executing side's fitness 29 is not the host's recomputation 28 over the full physical grid; F: the executing side's fitness 21 is not the host's recomput
 TOTAL killed 17 survived 6 edit-miss 0 of 23

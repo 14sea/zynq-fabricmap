@@ -1,23 +1,23 @@
 == valid
-{"name": "valid", "wall_s": 3.781, "chain_findings": [], "accesses": 77749}
+{"name": "valid", "wall_s": 3.672, "chain_findings": [], "accesses": 77749}
 == a5
-{"name": "a5", "wall_s": 4.365, "chain_findings": [], "accesses": 89211, "a5": "pass", "a5_why": "this adversarial state arrived and was cleared by the initialisation"}
+{"name": "a5", "wall_s": 4.224, "chain_findings": [], "accesses": 89211, "a5": "pass", "a5_why": "this adversarial state arrived and was cleared by the initialisation"}
 == a5_persist
-{"name": "a5_persist", "wall_s": 4.341, "chain_findings": [], "accesses": 89211, "a5": "fail", "a5_why": "persistence after initialisation; the differing positions are the finding"}
+{"name": "a5_persist", "wall_s": 4.152, "chain_findings": [], "accesses": 89211, "a5": "fail", "a5_why": "persistence after initialisation; the differing positions are the finding"}
 == a8_cross
-{"name": "a8_cross", "wall_s": 4.633, "chain_findings": [], "accesses": 96298, "a8_AFF": "both demonstrated", "a8_BFF": "neither demonstrated"}
+{"name": "a8_cross", "wall_s": 4.585, "chain_findings": [], "accesses": 96298, "a8_AFF": "both demonstrated", "a8_BFF": "neither demonstrated"}
 == a2_pairs
-{"name": "a2_pairs", "wall_s": 4.629, "chain_findings": ["chain[4]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]", "chain[4]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]", "chain[4]: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]", "chain[4]: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]", "chain[4]: O.steps[1].q_afte
+{"name": "a2_pairs", "wall_s": 4.531, "chain_findings": ["chain[4]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]", "chain[4]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]", "chain[4]: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]", "chain[4]: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]", "chain[4]: O.steps[1].q_afte
 == not_realisable
-{"name": "not_realisable", "wall_s": 1.715, "chain_findings": ["chain[1]: no transaction close; the chain ends here"], "accesses": 34359, "invalid_phase": "P5", "invalid_code": "not_realisable", "after_status": 1, "after_reason": "STOP_ARM: the gate refused (FAULT latched)"}
+{"name": "not_realisable", "wall_s": 1.709, "chain_findings": ["chain[1]: no transaction close; the chain ends here"], "accesses": 34359, "invalid_phase": "P5", "invalid_code": "not_realisable", "after_status": 1, "after_reason": "STOP_ARM: the gate refused (FAULT latched)"}
 == wrong_key
-{"name": "wrong_key", "wall_s": 0.368, "chain_findings": ["chain[0]: no transaction close; the chain ends here"], "accesses": 4665, "root_status": 1, "root_reason": "STOP_ARM: the gate refused (FAULT latched)", "o_status": "invalid", "o_phase": "P1"}
+{"name": "wrong_key", "wall_s": 0.346, "chain_findings": ["chain[0]: no transaction close; the chain ends here"], "accesses": 4665, "root_status": 1, "root_reason": "STOP_ARM: the gate refused (FAULT latched)", "o_status": "invalid", "o_phase": "P1"}
 == notary_refuses
-{"name": "notary_refuses", "wall_s": 1.214, "chain_findings": [], "accesses": 22860, "status": 1, "reason": "STOP_SIGN: the notary refused the candidate", "o": false, "findings": ["no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"]}
+{"name": "notary_refuses", "wall_s": 1.193, "chain_findings": [], "accesses": 22860, "status": 1, "reason": "STOP_SIGN: the notary refused the candidate", "o": false, "findings": ["no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"]}
 == dma_never
-{"name": "dma_never", "wall_s": 5.955, "chain_findings": [], "accesses": 126677, "status": 1, "phase": "P2", "reason": "STOP_DMA: DEVCFG D_P_DONE never asserted", "o": false, "findings": ["no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"]}
+{"name": "dma_never", "wall_s": 5.887, "chain_findings": [], "accesses": 126677, "status": 1, "phase": "P2", "reason": "STOP_DMA: DEVCFG D_P_DONE never asserted", "o": false, "findings": ["no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"]}
 == latch_unmodelled
-{"name": "latch_unmodelled", "wall_s": 2.066, "chain_findings": ["chain[1]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]", "chain[1]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]", "chain[1]: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]", "chain[1]: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]", "chain[1]: O.steps[1
+{"name": "latch_unmodelled", "wall_s": 2.011, "chain_findings": ["chain[1]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]", "chain[1]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]", "chain[1]: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]", "chain[1]: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]", "chain[1]: O.steps[1
 == interrupt
 transport closed
-{"name": "interrupt", "wall_s": 1.349, "chain_findings": [], "accesses": 25858, "status": 5, "interrupted": {"after_accesses": 3000, "last_request": "R 10300048"}, "o": false, "findings": ["no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"]}
+{"name": "interrupt", "wall_s": 1.316, "chain_findings": [], "accesses": 25858, "status": 5, "interrupted": {"after_accesses": 3000, "last_request": "R 10300048"}, "o": false, "findings": ["no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"]}
