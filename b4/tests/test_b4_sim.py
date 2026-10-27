@@ -163,7 +163,7 @@ class Preflight(Base):
         before = sorted(p.name for p in self.ns.iterdir()) if self.ns.exists() else []
         cases = [("b4-sim-1", 2, 60, None, SCHED1, "mechanics label"),            # a production label never runs on a fixture
                  ("b4-mech-1", 2, 60, None, None, "needs a FixtureSchedule"),       # a fixture label never derives
-                 ("b4-gate-1", 2, 60, None, None, "exploration label"), ("b4-sim-4", 0, 60, None, None, "--seeds"), ("b4-sim-4", 2, 0, None, None, "--deadline-s"),
+                 ("b4-gate-1", 2, 60, None, None, "exploration label"), ("b4-sim-5", 0, 60, None, None, "--seeds"), ("b4-sim-5", 2, 0, None, None, "--deadline-s"),
                  ("b4-sim-1", 2, 60, None, None, "retired"), ("b4-sim-2", 32, 3600, None, None, "retired"),      # the settlement of 2026-10-19: refused before any master
                  ("b4-sim-3", 32, 3600, None, None, "consumed"),                                                  # protocol v0.2.0: consumed by its archived records
                  ("b4-mech-1", 2, True, None, SCHED1, "--deadline-s"), ("b4-mech-1", 1, 60, None, SCHED1, "schedule's 2 pairs"),
@@ -227,14 +227,14 @@ class Preflight(Base):
         for label, word in (("b4-sim-1", "retired"), ("b4-sim-2", "retired"), ("b4-sim-3", "consumed")):
             with mock.patch.object(sim, "porcelain", side_effect=AssertionError("the tree was read")):
                 res = sim.run_batch(self.root, label, 32, 3600, None)
-                self.assertEqual((res["status"], res["exit_code"]), ("refused", 2)); self.assertIn(word, res["reason"]); self.assertIn("b4-sim-4", res["reason"])
+                self.assertEqual((res["status"], res["exit_code"]), ("refused", 2)); self.assertIn(word, res["reason"]); self.assertIn("b4-sim-5", res["reason"])
                 with mock.patch("sys.stdout"):
                     self.assertEqual(sim.main(["--label", label, "--seeds", "32", "--deadline-s", "3600"]), 2)
         with mock.patch.object(sim, "porcelain", side_effect=AssertionError("the tree was read")):
             res = sim.run_batch(self.root, "b4-gate-1", 200, 3600, None, mode="gate")
             self.assertEqual(res["status"], "refused"); self.assertIn("consumed", res["reason"]); self.assertIn("b4-gate-2", res["reason"])
         self.assertEqual([m.call_count for m in self.guard_mocks], [0, 0], "no retired or consumed label reached a derivation")
-        self.assertEqual(bs.EXPLORATION_LABEL, "b4-sim-4"); bs.check_label_not_retired(bs.EXPLORATION_LABEL)
+        self.assertEqual(bs.EXPLORATION_LABEL, "b4-sim-5"); bs.check_label_not_retired(bs.EXPLORATION_LABEL)
         self.assertEqual(th.THRESHOLDS["anchor"]["exploration_label"], bs.EXPLORATION_LABEL, "the table and the loader name the same next label")
         self.assertTrue(sim.LABEL_RE.match(bs.EXPLORATION_LABEL))
 
@@ -349,7 +349,8 @@ class CompleteBatch(Base):
         self.assertEqual(bp.identity_findings(man["protocol"]["identity"]), []); self.assertEqual(man["protocol"]["protocol_sha256"], bp.protocol_sha256(man["protocol"]["identity"]))
         self.assertEqual(bp.compare(man["protocol"]["identity"], bp.identity()), [], "the archive's identity is this tool's")
         rep = self.report(self.res); self.assertEqual(rep["identity"]["protocol_sha256"], man["protocol"]["protocol_sha256"])
-        self.assertEqual(man["constants"]["task"], "task-v0.2"); self.assertEqual(man["constants"]["target"]["setup_cost"], {"target": 1, "target_holdout": 1})
+        self.assertEqual(man["constants"]["task"], "task-v0.3"); self.assertEqual(man["constants"]["target"]["setup_cost"], {"target": 1, "target_holdout": 1})
+        self.assertEqual(man["constants"]["stimulus"]["rule"], bl.STIMULUS_RULE); self.assertEqual((man["constants"]["stimulus"]["ce_high_one_in"], man["constants"]["stimulus"]["sr_high_one_in"]), (2, 4))
 
     def test_the_task_setup_files_the_planted_target_and_the_arms_task(self):
         """task-v0.2 (section 7.1): per pair the private plan, the two setup observations and the public task; the planted configuration a
@@ -368,9 +369,12 @@ class CompleteBatch(Base):
             self.assertEqual(task["setup_files_sha256"], {n: sim.sha_file(out / f"pair_{r:03d}/{n}") for n in SETUP_FILES[:3]})
             pt = task["public_task"]
             self.assertEqual(set(pt), sc.PUBLIC_TASK_KEYS); self.assertNotIn("landscape_seed", pt); self.assertNotIn("seed", pt); self.assertNotIn("planted_genome", pt)
-            self.assertEqual((pt["label"], pt["version"]), ("b4-task", "task-v0.2"), "no identifying value smuggled through the label")
+            self.assertEqual((pt["label"], pt["version"]), ("b4-task", "task-v0.3"), "no identifying value smuggled through the label")
             scalars = {k: v for k, v in pt.items() if not isinstance(v, (list, tuple))}
-            self.assertEqual(scalars, {"label": "b4-task", "version": "task-v0.2", "base_genome": 0, "target_source_sha256": pt["target_source_sha256"]}, "no scalar of the executing side's input is a seed")
+            self.assertEqual(scalars, {"label": "b4-task", "version": "task-v0.3", "base_genome": 0, "target_source_sha256": pt["target_source_sha256"]}, "no scalar of the executing side's input is a seed")
+            for name in ("stimulus", "holdout_stimulus"):           # task-v0.3: every archived task stimulus is slice-wide (the validators hold it; here the archive itself)
+                self.assertEqual(bl.stimulus_findings(pt[name]), [], name)
+                self.assertTrue(all(s["ce"] in (0, 255) and s["sr"] in (0, 255) for s in pt[name][1:]), name)
             self.assertEqual([p_.calls for (pr, role, p_) in self.ports if (pr, role) == (r, sim.SETUP_ROLE)], [2], "the setup port made exactly two calls")
             self.assertEqual(pt["target_source_sha256"], bt.target_source_sha256(ts, th_))
             rebuilt = bt.rebuild_task(setup, ts, th_); self.assertEqual(rebuilt.digest(), task["task_digest"])

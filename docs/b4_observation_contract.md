@@ -1,4 +1,4 @@
-# B4-FF — the observation contract between the executing side and the host (DRAFT v0.5, host-only, documents only, 2026-10-21; ACCEPTED as a document contract by the owner's review of `4fc3dc7`, 2026-10-21)
+# B4-FF — the observation contract between the executing side and the host (DRAFT v0.6, host-only, documents only, 2026-10-27; v0.5 ACCEPTED as a document contract by the owner's review of `4fc3dc7`, 2026-10-21; v0.6 a narrow revision of 2.2 for task-v0.3 under the owner's ruling of 2026-10-27)
 
 > **Acceptance (2026-10-21, the owner's PASS on `4fc3dc7`; archived in `evidence/b4/unit_2c_obs_2026_10_21/owner_review_4fc3dc7_PASS/`).**
 > The 2c-obs document unit is closed. What the PASS covers: this document as a **contract** — the retained representations and
@@ -15,6 +15,15 @@
 > partition, the whole-site holdout and 2c's freeze are not supplied by this unit. Push / merge, RTL, board and new execution
 > authorisations are unchanged.
 
+> **Revision v0.5 → v0.6 (2026-10-27, the task-v0.3 revision unit; the owner's ruling of 2026-10-27 — "a narrow update of the observation
+> contract to v0.6: 2.2, the version pointers and the necessary cross-references; task-v0.2's description kept as history"; documents only;
+> targeted edits).** 2.2 — the fixed task shape is task-v0.3's (architecture 7.2): per `set` step **one slice-wide CE value and one slice-wide
+> SR value, each broadcast over the eight elements** in the common 8-bit grammar of 2.1 (`0xFF` / `0x00`), `d` per element; the common grammar,
+> the step list and the carrier's STEP_IN format are **unchanged** (still 8-bit `ce` / `sr`; task-v0.3 only ever produces the two broadcast
+> values, which the carrier's realisability rule accepts by construction); task-v0.2's shape is kept as history. A1–A8, the transaction
+> order (section 5), INIT / SRVAL (section 6), the restore and sampling requirements, the records (section 4), the holdouts (8) and the
+> acceptance lists (9) are unchanged. Cross-references to "task-v0.2's shape" now read task-v0.2 / task-v0.3 where both apply.
+>
 > **Revision v0.4 → v0.5 (2026-10-21, the owner's fourth HOLD, on `6927c24`, two P2; documents only; targeted edits).** R1 — the
 > mechanism-(c) **session root** no longer dereferences a predecessor it does not have: a **session-opening record** (`session_open`,
 > 5.5, 4.1) taken before anything is signed binds the fabric as loaded to the pinned carrier's base-frame reference (a trusted
@@ -77,7 +86,7 @@
 > (`observation_context`, `initialisation_event`, `applicable_semantics`; G6), `b4/host/b4_ff_model.py` (`validate_config`,
 > `observe()`'s return — the legacy wire format), `b4/host/b4_execution.py` (`sha256_json`, `genome_to_config`, `provenance_findings`), `b4/host/b4_engine.py` (the ledger
 > entry: `trace_sha256 = sha256_json(grid)`), `b4/host/b4_target.py` (the target record), `b4/host/b4_replay.py` (`ENTRY_KEYS`), `b4/host/b4_landscape.py`
-> (task-v0.2's stimulus shape), `docs/board_roles.md`, `docs/autonomous_cartography_roadmap.md` sections 4–5. The data read for
+> (task-v0.2's stimulus shape; since v0.6 task-v0.3's), `docs/board_roles.md`, `docs/autonomous_cartography_roadmap.md` sections 4–5. The data read for
 > section 7 is the committed `b4-sim-4` archive through the two read-only scripts of `evidence/b4/unit_2c_obs_2026_10_21/`; the
 > counterexample of 3.4 is one retained observation of the same archive; the representation facts of 3.2 are those the owner's
 > static probes of `d8ef6cf` and `df3b65e` read from a retained quarantine record (`float_return.json`) and from `pair_000`'s
@@ -88,7 +97,7 @@
 | section | what it fixes as a draft contract | what stays unresolved (named, not decided) |
 |---|---|---|
 | 1 position | what a contract is here and what it is not | — |
-| 2 the stimulus | the step grammar, the task-v0.2 shape (ending at clock 0), the application rule, the stimulus identity | the electrical timing numbers — the carrier-v2 unit's |
+| 2 the stimulus | the step grammar, the task-v0.3 shape (v0.6: one slice-wide CE / SR value per step, broadcast; ending at clock 0; task-v0.2's shape kept as history), the application rule, the stimulus identity | the electrical timing numbers — the carrier-v2 unit's (delivered, accepted on `bf17574`) |
 | 3 the raw readout | the logical view with its `context`; the retained representations, what each holds and what each digest covers; the adapters and their scope; the sample points; D1 and the scoring-domain limit; the source binding | the board-study metric across the limit (2c) |
 | 4 the records | the three objects per transaction; the exact field set of each, with the phase-dependent sets of an invalid `O`; the field-aware A3 rule; D3 | the schema file names (provisional); the implementation (a later tool unit) |
 | 5 the transaction | P1–P10 with one initialisation = step 0; the readiness table with (c)'s pre-write sample; the cleanup; the frame binding conditional on mechanism and predecessor context; the session-opening record and the session root; A5 as a decision table with a qualification-only injection protocol; faulted / interrupted retention with the stop location | the cleanup's and the injection's electrical realisation; the bench's and the board's *c′* |
@@ -125,18 +134,28 @@ The carrier applies the steps **in order, exactly, and nothing else**: no step i
 initialisation), none dropped, none reordered, no input held across a step it is not listed in. The clock is under the scorer's
 control only; the user SR operations are steps of the sequence, never a side channel.
 
-### 2.2 The shape of task-v0.2's stimuli (fixed by the public rule; `b4_landscape._stimulus`)
+### 2.2 The shape of task-v0.3's stimuli (v0.6; fixed by the public rule, architecture 7.2; `b4_landscape._stimulus`)
 
 | stimulus | steps | final clock | readout cells after init |
 |---|---|---|---|
 | search | `init` (index 0); K = 6 `set` steps, the clock toggling from 0 (an edge each); 2 `set` steps at the final level | **0** (K even) | 64 |
 | holdout | the same with K = 8 (`HOLDOUT_SALT`) | **0** | 80 |
 
-Per `set` step `ce` and `d` are uniform 8-bit draws and `sr` is sparse (each element asserted with probability 1/4): **the last step
-may leave `sr`, `ce` or `d` non-zero**, which is what the cleanup (5.3) clears. The task-v0.2 stimuli end with the clock at 0; the
-**general grammar** of 2.1 allows a stimulus to end at clock 1, and the cleanup handles that general case too — a clock at 1 is not
-an outcome of the current fixed task shape. The carrier does not know the generation rule; **a stimulus is never derived on the
-executing side** — the `PublicTask` carries it (architecture 7.1).
+Per `set` step task-v0.3 draws **one slice-wide CE value** (high with probability 1/2) and **one slice-wide SR value** (high with
+probability 1/4), the two draws independent, and writes each into the step as the **broadcast of that single control value over the
+eight elements** in the common grammar of 2.1: `ce` and `sr` are `0xFF` when high and `0x00` when low — the only two values those fields
+ever carry under this task; `d` stays a per-element uniform 8-bit draw. This follows the certified site's physics (one CE pin, one SR pin,
+one CLK pin per slice; `docs/b4_carrier_v2.md` §0) and leaves the grammar, the records and the carrier format unchanged: the carrier's
+`STEP_IN` word still carries 8-bit `ce` / `sr`, and its realisability rule (each uniform) is satisfied by construction. The shared control
+inputs do not merge the elements' INIT / SRVAL: those stay per element. **The last step may leave `sr`, `ce` or `d` non-zero**, which is
+what the cleanup (5.3) clears. The task-v0.3 stimuli end with the clock at 0; the **general grammar** of 2.1 allows a stimulus to end at
+clock 1, and the cleanup handles that general case too — a clock at 1 is not an outcome of the current fixed task shape. The carrier does
+not know the generation rule; **a stimulus is never derived on the executing side** — the `PublicTask` carries it (architecture 7.1).
+
+*History — task-v0.2's shape (the one `b4-sim-4` was run under; consumed).* The same steps, K and level steps; per `set` step `ce` and
+`d` were uniform 8-bit draws and `sr` was sparse per element (each element asserted with probability 1/4) — a shape the site cannot
+apply except when every element happens to agree, which is why task-v0.3 exists. A stimulus of that shape is not a task-v0.3 stimulus:
+`b4_landscape.stimulus_findings` names it, and the task records' validators refuse it.
 
 ### 2.3 The application rule, per step (contract; the numbers are the carrier unit's)
 
@@ -386,7 +405,7 @@ candidate is not signed while the last `X` is not `closed` with an idle `idle_st
 ### 5.3 The cleanup phase (P7) — defined, recorded in `X`, not scored
 
 In this order: (1) `sr` → 0, `ce` → 0, `d` → 0 (one settle interval); (2) if the clock is 1 (possible under the general grammar;
-not under task-v0.2's fixed shapes, 2.2), clock → 0 — a falling edge, recorded as one, possibly capturing on a falling-edge
+not under task-v0.2's / task-v0.3's fixed shapes, 2.2), clock → 0 — a falling edge, recorded as one, possibly capturing on a falling-edge
 element: a consequence of the stimulus's final state, not an observation; (3) one hold interval; (4) sample. `X.cleanup` =
 `{steps: [...], final_q}`. Cleanup is never part of the fitness, never in K9 / K10's grids, never an input to the cartographer; its
 purpose is that P9's precondition (clock low, SR de-asserted) is met *and witnessed*. An SR operation inside the stimulus is
@@ -680,13 +699,13 @@ of 3.2 are further reads of retained records, disclosed likewise.
 
 ## 8. The two holdouts — two axes, one contract
 
-| | the stimulus holdout (task-v0.2, architecture 7.1 axis (a)) | the whole-site holdout (2c, architecture 4.3) |
+| | the stimulus holdout (task-v0.2 / task-v0.3, architecture 7.1 axis (a)) | the whole-site holdout (2c, architecture 4.3) |
 |---|---|---|
 | what is held out | a second stimulus (K = 8, its own derivation) the search never scores against; the champion scored on it once | a site instance whose addresses the FF cartographer's development never read |
 | what it tests | behavioural consistency on vectors the champion was not tuned on — a research quantity, no threshold | that the map was built from observations, not from knowledge of this site — an engineering holdout, not a claim the truth was unseen |
 | who knows which is which | the engine (phase `holdout`); the carrier **does not** | the preregistration names the instance; a second instance is a second build or a parameterised one — the carrier unit's |
 | the record | the same `O` / `F` / `X`; the phase is the engine's field | the same records on the holdout site, in its own session |
-| status | fixed by task-v0.2 | **unresolved**: which instance (`17A6` second site, or `3671`) |
+| status | fixed by the task (task-v0.2; task-v0.3 since v0.6) | **unresolved**: which instance (`17A6` second site, or `3671`) |
 
 **Neither holdout changes what the executing side does or records**; the bench's negative scenario: a holdout-phase and a
 search-phase observation of the same configuration and stimulus are equal under 5.6's post-init projection and in every `O`

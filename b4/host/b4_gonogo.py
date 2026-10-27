@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""B4 — the ENGINEERING GO / NO-GO POLICY of an exploration (docs/b4_architecture.md section 9.4, DRAFT v0.2.0; the owner's choice 5
-of 2026-10-20): a COST POLICY for spending the production gate's budget — not a significance result, not a gate verdict, not an
-authorisation of anything, and never a scientific impossibility.
+"""B4 — the ENGINEERING GO / NO-GO POLICY of an exploration (docs/b4_architecture.md section 9.4, DRAFT v0.3.0; the owner's choice 5
+of 2026-10-20, carried to b4-sim-5 unchanged by the owner's ruling of 2026-10-27): a COST POLICY for spending the production gate's
+budget — not a significance result, not a gate verdict, not an authorisation of anything, and never a scientific impossibility. The
+p threshold p_max_go = 0.20 is an engineering cost threshold on the sign test's p, NOT the alpha of a formal scientific test.
 
     b4_gonogo.py decide <batch_dir> [--out-dir evidence/b4/gonogo/<label>_<UTC>]   # the decision record of an exploration archive (runs nothing)
     b4_gonogo.py verify <gonogo_dir>                                                # the record re-decided from its evidence in a fresh process
@@ -9,7 +10,7 @@ authorisation of anything, and never a scientific impossibility.
 THE POLICY (b4_thresholds.THRESHOLDS["gonogo"]): precondition — a complete batch of exactly S = 32 planned pairs, every pair complete,
 the archive verifying clean under this method version (else NO DECISION: stop and report); statistic 1 — the one-sided exact sign
 test on Ω − R at the budget B_go = 64 (ties excluded from n and counted; the harness's own record of it), positives > negatives and
-p ≤ α_go = 0.20; statistic 2 — K9's seven JUDGED conditional medians all ≥ 0.50; GO iff both; NO-GO otherwise. Every budget's Ω − R
+p ≤ p_max_go = 0.20 (a cost threshold, not an α); statistic 2 — K9's seven JUDGED conditional medians all ≥ 0.50; GO iff both; NO-GO otherwise. Every budget's Ω − R
 record is carried in full; no other budget is picked afterwards. A `formal` record needs a production exploration label (b4-sim-<n>);
 a mechanics fixture batch is decided with `formal = false` and a standing that says NOT A DECISION OF RECORD.
 
@@ -116,23 +117,24 @@ def decide(report: dict) -> dict:
     out["omega_minus_R_by_budget"] = {str(b): dict(pb[str(b)]["deltas"]["Omega_minus_R"]) for b in th.GRID}
     om = pb[str(B)]["deltas"]["Omega_minus_R"]
     pos_ok = om["positives"] > om["negatives"]
-    p_ok = _num(om["sign_test_p"]) and om["sign_test_p"] <= T["alpha_go"]
+    p_ok = _num(om["sign_test_p"]) and om["sign_test_p"] <= T["p_max_go"]
     out["statistic_1"] = {"budget": B, "positives": om["positives"], "negatives": om["negatives"], "ties": om["ties"], "sign_test_p": om["sign_test_p"], "mean": om["mean"],
-                          "cohen_d": om["cohen_d"], "positives_gt_negatives": pos_ok, "p_le_alpha_go": p_ok, "alpha_go": T["alpha_go"]}
+                          "cohen_d": om["cohen_d"], "positives_gt_negatives": pos_ok, "p_le_p_max_go": p_ok, "p_max_go": T["p_max_go"],
+                          "p_max_go_standing": T["p_max_go_standing"]}
     med = {sem: s["k9"]["per_semantic"][sem]["median_coverage_over_all_S"] for sem in k9.SEMANTICS}
     k9_ok = all(_num(m) and m >= T["k9_conditional_medians_min"] for m in med.values())
     out["statistic_2"] = {"judged_estimand": s["k9"]["judged_estimand"], "conditional_medians": med, "all_ge_min": k9_ok, "min": T["k9_conditional_medians_min"],
                           "all_panel_medians_descriptive": {sem: s["k9"]["per_semantic_all_panel"][sem]["median_coverage_over_all_S"] for sem in k9.SEMANTICS}}
     if pos_ok and p_ok and k9_ok:
         out["decision"] = "go"
-        out["reason"] = (f"go: at B = {B} Omega - R has {om['positives']} positives > {om['negatives']} negatives with one-sided sign-test p = {om['sign_test_p']:.4g} <= {T['alpha_go']}, "
+        out["reason"] = (f"go: at B = {B} Omega - R has {om['positives']} positives > {om['negatives']} negatives with one-sided sign-test p = {om['sign_test_p']:.4g} <= {T['p_max_go']} (a cost threshold, not an alpha), "
                          f"and every judged conditional K9 median >= {T['k9_conditional_medians_min']} — a cost policy met, not a gate result and not an authorisation")
     else:
         why = []
         if not pos_ok:
             why.append(f"at B = {B} positives {om['positives']} are not more than negatives {om['negatives']}")
         if not p_ok:
-            why.append(f"at B = {B} the one-sided sign-test p {om['sign_test_p']!r} > {T['alpha_go']}")
+            why.append(f"at B = {B} the one-sided sign-test p {om['sign_test_p']!r} > the cost threshold p_max_go {T['p_max_go']}")
         if not k9_ok:
             below = [f"{sem} {m!r}" for sem, m in med.items() if not (_num(m) and m >= T["k9_conditional_medians_min"])]
             why.append("judged conditional K9 medians below 0.50 or not assessable: " + ", ".join(below))

@@ -989,6 +989,10 @@ def task_findings(doc) -> list[str]:
         task = bt.task_from_dict(pt)
     except Exception as exc:  # noqa: BLE001
         f.append(f"public_task cannot be rebuilt: {type(exc).__name__}: {exc}"); return f
+    for name in ("stimulus", "holdout_stimulus"):                # task-v0.3 (section 7.2): the slice-wide shape is held on the record, never assumed
+        sf = bl.stimulus_findings(pt[name])
+        if sf:
+            f.append(f"public_task.{name}: not a {bl.TASK_VERSION} stimulus: " + "; ".join(sf[:3])); return f
     if doc["task_digest"] != task.digest():
         f.append("task_digest is not the public task's digest")
     sf = doc["setup_files_sha256"]

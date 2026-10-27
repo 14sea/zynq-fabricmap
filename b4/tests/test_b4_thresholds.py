@@ -13,6 +13,7 @@ for p in (R / "b4/host",):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 import b4_k10 as k10  # noqa: E402
+import b4_landscape as bl  # noqa: E402
 import b4_protocol as bp  # noqa: E402
 import b4_thresholds as th  # noqa: E402
 from b4_ff_hypothesis import HYPOTHESIS_SHA256  # noqa: E402
@@ -27,8 +28,9 @@ def rows_of_section_9(doc: str) -> dict:
     i10 = doc.index("\n## 10. ")
     i8 = doc.index("\n## 8. Controls")
     i71 = doc.index("\n### 7.1 ")
+    i72 = doc.index("\n### 7.2 ")
     sec9 = doc[i9:i91]
-    out = {"9-intro": sec9[:sec9.index("| id | criterion |")], "9.2": doc[i92:i93], "9.3": doc[i93:i10], "8": doc[i8:i9], "7.1": doc[i71:i8]}
+    out = {"9-intro": sec9[:sec9.index("| id | criterion |")], "9.2": doc[i92:i93], "9.3": doc[i93:i10], "8": doc[i8:i9], "7.1": doc[i71:i72], "7.2": doc[i72:i8]}
     for m in re.finditer(r"^\| (K\d+) [^|]*\|(.*)$", sec9, re.M):
         out[m.group(1)] = m.group(0)
     out["K-grid"] = sec9[sec9.index("**The budget grid and `B*`.**"):]
@@ -62,17 +64,23 @@ class ThePins(unittest.TestCase):
         self.assertEqual((T["K10"]["tau"], T["K10"]["interacting_seeds_over_S_min"], T["K10"]["pairs_per_background"], T["K10"]["backgrounds"], T["K10"]["background_salt"]), (2, 0.50, 210, 2, 0x4C0A4E55))
         self.assertEqual((T["K10"]["tau"], T["K10"]["background_salt"]), (k10.TAU, k10.SALT), "the driver's constants are the table's")
         self.assertEqual(T["anchor"]["hypothesis_sha256"], HYPOTHESIS_SHA256)
-        self.assertEqual((T["anchor"]["gate_label"], T["anchor"]["exploration_label"]), ("b4-gate-2", "b4-sim-4"), "protocol v0.2.0: the next labels; the retired and consumed ones never")
-        self.assertEqual(sorted(T["anchor"]["retired_exploration_labels"]), ["b4-sim-1", "b4-sim-2"]); self.assertEqual(sorted(T["anchor"]["consumed_labels"]), ["b4-gate-1", "b4-sim-3"])
+        self.assertEqual((T["anchor"]["gate_label"], T["anchor"]["exploration_label"]), ("b4-gate-2", "b4-sim-5"), "protocol v0.3.0: the next labels; the retired and consumed ones never")
+        self.assertEqual(sorted(T["anchor"]["retired_exploration_labels"]), ["b4-sim-1", "b4-sim-2"]); self.assertEqual(sorted(T["anchor"]["consumed_labels"]), ["b4-gate-1", "b4-sim-3", "b4-sim-4"])
         import b4_seeds as bs
         self.assertEqual((set(T["anchor"]["retired_exploration_labels"]), T["anchor"]["exploration_label"]), (set(bs.RETIRED_LABELS), bs.EXPLORATION_LABEL), "the table and the loader agree")
         self.assertEqual((set(T["anchor"]["consumed_labels"]), T["anchor"]["gate_label"]), (set(bs.CONSUMED_LABELS), bs.GATE_LABEL))
         self.assertNotIn(bs.EXPLORATION_LABEL, bs.RETIRED_LABELS | bs.CONSUMED_LABELS); self.assertNotIn(bs.GATE_LABEL, bs.RETIRED_LABELS | bs.CONSUMED_LABELS)
         self.assertEqual(T["delta2_F_shift"], 21)
-        self.assertEqual((T["task"]["version"], T["task"]["target_salt"], T["task"]["setup_observations_per_pair"]), ("task-v0.2", 0x54415247, 2))
-        self.assertEqual((T["gonogo"]["S"], T["gonogo"]["B_go"], T["gonogo"]["alpha_go"], T["gonogo"]["k9_conditional_medians_min"]), (32, 64, 0.20, 0.50))
+        self.assertEqual((T["task"]["version"], T["task"]["target_salt"], T["task"]["setup_observations_per_pair"]), ("task-v0.3", 0x54415247, 2))
+        self.assertEqual((T["gonogo"]["S"], T["gonogo"]["B_go"], T["gonogo"]["p_max_go"], T["gonogo"]["k9_conditional_medians_min"]), (32, 64, 0.20, 0.50))
+        self.assertNotIn("alpha_go", T["gonogo"], "the p threshold is a cost threshold, not an alpha (the owner's ruling of 2026-10-27)"); self.assertIn("not the alpha", T["gonogo"]["p_max_go_standing"])
+        self.assertIn("b4-sim-5", T["gonogo"]["applies_to"]); self.assertIn("b4-sim-4", T["gonogo"]["applies_to"])
+        # task-v0.3 (section 7.2): the slice-wide stimulus rule of the table is the generator's
+        self.assertEqual((bl.CE_HIGH_ONE_IN, bl.SR_HIGH_ONE_IN, bl.BROADCAST), (2, 4, {0: 0x00, 1: 0xFF}))
+        self.assertIn("1/2", T["task"]["stimulus"]["ce"]); self.assertIn("1/4", T["task"]["stimulus"]["sr"]); self.assertEqual(T["task"]["stimulus"]["draw_order"], "ce, sr, d")
+        self.assertEqual((T["task"]["stimulus"]["K"], T["task"]["stimulus"]["level_steps"]), ({"search": bl.K_DEFAULT, "holdout": bl.K_HOLDOUT}, bl.LEVEL_STEPS))
+        self.assertIn("task-v0.2", T["task"]["stimulus"]["previous"]); self.assertEqual(bl.PREVIOUS_TASK_VERSION, "task-v0.2")
         self.assertEqual(T["K9"]["judged_estimand"], "conditional_sr_driven")
-        import b4_landscape as bl
         self.assertEqual((bl.TASK_VERSION, bl.SALT_TARGET), (T["task"]["version"], T["task"]["target_salt"]), "the generator's constants are the table's")
 
     def test_the_document_version_is_informational_outside_the_table_and_outside_the_method_digest(self):

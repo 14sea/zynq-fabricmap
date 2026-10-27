@@ -89,3 +89,27 @@ refuse them **by name** at their first step — "the archive carries no protocol
 (its thresholds source … (v0.1.16) …, HEAD …) — re-verify it with its own tool at its recorded HEAD" — and write nothing; a v0.2.0 archive
 whose identity differs from the verifier's is refused the same way, the differing components listed. Both named archives are therefore
 re-verified by this page with the v0.1.16 tool at their archive commits, never by the v0.2.0 tool.
+
+## 6. The third named archive — `b4-sim-4` (protocol v0.2.0), under protocol v0.3.0 (2026-10-27)
+
+The task-v0.3 revision (`docs/b4_architecture.md` v0.3.0, §7.2) changes the task's stimulus rule, which is a component of the protocol
+identity (§9.5): every v0.3.0 verifier, judge and policy therefore refuses the `b4-sim-4` archive **by name** — "the archive's protocol
+identity is not this tool's: task: …" with the differing components listed — and writes nothing. The archive is re-verified by this page's
+procedure (§3) **with its own tool at its recorded HEAD**, exactly as the two v0.1.16 archives are; nothing of it is re-judged, corrected
+or compared under v0.3.0, and its no-go of record stands.
+
+| | `b4-sim-4` (exploration, S = 32, protocol v0.2.0) |
+|---|---|
+| archive directories | `evidence/b4/sim/b4-sim-4_20261021T065339Z/` (the batch) and `evidence/b4/gonogo/b4-sim-4_20261021T065857Z/` (the go / no-go decision record) |
+| **code HEAD** (the manifest's `head`; the tree the batch ran on) | `495cc360c97aba58bda959a2e867e6b43dbf4f7f` (the v0.2.0 tool unit `21db2de` plus the documents-only closure `34c607f` and the execution plan `495cc36`; the tool files byte-identical to `21db2de`) |
+| **archive commits** | `580c0e5` (the batch, parent `495cc36`), `adce027` (the decision record, parent `580c0e5`); the unit record `196b358` / `5b8aabc` / `fceedd6` after them |
+| the tool files in the manifest | 28 (`tool_files`: the 27 host modules and the schema) |
+| repository inputs / external inputs | 45 / 6 (the same external UNISIM sources as section 1) |
+| the registry **at the start** (`exclusion.registry_snapshot`) | exactly two entries: `b4-gate-1_20261020T102526Z` and `b4-sim-3_20261019T121833Z` |
+| the registry **at the archive commit** | the snapshot **plus this batch** |
+| pooled exclusion at the start / after | 2 625 / 2 690 |
+| the protocol identity recorded | `protocol_sha256` `2f096d4a…` (the v0.2.0 method; the v0.3.0 tool's differs in the `task` component and in every module whose bytes moved) |
+| the verifiers of that version | `b4/host/b4_sim_verify.py` and `b4/host/b4_gonogo.py verify` at the code HEAD (a worktree at `495cc36`, the archive copied in as §3 describes; the gonogo verifier needs the batch directory beside it) |
+
+The counts are the recorded values of that manifest, read on 2026-10-27. The v0.3.0 tool's refusal names the differing identity
+components and points here; the pointer is the whole of what the newer tool does with this archive.

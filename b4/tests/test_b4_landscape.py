@@ -1,4 +1,7 @@
-"""b4/host/b4_landscape.py — the public task, task-v0.2 (docs/b4_architecture.md section 7.1; the owner's rulings of 2026-10-20):
+"""b4/host/b4_landscape.py — the public task, task-v0.3 (docs/b4_architecture.md section 7.2; the owner's ruling of 2026-10-27 on the
+slice-wide CE / SR stimulus: one control value per set step, CE high with probability 1/2, SR with 1/4, independent, each broadcast as
+0xFF / 0x00; d per element; the shape held by `stimulus_findings`; the carrier's STEP_IN mapping and `realisable` never refusing it) and,
+unchanged from task-v0.2 (section 7.1; the owner's rulings of 2026-10-20):
 the public parts from the landscape seed alone (the module imports neither the mapping nor the hypothesis), deterministic; the
 PLANTED flip-flop configuration by the fixed rule — the storage_kind bit 0, the other 20 bits drawn ONCE, the all-zero base
 included, nothing redrawn; the targets read from a planted trace (a None cell is a TargetRefusal, never a narrowed mask); the
@@ -121,6 +124,102 @@ class TheGenerator(unittest.TestCase):
             bl.make_task(ADDR, parts, t.target, t.holdout_target, "zz")
         with self.assertRaises(ValueError):
             bl.make_task(ADDR, parts, tuple([2] * len(t.target)), t.holdout_target, "a" * 64)
+
+
+class TheSliceWideStimulus(unittest.TestCase):
+    """task-v0.3 (section 7.2): the shape, the two probabilities by hand from the generator's own draws, the independence of the two
+    draws, d per element, the validator, the carrier mapping. No value of any production label is derived (exposed seeds only)."""
+    SEEDS = (3, 5, 7, 8, 11, 12, 13)                                 # already-exposed values (section 9.2); nothing production-like
+
+    def test_every_set_step_is_a_broadcast_and_d_is_per_element(self):
+        seen_d_non_broadcast = False
+        for seed in self.SEEDS:
+            parts = bl.public_parts(seed)
+            for name in ("stimulus", "holdout_stimulus"):
+                self.assertEqual(bl.stimulus_findings(parts[name]), [], (seed, name))
+                for s in parts[name][1:]:
+                    self.assertIn(s["ce"], (0x00, 0xFF)); self.assertIn(s["sr"], (0x00, 0xFF)); self.assertEqual(type(s["ce"]), int); self.assertEqual(type(s["sr"]), int)
+                    self.assertEqual(bl.slice_wide_controls(s), (1 if s["ce"] == 0xFF else 0, 1 if s["sr"] == 0xFF else 0))
+                    seen_d_non_broadcast = seen_d_non_broadcast or s["d"] not in (0x00, 0xFF)
+        self.assertTrue(seen_d_non_broadcast, "d stays a per-element draw: not every d is a broadcast")
+        self.assertEqual(bl.TASK_VERSION, "task-v0.3"); self.assertEqual(bl.PREVIOUS_TASK_VERSION, "task-v0.2")
+        self.assertEqual((bl.CE_HIGH_ONE_IN, bl.SR_HIGH_ONE_IN, bl.BROADCAST), (2, 4, {0: 0x00, 1: 0xFF}))
+        self.assertEqual((bl.broadcast(0), bl.broadcast(1)), (0x00, 0xFF))
+        for bad in (2, -1, True, "1"):
+            with self.assertRaises(ValueError):
+                bl.broadcast(bad)
+        self.assertTrue(bl.is_broadcast(0) and bl.is_broadcast(255)); self.assertFalse(bl.is_broadcast(0x80) or bl.is_broadcast(True) or bl.is_broadcast(255.0))
+
+    def test_the_two_probabilities_and_the_draw_order_by_hand(self):
+        """The same generator stream, replayed by hand: per set step ce = [uniform(2) == 0], then sr = [uniform(4) == 0], then d = uniform(256);
+        a step's ce / sr equal the broadcast of those draws. The rates over the exposed seeds are near 1/2 and 1/4 (a sanity bound, not a
+        statistic): the rule is the draw, not the rate."""
+        hi_ce = hi_sr = n = 0
+        for seed in self.SEEDS:
+            rng = Rng(seed)
+            parts = bl.public_parts(seed)
+            for s in parts["stimulus"][1:]:
+                ce = 1 if rng.uniform(2) == 0 else 0
+                sr = 1 if rng.uniform(4) == 0 else 0
+                d = rng.uniform(256)
+                self.assertEqual((s["ce"], s["sr"], s["d"]), (bl.broadcast(ce), bl.broadcast(sr), d), seed)
+                hi_ce += ce; hi_sr += sr; n += 1
+            hrng = Rng(seed ^ bl.HOLDOUT_SALT)
+            for s in parts["holdout_stimulus"][1:]:
+                ce = 1 if hrng.uniform(2) == 0 else 0
+                sr = 1 if hrng.uniform(4) == 0 else 0
+                d = hrng.uniform(256)
+                self.assertEqual((s["ce"], s["sr"], s["d"]), (bl.broadcast(ce), bl.broadcast(sr), d), seed)
+                hi_ce += ce; hi_sr += sr; n += 1
+        self.assertEqual(n, len(self.SEEDS) * (bl.K_DEFAULT + bl.K_HOLDOUT + 2 * bl.LEVEL_STEPS))
+        self.assertTrue(0.3 < hi_ce / n < 0.7, hi_ce / n); self.assertTrue(0.1 < hi_sr / n < 0.45, hi_sr / n)
+        # the two draws are independent draws of one stream: swapping the order would change the step (the rule fixes ce, sr, d)
+        rng = Rng(7); sr_first = 1 if rng.uniform(4) == 0 else 0; ce_second = 1 if rng.uniform(2) == 0 else 0
+        s1 = bl.public_parts(7)["stimulus"][1]
+        self.assertTrue((s1["ce"], s1["sr"]) != (bl.broadcast(ce_second), bl.broadcast(sr_first)) or (s1["ce"] == s1["sr"]), "the draw order is part of the rule")
+
+    def test_the_validator_names_a_per_element_vector_and_every_other_shape_defect(self):
+        parts = bl.public_parts(7)
+        self.assertEqual(bl.stimulus_findings(parts["stimulus"]), [])
+        bad = [dict(s) for s in parts["stimulus"]]; bad[2]["ce"] = 0x80
+        f = bl.stimulus_findings(bad); self.assertEqual(len(f), 1); self.assertIn("step 2: ce = 128", f[0]); self.assertIn("broadcast", f[0])
+        bad = [dict(s) for s in parts["stimulus"]]; bad[3]["sr"] = 0x01
+        self.assertTrue(any("step 3: sr = 1" in x for x in bl.stimulus_findings(bad)))
+        bad = [dict(s) for s in parts["stimulus"]]; bad[1]["ce"] = True
+        self.assertTrue(bl.stimulus_findings(bad), "a bool is not the int 0 / 1 broadcast")
+        bad = [dict(s) for s in parts["stimulus"]]; bad[1]["d"] = 256
+        self.assertTrue(any("d 256" in x for x in bl.stimulus_findings(bad)))
+        bad = [dict(s) for s in parts["stimulus"]]; bad[0] = {"kind": "set", "clock": 0, "ce": 0, "sr": 0, "d": 0}
+        self.assertTrue(any("step 0" in x for x in bl.stimulus_findings(bad)))
+        bad = [dict(s) for s in parts["stimulus"]]; bad.insert(4, {"kind": "init"})
+        self.assertTrue(any("step 4" in x and "init" in x for x in bl.stimulus_findings(bad)))
+        bad = [dict(s) for s in parts["stimulus"]]; bad[5]["clock"] = 2
+        self.assertTrue(any("clock 2" in x for x in bl.stimulus_findings(bad)))
+        bad = [dict(s) for s in parts["stimulus"]]; bad[5]["extra"] = 1
+        self.assertTrue(any("keys" in x for x in bl.stimulus_findings(bad)))
+        self.assertTrue(bl.stimulus_findings([])); self.assertTrue(bl.stimulus_findings("x")); self.assertTrue(bl.stimulus_findings([{"kind": "init"}, 3]))
+        with self.assertRaises(ValueError):
+            bl.slice_wide_controls({"kind": "set", "clock": 0, "ce": 0x80, "sr": 0, "d": 0})
+        with self.assertRaises(ValueError):
+            bl.slice_wide_controls({"kind": "init"})
+        # the task-v0.2 shape (per-element ce, sparse sr) is NOT a task-v0.3 stimulus: the validator refuses it
+        rng = Rng(7); old = [{"kind": "init"}] + [{"kind": "set", "clock": c, "ce": rng.uniform(256), "sr": sum(1 << i for i in range(8) if rng.uniform(4) == 0), "d": rng.uniform(256)} for c in (1, 0, 1, 0, 1, 0, 0, 0)]
+        self.assertTrue(bl.stimulus_findings(old), "the previous task's shape is refused by name")
+
+    def test_the_common_grammar_and_the_carrier_mapping(self):
+        """The model accepts every task-v0.3 step as handed (the 8-bit grammar is the common one); the carrier's STEP_IN word packs it and
+        `realisable` is an invariant task-v0.3 never violates (host/b4carrier_regmap, read-only: the carrier unit is accepted and unchanged)."""
+        sys.path.insert(0, str(R / "host"))
+        import b4carrier_regmap as rm
+        for seed in self.SEEDS:
+            parts = bl.public_parts(seed)
+            for name in ("stimulus", "holdout_stimulus"):
+                for s in parts[name][1:]:
+                    fm.validate_step(s)
+                    self.assertTrue(rm.realisable(s["ce"], s["sr"]), "task-v0.3 never produces a vector the carrier refuses")
+                    w = rm.step_word(s["d"], s["ce"], s["sr"], s["clock"])
+                    self.assertEqual(rm.decode_applied(w), {"d": s["d"], "ce": s["ce"], "sr": s["sr"], "clock": s["clock"]}, "the word round-trips the step unchanged")
+        self.assertFalse(rm.realisable(0x80, 0x00)); self.assertFalse(rm.realisable(0x00, 0x01))
 
 
 class TheScoring(unittest.TestCase):

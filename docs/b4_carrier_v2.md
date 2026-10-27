@@ -233,7 +233,9 @@ the bench's fabric has none (the record tests show that refusal).
 ## 8. Unresolved — named
 
 1. **The per-element `ce` / `sr` of task-v0.2 and of the model** against one CE / SR pin per slice (section 0): an owner decision
-   on the protocol; the carrier refuses what it cannot apply.
+   on the protocol; the carrier refuses what it cannot apply. *Taken up (2026-10-27): the owner's ruling opened the task-v0.3 revision
+   unit — the task produces one slice-wide CE / SR value per step, broadcast in the same 8-bit grammar (`docs/b4_architecture.md` §7.2);
+   this carrier, its register map and its records are unchanged, and the realisability refusal stays as an invariant the task never hits.*
 2. **A8** and the GSR pulse width on silicon (section 2).
 3. **The firmware** (the executing-side program of the register sequence; `host/b4carrier_regmap.py` is its table) and the
    integration of links 1–3 (the archived PCAP write / readback path) and of the session-opening readback with the carrier's

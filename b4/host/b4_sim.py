@@ -5,7 +5,11 @@ up each pair's task-v0.2 target (the planted configuration observed through the 
 per pair on the FORMAL model, audits every run, computes K7 / K9 / K10's data and the descriptive statistics, and archives
 everything typed — values beside the fixed thresholds, NEVER a gate verdict.
 
-    b4_sim.py --label b4-sim-4 --seeds 32 --deadline-s 3600 [--out evidence/b4/sim/<label>_<UTC>]   # b4-sim-1 / b4-sim-2 retired; b4-sim-3 / b4-gate-1 consumed
+    b4_sim.py --label b4-sim-5 --seeds 32 --deadline-s 3600 [--out evidence/b4/sim/<label>_<UTC>]   # b4-sim-1 / b4-sim-2 retired; b4-sim-3 / b4-gate-1 / b4-sim-4 consumed
+
+TASK-V0.3 (section 7.2; the owner's ruling of 2026-10-27): the stimulus the generator writes is slice-wide — one CE and one SR value
+per set step, broadcast over the eight elements — and every task record is held to that shape (b4_landscape.stimulus_findings) by the
+validators and the offline reconstruction. The setup, the planted target (T-i) and the PublicTask boundary (H) are task-v0.2's:
 
 TASK-V0.2 (section 7.1; the owner's choices 1-3 and the target-setup contract). Per pair, BEFORE any arm: task_setup.json (the
 private record — the seeds, the planted flip-flop genome g* by the fixed rule, the stimulus digests — persisted before the first
@@ -114,9 +118,9 @@ PROBES = th.PROBES
 EXPECTED_COST = {role: {"base": 1, "probes": PROBES if role == "F" else 0, "search": B_MAX, "holdout": 1} for role in ROLES}
 SETUP_ROLE = "TARGET"                                                # the port role of the per-pair target setup (two calls, shared by the seven arms)
 STANDING = ("exploration data under the label given, S as planned; not a gate verdict; the thresholds of docs/b4_architecture.md "
-            "section 9 (protocol v0.2.0: task-v0.2, K9 (b') judged) are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's")
-# (the text every archived v0.2.0 exploration carries in its summary; the archive-wide verifier recomputes the summary with it. The
-# v0.1.x explorations carried their own text and are verified by their own tool at their recorded HEAD — docs/b4_archive_reverification.md)
+            "section 9 (protocol v0.3.0: task-v0.3 slice-wide stimulus, K9 (b') judged) are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's")
+# (the text every archived v0.3.0 exploration carries in its summary; the archive-wide verifier recomputes the summary with it. The
+# v0.1.x and v0.2.0 explorations carried their own text and are verified by their own tool at their recorded HEAD — docs/b4_archive_reverification.md)
 STANDING_GATE = ("the batch of the formal gate under the label given, S as planned; values beside the thresholds of docs/b4_architecture.md section 9 "
                  "and not a gate verdict here: the verdict is b4_gate.py's, written in a gate directory under evidence/b4/gate/ and bound to this "
                  "archive by digest (unit 2b-4); candidate B* / N are the budget rule's on this batch")
@@ -848,6 +852,8 @@ def manifest_constants() -> dict:
     """The constants a manifest records; the verifier binds a manifest to exactly these (R2)."""
     return {"engine": {"version": be.ENGINE_VERSION, "mu": be.MU, "lambda": be.LAMBDA, "kmax": be.KMAX}, "cartographer": bc.CARTO_VERSION,
             "task": bl.TASK_VERSION, "target": {"rule": bl.PLANTED_RULE, "salt": bl.SALT_TARGET, "setup_cost": bt.SETUP_COST, "setup_role": SETUP_ROLE},
+            "stimulus": {"rule": bl.STIMULUS_RULE, "ce_high_one_in": bl.CE_HIGH_ONE_IN, "sr_high_one_in": bl.SR_HIGH_ONE_IN, "broadcast": {str(k): v for k, v in bl.BROADCAST.items()},
+                         "model_input_contract": bl.MODEL_INPUT_CONTRACT},
             "probes_per_F": PROBES, "expected_cost": EXPECTED_COST, "k9_panel": k9.PANEL_VERSION,
             "k9_applicability": {"all_panel": k9.APPLICABILITY_ALL_PANEL, "conditional": k9.APPLICABILITY_CONDITIONAL, "judged": k9.JUDGED_ESTIMAND},
             "k10_salt": k10.SALT, "tau": k10.TAU, "gonogo": th.THRESHOLDS["gonogo"],
@@ -1078,7 +1084,7 @@ def run_batch(root: Path, label: str, count: int, deadline_s: int, out: Path | N
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="B4 host-only exploration harness (values beside thresholds; no gate verdict). Running it needs the owner's authorisation. "
                                              "Production labels only: a mechanics fixture batch has no CLI.")
-    ap.add_argument("--label", required=True, help="b4-sim-<n> (b4-sim-1 / b4-sim-2 retired, b4-sim-3 / b4-gate-1 consumed; the next exploration label is b4-sim-4)")
+    ap.add_argument("--label", required=True, help="b4-sim-<n> (b4-sim-1 / b4-sim-2 retired, b4-sim-3 / b4-gate-1 / b4-sim-4 consumed; the next exploration label is b4-sim-5)")
     ap.add_argument("--seeds", required=True, type=int, help="S, the number of pairs planned")
     ap.add_argument("--deadline-s", required=True, type=int, help="the soft monotonic deadline in seconds, from the pre-flight on (no default)")
     ap.add_argument("--out", default=None, help=f"the output directory, directly under {SIM_REL}/ and named <label>_…; default <label>_<UTC>")

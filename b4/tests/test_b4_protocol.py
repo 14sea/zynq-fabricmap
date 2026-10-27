@@ -47,8 +47,14 @@ class TheIdentity(unittest.TestCase):
         for name in ("b4_sim_manifest", "b4_sim_report", "b4_gate_report", "b4_sim_k9", "b4_sim_task", "b4_gonogo_decision", "b4_protocol_identity"):
             self.assertIn(name, p["schemas"]); self.assertEqual(set(p["schemas"][name]), {"version", "validator", "validator_sha256"})
         self.assertEqual(set(p["statistics"]), {"bootstrap_reject_rate", "cohen_d", "mean", "median", "percentile", "required_pairs", "sign_test_p"})
-        self.assertEqual(p["labels"], {"gate": "b4-gate-2", "exploration": "b4-sim-4", "retired": ["b4-sim-1", "b4-sim-2"], "consumed": ["b4-gate-1", "b4-sim-3"]})
-        self.assertEqual((p["task"]["version"], p["task"]["salt"], p["k9"]["judged"], p["k10"]["tau"]), ("task-v0.2", 0x54415247, "conditional_sr_driven", 2))
+        self.assertEqual(p["labels"], {"gate": "b4-gate-2", "exploration": "b4-sim-5", "retired": ["b4-sim-1", "b4-sim-2"], "consumed": ["b4-gate-1", "b4-sim-3", "b4-sim-4"]})
+        self.assertEqual((p["task"]["version"], p["task"]["salt"], p["k9"]["judged"], p["k10"]["tau"]), ("task-v0.3", 0x54415247, "conditional_sr_driven", 2))
+        # task-v0.3: the stimulus rule is a component of the method's identity (section 9.5): its constants and its text move the digest
+        self.assertEqual((p["task"]["ce_high_one_in"], p["task"]["sr_high_one_in"], p["task"]["broadcast"]), (2, 4, {"0": 0, "1": 255}))
+        self.assertIn("1/2", p["task"]["stimulus_rule"]); self.assertIn("1/4", p["task"]["stimulus_rule"])
+        for key, val in (("sr_high_one_in", 2), ("ce_high_one_in", 4), ("stimulus_rule", "another rule"), ("broadcast", {"0": 0, "1": 128})):
+            q = copy.deepcopy(p); q["task"][key] = val
+            self.assertNotEqual(bp.protocol_sha256(q), sha, key); self.assertIn("task: " + key, bp.compare(q, p)[0])
         inv = p["inventory"]
         self.assertTrue(all(rel.startswith("b4/host/") or rel.startswith("b4/schemas/") for rel in inv)); self.assertIn("b4/host/b4_protocol.py", inv)
         self.assertNotIn(sha, json.dumps(p), "no self-reference: the payload never carries its own digest")
@@ -130,7 +136,7 @@ class TheIdentity(unittest.TestCase):
             shutil.copytree(R / "b4", root / "b4", ignore=shutil.ignore_patterns("__pycache__")); (root / "docs").mkdir(); shutil.copy(R / th.ARCHITECTURE_REL, root / th.ARCHITECTURE_REL)
             code, a = cli(root); self.assertEqual(code, 0, a); self.assertEqual((a["protocol_sha256"], a["architecture_revision"]), (bp.protocol_sha256(self.p), th.ARCHITECTURE_REVISION))
             f = root / th.ARCHITECTURE_REVISION_REL; doc = json.loads(f.read_text()); doc["revision"] = "v0.2.1"; f.write_text(json.dumps(doc, indent=1) + "\n"); refresh(root, th.ARCHITECTURE_REVISION_REL)
-            d = root / th.ARCHITECTURE_REL; lines = d.read_text().split("\n"); self.assertIn("(DRAFT v0.2.0,", lines[0]); lines[0] = lines[0].replace("(DRAFT v0.2.0,", "(DRAFT v0.2.1,"); d.write_text("\n".join(lines))
+            d = root / th.ARCHITECTURE_REL; lines = d.read_text().split("\n"); self.assertIn("(DRAFT v0.3.0,", lines[0]); lines[0] = lines[0].replace("(DRAFT v0.3.0,", "(DRAFT v0.2.1,"); d.write_text("\n".join(lines))
             code, b = cli(root); self.assertEqual(code, 0, b)
             self.assertEqual((b["protocol_sha256"], b["architecture_revision"]), (a["protocol_sha256"], "v0.2.1"), "a documentation-only revision: the method's digest does not move")
             pins = subprocess.run([sys.executable, "-B", "-m", "unittest", "b4.tests.test_b4_thresholds"], cwd=root, capture_output=True, text=True)

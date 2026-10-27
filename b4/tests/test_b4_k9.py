@@ -146,7 +146,11 @@ class TheComputation(Base):
                 self.assertIsNone(p["covered"]); self.assertEqual(p["differences"], [])
         identical = [p for p in r["pairs"] if p["applicable"] and not p["covered"]]
         self.assertTrue(identical, "some applicable pair has identical traces under this stimulus")
-        self.assertIn(identical[0]["semantic"], [u["semantic"] for u in r["summary"]["uncovered_applicable_pairs"]], "it stays in the denominator and is listed")
+        unc_all = {(u["address"], u["g0"], u["g1"]) for u in r["summary"]["uncovered_applicable_pairs_all_panel"]}
+        unc_cond = {(u["address"], u["g0"], u["g1"]) for u in r["summary"]["uncovered_applicable_pairs"]}
+        for p in identical:
+            self.assertIn((p["address"], p["g0"], p["g1"]), unc_all, "it stays in the all-panel denominator and is listed there")
+            self.assertEqual((p["address"], p["g0"], p["g1"]) in unc_cond, bool(p["applicable_sr_driven"]), "and in the judged (b') list exactly when conditionally applicable")
         json.dumps(r, allow_nan=False)
         self.assertEqual(k9.recompute(r, self.task, self.fab), [])
 

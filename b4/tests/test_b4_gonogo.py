@@ -49,8 +49,9 @@ class ThePolicy(unittest.TestCase):
         d = gg.decide(report(s))
         self.assertEqual(d["decision"], "go", d["reason"]); self.assertTrue(d["formal"]); self.assertEqual(d["formal_reasons"], [])
         st1 = d["statistic_1"]
-        self.assertEqual((st1["budget"], st1["positives"], st1["negatives"], st1["ties"], st1["alpha_go"]), (64, 25, 4, 3, 0.20))
-        self.assertEqual(st1["sign_test_p"], s["per_budget"]["64"]["deltas"]["Omega_minus_R"]["sign_test_p"]); self.assertTrue(st1["positives_gt_negatives"] and st1["p_le_alpha_go"])
+        self.assertEqual((st1["budget"], st1["positives"], st1["negatives"], st1["ties"], st1["p_max_go"]), (64, 25, 4, 3, 0.20))
+        self.assertEqual(st1["sign_test_p"], s["per_budget"]["64"]["deltas"]["Omega_minus_R"]["sign_test_p"]); self.assertTrue(st1["positives_gt_negatives"] and st1["p_le_p_max_go"])
+        self.assertNotIn("alpha_go", st1); self.assertIn("not the alpha", st1["p_max_go_standing"]); self.assertIn("not an alpha", d["reason"])
         self.assertEqual(d["statistic_2"]["judged_estimand"], k9.JUDGED_ESTIMAND); self.assertTrue(d["statistic_2"]["all_ge_min"])
         self.assertEqual(set(d["omega_minus_R_by_budget"]), {str(B) for B in GRID}, "every budget's record carried; none picked afterwards")
         self.assertIn("not a gate result", d["reason"]); self.assertIn("not an authorisation", d["reason"])
@@ -60,7 +61,7 @@ class ThePolicy(unittest.TestCase):
         d = gg.decide(report(syn(om=(0.5, 14, 15, 3))))                                      # negatives ≥ positives
         self.assertEqual(d["decision"], "no-go"); self.assertIn("not more than negatives", d["reason"])
         d = gg.decide(report(syn(om=(0.5, 16, 13, 3))))                                      # 16 / 13: p = 0.3555 > 0.20
-        self.assertEqual(d["decision"], "no-go"); self.assertIn("> 0.2", d["reason"]); self.assertGreater(d["statistic_1"]["sign_test_p"], 0.20)
+        self.assertEqual(d["decision"], "no-go"); self.assertIn("> the cost threshold p_max_go 0.2", d["reason"]); self.assertGreater(d["statistic_1"]["sign_test_p"], 0.20)
         d = gg.decide(report(syn(om=(0.5, 18, 11, 3))))                                      # 18 / 11: p = 0.1325 ≤ 0.20
         self.assertEqual(d["decision"], "go", d["reason"])
         d = gg.decide(report(syn(k9_medians={"ff_srval": 0.49})))
@@ -131,7 +132,7 @@ class EndToEnd(unittest.TestCase):
         # tampers with the digests refreshed: the decision, the policy, the standing, the evidence path
         original = (out / gg.DECISION_JSON).read_bytes()
         try:
-            for mutate, part in ((lambda d: d.__setitem__("decision", "go"), "carries"), (lambda d: d["policy"].__setitem__("alpha_go", 0.5), "policy"),
+            for mutate, part in ((lambda d: d.__setitem__("decision", "go"), "carries"), (lambda d: d["policy"].__setitem__("p_max_go", 0.5), "policy"),
                                  (lambda d: d.__setitem__("standing", gg.STANDING_FORMAL), "standing"), (lambda d: d["batch"].__setitem__("sha256", "0" * 64), "does not hash"),
                                  (lambda d: d.__setitem__("precondition", {}), "precondition is not the one recomputed")):
                 d = json.loads(original); mutate(d)
@@ -199,10 +200,15 @@ class EndToEnd(unittest.TestCase):
         r = gg.write_decision(self.root, Path(self.tmp.name) / "nowhere"); self.assertEqual(r["status"], "refused")
         empty = self.ns / "b4-mech-1_empty"; empty.mkdir()
         r = gg.write_decision(self.root, empty); self.assertEqual(r["status"], "refused"); self.assertIn("no sim_report.json", r["reason"]); empty.rmdir()
-        # an archive without the protocol identity (the committed v0.1.16 exploration, read-only): refused by name before anything else
+        # an archive without the protocol identity (the committed v0.1.16 exploration, read-only): refused by name before anything else;
+        # an archive of ANOTHER identity (the committed v0.2.0 exploration b4-sim-4, read-only): refused by name, the differing components listed.
+        # The repository's own gonogo namespace holds the committed b4-sim-4 decision since 2026-10-21: its listing must be unchanged, not absent.
+        repo_gonogo = sorted(p.name for p in (R / gg.GONOGO_REL).iterdir()) if (R / gg.GONOGO_REL).exists() else []
         r = gg.write_decision(R, R / "evidence/b4/sim/b4-sim-3_20261019T121833Z")
         self.assertEqual(r["status"], "refused"); self.assertIn("no protocol identity", r["reason"]); self.assertIn("b4_archive_reverification", r["reason"])
-        self.assertFalse((R / gg.GONOGO_REL).exists(), "nothing was written to the repository")
+        r = gg.write_decision(R, R / "evidence/b4/sim/b4-sim-4_20261021T065339Z")
+        self.assertEqual(r["status"], "refused"); self.assertIn("not this tool's", r["reason"]); self.assertIn("task", r["reason"]); self.assertIn("b4_archive_reverification", r["reason"])
+        self.assertEqual(sorted(p.name for p in (R / gg.GONOGO_REL).iterdir()) if (R / gg.GONOGO_REL).exists() else [], repo_gonogo, "nothing was written to the repository")
         after = sorted(p.name for p in self.gns.iterdir()) if self.gns.exists() else []
         self.assertEqual(before, after)
         self.assertFalse(git(self.root, "status", "--porcelain").strip())

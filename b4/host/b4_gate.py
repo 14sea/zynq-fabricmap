@@ -11,7 +11,8 @@ evidence/b4/gate/, bound to the batch archive by digest.
 NOTHING IS AUTHORISED BY THIS FILE. The production run derives the gate's master and pairs (section 9.2, the pinned gate label
 of protocol v0.2.0, b4-gate-2; b4-gate-1 is consumed by its records) — that derivation needs its own execution ruling. The CLI
 has no fixture path, no allow-dirty, no other S than the planned 200 and no label but the pinned gate label of section 9.2.
-PROTOCOL v0.2.0 (the owner's rulings of 2026-10-20): K9's judged row is (b') — the conditional coverage under SR-driven backgrounds
+PROTOCOL v0.2.0 (the owner's rulings of 2026-10-20), carried unchanged into v0.3.0 (the owner's ruling of 2026-10-27: the task-v0.3
+slice-wide stimulus; the panel, both applicabilities and every number unchanged): K9's judged row is (b') — the conditional coverage under SR-driven backgrounds
 — with the all-panel (b) reported beside it; the judgement carries the protocol identity's digest (section 9.5) and a batch archive of
 another method version, or one without an identity, is refused by name and never judged.
 
@@ -610,7 +611,7 @@ def judge(doc: dict, evidence_kind: str = "batch_archive") -> dict:
         "K7": "(a) zero recomputation mismatches on every arm's own ledger (the completion contract: each audit's recompute findings empty, re-audited by the archive-wide verifier); (b) median_r over seeds of the addresses whose state is not unknown in arm O's B* prefix >= 11 of 21",
         "K8": "the replay of every executed run reports no finding, the recorded q grid recomputes the recorded fitness, X's shadow isomorphism and the source-identity / fixture boundary hold (the completion contract; a break is invalid under 9.1)",
         "K9": ("on the fixed comparison set of 9.3: (a) >= 90 % of all S seeds have, for each of the seven semantics, an applicable pair whose readouts differ (the all-panel record); "
-               "(b') JUDGED (protocol v0.2.0): per semantic, the median over all S seeds of the CONDITIONAL coverage fraction >= 0.50 — applicable_conditional = applicable_all_panel AND "
+               "(b') JUDGED (protocol v0.2.0, unchanged in v0.3.0): per semantic, the median over all S seeds of the CONDITIONAL coverage fraction >= 0.50 — applicable_conditional = applicable_all_panel AND "
                "sr_mode = driven at both endpoints for ff_srval and sr_kind, the five other semantics as the all-panel rule, the latch / x5FF exclusions kept (a semantic not assessable "
                "for one seed has no median and does not meet (b')); (b) the all-panel coverage of clauses 4-5 is recomputed from the same retained raw grids and reported beside (b') "
                "as a description, not judged"),

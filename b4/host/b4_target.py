@@ -238,6 +238,10 @@ def setup_findings(plan_doc: dict, rec_search: dict | None, rec_holdout: dict | 
         if plan_doc.get("rule", {}).get("storage_kind_bit") != bit or plan_doc.get("rule", {}).get("salt") != bl.SALT_TARGET or plan_doc.get("rule", {}).get("n_bits") != n:
             f.append("task_setup.rule: not the fixed rule")
         parts = bl.public_parts(plan_doc["landscape_seed"])
+        for name in ("stimulus", "holdout_stimulus"):             # task-v0.3: the generator's output held to the slice-wide shape (section 7.2)
+            sf = bl.stimulus_findings(parts[name])
+            if sf:
+                f.append(f"task_setup: the public {name} is not a {bl.TASK_VERSION} stimulus: " + "; ".join(sf[:3]))
         for rec, phase, stim in ((rec_search, "target", parts["stimulus"]), (rec_holdout, "target_holdout", parts["holdout_stimulus"])):
             if rec is None:
                 continue

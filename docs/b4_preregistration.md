@@ -1,4 +1,11 @@
-# B4-FF — the flip-flop configuration-bit class on the board: preregistration (DRAFT v0.0.3 — a SKELETON, host-only, 2026-10-19; pointer revision 2026-10-21)
+# B4-FF — the flip-flop configuration-bit class on the board: preregistration (DRAFT v0.0.4 — a SKELETON, host-only, 2026-10-19; pointer revisions 2026-10-21, 2026-10-27)
+
+> **v0.0.3 → v0.0.4 (2026-10-27, the task-v0.3 revision unit; a pointer, nothing resolved):** the task the board study would run is
+> task-v0.3 (`docs/b4_architecture.md` §7.2 — one slice-wide CE / SR value per step, broadcast; the planted target and the executing
+> side's input as task-v0.2), the observation contract is `docs/b4_observation_contract.md` v0.6 (2.2 revised for it), the next
+> exploration label is `b4-sim-5` (reserved, nothing derived) and the go / no-go row of §9.4 (v0.3.0) names its p threshold `p_max_go`.
+> Every `<unresolved>` of this skeleton stays unresolved; no N, B*, seed, prediction, session partition, rate or board execution is
+> supplied; nothing here is frozen.
 
 > **v0.0.2 → v0.0.3 (2026-10-21, the 2c-obs unit; a pointer, nothing resolved):** the observation contract that sections 5, 6 and 8 of this skeleton leave to 2c now exists as a DRAFT — `docs/b4_observation_contract.md` v0.5 (v0.1 held by the owner on `e91650b`, R1–R3; v0.2 held on `d8ef6cf`, C1–C4; v0.3 held on `df3b65e`, R1–R4; v0.4 held on `6927c24`, two P2; v0.5 **accepted as a document contract** by the owner's PASS on `4fc3dc7`, 2026-10-21; all corrected in the same unit: the stimulus, the raw readout as a logical view built from each source's raw wire format through a declared adapter, the three records per transaction with their immutability points, the one-initialisation transaction with its cleanup, session-opening record, session root and witnesses, A5 as a decision table with a qualification-only injection protocol, INIT / SRVAL observed separately with the same-element A8 cross, the two-episode SR-restore evidence and a precedence-ordered outcome table, A8 unresolved, the positive-control rule as a revision proposal of choice 7 with its nine pairs and the data influence disclosed, the two holdouts, the bench / board acceptance lists). **Every `<unresolved>` of this skeleton stays unresolved**: the contract fixes no N, `B*`, prediction, session, seed, holdout instance or initialisation mechanism, and this skeleton is not frozen by it. Sections 5, 6 and 8 carry a one-line pointer each; nothing else changed.
 

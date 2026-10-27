@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.2.0, host-only, 2026-10-16; revised 2026-10-20)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.3.0, host-only, 2026-10-16; revised 2026-10-20, 2026-10-27)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -226,6 +226,62 @@
 > bound by the verifier. It makes the known and reconstructable exposure EXCLUDED; it does not make the historical
 > exposure record complete — the raw evidence of the deleted runs is lost and is not recreated, and uncommitted
 > development versions of the tests that ran before `edfc93c` are outside the reconstructed envelope.
+
+> **Revision v0.3.0 (2026-10-27, the task-v0.3 revision unit after the carrier v2 finding; a protocol revision of the task's stimulus
+> rule and of the records that hold it, written on the branch `b4-task-v03` from the carrier v2 closure `e084f07` under the owner's
+> ruling of 2026-10-27 — "a complete host-only revision engineering unit, delivered for review once"; mechanics fixtures only; no
+> production label derived, no exploration, no gate; the model's state machine, the hypothesis file, the certificate, the operator, the
+> engine, the cartographer, every K1–K10 number, the go / no-go policy's numbers, the statistics copies, the K9 panel and both
+> applicabilities, K10, the anchor formula and every archive, receipt, seed and verdict UNCHANGED):**
+>
+> - **The reason, and what it is not.** The carrier v2 unit (`docs/b4_carrier_v2.md` §0, accepted on `bf17574`) found that a 7-series
+>   slice has **one CE pin, one SR pin and one CLK pin shared by its eight storage elements** (AMD UG474: the site's `CEUSEDVCC` /
+>   `SRUSEDGND`, one each). task-v0.2's stimulus drew `ce` uniformly over 256 values and `sr` per element with probability 1/4, so
+>   almost every step is **not realisable** on the site (the carrier refuses it by name, `F_NOT_REALISABLE`). task-v0.3 makes the
+>   stimulus fit the physical slice — **that is its reason** — and not an attempt to improve the three negative Ω − R records
+>   (`b4-sim-3`, `b4-gate-1`, `b4-sim-4`), which stand as they are and are not re-interpreted; §9.4 of v0.2.0 permits new research
+>   with its own reason and ruling, and this is one. Nothing in v0.3.0 predicts a map benefit: the new stimulus may change K9's
+>   coverage and the search's behaviour, and both are to be **measured again** under a new label, never carried over.
+> - **§7.2 — task-v0.3, the slice-wide control stimulus.** Per `set` step the generator draws **one** CE value (high with probability
+>   **1/2**) and **one** SR value (high with probability **1/4**), the two draws independent, and **broadcasts** each over the eight
+>   elements in the common 8-bit grammar (`0xFF` / `0x00`); `d` stays a per-element uniform 8-bit draw; the draw order is `ce`, `sr`,
+>   `d`; K = 6 / 8, the two level steps, the mask, the weights, the ceilings 64 / 80 and the planted target (T-i) and the executing
+>   side's input (H) of §7.1 are unchanged. The shared control inputs do **not** merge the eight elements' INIT / SRVAL into one value:
+>   those sixteen bits stay per element. The 8-bit grammar is kept because it is the common grammar of the model, the observation
+>   contract (2.1) and the carrier's `STEP_IN` word; the model's per-element evaluation under a broadcast vector gives every element the
+>   same control value — the slice-wide semantics — so the model's state machine is **not** rewritten (held by a test against a
+>   slice-wide twin); the carrier's realisability refusal becomes an invariant the task never hits. The shape is **held, not assumed**:
+>   `b4_landscape.stimulus_findings` names any set step whose `ce` / `sr` is not a broadcast, and every task record is checked by its
+>   validator and by the offline reconstruction. The ceiling (64 / 80) is verified as the **count of scoring cells**; the planted
+>   configuration's reachability of that ceiling on its own trace is verified per pair (`b4_target.setup_findings`); the two are not
+>   the same statement, and a search's reaching it is not guaranteed.
+> - **K9 (§9, §9.3 clause 7).** The comparison set, the 64 backgrounds, the 1 184 forced pairs and **both** applicabilities (the
+>   all-panel (b) and the judged conditional (b′)) are unchanged; what changes is the stimulus under which the pairs are observed —
+>   K9 measures observability under the task's own stimulus, which is now slice-wide. Under a slice-wide SR every element sees the
+>   same SR level at the same step, so a per-address `ff_srval` / `sr_kind` coverage is **a different quantity** from the one measured
+>   under per-element SR patterns; the `b4-sim-4` K9 record (per-element SR) is not reinterpreted, not compared and not re-decided;
+>   the v0.3.0 coverage is to be measured by the next exploration. The data influence is disclosed in §7.2.
+> - **§9.2 — labels.** `b4-sim-4` is **consumed** by its archived records (S = 32, 2026-10-21; its 65 values in the registry and the
+>   pooled exclusion, 2 690 at this revision; `b4_seeds.CONSUMED_LABELS`). The next exploration label is **`b4-sim-5`** — a reserved
+>   name only, no value derived. `b4-gate-2` stays the reserved gate name: no value of it was ever derived under v0.2.0 (the
+>   exploration ended no-go), so the same label under this version reproduces nothing. The anchor formula is unchanged.
+> - **§9.4 — the go / no-go row of `b4-sim-5`.** The complete policy is carried unchanged: S = 32 all complete, B = 64, the one-sided
+>   exact sign test on Ω − R with positives > negatives and **p ≤ 0.20**, the seven judged conditional K9 medians ≥ 0.50, incomplete
+>   data → no decision. The p threshold is named for what it is — **`p_max_go`, an engineering cost threshold on the sign test's p,
+>   not the α of a formal scientific test** (the machine table's key is renamed from `alpha_go` to `p_max_go`; the number is the
+>   same); the execution plan cites the fixed rule and chooses nothing. `b4-sim-4`'s no-go of record is not re-decided.
+> - **§9.5 — the identity.** The task's stimulus rule (its constants and its text) is a component of the protocol identity; the
+>   v0.2.0 archive `b4-sim-4` (and its go / no-go record) is therefore of another method version and is refused by name by every
+>   v0.3.0 verifier, judge and policy, pointed to `docs/b4_archive_reverification.md` §6 (re-verify it with its own tool at its
+>   recorded HEAD `495cc36`). No verifier is a general version selector.
+> - **The observation contract** `docs/b4_observation_contract.md` is revised narrowly to **v0.6** (§2.2 the task-v0.3 shape with the
+>   broadcast stated as one control value per step; task-v0.2's shape kept as history; the common grammar and the carrier format
+>   unchanged; A1–A8, the transaction order, INIT / SRVAL, restore and sampling requirements unchanged). `docs/b4_preregistration.md`
+>   v0.0.4 points at it.
+> - **Unchanged, named.** `b4/hypothesis/ff_behaviour_v0.3.json` and its digest (hence the anchor); `b4_ff_model.py`; the certificate
+>   mapping; the engine, the cartographer, the controls, K10, the replay; every number of §9; the statistics copies; the exposure
+>   receipt; `b4-sim-3` / `b4-gate-1` / `b4-sim-4` and their verdicts; the carrier v2 RTL, register map and record layer (accepted on
+>   `bf17574`, this unit maps onto them and changes nothing there).
 
 > **Revision v0.2.0 (2026-10-20, the protocol revision after the production gate `b4-gate-1`; a DESIGN revision of the
 > documents, written on the branch `b4-protocol-v2` from `d19cc2f` under the owner's ruling of 2026-10-20 on the scope
@@ -915,6 +971,60 @@ the owner's rulings of 2026-10-20; the table of what drove which choice is
 `evidence/b4/unit_protocol_v2_design_2026_10_20/README.md` §4. None of that record validates this contract, and no number from it
 sets a threshold here.
 
+### 7.2 task-v0.3 — the slice-wide control stimulus (DRAFT v0.3.0; the owner's ruling of 2026-10-27; implemented by the task-v0.3 revision unit)
+
+**Standing.** task-v0.3 is task-v0.2 with **one change**: the stimulus rule, so that every step the task produces is realisable on the
+certified site, where the eight storage elements share **one CE pin, one SR pin and one CLK pin** (`docs/b4_carrier_v2.md` §0; AMD
+UG474). The planted target (T-i), the executing side's input (H), the setup and persistence, the failure records, the isolation, the
+cost, the replay, the non-triviality record and the two holdout axes of §7.1 apply **unchanged**. It is a revision made for a physical
+reason, not for a result: no record of `b4-sim-3`, `b4-gate-1` or `b4-sim-4` is corrected, compared or re-judged by it, and no map
+benefit is expected from it — K9's coverage and the search's behaviour under the new stimulus are to be measured, not assumed.
+
+**The stimulus rule (fixed before any draw; `b4_landscape.STIMULUS_RULE`).** Per `set` step, from the task's generator in this order:
+
+1. `ce` — **one slice-wide value**, CE high with probability **1/2** (`uniform(2) == 0`);
+2. `sr` — **one slice-wide value**, SR high with probability **1/4** (`uniform(4) == 0`), the draw independent of `ce`'s;
+3. `d` — `d` stays a per-element uniform 8-bit draw (every element has its own D input through its LUT).
+
+The draw order is `ce`, `sr`, `d`. Each control value is **broadcast** over the eight elements in the common 8-bit grammar —
+`0xFF` when high, `0x00` when low (`b4_landscape.broadcast`): the step's `ce` and `sr` fields carry the broadcast vector, which is the
+only form of those fields task-v0.3 ever produces. K = 6 search steps / 8 holdout steps, the two level steps, the mask (every readout
+cell after the init step), the weights (all 1), the holdout salt and the two level steps are task-v0.2's. The shared control pins do
+**not** merge the eight elements' INIT / SRVAL into one value: those sixteen per-element bits are drawn, planted and decoded exactly as
+before. The previous rule (task-v0.2: `ce` a per-element uniform 8-bit draw, `sr` each element with probability 1/4) is kept as
+history in the machine table (`task.stimulus.previous`) and in the observation contract 2.2; it is consumed by `b4-sim-4`.
+
+**The common grammar, the model's input contract and the carrier mapping.** The 8-bit `ce` / `sr` vectors are the common grammar of
+the model (`b4_ff_model.validate_step`: ints in 0..255), of the observation contract (2.1: "one bit per element") and of the
+carrier's `STEP_IN` word (`host/b4carrier_regmap.step_word`: `d` bits 7:0, `ce` 15:8, `sr` 23:16, `clock` 24). task-v0.3 changes none
+of them; it **produces only the two broadcast values**. Under a broadcast vector the model's per-element evaluation (`_ce_ok` /
+`_sr_active` reading bit *i*) gives every element the same control value — the slice-wide semantics — so the model's state machine
+is **not rewritten**; the unit holds this by a test that runs the formal model against a slice-wide twin (one control bit per step,
+through the model's own decode and flags) on sampled configurations of the whole domain and the task's own stimuli, and shows where
+the two part: a per-element vector, which the task no longer produces. The carrier applies a step only when `ce` and `sr` are each
+uniform (`realisable`): under task-v0.3 that refusal is an **invariant the task never hits**, kept in the carrier as accepted (the
+RTL, the register map and the record layer of `bf17574` are unchanged by this unit).
+
+**Held, not assumed.** `b4_landscape.stimulus_findings(stimulus)` names any set step whose `ce` / `sr` is not a broadcast (and every
+other shape defect: an init step anywhere but index 0, a clock outside 0 / 1, a `d` outside 0..255, a bool); the record validator of
+`task.json` (`b4_sim_schema.task_findings`) and the offline reconstruction (`b4_target.setup_findings`, on the public parts re-derived
+from the plan's seed) call it on both stimuli of every pair, so a task record of the previous shape, or any tampering toward it, is a
+finding — never a silent acceptance.
+
+**Ceiling and reachability, kept apart.** The ceiling is the **count of scoring cells** — 64 for the search stimulus, 80 for the
+holdout — verified from the mask the generator writes (every readout cell after the init step, weight 1). That the **planted
+configuration** reaches the ceiling on its own trace is verified **per pair** by the setup reconstruction (the target is that trace; a
+None cell refuses it under T-i); that a **search** reaches it, that the base is not already the target, and interaction are not
+guaranteed and are recorded (K1, the non-triviality record of §7.1), never arranged by choosing seeds. A contradiction between the
+rule above and any of these — found while implementing or measuring — is to be named and reported, never resolved toward a better
+number.
+
+**Influence, disclosed.** The two probabilities, the broadcast and the draw order were fixed by the owner's ruling of 2026-10-27
+before this unit drew anything. The SR probability 1/4 equals the per-element SR rate of task-v0.1 / v0.2 (one user SR operation
+inside the sequence, now at the slice level); the CE probability 1/2 is the uniform choice for a single control bit. **No K9 coverage
+value, Ω − R value, curve or per-address record of `b4-sim-3`, `b4-gate-1` or `b4-sim-4` was read in choosing them**, and none sets a
+threshold here. The unit's tests use the already-exposed seeds of §9.2 only; no production value is derived.
+
 ## 8. Controls
 
 All on the same seeds and rows, the form of B2 §7 / §7a and B3 §9:
@@ -989,7 +1099,7 @@ rather than hidden behind the word *reported*.
 | K6 no fixed-seed lock | **S = 200** and **N ≥ 8**; the gate's seeds derived once by §9.2's formula with the complete exclusion set. S is the number of seeds planned, never the number that completed | B2 G6 / B3 H6 | S = 200; N ≥ 8 |
 | K7 the map is a map | (a) **zero recomputation mismatches**: from the arm's own ledger, the single-flip pairs are recomputed — affected cells, presence, pair counts, contexts, evidence references, the map version and the map at that budget — and must equal what the run recorded. This is an internal-consistency check, not a claim about semantic truth. (b) coverage on **arm O's `B*` search prefix** — the ledger records from the base observation through O's `B*`-th search evaluation inclusive (arm O has no probe phase, so these are O's first `B* + 1` records), and the map state is the one the cartographer reached after ingesting exactly those records; nothing from after `B*` and nothing from the holdout; the snapshot is rebuilt from the true ledger prefix without re-running any candidate: `median_r(#addresses whose state is not unknown) ≥ 11` of 21. Per seed the 21 addresses are reported in the four states `unknown` / `effect_seen` / `no_effect_seen` / `context_dependent`, summing to 21; *not unknown* means the latter three and implies **neither** a usable grouping **nor** a decoded semantic. F's frozen post-probe map and the other controls are reported separately and never substitute for O's ≥ 11. The difference between the certificate-derived partition (Ω) and an observed partition is reported as a **diagnostic with no threshold**: the cartographer groups by the elements an address was *seen* to affect and puts every multi-element address in one group, so a slice-wide configuration bit that moved one element under one stimulus lands beside that element's address — that is not a defect, and the model never promised the two partitions agree. X's own relations are judged against its shadow under the X-A contract (§8), never against the certificate partition | B3 H7, extended by the `unknown` rule of §5.2 | 0 mismatches; median ≥ 11 |
 | K8 ledger replay | for **every** run actually executed (R / F / O / X / D / Ω / A0): the replay reports no finding, the recorded q grid recomputes the recorded fitness, X's shadow isomorphism holds and the source-identity / fixture boundary holds. A broken tool contract is `invalid` under §9.1 and is never packaged as an ordinary landscape failure | B3 H8 + §5.3 | holds |
-| K9 observability | computed on the fixed host-only comparison set of **§9.3** (the stimulus of `task-v0.1` as generated, the whole public `q_after` trace including the init readout, no champion and no holdout): (a) **≥ 90 % of all S seeds** have, for each of the seven semantics, at least one applicable address-and-background pair whose two readouts differ; (b) per semantic, the **median over all S seeds of the coverage fraction** (distinguishable applicable pairs / all applicable pairs) **≥ 0.50** — per semantic, never averaged across the seven. A semantic with an empty denominator for a seed is *not assessable* for that seed and is never recorded as 100 %; if a semantic is not assessable for even one seed, its median is *not assessable*, condition (b) is not met for that semantic, and the number of such seeds is reported. The seven semantics are those of §5.2: `ff_init`, `ff_srval`, `ce_mode`, `sr_mode`, `sr_kind`, `storage_kind`, `clock_mode`. `ff_init` is one of the seven and counts in (a) and (b) exactly as the others do; in addition its row carries the flag *conditional on A8* (§5.2), because a difference at the init readout rests on the model's atomic-initialisation abstraction **(b′) — v0.2.0 (DRAFT; the judged quantity once the tool unit of v0.2.0 is accepted — until then the table of record is v0.1.16 and judges (b)):** for `ff_srval` and `sr_kind` the **conditional coverage under SR-driven backgrounds** — `applicable_conditional = applicable_all_panel AND sr_mode_driven_at_both_endpoints` (§9.3 clause 6; the latch / x5FF exclusions of the all-panel rule stay in force, and a new flag never overwrites an old exclusion), the SR-tied-low pairs named and removed from (b′)'s denominator with the reason `sr_tied_low` — per semantic the median over all S seeds **≥ 0.50**; for the five other semantics the conditional applicability IS the all-panel applicability; (a) unchanged at ≥ 90 %, from the all-panel record. (b) over all panel backgrounds is kept beside (b′) as a description, recomputed from the same retained raw grids under the old applicability — never filled in with model-derived zeros for unobserved pairs; the two applicabilities, denominators, exclusion reasons, counts and fractions are recorded separately and are each recomputable offline. The old (b) judged v0.1.16 correctly by its own definition; (b′) is a different estimand, not a correction of it. The host decode and either applicability never enter the engine or the cartographer. **Implemented** (the v0.2.0 tool unit): `b4_k9.applicability` records both (`applicable` / `applicable_sr_driven`), `b4_k9.summarise` writes both records, the summary and the judgement read (b′) as `judged_estimand = conditional_sr_driven` | new; §5.2 — the same wording as A2 | ≥ 90 % of seeds; median coverage ≥ 0.50 per semantic |
+| K9 observability | computed on the fixed host-only comparison set of **§9.3** (the stimulus of `task-v0.1` as generated, the whole public `q_after` trace including the init readout, no champion and no holdout): (a) **≥ 90 % of all S seeds** have, for each of the seven semantics, at least one applicable address-and-background pair whose two readouts differ; (b) per semantic, the **median over all S seeds of the coverage fraction** (distinguishable applicable pairs / all applicable pairs) **≥ 0.50** — per semantic, never averaged across the seven. A semantic with an empty denominator for a seed is *not assessable* for that seed and is never recorded as 100 %; if a semantic is not assessable for even one seed, its median is *not assessable*, condition (b) is not met for that semantic, and the number of such seeds is reported. The seven semantics are those of §5.2: `ff_init`, `ff_srval`, `ce_mode`, `sr_mode`, `sr_kind`, `storage_kind`, `clock_mode`. `ff_init` is one of the seven and counts in (a) and (b) exactly as the others do; in addition its row carries the flag *conditional on A8* (§5.2), because a difference at the init readout rests on the model's atomic-initialisation abstraction **(b′) — v0.2.0 (DRAFT; the judged quantity once the tool unit of v0.2.0 is accepted — until then the table of record is v0.1.16 and judges (b)):** for `ff_srval` and `sr_kind` the **conditional coverage under SR-driven backgrounds** — `applicable_conditional = applicable_all_panel AND sr_mode_driven_at_both_endpoints` (§9.3 clause 6; the latch / x5FF exclusions of the all-panel rule stay in force, and a new flag never overwrites an old exclusion), the SR-tied-low pairs named and removed from (b′)'s denominator with the reason `sr_tied_low` — per semantic the median over all S seeds **≥ 0.50**; for the five other semantics the conditional applicability IS the all-panel applicability; (a) unchanged at ≥ 90 %, from the all-panel record. (b) over all panel backgrounds is kept beside (b′) as a description, recomputed from the same retained raw grids under the old applicability — never filled in with model-derived zeros for unobserved pairs; the two applicabilities, denominators, exclusion reasons, counts and fractions are recorded separately and are each recomputable offline. The old (b) judged v0.1.16 correctly by its own definition; (b′) is a different estimand, not a correction of it. The host decode and either applicability never enter the engine or the cartographer. **Implemented** (the v0.2.0 tool unit): `b4_k9.applicability` records both (`applicable` / `applicable_sr_driven`), `b4_k9.summarise` writes both records, the summary and the judgement read (b′) as `judged_estimand = conditional_sr_driven`. **v0.3.0:** the comparison set, the panel, both applicabilities and both thresholds are unchanged; the stimulus of clause 1 is now task-v0.3's (slice-wide `ce` / `sr`, §7.2, §9.3 clause 7), under which the per-address coverage of `ff_srval` / `sr_kind` is a **different quantity** from the one measured under per-element SR patterns — the `b4-sim-4` record is not reinterpreted, and the v0.3.0 values are to be measured by the next exploration, never carried over | new; §5.2 — the same wording as A2 | ≥ 90 % of seeds; median coverage ≥ 0.50 per semantic |
 | K10 real interaction | τ = **2 fitness score units** (the task's weights are all 1, so two scoring cells of 64). For each landscape seed, two fixed background configurations — `genome0 = 0` and `genome1 = Rng((landscape_seed ^ 0x4C0A4E55) & 0xffffffff).uniform(1 << 21)`, the first `uniform` call of that new generator, independent of the task, operator and control generators, drawn once and kept even if the two backgrounds coincide — and in each background **all 210 unordered pairs** of the 21 configuration-bit addresses: the four-corner index `I_ab = f11 − f10 − f01 + f00` with every other bit, the initial state and the stimulus held fixed across the four corners (`b4_stats.four_corner`), recording the background, the four corner configurations, their scores and `I`. `max|I|` per seed is taken over all comparable values of both backgrounds. Outcomes: **interacting** when `max|I| > 2` (exactly 2 falls in *nonzero below threshold*), *nonzero below threshold*, *no interaction seen among the tested comparisons*, *not assessable*; all four counts and the comparable / not-comparable counts are reported, and the criterion is **interacting seeds / all S ≥ 0.50** (not-assessable seeds stay in the denominator). Comparability here is **comparability inside the model's domain under hypothesis v0.3** — it is *not* a statement that a corner is buildable, writable or safe as a bitstream on a device; if 2c needs composition legality, that is a separate frozen condition and this result never stands in for it. Under hypothesis v0.3 every assignment of the 21 bits is in the domain (`ff_behaviour_v0.3.json`, the domain rule), so a corner can be *not comparable* only through a DOMAIN refusal: the expected not-comparable count is 0, and a DOMAIN refusal — the only way a nonzero count can arise — is `invalid` under §9.1, never absorbed as *not assessable* or as *not comparable* | new; §7 | τ = 2; ≥ 0.50 of S |
 
 **The budget grid and `B*`.** The grid is `G = {8, 16, 24, 32, 48, 64, 96, 128, 192, 256}` with
@@ -1047,7 +1157,8 @@ into the anchor (which would put two labels in one string):
 
 ```
 gate master = int.from_bytes(sha256(utf8('b4-gate-2|' + HYPOTHESIS_SHA256)).digest()[:4], 'big')   # protocol v0.2.0 (b4-gate-1 consumed by its records, 2026-10-20)
-exploration = the same formula with the label 'b4-sim-4'   (b4-sim-1 and b4-sim-2 retired, 2026-10-19; b4-sim-3 consumed, 2026-10-20)
+exploration = the same formula with the label 'b4-sim-5'   # protocol v0.3.0 (b4-sim-4 consumed by its records, 2026-10-21; b4-sim-1 / b4-sim-2 retired, 2026-10-19; b4-sim-3 consumed, 2026-10-20)
+v0.2.0 (the history): the label 'b4-sim-4' with the same formula and the same anchor (consumed)
 v0.1.16 (the history): the labels 'b4-gate-1|' and 'b4-sim-3' with the same formula and the same anchor
 HYPOTHESIS_SHA256 = 59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8
 ```
@@ -1177,6 +1288,13 @@ rulings. **The anchor formula is unchanged.** The protocol identity of §9.5 is
 version must use a new label and why the identity lives in the manifest, not in the anchor. Changing the hypothesis or the anchor
 still licenses no redraw.
 
+**v0.3.0: labels (the owner's ruling of 2026-10-27).** `b4-sim-4` is consumed by its archived records (`evidence/b4/sim/b4-sim-4_20261021T065339Z`, S = 32, 2026-10-21; its 65 values
+in the registry and in the pooled exclusion of every later derivation — 2 690 pooled values at this revision, read from the registry; nothing derived) and the tool unit
+refuses a production derivation under it before any tree is read: `b4-sim-3`, `b4-gate-1` and `b4-sim-4` are consumed (`b4_seeds.CONSUMED_LABELS`). The next exploration label is
+**`b4-sim-5`** — the table's `anchor.exploration_label`, a reserved name only: no value of it exists and none is derived by this unit; its derivation and execution need
+their own rulings. **`b4-gate-2`** stays the reserved gate name: no value of it was ever derived under v0.2.0, so the same label under this version reproduces
+no existing set. The anchor formula is unchanged; the protocol identity (§9.5) is not part of it.
+
 ### 9.3 K9's fixed comparison set, written before it is measured
 
 Writing only "90 %" and "0.50" would leave the choice of comparison contexts free after the fact,
@@ -1225,6 +1343,14 @@ so the method is fixed here (and executed by no code in this unit):
    the query contract are unchanged. For the five other semantics the conditional applicability equals the all-panel one, and a new flag
    never overwrites an old exclusion.
 
+7. **The stimulus of clause 1 under v0.3.0 (the owner's ruling of 2026-10-27).** "The task's own stimulus" is task-v0.3's (§7.2): per
+   set step one slice-wide CE and one slice-wide SR value, broadcast over the eight elements. Clauses 2–6 are unchanged — the same 64
+   backgrounds, the same 1 184 forced pairs, the same two applicabilities read from the decode of the endpoints, the same scopes and
+   denominators. What differs is the quantity: under a slice-wide SR the eight elements see one SR level per step, so a per-address
+   `ff_srval` / `sr_kind` coverage under v0.3.0 is **not the same estimand** as under per-element SR patterns (v0.2.0's `b4-sim-4`
+   record, 1/4 per element); the two are reported under their own versions and never compared, pooled or corrected against each
+   other. Which semantics are distinguishable under the new stimulus is to be **measured** by the next exploration, not predicted here.
+
 This set is an advance host-side engineering diagnostic. It is **not** the same contract as unit
 2c's board stimulus, and it says nothing about what is legal or safe to write to a device. An
 uncovered semantic is never repaired by adding one favourable background afterwards; changing the
@@ -1235,7 +1361,7 @@ set requires a new version of this section, the reason, and a complete re-report
 excluded pairs with their reasons; per seed: the seven medians' inputs under both definitions. The owner's choice 4: the judged row
 in v0.2.0 is (b′); (b) is the description beside it; neither is a correction of the other.
 
-### 9.4 The engineering go / no-go policy for the exploration `b4-sim-4` (v0.2.0, DRAFT; the owner's choice 5)
+### 9.4 The engineering go / no-go policy for an exploration (v0.2.0, DRAFT, the owner's choice 5 — `b4-sim-4`, decided; v0.3.0 — the row for `b4-sim-5`, below)
 
 A **cost policy** for spending the production gate's budget — not a significance result, not a scientific impossibility, not a
 gate verdict, and not an authorisation of anything (the gate's execution is its own ruling, as it was for `b4-gate-1`). Fixed here,
@@ -1255,6 +1381,17 @@ before the exploration, and not changed after it:
 **No automatic successor.** A no-go stops; a valid FAIL of `b4-gate-2` closes this protocol version; any later research needs its
 own reasons and its own authorisation. Neither outcome is written as a scientific impossibility, and two FAILs do not prove that a
 third version would be overfitting — they only remove the automatic next step.
+
+**v0.3.0 — the row for `b4-sim-5` (the owner's ruling of 2026-10-27; fixed here, before the exploration, in the document and in the
+machine table `b4_thresholds.THRESHOLDS["gonogo"]` together).** The policy above is carried **unchanged in every number and rule** to the
+next exploration `b4-sim-5` under task-v0.3: the precondition (all **32** planned pairs complete, the batch neither `invalid` nor
+`incomplete`, every contract held — otherwise **no decision**); the budget **B = 64** with every budget's descriptive values reported;
+statistic 1, the one-sided exact sign test on Ω − R at B = 64 with **positives > negatives** and **p ≤ 0.20**; statistic 2, the seven
+judged conditional K9 medians each **≥ 0.50**; go iff all hold, no-go otherwise; no automatic successor. One naming is corrected: the
+threshold on the sign test's p is **`p_max_go` = 0.20, an engineering cost threshold on p, not the α of a formal scientific test** —
+the record's field and the table's key say so, the value is the one of v0.2.0. The row applies to `b4-sim-5`; `b4-sim-4`'s no-go of
+record (`evidence/b4/gonogo/b4-sim-4_20261021T065857Z`, v0.2.0) is not re-decided under it. An execution plan for `b4-sim-5` cites this
+row and chooses nothing; a go authorises nothing by itself.
 
 ### 9.5 The protocol identity (v0.2.0, DRAFT; the owner's choice 6; implemented by the v0.2.0 tool unit, `b4_protocol.py`)
 
@@ -1375,6 +1512,11 @@ evidence** and is listed as a prerequisite, not described as a protection.
   protocol identity are designs for a tool unit that does not exist; `b4-sim-4` and `b4-gate-2` are names, not derivations; the
   gate `b4-gate-1`'s valid FAIL and the archives of `b4-sim-3` and `b4-gate-1` are unchanged and are not re-judged; the owner's
   review of these documents is not a tool acceptance, an exploration or a gate.
+- **v0.3.0 (DRAFT) claims nothing new about the fabric and authorises nothing**: task-v0.3 is a stimulus rule fitted to the physical
+  slice, implemented and verified on mechanics fixtures; `b4-sim-5` is a name, not a derivation; the no-go of `b4-sim-4` and the
+  archives of `b4-sim-3`, `b4-gate-1` and `b4-sim-4` are unchanged and not re-judged; no K9 coverage or search benefit under the new
+  stimulus is predicted; the owner's review of this unit is a host-tool engineering acceptance, not an exploration, a gate, a
+  preregistration freeze, a board authorisation or a push / merge.
 
 ## 13. The units ahead (each separately authorised; none begun)
 
@@ -1396,6 +1538,7 @@ evidence** and is listed as a prerequisite, not described as a protection.
 | protocol v0.2.0 documents (**this revision**; the branch `b4-protocol-v2` from `d19cc2f`, the owner's ruling of 2026-10-20 on the scope proposal v0.2) | this document v0.2.0 (§7.1, §9 K9 (b′), §9.2, §9.3 clause 6, §9.4, §9.5, §12–§14), `docs/b4_archive_reverification.md`, `evidence/b4/unit_protocol_v2_design_2026_10_20/` (the two scope drafts, the owner's rulings, the read-only aggregation record, the influence table); the gate-1 unit's two pending document items | the owner's review of the documents; no program, table, hypothesis, import table, archive or seed changed; nothing run |
 | tool unit v0.2.0 (**delivered and accepted**: `04385ae` HOLD R1–R6, `b29b0fb` HOLD C1–C3 / P3, **`21db2de` PASS, 2026-10-21** — the v0.2.0 host-tool engineering acceptance; `evidence/b4/unit_protocol_v2_tool_2026_10_20/`, the three owner reviews archived there) | task-v0.2 and the `PublicTask` / `PrivateTask` boundary, the target setup and its records (the quarantine of a refused return, the durable ordered prefix, the disk-authority reconciliation), K9 (b′) and the two applicabilities, the protocol identity and the verifier's named refusal, the go / no-go policy tool, the consumed labels, the call-count fixtures, tests and mutants, the thresholds table revised to section 9 with the revision text in `b4/architecture_revision.json` | the owner's reviews (PASS on `21db2de`); mechanics fixtures only; no production derivation |
 | `b4-sim-4` (**executed once, 2026-10-21**: the plan `docs/b4_sim4_execution_plan.md` accepted at `495cc36`; the batch `complete` 32 / 32 in 199.256 s, archive `evidence/b4/sim/b4-sim-4_20261021T065339Z` (commit `580c0e5`); the §9.4 policy decided **no-go** at B = 64 — positives 7, negatives 13, ties 12, one-sided sign-test p 0.9423; the seven conditional K9 medians all ≥ 0.50 (`ff_srval` 0.8125, `sr_kind` 0.875) — `evidence/b4/gonogo/b4-sim-4_20261021T065857Z` (commit `adce027`); the unit record `evidence/b4/unit_sim4_execution_2026_10_21/` (commit `196b358`); **accepted and closed by the owner's review of `196b358`, 2026-10-21 (PASS; the no-go of record; the pooled exclusion now 2 690)**; the label consumed by its records) | the S = 32 exploration under v0.2.0 after the tool unit's acceptance; the §9.4 policy applied once | **a no-go is the cost policy's stop, not a scientific negative conclusion and not evidence about the fabric; no automatic successor** — what follows (a different grouping shape, operator or stimulus, or stopping) needs its own argument and ruling; `b4-gate-2` remains a reserved name |
+| task-v0.3 revision unit (**delivered for review**, 2026-10-27; the owner's ruling of 2026-10-27 after the carrier v2 PASS; the branch `b4-task-v03` from the closure `e084f07`) | §7.2 (the slice-wide stimulus rule: CE 1/2, SR 1/4, independent, broadcast; `d` per element; the common grammar, the model input contract, the carrier mapping; ceiling ≠ reachability; the data influence disclosed), §9 K9 note and §9.3 clause 7, §9.2 labels (`b4-sim-4` consumed, `b4-sim-5` reserved), §9.4 the `b4-sim-5` row with `p_max_go`, §9.5 the stimulus rule in the identity, §12, §14; `b4/host/b4_landscape.py` (`TASK_VERSION = task-v0.3`, `STIMULUS_RULE`, `broadcast` / `is_broadcast` / `slice_wide_controls`, `stimulus_findings`), `b4_thresholds.py` (`task.stimulus`, `gonogo.p_max_go` / `applies_to` / standing, the labels, the pins), `b4_seeds.py` (the consumed `b4-sim-4`, `EXPLORATION_LABEL = b4-sim-5`), `b4_protocol.py` (the stimulus rule in the `task` component), `b4_sim.py` (the standing, the manifest constants), `b4_sim_schema.py` / `b4_target.py` (the shape held on every task record and in the reconstruction), `b4_gonogo.py` (`p_max_go`), `b4/architecture_revision.json` v0.3.0, `b4/IMPORT.json` refreshed; `docs/b4_observation_contract.md` v0.6, `docs/b4_preregistration.md` v0.0.4, `docs/b4_archive_reverification.md` §6; the tests (the shape, the two probabilities by hand, the validator, the carrier mapping, the slice-wide twin of the model, the labels, the pins, the identity), the mutants and the mechanics e2e; `evidence/b4/unit_task_v03_2026_10_27/` | the owner's review; mechanics fixtures only — no production derivation, exploration, gate, board, push or merge; `b4-sim-5`'s derivation and execution need their own execution plan and ruling |
 | `b4-gate-2` (**not authorised**; a reserved name) | the S = 200 gate under v0.2.0, after a go and its own execution plan and execution ruling | its own rulings |
 
 ## 14. Files and references
@@ -1428,3 +1571,8 @@ v0.2.0 (documents only): `docs/b4_archive_reverification.md` · `docs/b4_gate_ex
 2c-obs (documents only, 2026-10-21): `docs/b4_observation_contract.md` (DRAFT v0.5, the observation contract, accepted as a document contract on `4fc3dc7`; v0.1 held on `e91650b`, v0.2 on `d8ef6cf`, v0.3 on `df3b65e`, v0.4 on `6927c24`) · `docs/b4_preregistration.md` (v0.0.3, the skeleton pointing to it) · `evidence/b4/unit_2c_obs_2026_10_21/` (README, `k9_address_record.py` / `.txt`, `positive_control_choice.py` / `.txt` — read-only over the committed `b4-sim-4` archive).
 
 carrier v2 (host-only, 2026-10-21): `docs/b4_carrier_v2.md` · `rtl/b4/` · `tb/b4/` · `sim/b4/run.sh` · `vivado/b4/` · `builds/b4/` · `host/b4carrier_regmap.py` · `host/b4carrier_records.py` · `host/b4carrier_manifest.py` · `tests/test_b4carrier_*.py` · `evidence/b4/unit_carrier_v2_2026_10_21/`. · `evidence/b4/unit_carrier_v2_2026_10_21/owner_review_bf17574_PASS/` (the owner's PASS review, archived; the unit closed, README §11).
+
+task-v0.3 revision (host-only, 2026-10-27): `b4/host/b4_landscape.py` · `b4/host/b4_thresholds.py` · `b4/host/b4_seeds.py` · `b4/host/b4_protocol.py` · `b4/host/b4_sim.py` ·
+`b4/host/b4_sim_schema.py` · `b4/host/b4_target.py` · `b4/host/b4_gonogo.py` · `b4/architecture_revision.json` (v0.3.0) · `b4/IMPORT.json` ·
+`docs/b4_observation_contract.md` (v0.6) · `docs/b4_preregistration.md` (v0.0.4) · `docs/b4_archive_reverification.md` (§6: the `b4-sim-4` archive under its own tool) ·
+`evidence/b4/unit_task_v03_2026_10_27/` (README, the owner's ruling as relayed, the tests, the mutant battery, the mechanics e2e, the import check).

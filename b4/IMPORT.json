@@ -42,7 +42,7 @@
    "kind": "new",
    "note": "the owner's review of 04385ae, R1: the architecture document's revision the tool tree was written against — PROVENANCE outside the identity's inventory (not a tool file), read by b4_thresholds.ARCHITECTURE_REVISION and held to the document's first line by the static pin test; a documentation-only revision changes this file and the document, never a tool file, and the method's identity does not move. Listed here like every file under b4/; not in the identity's import_table_sha256 projection.",
    "role": "provenance",
-   "sha256": "0ab47e312d16d1b31ec24e2ffef3fb6ab06d2562e66e8719348de14bc816c75d"
+   "sha256": "0ec4dcf601cfa767e7c865bc22d1fcfa3508e7c8fd348fe34523fcd91dfe6933"
   },
   "b4/host/b4_carto.py": {
    "base": "b3/host/b3_control_x.py",
@@ -100,7 +100,7 @@
    "kind": "new",
    "note": "unit 2b-4 (the gate-tool half; the owner's ruling of 2026-10-19 on gate tool versus production execution): the formal gate tool — judge (pure: the budget rule, the ten rows K1–K10 with method / value / threshold / status / reason, the verdict PASS / FAIL / invalid / incomplete; a valid complete failure FAIL, a contract break invalid, unfinished work incomplete, no B* / N leaving the dependent rows not assessable and the gate unable to PASS; the summary's own contract checked before anything is judged), the formal identity (the pinned gate label, S = 200, a production batch archive; fixture / synthetic judgements written with formal = false and a NOT A GATE RESULT standing), the gate report document (gate_report.json + its deterministic markdown rendering, bound by digest; typed validator), the gate directory under evidence/b4/gate/ (exclusive, no symlink, nothing overwritten; the self-validation by the verifier before the report is written — findings make the verdict invalid), run_gate (b4_sim.run_batch in mode gate, then the judgement), judge_batch (an existing gate or mechanics archive), judge_synthetic (Python API, b4-mech labels only), the production CLI (run: the pinned label and S = 200 only; judge: production archives on a clean tree only; no fixture / allow-dirty path). Running the production gate is withheld by the ruling. The owner's HOLD on 4cdc0c1 (R1 / R2): the summary contract made TOTAL on arbitrary decoded JSON (exact types — a bool is never an int, 64.0 never the budget 64; finite numbers; nested shapes before any index) and COHERENT (the at-B* copies bound to their per-budget originals, the ratios to the means through the harness's _ratio, the sign-test p to its counts, Cohen's d to its mean and variance with +inf's one encoding, the N scan ascending and bound to N / power, the fractions to their counts and S, the budget rule to its inputs); the document's identity fields validated before anything is read. The owner's second HOLD (a8f2da1): Cohen's d bound by MAGNITUDE to the value implied by its mean, population variance and S under the production sample-variance convention (implied_cohen_d; D_REL_TOL 1e-12, the archives agree to ~1e-16; the special cases S < 2 and zero variance exact); a numeric pre-pass (numeric_findings: every float finite, every int within ±2^63) before any canonical serialisation or arithmetic in the summary contract, the identity fields, the synthetic summary, the gate report and judge_batch; every copy / constant binding exact in type through _same (8.0 is never 8, true never 1); the count bounded by S_MAX. The owner's third HOLD (b49b2ec): the derived arithmetic guarded — implied_cohen_d checks the sample variance, its root and the quotient finite (an overflow or an underflow to zero is the special 'unrepresentable', named by _stat_findings and never compared); _ratio_findings checks its inputs finite and the quotient representable before any serialisation; the D_REL_TOL note rewritten as a consistency-check tolerance with its boundary limit disclosed (not the K5 threshold, no epsilon).",
    "role": "host",
-   "sha256": "f562c1435c00d5653e10243a1e7ca36525707f4bbc0efc2ff07a80efd3ec4d8a"
+   "sha256": "3b4510c434e3005a5f7834e97f95f82e0a0a313c37c07f8f6c6a5b03676333c8"
   },
   "b4/host/b4_gate_stats.py": {
    "base": "host/b2_gate.py",
@@ -129,7 +129,7 @@
    "kind": "new",
    "note": "protocol v0.2.0 (choice 5): the engineering go / no-go policy of section 9.4 applied to an exploration archive — S = 32, B_go = 64, the one-sided exact sign test on Omega - R with positives > negatives and p <= 0.20, the seven judged conditional K9 medians >= 0.50, every planned pair complete else no decision; a cost policy record with its own validator, verifier and markdown; never a gate verdict or an authorisation.",
    "role": "host",
-   "sha256": "ac654c44c407f76cf045ce5018e6cbf63558ccdf74933c461b9225bbb1f9fb75"
+   "sha256": "7ec27e4479a41b46485f6863762576b3168944bef4590b7392244e631c92bb2a"
   },
   "b4/host/b4_k10.py": {
    "kind": "new",
@@ -147,7 +147,7 @@
    "kind": "new",
    "note": "the public task generator task-v0.1 (stimulus, mask, target, weights from the landscape seed alone; the all-zero base declared; the holdout stimulus its own derivation) and the scoring (None scores nothing, is counted, never moves the ceiling).",
    "role": "host",
-   "sha256": "d3b94edf79130115b6cf8a44ee055d0871fd0e3abed6e61e5df38f1e734f8dbc"
+   "sha256": "fb36fec88cd21c8381caa9e441fa4c4cda176f7eba69277709877ab009faa1f9"
   },
   "b4/host/b4_observe.py": {
    "kind": "new",
@@ -159,7 +159,7 @@
    "kind": "new",
    "note": "protocol v0.2.0 (choice 6): the machine identity of the execution / judgement method, built from the tree's trusted inventory (every tool file held to this table's digest, the copied statistics by per-function digest, the thresholds table's digest without its source text, the task / K9 / K10 constants, the engine, every record schema by version and validator digest, the formal inputs, the labels); the document's revision carried as provenance and excluded from the digest and the equality; compare() names the differing components; an archive of another version is refused by name.",
    "role": "host",
-   "sha256": "230d0187546795bf617ae1358613344505ac4a910feb7c35ee4f5813b92b4516"
+   "sha256": "d1a5f3895a2e9895af74ad97af5e256d5b41e7077f2e54d04352f77094368b26"
   },
   "b4/host/b4_replay.py": {
    "kind": "new",
@@ -181,19 +181,19 @@
    "kind": "derived",
    "note": "unit 2b-4a A: the seed anchor (sha256(label|anchor)[:4], the label beside the anchor, '|' in a label refused); the 38 historical exclusion sources of docs/b4_architecture.md section 9.2 read against their digests through TYPED field paths (no count / version / timestamp can be read as a seed); B2's EXCLUDED_SEEDS copied and held to the pinned file's text; B4's exposed literal values; the evidence/b4/sim/ registry of every archived set (a run directory without a valid seed record is refused); one pooled set; pair_seeds copied from host/b2_search.py (held equal to the original by import in the tests, read-only). Runtime imports no pinned module.",
    "role": "host",
-   "sha256": "2299d6004575be3d12bae1b282f9efdc0bab31114f2c8c63b298104c7a489361"
+   "sha256": "99e273fa3e2da1930746edcd62a78793ff42d31cfd9c9c7c64fe71b66f6d85c3"
   },
   "b4/host/b4_sim.py": {
    "kind": "new",
    "note": "unit 2b-4a C: the host-only exploration harness — a pre-flight that writes nothing on refusal (label b4-sim-<n>, a clean tree with no override, the formal source, the root's inputs at their pinned digests, every exclusion source, an output directory directly under evidence/b4/sim/ created exclusively); seeds.json then manifest.json then the first observation; per pair R > F > O > X > D > Omega > A0 on one worker, each RunResult written exclusively before its audit, the typed completion checks, replay, ledger recompute, given-view checks, D from F's rebuilt map, K7 prefixes, K9, K10, curves, the pair index, the HEAD / input checkpoint; fail-closed stops (invalid / incomplete) with STOPPED.json, a typed sim_report.json always and a pooled summary only when complete; values beside the section-9 thresholds, no verdict field; exit codes 0 / 1 / 2 / 3. Running it is a separate authorisation. Unit 2b-4 (the gate tool, 2026-10-19): mode \"gate\" (b4-gate-<n> labels, reached through b4_gate.py only; the exploration CLI unchanged), standing_for(label) — the gate's standing text for a gate label, the exploration's text (unchanged, as the archived summaries carry it) otherwise; summarise_batch takes the standing as a parameter; no constant changed.",
    "role": "host",
-   "sha256": "5334fb3537f6805e72365fb4ad4ca71b296ca8f8ca6cbcb598b5ba6c45313001"
+   "sha256": "f5b25d054fd5f93ab1c743470ea658544dbd50ffc28bf044f7312a5636fd9378"
   },
   "b4/host/b4_sim_schema.py": {
    "kind": "new",
    "note": "unit 2b-4a C: typed validators (named findings, total over keys, type-exact scalars) for every file the harness writes — seeds, manifest, arm result (the engine's shape check), arm audit, controls, k7, k9, k10, curves, pair index, STOPPED, INIT_FAILED, the report (a summary only when complete; no verdict-like key) — applied before each write and offline over a run directory.",
    "role": "host",
-   "sha256": "c1299c6a376fd99cf0443d6580aff01c6c1409659f766827d8ba7df7cce58dc2"
+   "sha256": "0c8676e3deba07a6fde0c40ca8f300099afe9d8aad9ed03341d872dda96a8142"
   },
   "b4/host/b4_sim_verify.py": {
    "kind": "new",
@@ -217,13 +217,13 @@
    "kind": "new",
    "note": "protocol v0.2.0 (the owner's rulings of 2026-10-20, choices 2-3 and the target-setup contract): the per-pair target setup of task-v0.2 — the private plan (seeds, the planted flip-flop genome by the fixed rule, the stimulus digests) persisted before the first target call, each setup observation of the planted configuration through the execution port saved on return, the PublicTask (no seed, no planted genome, no private record) and task.json last; the offline reconstruction (setup_findings) from the kept records, the fabric never asked again.",
    "role": "host",
-   "sha256": "447841ee1b66e1d71d6e62ff4b9cede483ac0059bcb4bedf1549553d5ffccb53"
+   "sha256": "15ae9bc2f3c2054c414138bb9ead8420091a47f1af60f5fbd6e771b87ecb1206"
   },
   "b4/host/b4_thresholds.py": {
    "kind": "new",
    "note": "unit 2b-4a C: the machine table of docs/b4_architecture.md section 9's fixed thresholds, grid, anchor and control formulas, pinned field by field to the document's text by b4/tests/test_b4_thresholds.py; listed beside exploration values for reference; never a verdict.",
    "role": "host",
-   "sha256": "fdc99be7d651297cffe6bf73ec13fe5c70e23631f751e28b2d8ac191b1a55a4b"
+   "sha256": "31d756718eb3646f65040ab95535788a974a14e544fa33f4344590c10fd27a35"
   },
   "b4/hypothesis/ff_behaviour_v0.2.json": {
    "kind": "new",
@@ -311,7 +311,7 @@
    "kind": "new",
    "note": "every expected trace derived by hand from the hypothesis's adopted lines, never by running the model. v0.3: the inverted-gate latch's trace derived by hand in the model's settle order (the new inputs at the old clock first; the init step atomic), the 0.2.1 refusal kept on the v021_hole fixture.",
    "role": "test",
-   "sha256": "dfefb73b79ee26966ddc75e4bf0f0941247c67241be38d7520662eb2418bd15b"
+   "sha256": "81bf82b594172668c16bc9fa2ef74c18e628ec78ef0c447a6c5973134677af26"
   },
   "b4/tests/test_b4_gate.py": {
    "kind": "new",
@@ -327,7 +327,7 @@
   "b4/tests/test_b4_gonogo.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "6800b48947f14a4bfd2b6f0ce63ac5e31a33c46767a381caa9f4e3dc08cd1407"
+   "sha256": "688979b0bfccb84319db813ba4c8d01f7ac3a6f1a06533d99370e4de7027ef22"
   },
   "b4/tests/test_b4_k10.py": {
    "kind": "new",
@@ -337,12 +337,12 @@
   "b4/tests/test_b4_k9.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "3e42446082f848c75286c1303a5b7fb150ae90f9a404c16e3654b6f6f41bef25"
+   "sha256": "656e0eb7b15c71b8666bf6e3c7da5e4e0f6bef9edd5f16a84c9b3a06a2e77443"
   },
   "b4/tests/test_b4_landscape.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "7609f274bf2242636fc5abbad0fbd50037a9c070852b123d05ffcbebb3e1ce71"
+   "sha256": "3524a071e3b691bf152c1066a772e311d0d2004f6b16a82c50e1593add7eb2f6"
   },
   "b4/tests/test_b4_probe_latch_ginv.py": {
    "kind": "new",
@@ -353,7 +353,7 @@
   "b4/tests/test_b4_protocol.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "2da62abf97d220b9650a3559ad8526d133271339d23d14074113c9aab53c7520"
+   "sha256": "7597655e43610273cc9482ad4ceea688807d54d19b616d137b3fc595bcaab62b"
   },
   "b4/tests/test_b4_replay.py": {
    "kind": "new",
@@ -369,12 +369,12 @@
    "kind": "new",
    "note": "Unit 2b-4: the two historical-source tests no longer assume an empty exploration registry (the S = 32 exploration b4-sim-3 is archived under evidence/b4/sim/ since 5c08536): the registry is exactly the archived run directories, each read from its seeds.json, and their values are in the pool. R3 of the HOLD on 4cdc0c1: the registry assertions status-aware (seeds / seeds_fixture / init_failed_no_seeds) with exact membership, digests and the pooled union; a mixed-registry case beside the committed set.",
    "role": "test",
-   "sha256": "8eb2cf048a083a9a37f15695802b32a6f82be42de62fe5879a233803e835407a"
+   "sha256": "51ae77847afa24a28b402c7100edf7e97ae40213931c3101c640fafab17ebda7"
   },
   "b4/tests/test_b4_sim.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "27536ad11c7b04043b49f404ae66b1a6377d7a595e0d0a4d62a206c8d8fbc838"
+   "sha256": "8443e9b241a19bf00d4dd80624dec6f21bc11626ad886f370fa2fe62800a80af"
   },
   "b4/tests/test_b4_snapshot.py": {
    "kind": "new",
@@ -394,7 +394,7 @@
   "b4/tests/test_b4_thresholds.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "da73ebcfc9f1ad4b4b31f87dedfb52c2648e7d1d9bc3f6b250172eab45b88590"
+   "sha256": "5e124e881c72dd5905cea031cf34dec3921d7c96ca04c41b75da1d8f1f33f3f6"
   }
  },
  "repository_inputs": [
@@ -473,5 +473,5 @@
  "schema_version": "1.0.0",
  "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) — b4_rng.py, b4_engine.py, b4_carto.py and b4_seeds.py and b4_gate_stats.py derived so far; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
  "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings); the owner's rulings of 2026-10-18 (D1', X-A) and on the v0.3 scope draft",
- "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commits A: seeds / controls / snapshot; B: deadline / statistics copies / observation memo / K9 / K10; C: the harness, its validators, the thresholds table; the repair unit after the owner's HOLD on cdf2c53 of 2026-10-18 — F1 fixture schedules in place of production derivations in the tests, F2 the archive-wide verifier, F3 total validators and the fixed comparison sets, F4 verification and the report as conditions of success, F5 no corner after a refused one, F6 quarantine and partial records kept, F7 no symlink in the namespace, F8 the deadline before finalisation, F9 every input bound at the checkpoints; the second repair round after the owner's HOLD on f2c4bca of 2026-10-18 — R1 completeness invariants (a complete pair has every arm audited, the deep re-audit cannot be switched off by a weaker recorded state), R2 every record bound to the planned pair / role / seeds and every descriptor to the formal source, R3 exact scalar types, R4 the deadline and R5 the inputs re-checked after the final verification and before publication; the third repair round after the owner's HOLD on 6c00156 of 2026-10-18 — the diagnostic state ↔ file contract (a genuine partial K9 / K10 cannot sit in a complete batch), the remaining counts and corner genomes type-exact, the deadline records validated for self-consistency and bound to the manifest's declared duration; the fourth repair round after the owner's HOLD on 8d1eefd of 2026-10-19 — the diagnostic state ↔ file contract total and asked only of documents their typed validator accepted (the verifier's CLI reports an exception as a finding), the deadline record one monotonic sample so the producer never writes a record its validator refuses, an interrupt before any K9 / K10 record recorded as in_progress, not partial; the exposure settlement after the owner's ruling of 2026-10-19 on the prior production-seed exposure — b4-sim-1 / b4-sim-2 retired (refused on the new-derivation path before any master, still read from archives), b4-sim-3 reserved and not derived, the seed-only reconstruction of the exposed sets from edfc93c's derivation code checked against the 22 preserved records, the pinned exposure receipt pooled into both pair positions and bound into seeds.json 1.2.0, the manifest, the checkpoints and the verifier) Unit 2b-4, the gate-tool half (2026-10-19): b4_gate.py, b4_gate_verify.py, test_b4_gate.py; the harness's gate mode; the production execution withheld. | v0.2.0 (the owner's rulings of 2026-10-20): task-v0.2 with the planted flip-flop target and the PublicTask / PrivateTask boundary (b4_target), K9's two applicabilities with (b') judged, the protocol identity (b4_protocol), the go / no-go policy (b4_gonogo), the consumed labels b4-sim-3 / b4-gate-1, the next labels b4-sim-4 / b4-gate-2; every digest refreshed"
+ "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commits A: seeds / controls / snapshot; B: deadline / statistics copies / observation memo / K9 / K10; C: the harness, its validators, the thresholds table; the repair unit after the owner's HOLD on cdf2c53 of 2026-10-18 — F1 fixture schedules in place of production derivations in the tests, F2 the archive-wide verifier, F3 total validators and the fixed comparison sets, F4 verification and the report as conditions of success, F5 no corner after a refused one, F6 quarantine and partial records kept, F7 no symlink in the namespace, F8 the deadline before finalisation, F9 every input bound at the checkpoints; the second repair round after the owner's HOLD on f2c4bca of 2026-10-18 — R1 completeness invariants (a complete pair has every arm audited, the deep re-audit cannot be switched off by a weaker recorded state), R2 every record bound to the planned pair / role / seeds and every descriptor to the formal source, R3 exact scalar types, R4 the deadline and R5 the inputs re-checked after the final verification and before publication; the third repair round after the owner's HOLD on 6c00156 of 2026-10-18 — the diagnostic state ↔ file contract (a genuine partial K9 / K10 cannot sit in a complete batch), the remaining counts and corner genomes type-exact, the deadline records validated for self-consistency and bound to the manifest's declared duration; the fourth repair round after the owner's HOLD on 8d1eefd of 2026-10-19 — the diagnostic state ↔ file contract total and asked only of documents their typed validator accepted (the verifier's CLI reports an exception as a finding), the deadline record one monotonic sample so the producer never writes a record its validator refuses, an interrupt before any K9 / K10 record recorded as in_progress, not partial; the exposure settlement after the owner's ruling of 2026-10-19 on the prior production-seed exposure — b4-sim-1 / b4-sim-2 retired (refused on the new-derivation path before any master, still read from archives), b4-sim-3 reserved and not derived, the seed-only reconstruction of the exposed sets from edfc93c's derivation code checked against the 22 preserved records, the pinned exposure receipt pooled into both pair positions and bound into seeds.json 1.2.0, the manifest, the checkpoints and the verifier) Unit 2b-4, the gate-tool half (2026-10-19): b4_gate.py, b4_gate_verify.py, test_b4_gate.py; the harness's gate mode; the production execution withheld. | v0.2.0 (the owner's rulings of 2026-10-20): task-v0.2 with the planted flip-flop target and the PublicTask / PrivateTask boundary (b4_target), K9's two applicabilities with (b') judged, the protocol identity (b4_protocol), the go / no-go policy (b4_gonogo), the consumed labels b4-sim-3 / b4-gate-1, the next labels b4-sim-4 / b4-gate-2; every digest refreshed | v0.3.0 (the owner's ruling of 2026-10-27, after the carrier v2 finding of one CE / SR / CLK pin per slice): task-v0.3 — one slice-wide CE value (p = 1/2) and one slice-wide SR value (p = 1/4) per set step, independent, broadcast as 0xFF / 0x00 in the common 8-bit grammar, d per element; the shape held by b4_landscape.stimulus_findings in the task validators and the reconstruction; the stimulus rule in the protocol identity; b4-sim-4 consumed, b4-sim-5 reserved; the go / no-go row of b4-sim-5 with p_max_go (the same 0.20, a cost threshold, not an alpha); no model, hypothesis, certificate, operator, statistic, panel, applicability or K-number changed; every digest refreshed"
 }
