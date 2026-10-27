@@ -1,4 +1,4 @@
-# B4 — the task-v0.3 revision unit (host-only, 2026-10-27): the slice-wide CE / SR stimulus, delivered for review
+# B4 — the task-v0.3 revision unit (host-only, 2026-10-27): the slice-wide CE / SR stimulus — **CLOSED: the owner's PASS on `e20e12b` (section 6)**
 
 **What this unit is.** The engineering unit the owner authorised on 2026-10-27 (the ruling as relayed: `owner_ruling_2026_10_27.txt`),
 after the PASS on the carrier v2 unit (`bf17574`, closed at `e084f07`): "a complete host-only revision engineering unit, delivered for
@@ -81,6 +81,7 @@ evidence/b4/gate evidence/b4/gonogo host rtl vivado tb b4/hypothesis b4/schemas 
 | the import table | `import_check.txt` | 59 entries, every digest equal, no tracked file under `b4/` without an entry |
 | the identity | `protocol_identity.txt` | `protocol_sha256` `5bba53c7…`, revision v0.3.0, labels / task / K9 as the table's |
 | the protected paths | `protected_paths.txt` | the diff of §1's protected list against `e084f07`: empty |
+| the owner's review | `owner_review_e20e12b_PASS/` | archived byte for byte (74 payload files incl. the owner's fresh e2e, `SHA256SUMS` verified after the copy); section 6 |
 
 **The mutant battery's history, by the proportionality rule.** One full run of the 72 on the final tree: 68 / 72, the three known
 equivalents surviving as recorded by the v0.2.0 unit, and M67 surviving in its first form. M67's first form replaced the identity's
@@ -112,8 +113,10 @@ EDIT-MISS, a non-green baseline or `Ran 0` (`--check`: 72 defined, 0 edit-miss b
   be a one-line reorder in `verify_gonogo_dir` — not necessary for this unit and not made, left to the owner.
 - **K9 under the new stimulus is a different estimand** (`docs/b4_architecture.md` §9.3 clause 7): the comparison set and the two
   applicabilities are unchanged, but the per-address coverage of `ff_srval` / `sr_kind` under a slice-wide SR is not the quantity
-  `b4-sim-4` measured under per-element SR patterns. No v0.3.0 coverage value exists yet; none is predicted here; the `b4-sim-4`
-  record is not re-decided.
+  `b4-sim-4` measured under per-element SR patterns. **No production / exploration estimate of record of the v0.3.0 coverage exists yet**
+  (the mechanics fixtures of this unit necessarily contain coverage values — `complete_32` and the K9 tests — but those are fixture
+  values on explicit schedules: not scientific results, not estimates, and no ground for tuning the fixed rule; the owner's P3 of
+  2026-10-27); none is predicted here; the `b4-sim-4` record is not re-decided.
 - **Data influence (§7.2).** The two probabilities (CE 1/2, SR 1/4), the broadcast and the draw order were fixed by the owner's ruling
   before anything was drawn; SR 1/4 equals the per-element SR rate of task-v0.1 / v0.2 at the slice level; CE 1/2 is the uniform
   choice for one control bit. No K9 value, Ω − R value, curve or per-address record of any archive was read in choosing them, and the
@@ -132,3 +135,41 @@ No board was powered; no production run, seed derivation, smoke, exploration or 
 hypothesis, a threshold number, a statistic, an operator, an archive, a receipt, a verdict or a pinned surface; no RTL, no 2d, no
 routing; no push, no merge. `b4-sim-5`'s derivation and execution need their own execution plan and ruling; `b4-gate-2` stays a
 reserved name; a go of `b4-sim-5` would authorise nothing by itself.
+
+## 6. Closure — the owner's PASS on `e20e12b` (2026-10-27)
+
+The review is archived in `owner_review_e20e12b_PASS/` (74 payload files incl. `SHA256SUMS`, every digest verified after the copy). Its
+independent verification: the full suite **332 tests OK, no skip** in a detached clone of the tip; the new-contract mutants **M58–M72
+15 / 15 killed** (green baselines, `Ran N > 0` / FAILED, no edit miss; the re-aimed M67; the old equivalents inspected, not rerun); the
+unmodified e2e driver in a fresh hermetic root **exit 0, `as_expected = true`, `production_derivation_calls = [0, 0]`**, and the owner's
+regenerated run against the submitted one **966 / 966 normalised digests equal** (the author's two-run comparison is additional
+submitted evidence, not two owner runs); the semantic and explanation tampers localised as prescribed; scripted probes of the generator
+and the planted model (the draws 2 / 4 / 256 in order, the broadcast and the carrier round-trip, four explicit mechanics fixtures
+self-scoring 64 / 80 with zero None, the setup reconstruction clean, a refreshed-digest old-shape task refused); K1–K10, the grid, the
+operator, the statistics, the target and policy rules, the model / hypothesis, K9 / K10, the carrier and the historical archives
+unchanged; 59 IMPORT digests equal; the `b4-sim-4` historical bindings (45 inputs, 28 tools at `495cc36`, 6 UNISIM sources) match.
+No historical deep verification, no aggregation of sim-4's values, no board, no tracked change by the reviewer.
+
+**Accepted.** The implementation and decisions of §1–§2; protocol `5bba53c7…` binding the new stimulus rule and the inventory; the
+narrow contract v0.6; the carried go / no-go row with `p_max_go` as an engineering cost threshold; `b4-sim-4` consumed / no-go of
+record; `b4-sim-5` reserved only; the never-derived `b4-gate-2` reservation kept.
+
+**What the PASS does not establish** (the review's section 2): a K9 coverage estimate, a map / search benefit, N / B\*, predictions,
+sessions, physical model agreement, a gate result; physical INIT / SRVAL / A8, timing / sampling, the latch / x5FF scoring-domain
+boundary, the producer / schema / adapter integration and B4Q remain later work; the carrier engineering PASS is not a board
+qualification; the preregistration is not frozen.
+
+**Closure edits (documents only, as the review's section 3 allows; no test, mutant or e2e rerun):** this review archived; the heading,
+the file table and this section; the two P3 wordings — (1) `docs/b4_archive_reverification.md` §6 now says that the go / no-go
+decision-record verifier may refuse the v0.2.0 record at its policy-shape check (`policy: not the table's`) before the identity
+comparison, while the batch verifier, the judge and the policy on the batch give the identity refusal; the historical decision record
+is re-verified by the same recorded-HEAD procedure; the early refusal is safe, was disclosed, and needs no runtime change and no new
+digest; (2) §4 above distinguishes the mechanics fixtures' coverage values from a production / exploration estimate of record;
+`docs/b4_architecture.md` §13 marks the unit accepted and closed and §14 names the archive.
+
+**Next bounded work the review names (its section 4):** the `b4-sim-5` execution plan as a complete documents-only unit — the accepted
+method, the fixed S = 32 policy, a concrete candidate execution HEAD / baseline, the deadline and resource estimate, the input and
+registry checks, the one-attempt stop and retention rules, the fresh verification and the archive / decision publication sequence;
+choosing no new probability, threshold or scientific rule; submitted once. **No production seed derivation, smoke / exploration /
+gate, board / 2d / routing, push or merge is authorised by the PASS or by the plan-writing authorisation**; no date gate, branch name
+or commit count is imposed.

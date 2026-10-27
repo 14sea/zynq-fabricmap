@@ -93,8 +93,14 @@ re-verified by this page with the v0.1.16 tool at their archive commits, never b
 ## 6. The third named archive — `b4-sim-4` (protocol v0.2.0), under protocol v0.3.0 (2026-10-27)
 
 The task-v0.3 revision (`docs/b4_architecture.md` v0.3.0, §7.2) changes the task's stimulus rule, which is a component of the protocol
-identity (§9.5): every v0.3.0 verifier, judge and policy therefore refuses the `b4-sim-4` archive **by name** — "the archive's protocol
-identity is not this tool's: task: …" with the differing components listed — and writes nothing. The archive is re-verified by this page's
+identity (§9.5): the v0.3.0 batch verifier (`b4_sim_verify.py`), the judge (`b4_gate.py judge`) and the policy (`b4_gonogo.py decide`)
+therefore refuse the `b4-sim-4` **batch** archive **by name** — "the archive's protocol identity is not this tool's: task: …" with the
+differing components listed, pointing here — and write nothing. **One qualification (the owner's P3 of 2026-10-27):** the go / no-go
+**decision-record** verifier (`b4_gonogo.py verify`) validates the record's shape — its `policy` block against the current table — before
+it compares the identity, so the v0.2.0 decision record `evidence/b4/gonogo/b4-sim-4_20261021T065857Z` (its policy block carries
+`alpha_go`) is refused first at that step, by name, as `policy: not the table's`, without the identity line and this pointer; the
+refusal is safe (nothing is written), was disclosed by the task-v0.3 unit, and needs no runtime change and no new digest. The
+historical decision record is re-verified by the same recorded-HEAD procedure as the batch. The archive is re-verified by this page's
 procedure (§3) **with its own tool at its recorded HEAD**, exactly as the two v0.1.16 archives are; nothing of it is re-judged, corrected
 or compared under v0.3.0, and its no-go of record stands.
 
