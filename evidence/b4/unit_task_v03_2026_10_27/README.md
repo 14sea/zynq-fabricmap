@@ -81,7 +81,7 @@ evidence/b4/gate evidence/b4/gonogo host rtl vivado tb b4/hypothesis b4/schemas 
 | the import table | `import_check.txt` | 59 entries, every digest equal, no tracked file under `b4/` without an entry |
 | the identity | `protocol_identity.txt` | `protocol_sha256` `5bba53c7…`, revision v0.3.0, labels / task / K9 as the table's |
 | the protected paths | `protected_paths.txt` | the diff of §1's protected list against `e084f07`: empty |
-| the owner's review | `owner_review_e20e12b_PASS/` | archived byte for byte (74 payload files incl. the owner's fresh e2e, `SHA256SUMS` verified after the copy); section 6 |
+| the owner's review | `owner_review_e20e12b_PASS/` | archived byte for byte (74 checksummed payload files incl. the owner's fresh e2e, plus `SHA256SUMS` itself, verified after the copy); section 6 |
 
 **The mutant battery's history, by the proportionality rule.** One full run of the 72 on the final tree: 68 / 72, the three known
 equivalents surviving as recorded by the v0.2.0 unit, and M67 surviving in its first form. M67's first form replaced the identity's
@@ -138,7 +138,7 @@ reserved name; a go of `b4-sim-5` would authorise nothing by itself.
 
 ## 6. Closure — the owner's PASS on `e20e12b` (2026-10-27)
 
-The review is archived in `owner_review_e20e12b_PASS/` (74 payload files incl. `SHA256SUMS`, every digest verified after the copy). Its
+The review is archived in `owner_review_e20e12b_PASS/` (74 checksummed payload files plus `SHA256SUMS` itself, every digest verified after the copy; the owner's counting precision of the review of `ae7fc35`). Its
 independent verification: the full suite **332 tests OK, no skip** in a detached clone of the tip; the new-contract mutants **M58–M72
 15 / 15 killed** (green baselines, `Ran N > 0` / FAILED, no edit miss; the re-aimed M67; the old equivalents inspected, not rerun); the
 unmodified e2e driver in a fresh hermetic root **exit 0, `as_expected = true`, `production_derivation_calls = [0, 0]`**, and the owner's

@@ -1,4 +1,4 @@
-# B4 — the execution plan of the exploration `b4-sim-5` (DRAFT v0.1, documents only, 2026-10-27)
+# B4 — the execution plan of the exploration `b4-sim-5` (v0.1.1 — **executed once on 2026-10-27: the batch complete, the policy no-go**; the plan text as accepted at `ae7fc35`, with the owner's three non-blocking precisions recorded in the status note)
 
 > **Authorisation.** The owner's review of `e20e12b` (2026-10-27, PASS: the task-v0.3 revision unit accepted and closed), section 4: the
 > next bounded work is "the `b4-sim-5` execution plan as a complete documents-only unit — the accepted method, the fixed S = 32 policy, a
@@ -14,6 +14,20 @@
 > decision.** The precedent this plan follows is `docs/b4_sim4_execution_plan.md` (v0.1.1, executed once); where v0.3.0 differs from v0.2.0
 > (the slice-wide stimulus rule and its place in the identity, the consumed `b4-sim-4`, the pooled exclusion, `p_max_go` in place of `α_go`,
 > the existing go / no-go namespace, the policy-shape refusal of the old decision record), the difference is stated here and nowhere assumed.
+
+> **Status (2026-10-27, after the execution).** The owner's review of `ae7fc35` (PASS; its section 4 a separate execution ruling) authorised one
+> execution: HEAD `ae7fc3547e1f9271a430b38ffee7fd469b89a7ee`, S = 32, deadline 3 600 s, one batch, no calendar-date gate. It ran on 2026-10-27
+> (17:06:04Z → 17:11:54Z): `complete` 32 / 32, 349.419 s; `b4_gonogo.py decide` wrote **no-go** at B = 64 (positives 9, negatives 7, ties 16,
+> p 0.4018 > `p_max_go` 0.2; the seven conditional K9 medians all ≥ 0.50, `sr_kind` exactly 0.5). Archive commit `d1e0e2c`, decision commit
+> `61733c5`, unit record `0c57bc1` on `b4-sim-5-execution`; the records and the copied statistics are in `evidence/b4/unit_sim5_execution_2026_10_27/`.
+> The label `b4-sim-5` is consumed by its records; the pooled exclusion is now 2 755 (the actual union, 0 collisions); a no-go is the cost
+> policy's stop and nothing follows from it automatically (sections 3.2 and 7). **The owner's three non-blocking precisions (the review's
+> section 3), which govern over the text below where the two differ:** (1) section 5 step 1's "still … decided (→ `no_decision`)" for an
+> invalid / incomplete batch is conditional on the policy's writer accepting the records — a malformed report is refused without a decision
+> directory, an internally inconsistent archive can yield a self-invalidating `no_decision` record whose fresh verification is not clean; keep
+> the output, stop and report, never manufacture a clean decision; (2) section 7's "2 755" assumed the 65 new values distinct from the pool —
+> the master is a separate hash not screened by pair generation; the actual union is what is reported, never a redraw (it was 2 755); (3) the
+> architecture's `b4-gate-2` row is aligned with the v0.3.0 route (not a permission). This revision (v0.1.1) changes no condition of the run.
 
 ## 0. Status index
 
