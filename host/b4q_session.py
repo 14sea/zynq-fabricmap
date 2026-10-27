@@ -51,9 +51,12 @@ def config_list(genome: int) -> list:
 
 
 def staging_witness(submissions: list) -> str | None:
-    """The pre-write staging commitment recomputed from the RETAINED stream bytes of two envelope submissions (the DDR content when each
-    DMA was queued): the streams parsed by the pinned grammar, the eight target frames hashed FAR-ordered — the same arithmetic as the
-    executing side's link 2 (`staged_hex`), on the bytes it re-read. None when a stream does not parse or the two are not the two envelopes."""
+    """The pre-write staging commitment recomputed from the RETAINED stream bytes of two envelope submissions — the bytes the DevC fake
+    read from the emulated DDR in its data handling, immediately before the emulated frame-store update (reached from the first status
+    poll after the queueing write; not a snapshot at the queueing write itself, and not a physical DDR re-read — b4q_backend.Devc.data):
+    the streams parsed by the pinned grammar, the eight target frames hashed FAR-ordered — the same arithmetic as the executing side's
+    link 2 (`staged_hex`), on the bytes it re-read. None when a stream does not parse, the two are not the two envelopes, or a DMA never
+    reached data handling (no stream_submitted entry exists for it: nothing is written for the witness then)."""
     frames = {}
     for e in submissions:
         words = [int(e["stream_words_hex"][8 * i:8 * i + 8], 16) for i in range(len(e["stream_words_hex"]) // 8)]
@@ -103,6 +106,7 @@ class Session:
         self.interrupt_tx = interrupt_tx                                    # the transaction number (1 = the root) the interruption is aimed at; None = any
         self.interrupted = None
         self.halted = None                                                  # the fail-closed latch of this layer: once set, no further SIGN or transaction (R1)
+        self.refused_reads, self.refused_mem_reads = set(), set()           # the read-refusal knobs a scenario armed (declared in the manifest; the counters themselves drain)
         self.qual_plan = {"a5": [], "a8": [], "a2": []}                     # the retained declared qualification index (R3): which records play which role
         self.binary = Path(binary)
         if not self.binary.is_file():
@@ -177,6 +181,14 @@ class Session:
             self.proc.wait(timeout=10)
 
     # ---------------------------------------------------------------- the session opening (contract 5.5)
+    def refuse_read(self, offset: int, n: int = 1):
+        """A bench fault knob (the environment's): the next n reads of the carrier-window offset answer SLVERR, the word unchanged; declared in the manifest."""
+        self.refused_reads.add(offset); self.backend.refuse_reads[offset] = self.backend.refuse_reads.get(offset, 0) + n
+
+    def refuse_mem_read(self, addr: int, n: int = 1):
+        """The same on the PS memory map (DEVCFG / DDR / SLCR)."""
+        self.refused_mem_reads.add(addr); self.backend.refuse_mem_reads[addr] = self.backend.refuse_mem_reads.get(addr, 0) + n
+
     def halt(self, why: str):
         if self.halted is None:
             self.halted = why
@@ -330,11 +342,13 @@ class Session:
                     "notary": {"key_id": self.notary.key_id, "contract": "zero tables, no attestation (fixture key)"},
                     "backend": {"power_on": "init" if self.backend.carrier.fab.q and None not in self.backend.carrier.fab.q else "x", "nonce_seed": f"{self.backend.carrier.nonce_seed:016x}", "devc_faults": {f"{k[0]}:{k[1]}": str(v) for k, v in self.backend.devc.faults.items()},
                                 "fault_injections": {"refuse_writes": sorted(f"{o:#06x}" for o in self.backend.refuse_writes), "corrupt_frame_reads": sorted(self.backend.devc.corrupt_frame_reads),
+                                                     "refuse_reads": sorted(f"{o:#06x}" for o in self.refused_reads), "refuse_mem_reads": sorted(f"{a:#010x}" for a in self.refused_mem_reads),
                                                      "note": "the bench's declared fault injections — a SIMULATION, never evidence that hardware refused or corrupted anything"}},
                     "records": [{"seq": e["seq"], "dir": f"tx_{e['seq']:03d}", "kind": e["kind"], "genome_hex": e["genome_hex"], "o": e["o"] is not None, "f": e["f"] is not None, "x": e["x"]["status"] if e["x"] else None,
                                  "o_status": e["o"]["status"] if e["o"] else None, "executing_side_status": e["firmware"].get("status"), "phase": e["firmware"].get("phase"), "findings": e["findings"],
                                  "trace_range": e["trace_range"], "pcap_range": e["pcap_range"]} for e in self.records],
                     "open_trace_range": [0, self.records[0]["trace_range"][0]] if self.records else [0, len(self.backend.trace)],
+                    "open_pcap_range": [0, self.records[0]["pcap_range"][0]] if self.records else [0, len(self.backend.pcap_log)],
                     "halted": self.halted, "qualification_plan": self.qual_plan,
                     "notary_deny": sorted(f"{g:06x}" for g in self.notary_deny), "interrupted": self.interrupted,
                     "chain_findings": chain, "accesses": len(self.backend.accesses), "trace_events": len(self.backend.trace)}

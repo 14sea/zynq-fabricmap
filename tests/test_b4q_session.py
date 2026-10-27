@@ -45,10 +45,10 @@ class EndToEnd(unittest.TestCase):
             self.assertTrue(rep["agree"], (name, rep["session"], [(t["dir"], t.get("only_here"), t.get("only_stored")) for t in rep["transactions"] if not t["agrees"]]))
             self.assertEqual(rc, 0, name)
             self.assertEqual([m for m in rep["session"] if m.startswith("A7:")], [], name)          # the bench's declared injected SLVERR (step_in_slverr) is not a finding
-            if name != "step_in_slverr":
+            if name not in ("step_in_slverr", "nonce_read_slverr", "heartbeat_read_slverr"):
                 self.assertEqual(rep["a7"]["findings"], [], name)
             else:
-                self.assertTrue(rep["a7"].get("declared_injections"), name)
+                self.assertTrue(rep["a7"].get("declared_injections"), name)                     # the bench's declared refused write / reads of the window
 
     def test_valid_paths_clean(self):
         for name in ("valid", "a5", "a5_persist", "a8_cross"):
@@ -133,10 +133,39 @@ class EndToEnd(unittest.TestCase):
         # the invalid record and the refused latch record halt the session: the next transaction refused, nothing signed
         self.assertIsNotNone(s["not_realisable"]["next_refused"]); self.assertEqual(s["not_realisable"]["signed_after"], 0)
         self.assertIsNotNone(s["latch_unmodelled"]["next_refused"])
-        for name in ("startup_corrupt", "pre_event_corrupt", "post_event_corrupt", "base_readback_corrupt", "step_in_slverr"):
+        for name in ("startup_corrupt", "pre_event_corrupt", "post_event_corrupt", "base_readback_corrupt", "step_in_slverr", "nonce_read_slverr", "heartbeat_read_slverr", "devc_ctrl_read_slverr"):
             rep = self.rep(name)
             self.assertTrue(rep["agree"], (name, rep["session"], [t.get("only_here") for t in rep["transactions"]]))
             self.assertIsNotNone(json.loads((root / name / "manifest.json").read_text())["halted"], name)
+
+    def test_r1_read_and_transport_failures_admit_no_later_event(self):
+        """the owner's R1 residual (6f62b6a): a read answered SLVERR — of the carrier window or of the PS map — admits NOTHING after it:
+        no signature on a refused nonce, no ARM; no INIT_REQ after a refused pre-event read; no DMA after a refused DEVCFG read; zero
+        writes of any kind after the refused read; the result is a stop (not a close), no O, the session halts, the next candidate refused"""
+        s = _STATE["summary"]
+        for name, want in (("nonce_read_slverr", {"phase": "P1", "signed_in_tx": 0, "ctrl_writes_in_tx": [], "dma_submits_in_tx": 0}),
+                           ("heartbeat_read_slverr", {"phase": "P3", "signed_in_tx": 1, "ctrl_writes_in_tx": ["0x40", "0x200"]}),           # PRE_SAMPLE before the refused read; no 0x400
+                           ("devc_ctrl_read_slverr", {"phase": "P2", "signed_in_tx": 1, "ctrl_writes_in_tx": ["0x40"], "dma_submits_in_tx": 0})):
+            e = s[name]
+            self.assertTrue(e["refused_read_seen"], name)
+            self.assertEqual(e["status"], 1, name); self.assertIn("SLVERR", e["reason"])
+            self.assertEqual(e["writes_after_the_refused_read"], 0, name)                        # the admission invariant: nothing is written after the stop
+            for k, v in want.items():
+                self.assertEqual(e[k], v, (name, k))
+            self.assertNotIn("0x400", e["ctrl_writes_in_tx"], name)
+            self.assertFalse(e["o"], name); self.assertIsNone(e["x"], name)
+            self.assertIsNotNone(e["next_refused"], name); self.assertIsNotNone(e["halted"], name)
+        # a refused IDCODE read at the opening: refused by name, no root signed
+        import b4q_session as ss, b4q_backend as bk, b4q_e2e as ee
+        sess = ss.Session(_STATE["root"] / "idcode_read_slverr", label="test-idcode"); sess.start()
+        try:
+            sess.refuse_mem_read(bk.SLCR_PSS_IDCODE); so = sess.open()
+            self.assertEqual(so["record"]["status"], "refused"); self.assertTrue(any("PSS_IDCODE read answered SLVERR" in m for m in so["findings"]), so["findings"])
+            with self.assertRaises(ss.SessionRefusal):
+                sess.transaction("root", 0, ee.stim([]))
+            self.assertEqual(len(sess.notary.log), 0)
+        finally:
+            sess.stop()
 
     def test_r2_archive_completeness_and_refusals(self):
         import shutil
@@ -161,6 +190,38 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(p.returncode, 1, bad); self.assertIn("REFUSED", p.stdout); self.assertNotIn("Traceback", p.stderr)
         shutil.rmtree(d); shutil.copytree(src, d); (d / "trace.jsonl").unlink()
         self.assertIn("missing", vf.verify(d)["refused"])
+        # R2a residual (6f62b6a): a coordinated +1 on a record's PCAP start in the manifest AND its record.json leaves an unowned
+        # interval (the first submission event of that transaction): never clean
+        d = _STATE["root"] / "valid_gap"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
+        m = json.loads((d / "manifest.json").read_text()); r = m["records"][1]; r["pcap_range"][0] += 1
+        rj = json.loads((d / r["dir"] / "record.json").read_text()); rj["pcap_range"] = r["pcap_range"]
+        (d / "manifest.json").write_text(json.dumps(m)); (d / r["dir"] / "record.json").write_text(json.dumps(rj))
+        rep = vf.verify(d); self.assertIsNone(rep["refused"]); self.assertFalse(rep["clean"]); self.assertFalse(rep["agree"])
+        self.assertTrue(any("does not start where the previous record ended in the PCAP log" in x for x in rep["session"]), rep["session"])
+        # the opening's own prefix: a declared opening range that does not end where the first record begins, or holding a transaction event
+        d = _STATE["root"] / "valid_open"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
+        m = json.loads((d / "manifest.json").read_text()); m["open_pcap_range"][1] -= 2; (d / "manifest.json").write_text(json.dumps(m))
+        rep = vf.verify(d); self.assertTrue(any("opening's PCAP range" in x for x in rep["session"]), rep["session"])
+        # R2c residual (6f62b6a): malformed NESTED files / fields are named refusals (exit 1, no traceback), never a traceback
+        for rel, val, needle in (("tx_001/record.json", [], "record.json: not a JSON object"), ("tx_001/ctx.json", [], "ctx.json: not a JSON object"),
+                                 ("tx_001/links.json", {"instrument": {}}, "links.json.nonce"), ("tx_001/firmware_result.json", {"status": "0"}, "firmware_result.json.status"),
+                                 ("tx_002/o.json", {"status": "complete"}, "o.json.seq"), ("tx_002/x.json", [], "x.json: not a JSON object")):
+            d = _STATE["root"] / "valid_nested"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
+            (d / rel).write_text(json.dumps(val))
+            p = subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d)], capture_output=True, text=True)
+            self.assertEqual(p.returncode, 1, rel); self.assertIn("REFUSED", p.stdout, rel); self.assertIn(needle, p.stdout, rel); self.assertNotIn("Traceback", p.stderr, rel)
+        for edit, needle in ((lambda m: m.update({"executing_side": {}}), "manifest.executing_side.binary"), (lambda m: m.update({"instrument": []}), "manifest.instrument"),
+                             (lambda m: m["qualification_plan"].update({"a8": [{"element": 1}]}), "qualification_plan.a8[0]"), (lambda m: m.update({"open_pcap_range": [1, 2]}), "open_pcap_range"),
+                             (lambda m: m["records"][0].update({"kind": "x"}), "records[0]"), (lambda m: m.update({"halted": 3}), "manifest.halted")):
+            d = _STATE["root"] / "valid_nested"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
+            m = json.loads((d / "manifest.json").read_text()); edit(m); (d / "manifest.json").write_text(json.dumps(m))
+            p = subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d)], capture_output=True, text=True)
+            self.assertEqual(p.returncode, 1, needle); self.assertIn(needle, p.stdout, needle); self.assertNotIn("Traceback", p.stderr, needle)
+        # the session_open record's consumed fields
+        d = _STATE["root"] / "valid_nested"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
+        so = json.loads((d / "session_open.json").read_text()); del so["record"]["startup_readback_sha256"]; (d / "session_open.json").write_text(json.dumps(so))
+        p = subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d)], capture_output=True, text=True)
+        self.assertEqual(p.returncode, 1); self.assertIn("session_open.record.startup_readback_sha256", p.stdout); self.assertNotIn("Traceback", p.stderr)
         # R2b: the staging witness is the retained submitted stream, recomputed; a tampered retained stream is found
         d = _STATE["root"] / "valid_stream"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
         lines = (d / "pcap_log.jsonl").read_text().splitlines()
@@ -179,9 +240,15 @@ class EndToEnd(unittest.TestCase):
         import shutil
         import b4q_qual as ql
         root = _STATE["root"]
-        for scenario, f, edit, needle in (("a8_cross", "a8_cross.json", lambda v: v["AFF"].update({"row": 5, "verdict": "neither demonstrated"}), "A8 AFF"),
-                                          ("a5_persist", "a5_verdict.json", lambda v: v.update({"verdict": "pass"}), "A5"),
-                                          ("a2_pairs", "a2_rows.json", lambda v: v["ce_mode"].update({"verdict": "does_not_differ"}), "A2 ce_mode")):
+        for scenario, f, edit, needle in (("a8_cross", "a8_cross.json", lambda v: v["AFF"].update({"row": 5, "verdict": "neither demonstrated"}), "A8[0] AFF"),
+                                          ("a5_persist", "a5_verdict.json", lambda v: v.update({"verdict": "pass"}), "A5[0]"),
+                                          ("a2_pairs", "a2_rows.json", lambda v: v["ce_mode"].update({"verdict": "does_not_differ"}), "A2[0] ce_mode"),
+                                          # the R3 residual (6f62b6a): the data-bearing fields are bound, not only row / verdict
+                                          ("a8_cross", "a8_cross.json", lambda v: (v["AFF"]["init_samples"].update({"00": 1 - v["AFF"]["init_samples"]["00"]}), v["AFF"]["quantities"].update({"init_effect": False})), "A8[0] AFF"),
+                                          ("a8_cross", "a8_cross.json", lambda v: v["BFF"]["sr_readings"]["00"].update({"samples": None}), "A8[0] BFF"),
+                                          ("a5", "a5_verdict.json", lambda v: v["injection_witness"].update({"c1_initial_q": [0] * 8}), "A5[0]"),
+                                          ("a2_pairs", "a2_rows.json", lambda v: v["ce_mode"].update({"differing_points": v["ce_mode"]["differing_points"][:3]}), "A2[0] ce_mode"),
+                                          ("a2_pairs", "a2_rows.json", lambda v: v["storage_kind"].update({"g1_findings": []}), "A2[1] storage_kind")):
             d = root / f"{scenario}_altered"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(root / scenario, d)
             v = json.loads((d / f).read_text()); edit(v); (d / f).write_text(json.dumps(v))
             rep = vf.verify(d)
@@ -190,6 +257,32 @@ class EndToEnd(unittest.TestCase):
         d = root / "a8_cross_undeclared"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(root / "a8_cross", d)
         m = json.loads((d / "manifest.json").read_text()); m["qualification_plan"]["a8"] = []; (d / "manifest.json").write_text(json.dumps(m))
         rep = vf.verify(d); self.assertTrue(any("declared no a8" in x for x in rep["qualification"]["findings"]))
+        # the R3 residual (6f62b6a): the index's labels are bound to the records' actual O.config and to the mapping — a coordinated
+        # relabelling (index + conclusion together) is found
+        def altered(scenario, name, edit_m=None, edit_c=None, cfile=None):
+            d = root / f"{scenario}_{name}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(root / scenario, d)
+            if edit_m:
+                m = json.loads((d / "manifest.json").read_text()); edit_m(m["qualification_plan"]); (d / "manifest.json").write_text(json.dumps(m))
+            if edit_c:
+                v = json.loads((d / cfile).read_text()); edit_c(v); (d / cfile).write_text(json.dumps(v))
+            rep = vf.verify(d); self.assertFalse(rep["agree"], name); self.assertIsNone(rep["refused"], name)
+            return rep["qualification"]["findings"]
+        def rename(q, old, new):
+            q["a8"][0]["elements"][new] = q["a8"][0]["elements"].pop(old); q["a8"][0]["element"] = new
+        f = altered("a8_cross", "label", lambda q: rename(q, "AFF", "A5FF"), lambda v: v.update({"A5FF": v.pop("AFF")}), "a8_cross.json")
+        self.assertTrue(any("element 'A5FF' / index 0 is not the mapping's element order" in x for x in f), f)
+        f = altered("a8_cross", "label2", lambda q: (rename(q, "AFF", "BFF"), q["a8"][0]["elements"].update({"BFF": 2})), lambda v: (v.update({"BFF": v.pop("AFF")})), "a8_cross.json")   # the cross relabelled onto the bystander
+        self.assertTrue(any("not the mapping's addresses of (BFF" in x for x in f) or any("corner" in x for x in f), f)
+        f = altered("a8_cross", "bits", lambda q: q["a8"][0].update({"background_hex": "000000", "bits": {"ff_init": 0, "ff_srval": 1}}))
+        self.assertTrue(any("declared varied bits" in x for x in f) and any("declared background" in x for x in f), f)
+        f = altered("a8_cross", "corner", lambda q: q["a8"][0]["corners"].update({"00": q["a8"][0]["corners"]["11"]}))
+        self.assertTrue(any("four distinct records" in x for x in f) and any("corner 00's record does not observe" in x for x in f), f)
+        f = altered("a2_pairs", "semantic", lambda q: q["a2"][0].update({"semantic": "ff_init"}), lambda v: v.update({"ff_init": v.pop("ce_mode")}), "a2_rows.json")
+        self.assertTrue(any("A2[0] ff_init: the two endpoints do not differ exactly in the bit(s) of one (ff_init) address" in x for x in f), f)
+        f = altered("a2_pairs", "endpoint", lambda q: q["a2"][0].update({"g1_hex": "000020"}))
+        self.assertTrue(any("g1's record does not observe the declared endpoint" in x for x in f), f)
+        f = altered("a5", "roles", lambda q: q["a5"][0].update({"J1": 1, "J2": 2, "J3": 3}))
+        self.assertTrue(any("J1 is a root transaction" in x for x in f) and any("J2 is a normal transaction" in x for x in f), f)
         # A5 without the close witnesses is never a pass; a corner without its closed X is not demonstrated
         A = root / "a5"; rd = lambda n: json.loads((A / n).read_text())
         self.assertEqual(ql.a5_verdict(rd("tx_002/o.json"), rd("tx_003/o.json"), rd("tx_004/o.json"))["verdict"], "not_demonstrated")

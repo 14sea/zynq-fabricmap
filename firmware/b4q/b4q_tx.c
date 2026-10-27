@@ -61,10 +61,17 @@ static int axi_writable(uint32_t off)
     return 0;   /* the key window among the rest: the signer principal's, never this program's */
 }
 
-static const char *g_stop;      /* the first named stop of the current call */
+static const char *g_stop;      /* the first named stop of the current call: once set, this side ADMITS no further event */
 static char g_phase[5];
 
+/* The admission invariant (the owner's R1 residual, 2026-10-27): after the first stop of a call — a refused read or write of the
+ * carrier window or of the PS memory map, a link mismatch, a refusal — no write of any kind is issued (so no SIGN is requested,
+ * no CTRL operation, no staging, no DMA register write and therefore no DMA is queued) and no signature is requested. Reads stay
+ * admitted: a diagnostic read (STATUS / FAULT after a refusal) is evidence, never permission. The first reason is kept; the phase
+ * and the raw prefix are the ones reached. The gate lives in the two write accessors and before the one signing call, so that no
+ * later edit of the sequence can admit an event after a stop by forgetting a check. */
 static void stop(const char *why) { if (!g_stop) g_stop = why; }
+static int admitted(void) { return g_stop == NULL; }
 static void phase(const char *p) { strncpy(g_phase, p, sizeof g_phase - 1); g_phase[sizeof g_phase - 1] = 0; }
 
 static uint32_t axi_rd(uint32_t off)
@@ -79,14 +86,24 @@ static uint32_t axi_rd(uint32_t off)
 static uint32_t axi_wr(uint32_t off, uint32_t v)
 {
     uint32_t resp;
+    if (!admitted()) return B4Q_RESP_SLVERR;      /* nothing is written after a stop: no CTRL operation, no staging, no step */
     if (!axi_writable(off)) { stop("STOP_AXI: write outside the pinned map"); return B4Q_RESP_SLVERR; }
     resp = b4q_wr32(B4Q_AXI_BASE + off, v);
     if (resp != B4Q_RESP_OKAY && off != B4Q_CTRL) stop("STOP_AXI: a write of the pinned map answered SLVERR (the register is not what this side meant to stage)");
     return resp;                                   /* a CTRL SLVERR is the register file's refusal: the caller names it */
 }
 
-static uint32_t mem_rd(uint32_t a) { uint32_t resp; return b4q_rd32(a, &resp); }
-static void mem_wr(uint32_t a, uint32_t v) { (void)b4q_wr32(a, v); }
+static uint32_t mem_rd(uint32_t a)
+{
+    uint32_t resp = B4Q_RESP_OKAY, v = b4q_rd32(a, &resp);
+    if (resp != B4Q_RESP_OKAY) stop("STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence");
+    return v;
+}
+static void mem_wr(uint32_t a, uint32_t v)
+{
+    if (!admitted()) return;                       /* no DMA register write, no staging word after a stop: no DMA is queued */
+    if (b4q_wr32(a, v) != B4Q_RESP_OKAY) stop("STOP_MEM: a write of the PS memory map (DEVCFG / DDR) answered SLVERR: the register / word is not what this side meant");
+}
 
 static uint64_t pl_nonce(void)
 {
@@ -124,6 +141,7 @@ static int devcfg_wait_done(void)
     int spins;
     for (spins = 0; spins < DMA_SPIN_LIMIT; spins++) {
         uint32_t sts = mem_rd(DEVCFG_INT_STS);
+        if (!admitted()) return -1;
         if (sts & INT_STS_ERROR_MASK) { stop("STOP_DMA: DEVCFG error bit after a DMA"); return -1; }
         if (sts & INT_STS_D_P_DONE) return 0;     /* D_P_DONE: the DMA and the PCAP; DMA_DONE alone is not */
     }
@@ -133,13 +151,20 @@ static int devcfg_wait_done(void)
 
 static int devcfg_dma(const b4q_dma *t, uint32_t src_override)
 {
-    if ((mem_rd(DEVCFG_CTRL) & CTRL_PCAP_MASK) != CTRL_PCAP_MASK) { stop("STOP_DMA: DEVCFG CTRL is not in PCAP mode"); return -1; }
+    uint32_t ctrl;
+    if (!admitted()) return -1;                    /* no DMA after a stop */
+    ctrl = mem_rd(DEVCFG_CTRL);
+    if (!admitted()) return -1;                    /* a refused CTRL read: the mode is unknown, nothing is queued */
+    if ((ctrl & CTRL_PCAP_MASK) != CTRL_PCAP_MASK) { stop("STOP_DMA: DEVCFG CTRL is not in PCAP mode"); return -1; }
     mem_wr(DEVCFG_INT_STS, INT_STS_CLEAR_MASK);
     if (mem_rd(DEVCFG_INT_STS) & INT_STS_D_P_DONE) { stop("STOP_DMA: INT_STS would not clear"); return -1; }
+    if (!admitted()) return -1;
     mem_wr(DEVCFG_DMA_SRC_ADDR, src_override ? src_override : t->src);
     mem_wr(DEVCFG_DMA_DEST_ADDR, t->dst);
     mem_wr(DEVCFG_DMA_SRC_LEN, t->src_len);
+    if (!admitted()) return -1;                    /* a refused register write: the tuple is not the one meant; the command is not queued */
     mem_wr(DEVCFG_DMA_DEST_LEN, t->dst_len);    /* queues the command */
+    if (!admitted()) return -1;
     return devcfg_wait_done();
 }
 
@@ -184,6 +209,7 @@ static int link2(char staged_hex[65], char stream_hex[65])
         uint32_t far_set;
         for (i = 0; i < P3_STREAM_WORDS; i++)
             words[i] = mem_rd(P3_WR_BUF + (uint32_t)e * 4u * P3_STREAM_WORDS + 4u * (uint32_t)i);
+        if (!admitted()) return -1;                /* a refused re-read: the staged bytes are unknown, no digest is formed */
         p3_sha256_words(&c, words, P3_STREAM_WORDS);
         if (p3_parse_stream(words, &far_set, frames5) != 0 || far_set != P3_ENVELOPE[e].far_set) { stop("STOP_LINK2: the staged stream does not parse"); return -1; }
         for (k = 0; k < 4; k++)
@@ -214,7 +240,7 @@ static int readback_frame(int index)
     for (i = 0; i < P3_READBACK_WORDS; i++)
         mem_wr(P3_DST_BUF + 4u * (uint32_t)i, P3_SENTINEL);
     for (i = 0; i < P3_READBACK_WORDS; i++)
-        if (mem_rd(P3_DST_BUF + 4u * (uint32_t)i) != P3_SENTINEL) { stop("STOP_LINK3: the sentinel prefill did not verify"); return -1; }
+        if (mem_rd(P3_DST_BUF + 4u * (uint32_t)i) != P3_SENTINEL || !admitted()) { stop("STOP_LINK3: the sentinel prefill did not verify"); return -1; }
     p3_build_readback_command(P3_TARGET_FARS[index], cmd);
     for (i = 0; i < P3_READBACK_CMD_WORDS; i++)
         mem_wr(P3_CMD_BUF + 4u * (uint32_t)i, cmd[i]);
@@ -226,7 +252,7 @@ static int readback_frame(int index)
     if (devcfg_dma(&DMA_READ_CLEANUP, 0) != 0) return -1;
     for (i = 0; i < P3_FRAME_WORDS; i++)         /* words [0:101] are the pad frame; [101:202] the target */
         g_readback[index][i] = mem_rd(P3_DST_BUF + 4u * (uint32_t)(P3_FRAME_WORDS + i));
-    return 0;
+    return admitted() ? 0 : -1;                    /* a refused read of the delivered frame: no digest is formed on it */
 }
 
 static int link3(char readback_hex[65])
@@ -255,6 +281,7 @@ static int candidate_in(uint32_t genome, int a5, b4q_tx_result *r, char pre_even
     }
     nonce = pl_nonce();
     r->nonce_before = nonce;
+    if (!admitted()) return -1;                    /* a refused NONCE read: no candidate is signed on a nonce that is not evidence */
     snprintf(ghex, sizeof ghex, "%08x", (unsigned)genome);
     snprintf(nhex, sizeof nhex, "%016llx", (unsigned long long)nonce);
     if (b4q_sign(ghex, nhex, words) != 0) { stop("STOP_SIGN: the notary refused the candidate"); return -1; }
@@ -270,7 +297,9 @@ static int candidate_in(uint32_t genome, int a5, b4q_tx_result *r, char pre_even
     r->nonce_after = pl_nonce();
     for (i = 0; i < 8; i++)
         if (axi_rd(B4Q_HW_COMMIT0 + 4u * (uint32_t)i) != commit_w[i]) { stop("STOP_ARM: HW_COMMIT is not the derived commit"); return -1; }
+    if (!admitted()) return -1;
     stage_streams();
+    if (!admitted()) return -1;                    /* a refused staging write: the DDR content is not the candidate; nothing is re-read or written */
     if (link2(staged_hex, stream_hex) != 0) return -1;
     if (strcmp(staged_hex, commit_hex) != 0) { stop("STOP_LINK2: the re-read frames are not the signed candidate"); return -1; }
     phase("P2");
@@ -305,8 +334,9 @@ int b4q_session_open(b4q_open_result *o)
     memset(o, 0, sizeof *o);
     g_stop = NULL; phase("open");
     {
-        uint32_t resp;
+        uint32_t resp = B4Q_RESP_OKAY;
         o->idcode = b4q_rd32(SLCR_PSS_IDCODE, &resp);
+        if (resp != B4Q_RESP_OKAY) stop("IDENT: the PSS_IDCODE read answered SLVERR: the part is not identified");
     }
     o->status_word = axi_rd(B4Q_STATUS);
     o->variant = axi_rd(B4Q_VARIANT);
@@ -346,6 +376,7 @@ int b4q_transaction(uint32_t genome, const uint32_t *steps, int n_steps, b4q_kin
     r->in_live_pre = axi_rd(B4Q_IN_LIVE);
     if (read_slot(0, r) != 0) goto stopped;
     r->heartbeat_before = axi_rd(B4Q_HEARTBEAT);
+    if (!admitted()) goto stopped;                 /* a refused read before the event: no INIT_REQ is raised (the accessor would refuse it; this names the phase) */
     if (engine_op(B4Q_CTRL_INIT_REQ, B4Q_ST_INIT_DONE, &st, r, "STOP_P3: INIT_REQ refused") != 0) goto stopped;
     r->witness_after_init = axi_rd(B4Q_WITNESS);
     r->heartbeat_after = axi_rd(B4Q_HEARTBEAT);
@@ -367,6 +398,7 @@ int b4q_transaction(uint32_t genome, const uint32_t *steps, int n_steps, b4q_kin
         r->steps_applied = k + 1;
     }
     r->status_final = axi_rd(B4Q_STATUS);
+    if (!admitted()) goto stopped;
     if (((r->status_final >> B4Q_ST_STEP_INDEX_SHIFT) & B4Q_ST_STEP_INDEX_MASK) != (uint32_t)n_steps) { stop("STOP_P5: step_index is not the number of steps applied"); goto stopped; }
     /* P6: the observation is sealed by the host from the trace; this side's fitness over the full mask on the sampled values */
     phase("P6");
@@ -393,6 +425,7 @@ int b4q_transaction(uint32_t genome, const uint32_t *steps, int n_steps, b4q_kin
     if (engine_op(B4Q_CTRL_CLEANUP, B4Q_ST_CLEANUP_DONE, &st, r, "STOP_P7: CLEANUP refused") != 0) goto faulted;
     if (axi_rd(B4Q_IN_LIVE) != 0u) { stop("STOP_P7: the cleanup left inputs held"); goto faulted; }
     if (read_slot(2 + n_steps, r) != 0) goto faulted;
+    if (!admitted()) goto faulted;
     /* P8: the base restored (genome 0 signed and written) and read back — the host's PCAP path, this side's DMAs */
     phase("P8");
     {
@@ -418,11 +451,13 @@ int b4q_transaction(uint32_t genome, const uint32_t *steps, int n_steps, b4q_kin
     if (engine_op(B4Q_CTRL_RESTORE_INIT, B4Q_ST_RESTORE_DONE, &st, r, "STOP_P9: RESTORE_INIT refused") != 0) goto faulted;
     r->witness_after_restore = axi_rd(B4Q_WITNESS);
     r->base_state = axi_rd(B4Q_BASE_STATE) & 0xFFu;
+    if (!admitted()) goto faulted;
     /* P10: the close; idle read */
     phase("P10");
     if (engine_op(B4Q_CTRL_CLOSE, 32u, &st, r, "STOP_P10: CLOSE refused") != 0) goto faulted;
     st = axi_rd(B4Q_STATUS);
     r->status_final = st;
+    if (!admitted()) goto faulted;
     if (!bit(st, B4Q_ST_IDLE)) { stop("STOP_P10: not idle after CLOSE"); goto faulted; }
     r->status = 0; r->reason = "closed";
     b4q_emit("MARK transaction_end");

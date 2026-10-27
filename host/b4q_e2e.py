@@ -105,7 +105,7 @@ def scenario_a8_cross(s: ss.Session) -> dict:
         recs[c] = e; corners[c] = e["o"]; closes[c] = e["x"]
     out = {"AFF": ql.a8_classify(corners, 0, DEMO_PARTS, closes=closes), "BFF": ql.a8_classify(corners, 2, DEMO_PARTS, closes=closes)}   # the main element the cross is on, and a bystander
     s.qual_plan["a8"].append({"background_hex": f"{G_CESR:06x}", "bits": {"ff_init": BIT_INIT_AFF, "ff_srval": BIT_SRVAL_AFF}, "corners": {c: recs[c]["seq"] for c in corners},
-                              "parts": DEMO_PARTS, "elements": {"AFF": 0, "BFF": 2}, "conclusion_file": "a8_cross.json"})
+                              "parts": DEMO_PARTS, "element": "AFF", "elements": {"AFF": 0, "BFF": 2}, "conclusion_file": "a8_cross.json"})   # AFF qualified; BFF a declared bystander
     (s.out / "a8_cross.json").write_text(json.dumps(out, indent=1) + "\n")
     return {"a8_AFF": out.get("AFF", {}).get("verdict"), "a8_BFF": out.get("BFF", {}).get("verdict")}
 
@@ -182,6 +182,27 @@ def _step_in_slverr(s: ss.Session) -> dict:
     return {"status": e["firmware"]["status"], "phase": e["firmware"]["phase"], "reason": e["firmware"]["reason"], "step_launches": len(steps), "o": e["o"] is not None, "o_status": e["o"]["status"] if e["o"] else None, "halted": s.halted}
 
 
+def _read_slverr(s: ss.Session, arm, want_phase: str) -> dict:
+    """a read answered SLVERR (the word unchanged): the executing side admits NO later event — no signature on a refused nonce, no
+    INIT_REQ after a refused pre-event read, no DMA after a refused DEVCFG read; the session halts; the next candidate is refused"""
+    s.open(); s.transaction("root", 0, stim([]))
+    arm(s)
+    signed_before, n_acc, n_pcap = len(s.notary.log), len(s.backend.accesses), len(s.backend.pcap_log)
+    e = s.transaction("normal", G_CESR, stim(FIX1))
+    try:
+        s.transaction("normal", G_BASE, stim(FIX0)); refused = None
+    except ss.SessionRefusal as ex:
+        refused = str(ex)
+    acc = s.backend.accesses[n_acc:]
+    first = next((i for i, a in enumerate(acc) if a[2] != 0), None)
+    after = acc[first + 1:] if first is not None else acc
+    ctrl = [hex(ev["data"]) for ev in s.backend.trace[e["trace_range"][0]:e["trace_range"][1]] if ev.get("op") == "wr" and ev.get("addr") == 0x2000]
+    return {"status": e["firmware"]["status"], "phase": e["firmware"]["phase"], "reason": e["firmware"]["reason"], "want_phase": want_phase, "o": e["o"] is not None,
+            "x": e["x"]["status"] if e["x"] else None, "signed_in_tx": len(s.notary.log) - signed_before, "ctrl_writes_in_tx": ctrl,
+            "dma_submits_in_tx": sum(1 for ev in s.backend.pcap_log[n_pcap:] if ev.get("pcap") == "submit"),
+            "writes_after_the_refused_read": sum(1 for a in after if a[0] == "wr"), "refused_read_seen": first is not None, "next_refused": refused, "halted": s.halted}
+
+
 def scenario_startup_corrupt(s: ss.Session) -> dict:
     """the startup readback corrupted: session_open refused; no root is signed (nothing further at all)"""
     s.corrupt_frame_reads.add(1)
@@ -214,6 +235,9 @@ SCENARIOS = {
     "post_event_corrupt": (lambda s: _corruption(s, 41, "P4"), {}),      # 41 = the candidate's post-event readback
     "base_readback_corrupt": (lambda s: _corruption(s, 49, "P8"), {}),   # 49 = the candidate's restored-base readback
     "step_in_slverr": (lambda s: _step_in_slverr(s), {}),
+    "nonce_read_slverr": (lambda s: _read_slverr(s, lambda s: s.refuse_read(ss.rm.NONCE_LO), "P1"), {}),            # no signature is requested on a nonce that is not evidence
+    "heartbeat_read_slverr": (lambda s: _read_slverr(s, lambda s: s.refuse_read(ss.rm.HEARTBEAT), "P3"), {}),       # no INIT_REQ after a refused pre-event read
+    "devc_ctrl_read_slverr": (lambda s: _read_slverr(s, lambda s: s.refuse_mem_read(ss.bk.DEVCFG_CTRL), "P2"), {}),   # no DMA after a refused DEVCFG read
     "valid": (scenario_valid, {}),
     "a5": (scenario_a5, {}),
     "a5_persist": (scenario_a5, {"gsr_init_effect": False}),

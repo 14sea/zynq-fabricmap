@@ -108,8 +108,12 @@ class Devc:
         d["data_done"] = True
         if d["kind"] == "env":
             words = [self.mem.rd((d["src"] & ~3) + 4 * i) for i in range(fr.STREAM_WORDS)]
-            # the staging witness, retained at SUBMISSION: the stream as it lies in DDR when the DMA is queued (what the executing side
-            # staged and re-read), kept whole so the host and a verifier recompute the pre-write commitment from the bytes themselves
+            # the staging witness: the stream as this fake reads it from the emulated DDR HERE — in its data handling, reached from the
+            # executing side's first status poll after the queueing write, immediately BEFORE the emulated frame-store update — not at
+            # the queueing write itself (the owner's P3 of 2026-10-27). Between the queueing write and this poll the executing side issues
+            # no write, so the bytes are the ones it staged and re-read (link 2); this is an emulation witness of "before the frame update",
+            # not a physical DDR re-read. A DMA that never reaches data handling (a 'never' fault, an interruption) leaves only its
+            # `submit` entry and no stream_submitted entry: the host then has no staging witness for it and writes none.
             self.log.append({"pcap": "stream_submitted", "n": d["n"], "src": d["src"], "stream_sha256": fr.words_sha256(words),
                              "stream_words_hex": "".join(f"{w:08x}" for w in words)})
             parsed = fr.parse_stream(words)
@@ -209,6 +213,8 @@ class Backend:
         self.devc.wl = self.wl
         self.loaded_genome = loaded_genome
         self.refuse_writes = set()                                         # window offsets answered SLVERR without a change (a fault knob)
+        self.refuse_reads = {}                                             # window offset -> how many of its next reads answer SLVERR (a fault knob; the data word unchanged)
+        self.refuse_mem_reads = {}                                         # PS-map address (DEVCFG / DDR / SLCR) -> how many of its next reads answer SLVERR
 
     def provision_key(self, key: bytes):
         """The signer principal's act (never the application's): the write-once key through its window, then the commit."""
@@ -227,8 +233,19 @@ class Backend:
             data, x, resp = self.carrier.read(a - AXI_BASE)
             if x is not None:
                 data = int("".join("0" if c in "xz" else c for c in x), 2)
+            if self.refuse_reads.get(a - AXI_BASE, 0) > 0:                 # a fault knob: the response SLVERR, the word as the carrier gave it (a bench's injection, declared)
+                self.refuse_reads[a - AXI_BASE] -= 1
+                resp = SLVERR
+                if self.trace and self.trace[-1].get("op") == "rd" and self.trace[-1].get("addr") == a - AXI_BASE:
+                    self.trace[-1]["resp"] = SLVERR
             self.accesses.append(("rd", a, resp))
             return data, resp, x
+        if self.refuse_mem_reads.get(a, 0) > 0:                            # a fault knob on the PS map: SLVERR answered, the word as the fake gives it
+            self.refuse_mem_reads[a] -= 1
+            self.accesses.append(("rd", a, SLVERR))
+            if DEVCFG_BASE <= a < DEVCFG_BASE + 0x100:
+                return self.devc.rd(a), SLVERR, None
+            return (IDCODE_FULL if a == SLCR_PSS_IDCODE else self.mem.rd(a)), SLVERR, None
         self.accesses.append(("rd", a, OKAY))
         if DEVCFG_BASE <= a < DEVCFG_BASE + 0x100:
             return self.devc.rd(a), OKAY, None

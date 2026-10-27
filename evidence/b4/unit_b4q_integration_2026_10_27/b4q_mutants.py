@@ -180,7 +180,7 @@ def probe_archive(root):
     v = json.loads((d2 / "a8_cross.json").read_text()); v["AFF"]["row"] = 5; v["AFF"]["verdict"] = "neither demonstrated"
     (d2 / "a8_cross.json").write_text(json.dumps(v))
     rep = verify(root, "a8_cross")
-    if not any("A8 AFF" in m for m in rep["qualification"]["findings"]) or rep["agree"]:
+    if not any("A8[0] AFF" in m for m in rep["qualification"]["findings"]) or rep["agree"]:
         return True, "an altered A8 conclusion was NOT found"
     return False, "found"
 
@@ -232,6 +232,113 @@ def probe_a5_witnesses(root):
     return False, v["verdict"]
 
 
+def probe_read_admission(root):
+    """R1 residual: a read answered SLVERR admits no later event — no signature on a refused nonce, no INIT_REQ after a refused
+    pre-event read, no DMA after a refused DEVCFG read, zero writes after the refused read; a stop, no O"""
+    for name, want in (("nonce_read_slverr", {"signed_in_tx": 0, "ctrl_writes_in_tx": [], "dma_submits_in_tx": 0}),
+                       ("heartbeat_read_slverr", {"ctrl_writes_in_tx": ["0x40", "0x200"]}),
+                       ("devc_ctrl_read_slverr", {"dma_submits_in_tx": 0})):
+        s = e2e(root, name)
+        if "error" in s:
+            return True, s["error"][:200]
+        if s.get("status") != 1 or s.get("writes_after_the_refused_read") != 0 or s.get("o") or s.get("next_refused") is None or "0x400" in s.get("ctrl_writes_in_tx", []):
+            return True, f"{name}: status {s.get('status')} writes_after {s.get('writes_after_the_refused_read')} o {s.get('o')} ctrl {s.get('ctrl_writes_in_tx')}"
+        for k, v in want.items():
+            if s.get(k) != v:
+                return True, f"{name}: {k} {s.get(k)} (want {v})"
+    return False, "as expected"
+
+
+def probe_tiling(root):
+    """R2a residual: a coordinated +1 on a record's PCAP start (manifest + record.json) leaves an unowned interval: never clean; the
+    opening's own prefix is held to end where the first record begins"""
+    import shutil
+    s = e2e(root, "valid")
+    if "error" in s:
+        return True, s["error"][:200]
+    src = root / "valid"; d = root / "valid_gap"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
+    m = json.loads((d / "manifest.json").read_text()); r = m["records"][1]; r["pcap_range"][0] += 1
+    rj = json.loads((d / r["dir"] / "record.json").read_text()); rj["pcap_range"] = r["pcap_range"]
+    (d / "manifest.json").write_text(json.dumps(m)); (d / r["dir"] / "record.json").write_text(json.dumps(rj))
+    rep = verify(root, "valid_gap")
+    if rep.get("clean") or rep.get("agree") or not any("PCAP log" in x for x in rep.get("session", [])):
+        return True, f"an internal PCAP gap was clean / agreed: {rep.get('session')}"
+    d = root / "valid_open"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
+    m = json.loads((d / "manifest.json").read_text()); m["open_pcap_range"][1] -= 2; (d / "manifest.json").write_text(json.dumps(m))
+    rep = verify(root, "valid_open")
+    if not any("opening's PCAP range" in x for x in rep.get("session", [])):
+        return True, "a shortened opening range was not found"
+    return False, "found"
+
+
+def probe_nested(root):
+    """R2c residual: malformed nested files / fields are NAMED refusals (exit 1, REFUSED, no traceback) — never a traceback and never
+    a verifier error"""
+    import shutil
+    s = e2e(root, "valid")
+    if "error" in s:
+        return True, s["error"][:200]
+    src = root / "valid"
+    for rel, val in (("tx_001/record.json", []), ("tx_001/ctx.json", []), ("tx_002/x.json", []), ("manifest.json", None)):
+        d = root / "valid_nested"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
+        if val is None:
+            m = json.loads((d / rel).read_text()); m["executing_side"] = {}; (d / rel).write_text(json.dumps(m))
+        else:
+            (d / rel).write_text(json.dumps(val))
+        p = subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d)], capture_output=True, text=True)
+        if p.returncode != 1 or "REFUSED" not in p.stdout or "Traceback" in p.stderr or "VERIFIER ERROR" in p.stdout:
+            return True, f"{rel}: not a named refusal (exit {p.returncode}): " + (p.stdout[:120] or p.stderr[-120:])
+    return False, "named"
+
+
+def probe_binding(root):
+    """R3 residual: the index's labels are bound to the records' actual O.config and the mapping; the conclusions are compared in full"""
+    import shutil
+    for name in ("a8_cross", "a2_pairs", "a5"):
+        s = e2e(root, name)
+        if "error" in s:
+            return True, s["error"][:200]
+    def altered(scenario, tag, edit_m=None, edit_c=None, cfile=None):
+        d = root / f"{scenario}_{tag}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(root / scenario, d)
+        if edit_m:
+            m = json.loads((d / "manifest.json").read_text()); edit_m(m["qualification_plan"]); (d / "manifest.json").write_text(json.dumps(m))
+        if edit_c:
+            v = json.loads((d / cfile).read_text()); edit_c(v); (d / cfile).write_text(json.dumps(v))
+        rep = verify(root, f"{scenario}_{tag}")
+        return rep.get("qualification", {}).get("findings", []), rep.get("agree")
+    def rename(q, old, new):
+        q["a8"][0]["elements"][new] = q["a8"][0]["elements"].pop(old); q["a8"][0]["element"] = new
+    def swapped_coordinated():
+        import importlib
+        import b4q_qual as ql
+        importlib.reload(ql)
+        d = root / "a8_cross_swap2"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(root / "a8_cross", d)
+        m = json.loads((d / "manifest.json").read_text()); e = m["qualification_plan"]["a8"][0]
+        e["corners"]["00"], e["corners"]["11"] = e["corners"]["11"], e["corners"]["00"]
+        corners = {c: json.loads((d / f"tx_{s:03d}/o.json").read_text()) for c, s in e["corners"].items()}
+        closes = {c: json.loads((d / f"tx_{s:03d}/x.json").read_text()) for c, s in e["corners"].items()}
+        (d / "a8_cross.json").write_text(json.dumps({name: ql.a8_classify(corners, idx, e["parts"], closes=closes) for name, idx in e["elements"].items()}))
+        (d / "manifest.json").write_text(json.dumps(m))
+        rep = verify(root, "a8_cross_swap2")
+        return rep.get("qualification", {}).get("findings", []), rep.get("agree")
+    cases = [
+        ("A8 label A5FF (index + conclusion)", lambda: altered("a8_cross", "label", lambda q: rename(q, "AFF", "A5FF"), lambda v: v.update({"A5FF": v.pop("AFF")}), "a8_cross.json")),
+        ("A8 bits / background", lambda: altered("a8_cross", "bits", lambda q: q["a8"][0].update({"background_hex": "000000", "bits": {"ff_init": 0, "ff_srval": 1}}))),
+        ("A8 background alone", lambda: altered("a8_cross", "bg", lambda q: q["a8"][0].update({"background_hex": "000000"}))),
+        ("A8 corners 00 / 11 swapped", lambda: altered("a8_cross", "swap", lambda q: q["a8"][0]["corners"].update({"00": q["a8"][0]["corners"]["11"], "11": q["a8"][0]["corners"]["00"]}))),
+        ("A8 corners 00 / 11 swapped WITH the conclusion recomputed to match (only the corner binding can find it)", lambda: swapped_coordinated()),
+        ("A8 init_samples / quantities", lambda: altered("a8_cross", "samples", None, lambda v: (v["AFF"]["init_samples"].update({"00": 1 - v["AFF"]["init_samples"]["00"]}), v["AFF"]["quantities"].update({"init_effect": False})), "a8_cross.json")),
+        ("A2 semantic ff_init (index + conclusion)", lambda: altered("a2_pairs", "sem", lambda q: q["a2"][0].update({"semantic": "ff_init"}), lambda v: v.update({"ff_init": v.pop("ce_mode")}), "a2_rows.json")),
+        ("A2 differing_points truncated", lambda: altered("a2_pairs", "pts", None, lambda v: v["ce_mode"].update({"differing_points": v["ce_mode"]["differing_points"][:3]}), "a2_rows.json")),
+        ("A5 injection witness altered", lambda: altered("a5", "wit", None, lambda v: v["injection_witness"].update({"c1_initial_q": [0] * 8}), "a5_verdict.json")),
+    ]
+    for what, run in cases:
+        f, agree = run()
+        if agree or not f:
+            return True, f"{what}: accepted (agree {agree}, findings {f})"
+    return False, "every relabelling / partial conclusion found"
+
+
 def probe_a5(root):
     s = e2e(root, "a5")
     if "error" in s:
@@ -264,8 +371,8 @@ MUTANTS = [
     ('R1e', SESSION, 'if self.session_open is None or self.session_open["record"]["status"] != "open":', 'if self.session_open is None:', 'a refused opening no longer withholds the root (masked by the halt latch: see R1d+R1e)', probe_fail_closed),
     ('R2a', VERIFY, 'extra = sorted(p.name for p in d.iterdir() if p.is_dir() and p.name.startswith("tx_") and p.name not in {r["dir"] for r in recs})', 'extra = []', 'undeclared record directories accepted again', probe_archive),
     ('R2a2', VERIFY, 'if not td.is_dir():\n            raise ArchiveRefusal(f"{r[\'dir\']}: declared in the manifest, not present")', 'if False:\n            raise ArchiveRefusal("x")', 'a declared record directory missing no longer refuses (masked by the per-record file checks: see R2a2+files)', probe_archive),
-    ('R2c', VERIFY, 'if not isinstance(manifest, dict) or manifest.get("schema") != "b4q_session":\n        raise ArchiveRefusal("manifest.json: not a b4q_session manifest object")', 'pass', "the manifest's shape no longer validated first", probe_archive),
-    ('R3a', VERIFY, 'rep["qualification"] = verify_qualification(d, manifest, rep["transactions"], tx_dirs)', 'rep["qualification"] = {"findings": [], "a5": [], "a8": [], "a2": []}', 'the qualification conclusions no longer recomputed', probe_archive),
+    ('R2c', VERIFY, 'if not isinstance(manifest, dict) or manifest.get("schema") != "b4q_session":\n        raise ArchiveRefusal("manifest.json: not a b4q_session manifest object")', 'pass', "the manifest's top-level check removed (since round 2 masked by the field validator's object check: see R2c+R2e)", probe_archive),
+    ('R3a', VERIFY, 'rep["qualification"] = verify_qualification(d, manifest, rep["transactions"], tx_dirs, mp, A["files"])', 'rep["qualification"] = {"findings": [], "a5": [], "a8": [], "a2": []}', 'the qualification conclusions no longer recomputed', probe_archive),
     ('R3b', QUAL, 'if not (isinstance(x, dict) and x.get("status") == "closed" and isinstance(x.get("cleanup"), dict) and "final_q" in x["cleanup"]):', 'if False:', "A5 no longer requires J1 / J3's cleanup witnesses", probe_a5_witnesses),
     ('R4a', A7, 'if (src & 1) != bk.DMA_HOLD_TAG:\n            return None, "a write to the PCAP endpoint without the HOLD tag on its source"', 'if False:\n            return None, "x"', 'the HOLD tag no longer required', probe_a7_tuple),
     ('R4b', A7, 'if base in ENVELOPE_SOURCES and src_len == fr.STREAM_WORDS:', 'if src_len == fr.STREAM_WORDS:', 'the envelope source no longer bound to the staging slots', probe_a7_tuple),
@@ -279,6 +386,27 @@ MUTANTS = [
     ('P6', RECORDS, 'if o["instrument"]["variant"] != f"{rm.VARIANT_WORD:08x}":', 'if False:', 'the VARIANT binding removed', probe_validator_rules),
     ('P7', A7, 'if off in rm.KEY_WINDOW:', 'if False:', 'the key-window finding of A7 removed (masked by the allowlist line)', probe_a7_tamper),
     ('P8', RECORDS, '    if code is not None:\n        phase = "P5" if init_done else ("P3" if pre_sampled else "P2")', '    if code is not None:\n        phase = "P5"', "an invalid O's phase always P5", probe_bench_records),
+]
+MUTANTS += [
+    ('R1f', FW, '    if (!admitted()) return B4Q_RESP_SLVERR;      /* nothing is written after a stop: no CTRL operation, no staging, no step */\n', '', "the write accessor's admission gate removed (masked on the tested fault conditions by the explicit pre-signing / pre-event / DMA checks: see R1f+R1j)", probe_read_admission),
+    ('R1g', FW, '    if (resp != B4Q_RESP_OKAY) stop("STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence");\n', '', "a refused PS-map read no longer stops (DEVCFG CTRL read SLVERR -> the DMA proceeds)", probe_read_admission),
+    ('R1h', FW, '    if (!admitted()) return;                       /* no DMA register write, no staging word after a stop: no DMA is queued */\n', '', "the PS-map write gate removed (masked by devcfg_dma's own admission checks: see R1h+R1k)", probe_read_admission),
+    ('R1i', FW, '    if (!admitted()) return -1;                    /* a refused NONCE read: no candidate is signed on a nonce that is not evidence */\n', '', "the pre-signing admission check removed (a signature requested on a refused nonce)", probe_read_admission),
+    ('R1j', FW, '    if (!admitted()) goto stopped;                 /* a refused read before the event: no INIT_REQ is raised (the accessor would refuse it; this names the phase) */\n', '', "the pre-event admission check removed (masked by the write accessor's gate: see R1f+R1j)", probe_read_admission),
+    ('R1k', FW, '    if (!admitted()) return -1;                    /* a refused CTRL read: the mode is unknown, nothing is queued */\n', '', "the DEVCFG CTRL read's admission check removed (masked by the PS-map write gate: see R1h+R1k)", probe_read_admission),
+    ('R2d', VERIFY, '        if r["pcap_range"][0] != cursor_p:                                 # exact tiling: neither an overlap nor a gap (R2a: an unowned interval is never clean)', '        if r["pcap_range"][0] < cursor_p:', "the exact PCAP tiling relaxed to no-overlap again (a gap accepted)", probe_tiling),
+    ('R2d2', VERIFY, '    if (recs and po0 != recs[0]["pcap_range"][0]) or (not recs and po0 != len(pcap)):', '    if False:', "the opening's PCAP range no longer held to the first record", probe_tiling),
+    ('R2e', VERIFY, '    _need(isinstance(obj, dict), f"{where}: not an object")\n', '', "the field validator's object check removed (masked by the JSON-object check of the reader: see R2e+R2e2)", probe_nested),
+    ('R2e2', VERIFY, '    _need(isinstance(v, dict), f"{where}: not a JSON object")\n', '', "the reader's JSON-object check removed (masked by the field validator: see R2e+R2e2)", probe_nested),
+    ('R2e3', VERIFY, '    _fields(manifest["executing_side"], "manifest.executing_side", {"binary": str, "sha256": str})\n', '', "the nested executing_side shape no longer validated (an indexing error instead of a named refusal)", probe_nested),
+    ('R3c', VERIFY, '            if name not in bm.ELEMENTS or idx != bm.ELEMENTS.index(name):', '            if False:', "the element / index correspondence no longer checked (masked by the corner binding under the mapping's bits: see R3c+R3d+R3e+R3f)", probe_binding),
+    ('R3d', VERIFY, '        if want_bits is not None and e["bits"] != want_bits:', '        if False:', "the varied bits no longer held to the mapping's addresses (masked by the corner / background bindings: see R3d+R3e+R3f)", probe_binding),
+    ('R3e', VERIFY, '            if cfg[bits["ff_init"]] != int(c[0]) or cfg[bits["ff_srval"]] != int(c[1]):', '            if False:', "a corner's record no longer held to its (INIT, SRVAL) label", probe_binding),
+    ('R3f', VERIFY, '            if rest != [b for i, b in enumerate(bg) if i not in (bits["ff_init"], bits["ff_srval"])]:', '            if False:', "the corners no longer held to the declared background", probe_binding),
+    ('R3g', VERIFY, '                if canon(stored.get(name)) != canon(v):', '                if (stored.get(name) or {}).get("row") != v["row"] or (stored.get(name) or {}).get("verdict") != v["verdict"]:', "the A8 conclusion compared on row / verdict only again (init_samples / quantities unbound)", probe_binding),
+    ('R3h', VERIFY, '        if not diff or sems != {sem} or len(els) != 1:', '        if False:', "the A2 semantic no longer bound to the endpoints' differing address", probe_binding),
+    ('R3i', VERIFY, '        if stored is not None and canon(stored) != canon(v):', '        if stored is not None and stored.get("verdict") != v["verdict"]:', "the A5 conclusion compared on the verdict only again", probe_binding),
+    ('R3j', VERIFY, '                elif canon(body) != canon(v):', '                elif body.get("verdict") != v.get("verdict"):', "the A2 row compared on the verdict only again (differing points unbound)", probe_binding),
 ]
 EXTRA_EDITS = {
     'PREV': (SESSION, 'if self.records and not (self.prev_x is not None and self.prev_x["status"] in ("closed", "injection_open")):', 'if False:'),
@@ -298,28 +426,38 @@ def _edit(mid):
 
 
 COMBINED = [
+    ('R1f+R1j', [_edit(x) for x in ['R1f', 'R1j']], 'the write accessor\'s gate AND the pre-event check removed: an INIT_REQ after a refused read', probe_read_admission),
+    ('R1h+R1k', [_edit(x) for x in ['R1h', 'R1k']], 'the PS-map write gate AND the CTRL-read check removed: a DMA queued after a refused DEVCFG read', probe_read_admission),
+    ('R2e+R2e2', [_edit(x) for x in ['R2e', 'R2e2']], 'both object checks removed: a list where an object is consumed is a verifier error, not a named refusal', probe_nested),
+    ('R3c+R3d', [_edit(x) for x in ['R3c', 'R3d']], 'the element order AND the varied-bits binding removed (still masked: the corner binding uses the MAPPING\'s bits of the relabelled element, so the corners fail: see R3c+R3d+R3e+R3f)', probe_binding),
+    ('R3d+R3e+R3f', [_edit(x) for x in ['R3d', 'R3e', 'R3f']], 'the bits, corner and background bindings removed: another cross accepted under the declared labels', probe_binding),
+    ('R3c+R3d+R3e+R3f', [_edit(x) for x in ['R3c', 'R3d', 'R3e', 'R3f']], 'the element order, bits, corner and background bindings removed: AFF relabelled A5FF accepted', probe_binding),
+    ('R2c+R2e', [_edit(x) for x in ['R2c', 'R2e']], 'the top-level manifest check AND the field validator\'s object check removed: manifest = [] is a verifier error, not a named refusal', probe_archive),
     ('C9+C10', [_edit(x) for x in ['C9', 'C10']], 'the link-2 comparison removed AND a staged word corrupted: the corrupted candidate is written', probe_valid_clean),
     ('P2+C6', [_edit(x) for x in ['P2', 'C6']], "the session no longer holds the fitness AND the executing side's is off by one: the verifier must still find it and the two must disagree", probe_valid_clean),
-    ('R1b+R1b2', [_edit(x) for x in ['R1b', 'R1b2']], 'the STEP_IN response check AND the read-back check removed: a STEP launched on the stale word', probe_fail_closed),
+    ('R1b+R1b2', [_edit(x) for x in ['R1b', 'R1b2']], 'the STEP_IN response check AND the read-back check removed (killed at 6f62b6a; since round 2 masked by the write accessor\'s admission gate, which refuses the STEP after the accessor\'s own stop: see R1c+R1b+R1b2)', probe_fail_closed),
     ('R1c+R1b+R1b2', [_edit(x) for x in ['R1c', 'R1b', 'R1b2']], "the accessor's propagation AND both STEP_IN checks removed", probe_fail_closed),
     ('R1d+prev', [_edit(x) for x in ['R1d', 'PREV']], 'the halt latch AND the previous-close rule removed: the next candidate is signed after an unclosed transaction', probe_fail_closed),
     ('R1d+R1e', [_edit(x) for x in ['R1d', 'R1e']], 'the halt latch AND the opening rule removed: the root is signed after a refused opening', probe_fail_closed),
-    ('R2a2+files', [_edit(x) for x in ['R2a2', 'FILES']], 'the declared-directory check AND the per-record file checks removed: a dropped declared record', probe_archive),
+    ('R2a2+files', [_edit(x) for x in ['R2a2', 'FILES']], 'the declared-directory check AND the per-record file checks removed (killed at 6f62b6a; since round 2 masked by the per-record reader, where a missing file is a named refusal)', probe_archive),
     ('R5a+R5b', [_edit(x) for x in ['R5a', 'R5b']], "the raw schema's value type AND the adapter's type check removed: a float bit passes", probe_raw_float),
 ]
 
 
 def main(argv=None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
-    only = set(argv)
     out = R / "evidence/b4/unit_b4q_integration_2026_10_27/mutants.txt"
+    if "--out" in argv:
+        i = argv.index("--out"); out = R / argv[i + 1]; argv = argv[:i] + argv[i + 2:]
+    only = set(argv)
     lines = [f"B4Q mutant battery — {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} HEAD {subprocess.run(['git', '-C', str(R), 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()}"]
     killed = survived = missed = 0
     # the baseline: the probes pass on the unmutated tree
     tmp = Path(tempfile.mkdtemp(prefix="b4q_mut_"))
     subprocess.run(BUILD, check=True, capture_output=True)
     for name, probe in (("valid", probe_valid_clean), ("wrong_key", probe_wrong_key), ("tamper", probe_tamper), ("a5", probe_a5), ("fail_closed", probe_fail_closed),
-                        ("archive", probe_archive), ("a7_tuple", probe_a7_tuple), ("raw_float", probe_raw_float), ("a5_witnesses", probe_a5_witnesses), ("bench_records", probe_bench_records)):
+                        ("archive", probe_archive), ("a7_tuple", probe_a7_tuple), ("raw_float", probe_raw_float), ("a5_witnesses", probe_a5_witnesses), ("bench_records", probe_bench_records),
+                        ("read_admission", probe_read_admission), ("tiling", probe_tiling), ("nested", probe_nested), ("binding", probe_binding)):
         broken, why = probe(tmp / "base")
         lines.append(f"BASELINE {name}: {'BROKEN — ' + why if broken else 'green'}")
         if broken:
@@ -376,6 +514,7 @@ def main(argv=None) -> int:
         print(lines[-1], flush=True)
     n = len([m for m in MUTANTS if not only or m[0] in only]) + len([m for m in COMBINED if not only or m[0] in only])
     lines.append(f"TOTAL killed {killed} survived {survived} edit-miss {missed} of {n}")
+    lines.append("ROUND-2 MUTANTS (the owner's HOLD on 6f62b6a, R1-R3 residuals): R1f-k (the admission invariant: the write accessors' gates, the PS-map read propagation, the pre-signing / pre-event / CTRL-read checks), R2d/R2d2 (exact PCAP tiling, the opening's range), R2e/R2e2/R2e3 (the nested shapes), R3c-j (the index bound to the mapping and the records' O.config; the conclusions compared in full) and their combined ones — probed by the read-failure scenarios, the coordinated range / label / conclusion mutations and the nested malformed files. Masked on the tested fault conditions (each by its named twin, the combined mutant killed): R1f (by the explicit pre-signing / pre-event / DMA checks; R1f+R1j killed), R1h (by devcfg_dma's own checks; R1h+R1k killed), R1j (by the write accessor's gate), R1k (by the PS-map write gate), R2e / R2e2 (each by the other; R2e+R2e2 killed), R2c (since round 2 by the field validator's object check; R2c+R2e killed), R3c / R3d (by the corner binding, which uses the mapping's bits of the relabelled element; R3c+R3d+R3e+R3f killed), R3d also by the background binding (R3d+R3e+R3f killed). Two combined mutants killed at 6f62b6a are masked since round 2 by the new guards — R1b+R1b2 by the write accessor's admission gate (R1c+R1b+R1b2 still killed), R2a2+files by the per-record reader — named, not recounted.")
     lines.append("REPAIR MUTANTS (R1-R5, 2026-10-27): R1a-e, R2a/R2a2/R2c, R3a/R3b, R4a/R4b, R5a/R5b and the combined ones — each probed by the fault condition it guards (a corrupted readback, a refused write, a refused opening, a dropped / undeclared record, a malformed manifest, an altered conclusion, missing close witnesses, a bad DMA tuple, a float bit). Where a single repair guard survives, its redundant twin masks it on every probe and the COMBINED mutant removing both is killed: R1b (the STEP_IN read-back check), R1c (the explicit STEP_IN response check and the read-back check), R1d (the previous-close rule), R1e (the halt latch), R2a2 (the per-record file checks), R5b (the raw schema file validated first) — proven redundancy under the explicit contract, each named here, none counted as a tested guard by itself.")
     lines.append("SURVIVORS acknowledged (each an equivalent or a redundancy on every available probe, named with what masks it): C9 (the link-2 comparison alone: on a correct executing side the re-read always equals the commit — its removal is observable only beside a corruption, C9+C10, killed), P2 (the session's fitness hold alone: the verifier recomputes it independently and the executing side's is correct — observable only beside C6, P2+C6, killed), P5 (the applied-vector realisability rule: the declared-step equality check catches a non-uniform applied vector first, since the declared stimulus is uniform by task-v0.3), P7 (A7's key-window line: the key window is also outside the application's write allowlist, which the next line reports), C11 (the idle check after CLOSE: the valid path's CLOSE always leaves idle, so its removal is equivalent on every available probe — the RTL's idle semantics are the carrier bench's finding, scenario open_close_refused), C13 (an ARM refusal ignored by the executing side: the record layer judges the TRACE, not the executing side's claim, so the O is still invalid at P1 with arm_auth — the mutant is silent by the record layer's authority, which is the design)")
     out.write_text("\n".join(lines) + "\n")

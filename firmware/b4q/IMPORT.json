@@ -64,7 +64,7 @@
    "kind": "new",
    "note": "the transaction logic: the allowlist at the accessor, bounded polls of STATUS / FAULT, the four legal DMA transactions, link 2 / link 3, fail-closed stops; derived nothing from firmware/b1/b1_app.c textually \u2014 the same discipline (the DMA tuples, the sentinel prefill, the link-2 re-read, the settle condition) re-expressed for the v2 register map. Repair of 2026-10-27 (R1): the pre-event readback compared to the signed candidate before the init event, the post-event to the pre-event before the steps, the restored base to the derived base before the restore event; every write response propagated (a refused STEP_IN launches no STEP).",
    "role": "the executing side",
-   "sha256": "ab01818d63065cd5ec2d4a4fb6f77a05014e1a4fb107b87009c37b2686aceba5"
+   "sha256": "2e7891d4e21b7ad1bb01778b765ed76ddc38b91d8664eb3db73a3b60f2b8156a"
   },
   "firmware/b4q/b4q_tx.h": {
    "kind": "new",
