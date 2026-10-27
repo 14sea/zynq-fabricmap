@@ -1,30 +1,86 @@
-B4Q mutant battery — 2026-10-27T19:39:52Z HEAD b4e540a
+B4Q mutant battery — 2026-10-27T20:34:05Z HEAD 93cb570
 BASELINE valid: green
 BASELINE wrong_key: green
 BASELINE tamper: green
 BASELINE a5: green
-C1 KILLED — a step's sample read from the wrong slot: O: the schema file and the code validator disagree (0 vs 1 findings); O: O: a complete observation applies every declared step (2 of 8 acquired); no transaction
-C2 KILLED — P9 (the restore event) skipped before CLOSE: no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped); no transaction close: no transaction close: the acquisition nev
-C3 KILLED — the cleanup skipped: no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped); no transaction close: no transaction close: the acquisition nev
-C4 KILLED — the A5 context flag on every ARM: no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped); no transaction close: no transaction close: the acquisition nev
-C5 KILLED — the tag words staged rotated: no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped); no transaction close: no transaction close: the acquisition nev
-C6 KILLED — the executing side's fitness off by one: F: the executing side's fitness 29 is not the host's recomputation 28 over the full physical grid; F: the executing side's fitness 21 is not the host's recomput
-C7 KILLED — the frames derived for another genome than signed: link: the executing side's commit digest is not the host's view; no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it
-C8 KILLED — the pre-event readback skipped, its digest fabricated from the commit: no transaction close: a closed X needs the cleanup sample, the carrier's BASE_STATE read and the base readback; no transaction close: a closed X needs the clean
-C9 SURVIVED — the link-2 comparison removed (with the words staged shifted: see C10): clean
-C10 KILLED — one staged frame word corrupted in DDR: no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet; no transaction close: no transaction close
-C11 SURVIVED — the idle check after CLOSE removed (with C2 the X would still be faulted; alone it must be silent: an equivalent on the valid path, see the log): clean
+BASELINE fail_closed: green
+BASELINE archive: green
+BASELINE a7_tuple: green
+BASELINE raw_float: green
+BASELINE a5_witnesses: green
+BASELINE bench_records: green
+C1 KILLED — a step's sample read from the wrong slot: the executing side failed:     ^^^^^^
+  File "/home/test/zynq_fabricmap/host/b4q_e2e.py", line 240, in main
+    summaries.append(run_session(root, name, body, *
+C2 KILLED — P9 (the restore event) skipped before CLOSE: the executing side failed: home/test/zynq_fabricmap/host/b4q_e2e.py", line 240, in main
+    summaries.append(run_session(root, name, body, **kw))
+              
+C3 KILLED — the cleanup skipped: the executing side failed: est/zynq_fabricmap/host/b4q_e2e.py", line 240, in main
+    summaries.append(run_session(root, name, body, **kw))
+                    
+C4 KILLED — the A5 context flag on every ARM: the executing side failed: abricmap/host/b4q_e2e.py", line 240, in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^
+C5 KILLED — the tag words staged rotated: the executing side failed: abricmap/host/b4q_e2e.py", line 240, in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^
+C6 KILLED — the executing side's fitness off by one: the executing side failed:  in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/
+C7 KILLED — the frames derived for another genome than signed: the executing side failed: ne 240, in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  
+C8 KILLED — the pre-event readback skipped, its digest fabricated from the commit: the executing side failed:     ^^^^^^
+  File "/home/test/zynq_fabricmap/host/b4q_e2e.py", line 240, in main
+    summaries.append(run_session(root, name, body, *
+C9 SURVIVED — the link-2 comparison removed (observable only beside a corruption: C9+C10): clean
+C10 KILLED — one staged frame word corrupted in DDR: the executing side failed: py", line 240, in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C11 SURVIVED — the idle check after CLOSE removed (equivalent on every available probe: the valid path's CLOSE always leaves idle): clean
 C12 KILLED — a write into the key window: A7: write of 0x2160: the KEY window (the signer principal's, never the application's); A7: 4 access(es) of the carrier window answered SLVERR; write of 0x2160: 
-C13 SURVIVED — an ARM refusal ignored: as expected
-P1 KILLED — the stored O's seq altered after sealing: O: the stored record is not the one rebuilt from the trace and the links; X: the stored close is not the one rebuilt from the trace; O: the stored record is not
-P2 SURVIVED — the session no longer holds the executing side's fitness to the host's: clean
+C13 SURVIVED — an ARM refusal ignored by the executing side (silent by the record layer's authority over the trace): as expected
+R1a KILLED — the pre-event comparison before the init event removed: pre_event_corrupt: phase P4 ctrl ['0x40', '0x200', '0x400'] next_refused True signed_after 0
+R1b SURVIVED — the STEP_IN write response ignored again (masked by the read-back check: see R1b+R1b2): as expected
+R1b2 SURVIVED — the STEP_IN read-back check removed (masked by the response check: see R1b+R1b2): as expected
+R1c SURVIVED — the accessor no longer propagates a refused write (masked by the explicit STEP_IN checks): as expected
+R1d SURVIVED — the session's halt latch no longer refuses the next transaction (masked by the previous-close rule: see R1d+prev): as expected
+R1e SURVIVED — a refused opening no longer withholds the root (masked by the halt latch: see R1d+R1e): as expected
+R2a KILLED — undeclared record directories accepted again: an undeclared record directory was NOT refused: /tmp/b4q_mut_lvab2m49/R2a/valid: clean=True agree=True session=[] chain=0 a7=0 qualification=[]
+   tx_001: O com
+R2a2 SURVIVED — a declared record directory missing no longer refuses (masked by the per-record file checks: see R2a2+files): found
+R2c KILLED — the manifest's shape no longer validated first: a malformed manifest was not a named refusal: , line 89, in load_archive
+    if not isinstance(manifest.get(k), typ):
+                      ^^^^^^^^^^^^
+Attribu
+R3a KILLED — the qualification conclusions no longer recomputed: an altered A8 conclusion was NOT found
+R3b KILLED — A5 no longer requires J1 / J3's cleanup witnesses: a pass without J1 / J3's cleanup witnesses
+R4a KILLED — the HOLD tag no longer required: accepted {'src': 272629760}
+R4b KILLED — the envelope source no longer bound to the staging slots: accepted {'src': 3735879681}
+R5a KILLED — the raw config's values untyped again (the file; masked by the adapter's own type check: see R5a+R5b): the raw schema accepted a float bit
+R5b SURVIVED — the adapter's type check removed (masked by the schema file validated first: see R5a+R5b): refused
+P1 KILLED — the stored O's seq altered after sealing: the executing side failed: e "/home/test/zynq_fabricmap/host/b4q_e2e.py", line 240, in main
+    summaries.append(run_session(root, name, body, **kw))
+          
+P2 SURVIVED — the session no longer holds the executing side's fitness to the host's (observable only beside C6: P2+C6): clean
 P3 KILLED — the verifier no longer compares the stored O to the rebuilt one: the tamper was NOT found
 P4 KILLED — the verifier skips A7: A7 findings []
-P5 SURVIVED — the realisability rule of the validator removed: refused
+P5 SURVIVED — the realisability rule of the validator removed (masked by the declared-step equality): refused
 P6 KILLED — the VARIANT binding removed: another VARIANT was accepted as the v2 carrier
-P7 SURVIVED — the key-window finding of A7 removed: found
-P8 KILLED — an invalid O's phase always P5: Ran 18 tests in 0.053s FAILED
-C9+C10 KILLED — the link-2 comparison removed AND a staged word corrupted: the corrupted candidate is written: no transaction close: the transaction is not closed: no completed CLOSE / CLOSE_INJECTION and no fault after the observation; no transaction close: no transacti
+P7 SURVIVED — the key-window finding of A7 removed (masked by the allowlist line): found
+P8 KILLED — an invalid O's phase always P5: Ran 18 tests in 0.054s FAILED
+C9+C10 KILLED — the link-2 comparison removed AND a staged word corrupted: the corrupted candidate is written: the executing side failed: maries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/test/zynq_f
 P2+C6 KILLED — the session no longer holds the fitness AND the executing side's is off by one: the verifier must still find it and the two must disagree: F: the executing side's fitness 29 is not the host's recomputation 28 over the full physical grid; F: the executing side's fitness 21 is not the host's recomput
-TOTAL killed 17 survived 6 edit-miss 0 of 23
+R1b+R1b2 KILLED — the STEP_IN response check AND the read-back check removed: a STEP launched on the stale word: step_in_slverr: launches 1 status 1
+R1c+R1b+R1b2 KILLED — the accessor's propagation AND both STEP_IN checks removed: step_in_slverr: launches 2 status 0
+R1d+prev KILLED — the halt latch AND the previous-close rule removed: the next candidate is signed after an unclosed transaction: pre_event_corrupt: phase P2 ctrl ['0x40', '0x40'] next_refused False signed_after 1
+R1d+R1e KILLED — the halt latch AND the opening rule removed: the root is signed after a refused opening: startup_corrupt: signatures 1 root_refused False
+R2a2+files KILLED — the declared-directory check AND the per-record file checks removed: a dropped declared record: a dropped final transaction was NOT refused: 
+R5a+R5b KILLED — the raw schema's value type AND the adapter's type check removed: a float bit passes: the raw schema accepted a float bit
+TOTAL killed 31 survived 13 edit-miss 0 of 44
+REPAIR MUTANTS (R1-R5, 2026-10-27): R1a-e, R2a/R2a2/R2c, R3a/R3b, R4a/R4b, R5a/R5b and the combined ones — each probed by the fault condition it guards (a corrupted readback, a refused write, a refused opening, a dropped / undeclared record, a malformed manifest, an altered conclusion, missing close witnesses, a bad DMA tuple, a float bit). Where a single repair guard survives, its redundant twin masks it on every probe and the COMBINED mutant removing both is killed: R1b (the STEP_IN read-back check), R1c (the explicit STEP_IN response check and the read-back check), R1d (the previous-close rule), R1e (the halt latch), R2a2 (the per-record file checks), R5b (the raw schema file validated first) — proven redundancy under the explicit contract, each named here, none counted as a tested guard by itself.
 SURVIVORS acknowledged (each an equivalent or a redundancy on every available probe, named with what masks it): C9 (the link-2 comparison alone: on a correct executing side the re-read always equals the commit — its removal is observable only beside a corruption, C9+C10, killed), P2 (the session's fitness hold alone: the verifier recomputes it independently and the executing side's is correct — observable only beside C6, P2+C6, killed), P5 (the applied-vector realisability rule: the declared-step equality check catches a non-uniform applied vector first, since the declared stimulus is uniform by task-v0.3), P7 (A7's key-window line: the key window is also outside the application's write allowlist, which the next line reports), C11 (the idle check after CLOSE: the valid path's CLOSE always leaves idle, so its removal is equivalent on every available probe — the RTL's idle semantics are the carrier bench's finding, scenario open_close_refused), C13 (an ARM refusal ignored by the executing side: the record layer judges the TRACE, not the executing side's claim, so the O is still invalid at P1 with arm_auth — the mutant is silent by the record layer's authority, which is the design)

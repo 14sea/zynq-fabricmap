@@ -1,9 +1,10 @@
 {
  "name": "valid",
- "wall_s": 3.672,
+ "wall_s": 3.725,
  "records": [
   {
    "seq": 1,
+   "dir": "tx_001",
    "kind": "root",
    "genome_hex": "000000",
    "o": true,
@@ -12,10 +13,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
   },
   {
    "seq": 2,
+   "dir": "tx_002",
    "kind": "normal",
    "genome_hex": "000000",
    "o": true,
@@ -24,10 +34,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    97,
+    252
+   ],
+   "pcap_range": [
+    204,
+    360
+   ]
   },
   {
    "seq": 3,
+   "dir": "tx_003",
    "kind": "normal",
    "genome_hex": "000018",
    "o": true,
@@ -36,10 +55,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    252,
+    407
+   ],
+   "pcap_range": [
+    360,
+    516
+   ]
   },
   {
    "seq": 4,
+   "dir": "tx_004",
    "kind": "normal",
    "genome_hex": "02011d",
    "o": true,
@@ -48,9 +76,17 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    407,
+    562
+   ],
+   "pcap_range": [
+    516,
+    672
+   ]
   }
  ],
  "chain_findings": [],
- "accesses": 77749
+ "accesses": 77770
 }

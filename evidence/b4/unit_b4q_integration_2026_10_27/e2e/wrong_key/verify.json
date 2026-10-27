@@ -20,6 +20,7 @@
     "$.pre_init_state.value: not of type object"
    ],
    "unmodelled_reads": 0,
+   "halt_expected": true,
    "agrees": true
   }
  ],
@@ -112,9 +113,18 @@
   "accesses": 4665
  },
  "agree": true,
+ "refused": null,
+ "qualification": {
+  "findings": [],
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
  "chain": [
   "chain[0]: no transaction close; the chain ends here"
  ],
  "session_findings_stored": [],
+ "session_only_here": [],
+ "session_only_stored": [],
  "clean": false
 }

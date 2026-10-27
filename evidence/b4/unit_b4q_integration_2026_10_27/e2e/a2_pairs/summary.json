@@ -1,9 +1,10 @@
 {
  "name": "a2_pairs",
- "wall_s": 4.531,
+ "wall_s": 4.635,
  "records": [
   {
    "seq": 1,
+   "dir": "tx_001",
    "kind": "root",
    "genome_hex": "000000",
    "o": true,
@@ -12,10 +13,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
   },
   {
    "seq": 2,
+   "dir": "tx_002",
    "kind": "normal",
    "genome_hex": "000000",
    "o": true,
@@ -24,10 +34,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    97,
+    222
+   ],
+   "pcap_range": [
+    204,
+    360
+   ]
   },
   {
    "seq": 3,
+   "dir": "tx_003",
    "kind": "normal",
    "genome_hex": "000010",
    "o": true,
@@ -36,10 +55,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    222,
+    347
+   ],
+   "pcap_range": [
+    360,
+    516
+   ]
   },
   {
    "seq": 4,
+   "dir": "tx_004",
    "kind": "normal",
    "genome_hex": "000000",
    "o": true,
@@ -48,10 +76,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    347,
+    572
+   ],
+   "pcap_range": [
+    516,
+    672
+   ]
   },
   {
    "seq": 5,
+   "dir": "tx_005",
    "kind": "normal",
    "genome_hex": "000400",
    "o": true,
@@ -92,6 +129,14 @@
     "O: O.steps[13].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
     "O: O.steps[14].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
     "O: O.steps[14].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+   ],
+   "trace_range": [
+    572,
+    797
+   ],
+   "pcap_range": [
+    672,
+    828
    ]
   }
  ],
@@ -129,7 +174,7 @@
   "chain[4]: O.steps[14].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
   "chain[4]: a malformed record; the chain ends here"
  ],
- "accesses": 96118,
+ "accesses": 96154,
  "a2": {
   "ce_mode": "differs",
   "storage_kind": "not_assessable"

@@ -14,6 +14,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   },
   {
@@ -28,6 +29,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   },
   {
@@ -42,6 +44,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   },
   {
@@ -56,6 +59,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   }
  ],
@@ -72,6 +76,7 @@
    "0x202c",
    "0x2030",
    "0x2034",
+   "0x2038",
    "0x203c",
    "0x2040",
    "0x2200",
@@ -115,8 +120,7 @@
   "rtl_reads_untouched": [
    "0x2008",
    "0x2010",
-   "0x201c",
-   "0x2038"
+   "0x201c"
   ],
   "rtl_writes_untouched": [
    "0x2160",
@@ -147,10 +151,19 @@
   "slcr_reads": [
    "0xf8000530"
   ],
-  "accesses": 77749
+  "accesses": 77770
  },
  "agree": true,
+ "refused": null,
+ "qualification": {
+  "findings": [],
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
  "chain": [],
  "session_findings_stored": [],
+ "session_only_here": [],
+ "session_only_stored": [],
  "clean": true
 }

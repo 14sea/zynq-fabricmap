@@ -2,23 +2,23 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-host-dma_never",
- "generated_utc": "2026-10-27T19:39:45Z",
+ "generated_utc": "2026-10-27T20:40:36Z",
  "emulated": true,
  "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
  "instrument": {
   "variant": "42340001",
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
-  "image_sha256": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec"
+  "image_sha256": "5f7489d7650786ba8400db41650417a01f91b1e93e22d889d83a4f60e12e6ee4"
  },
  "executing_side": {
   "binary": "build/b4q_firmware/b4q_host",
-  "sha256": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec",
+  "sha256": "5f7489d7650786ba8400db41650417a01f91b1e93e22d889d83a4f60e12e6ee4",
   "build": {
    "compiler": "/usr/bin/cc",
    "version": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
    "flags": "-std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion",
    "binaries": {
-    "b4q_host": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec",
+    "b4q_host": "5f7489d7650786ba8400db41650417a01f91b1e93e22d889d83a4f60e12e6ee4",
     "b4q_derive_twin": "15da92797a3bd25c5f6499600c04b5610e936442bc297b690679fff64da48906"
    }
   }
@@ -31,32 +31,9 @@
   "build_record": "builds/b4/b4_build.json",
   "idcode": "0x03722093",
   "carrier_manifest": "builds/b4/b4_carrier_manifest.json",
-  "carrier_manifest_bitstream_sha256": "52f2ea56fddd6268ce6a3b5adcf9aede9d1ab953dc8d1e75b653054524178745",
-  "carrier_manifest_file_digest_matches": false,
-  "carrier_manifest_column_frames_differing": [
-   "0x00400a02",
-   "0x00400a03",
-   "0x00400a04",
-   "0x00400a05",
-   "0x00400a06",
-   "0x00400a07",
-   "0x00400a08",
-   "0x00400a09",
-   "0x00400a0a",
-   "0x00400a0b",
-   "0x00400a0c",
-   "0x00400a0d",
-   "0x00400a0e",
-   "0x00400a0f",
-   "0x00400a10",
-   "0x00400a11",
-   "0x00400a12",
-   "0x00400a13",
-   "0x00400a16",
-   "0x00400a17",
-   "0x00400a18",
-   "0x00400a19"
-  ],
+  "carrier_manifest_bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "carrier_manifest_file_digest_matches": true,
+  "carrier_manifest_column_frames_differing": [],
   "envelopes": [
    {
     "far_set": "0x00400a00",
@@ -266,11 +243,17 @@
   "nonce_seed": "9e3779b97f4a7c15",
   "devc_faults": {
    "frame:35": "never"
+  },
+  "fault_injections": {
+   "refuse_writes": [],
+   "corrupt_frame_reads": [],
+   "note": "the bench's declared fault injections \u2014 a SIMULATION, never evidence that hardware refused or corrupted anything"
   }
  },
  "records": [
   {
    "seq": 1,
+   "dir": "tx_001",
    "kind": "root",
    "genome_hex": "000000",
    "o": true,
@@ -279,10 +262,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
   },
   {
    "seq": 2,
+   "dir": "tx_002",
    "kind": "normal",
    "genome_hex": "000000",
    "o": false,
@@ -293,9 +285,27 @@
    "phase": "P2",
    "findings": [
     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    97,
+    150
+   ],
+   "pcap_range": [
+    204,
+    225
    ]
   }
  ],
+ "open_trace_range": [
+  0,
+  12
+ ],
+ "halted": "transaction 2: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted)",
+ "qualification_plan": {
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
  "notary_deny": [],
  "interrupted": null,
  "chain_findings": [],

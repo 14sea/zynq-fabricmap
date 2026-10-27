@@ -14,6 +14,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   },
   {
@@ -31,6 +32,7 @@
     "reason": "STOP_DMA: DEVCFG D_P_DONE never asserted"
    },
    "unmodelled_reads": 0,
+   "halt_expected": true,
    "agrees": true
   }
  ],
@@ -125,7 +127,16 @@
   "accesses": 126677
  },
  "agree": true,
+ "refused": null,
+ "qualification": {
+  "findings": [],
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
  "chain": [],
  "session_findings_stored": [],
+ "session_only_here": [],
+ "session_only_stored": [],
  "clean": false
 }

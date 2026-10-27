@@ -1,9 +1,10 @@
 {
  "name": "not_realisable",
- "wall_s": 1.709,
+ "wall_s": 1.824,
  "records": [
   {
    "seq": 1,
+   "dir": "tx_001",
    "kind": "root",
    "genome_hex": "000000",
    "o": true,
@@ -12,10 +13,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
   },
   {
    "seq": 2,
+   "dir": "tx_002",
    "kind": "normal",
    "genome_hex": "000000",
    "o": true,
@@ -26,30 +36,24 @@
    "phase": "P5",
    "findings": [
     "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)"
-   ]
-  },
-  {
-   "seq": 3,
-   "kind": "normal",
-   "genome_hex": "000000",
-   "o": true,
-   "f": false,
-   "x": null,
-   "o_status": "invalid",
-   "executing_side_status": 1,
-   "phase": "P1",
-   "findings": [
-    "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)",
-    "bound: bound: O.seq does not follow the previous close"
+   ],
+   "trace_range": [
+    97,
+    190
+   ],
+   "pcap_range": [
+    204,
+    306
    ]
   }
  ],
  "chain_findings": [
   "chain[1]: no transaction close; the chain ends here"
  ],
- "accesses": 34359,
+ "accesses": 34333,
  "invalid_phase": "P5",
  "invalid_code": "not_realisable",
- "after_status": 1,
- "after_reason": "STOP_ARM: the gate refused (FAULT latched)"
+ "next_refused": "the session is halted: transaction 2: not closed (no X; STOP_P5: STEP refused) \u2014 nothing further is signed without a ruling",
+ "signed_after": 0,
+ "halted": "transaction 2: not closed (no X; STOP_P5: STEP refused)"
 }

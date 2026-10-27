@@ -14,6 +14,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   },
   {
@@ -28,6 +29,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   },
   {
@@ -42,6 +44,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   },
   {
@@ -56,6 +59,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   },
   {
@@ -136,6 +140,7 @@
     "X.cleanup.final_q: bad value [0, None, 0, None, 0, None, 0, None]"
    ],
    "unmodelled_reads": 17,
+   "halt_expected": false,
    "agrees": true
   }
  ],
@@ -152,6 +157,7 @@
    "0x202c",
    "0x2030",
    "0x2034",
+   "0x2038",
    "0x203c",
    "0x2040",
    "0x2200",
@@ -195,8 +201,7 @@
   "rtl_reads_untouched": [
    "0x2008",
    "0x2010",
-   "0x201c",
-   "0x2038"
+   "0x201c"
   ],
   "rtl_writes_untouched": [
    "0x2160",
@@ -227,9 +232,27 @@
   "slcr_reads": [
    "0xf8000530"
   ],
-  "accesses": 96118
+  "accesses": 96154
  },
  "agree": true,
+ "refused": null,
+ "qualification": {
+  "findings": [],
+  "a5": [],
+  "a8": [],
+  "a2": [
+   {
+    "semantic": "ce_mode",
+    "recomputed": "differs",
+    "stored": "differs"
+   },
+   {
+    "semantic": "storage_kind",
+    "recomputed": "not_assessable",
+    "stored": "not_assessable"
+   }
+  ]
+ },
  "chain": [
   "chain[4]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
   "chain[4]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
@@ -265,5 +288,7 @@
   "chain[4]: a malformed record; the chain ends here"
  ],
  "session_findings_stored": [],
+ "session_only_here": [],
+ "session_only_stored": [],
  "clean": false
 }

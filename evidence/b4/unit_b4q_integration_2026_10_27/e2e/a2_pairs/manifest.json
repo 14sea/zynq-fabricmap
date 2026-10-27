@@ -2,23 +2,23 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-host-a2_pairs",
- "generated_utc": "2026-10-27T19:39:35Z",
+ "generated_utc": "2026-10-27T20:40:26Z",
  "emulated": true,
  "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
  "instrument": {
   "variant": "42340001",
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
-  "image_sha256": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec"
+  "image_sha256": "5f7489d7650786ba8400db41650417a01f91b1e93e22d889d83a4f60e12e6ee4"
  },
  "executing_side": {
   "binary": "build/b4q_firmware/b4q_host",
-  "sha256": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec",
+  "sha256": "5f7489d7650786ba8400db41650417a01f91b1e93e22d889d83a4f60e12e6ee4",
   "build": {
    "compiler": "/usr/bin/cc",
    "version": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
    "flags": "-std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion",
    "binaries": {
-    "b4q_host": "c63dce157645e4f743693532754fd1281055c14d48750d943aa0ff17e08ae2ec",
+    "b4q_host": "5f7489d7650786ba8400db41650417a01f91b1e93e22d889d83a4f60e12e6ee4",
     "b4q_derive_twin": "15da92797a3bd25c5f6499600c04b5610e936442bc297b690679fff64da48906"
    }
   }
@@ -31,32 +31,9 @@
   "build_record": "builds/b4/b4_build.json",
   "idcode": "0x03722093",
   "carrier_manifest": "builds/b4/b4_carrier_manifest.json",
-  "carrier_manifest_bitstream_sha256": "52f2ea56fddd6268ce6a3b5adcf9aede9d1ab953dc8d1e75b653054524178745",
-  "carrier_manifest_file_digest_matches": false,
-  "carrier_manifest_column_frames_differing": [
-   "0x00400a02",
-   "0x00400a03",
-   "0x00400a04",
-   "0x00400a05",
-   "0x00400a06",
-   "0x00400a07",
-   "0x00400a08",
-   "0x00400a09",
-   "0x00400a0a",
-   "0x00400a0b",
-   "0x00400a0c",
-   "0x00400a0d",
-   "0x00400a0e",
-   "0x00400a0f",
-   "0x00400a10",
-   "0x00400a11",
-   "0x00400a12",
-   "0x00400a13",
-   "0x00400a16",
-   "0x00400a17",
-   "0x00400a18",
-   "0x00400a19"
-  ],
+  "carrier_manifest_bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "carrier_manifest_file_digest_matches": true,
+  "carrier_manifest_column_frames_differing": [],
   "envelopes": [
    {
     "far_set": "0x00400a00",
@@ -264,11 +241,17 @@
  "backend": {
   "power_on": "init",
   "nonce_seed": "9e3779b97f4a7c15",
-  "devc_faults": {}
+  "devc_faults": {},
+  "fault_injections": {
+   "refuse_writes": [],
+   "corrupt_frame_reads": [],
+   "note": "the bench's declared fault injections \u2014 a SIMULATION, never evidence that hardware refused or corrupted anything"
+  }
  },
  "records": [
   {
    "seq": 1,
+   "dir": "tx_001",
    "kind": "root",
    "genome_hex": "000000",
    "o": true,
@@ -277,10 +260,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
   },
   {
    "seq": 2,
+   "dir": "tx_002",
    "kind": "normal",
    "genome_hex": "000000",
    "o": true,
@@ -289,10 +281,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    97,
+    222
+   ],
+   "pcap_range": [
+    204,
+    360
+   ]
   },
   {
    "seq": 3,
+   "dir": "tx_003",
    "kind": "normal",
    "genome_hex": "000010",
    "o": true,
@@ -301,10 +302,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    222,
+    347
+   ],
+   "pcap_range": [
+    360,
+    516
+   ]
   },
   {
    "seq": 4,
+   "dir": "tx_004",
    "kind": "normal",
    "genome_hex": "000000",
    "o": true,
@@ -313,10 +323,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    347,
+    572
+   ],
+   "pcap_range": [
+    516,
+    672
+   ]
   },
   {
    "seq": 5,
+   "dir": "tx_005",
    "kind": "normal",
    "genome_hex": "000400",
    "o": true,
@@ -357,9 +376,44 @@
     "O: O.steps[13].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
     "O: O.steps[14].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
     "O: O.steps[14].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+   ],
+   "trace_range": [
+    572,
+    797
+   ],
+   "pcap_range": [
+    672,
+    828
    ]
   }
  ],
+ "open_trace_range": [
+  0,
+  12
+ ],
+ "halted": "transaction 5: O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+ "qualification_plan": {
+  "a5": [],
+  "a8": [],
+  "a2": [
+   {
+    "semantic": "ce_mode",
+    "g0_hex": "000000",
+    "g1_hex": "000010",
+    "g0": 2,
+    "g1": 3,
+    "conclusion_file": "a2_rows.json"
+   },
+   {
+    "semantic": "storage_kind",
+    "g0_hex": "000000",
+    "g1_hex": "000400",
+    "g0": 4,
+    "g1": 5,
+    "conclusion_file": "a2_rows.json"
+   }
+  ]
+ },
  "notary_deny": [],
  "interrupted": null,
  "chain_findings": [
@@ -396,6 +450,6 @@
   "chain[4]: O.steps[14].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
   "chain[4]: a malformed record; the chain ends here"
  ],
- "accesses": 96118,
- "trace_events": 761
+ "accesses": 96154,
+ "trace_events": 797
 }

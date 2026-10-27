@@ -14,6 +14,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
+   "halt_expected": false,
    "agrees": true
   },
   {
@@ -32,28 +33,7 @@
    },
    "view_findings": [],
    "unmodelled_reads": 0,
-   "agrees": true
-  },
-  {
-   "dir": "tx_003",
-   "findings": [
-    "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)",
-    "bound: bound: O.seq does not follow the previous close"
-   ],
-   "stored_findings": [
-    "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)",
-    "bound: bound: O.seq does not follow the previous close"
-   ],
-   "outcome": "O invalid at P1 (not_realisable); no X (no transaction close: the acquisition never reached the P6 seal (stopped))",
-   "executing_side": {
-    "status": 1,
-    "phase": "P1",
-    "reason": "STOP_ARM: the gate refused (FAULT latched)"
-   },
-   "view_findings": [
-    "$.pre_init_state.value: not of type object"
-   ],
-   "unmodelled_reads": 0,
+   "halt_expected": true,
    "agrees": true
   }
  ],
@@ -71,6 +51,7 @@
    "0x202c",
    "0x2030",
    "0x2034",
+   "0x2038",
    "0x203c",
    "0x2040",
    "0x2200",
@@ -113,8 +94,7 @@
   ],
   "rtl_reads_untouched": [
    "0x2010",
-   "0x201c",
-   "0x2038"
+   "0x201c"
   ],
   "rtl_writes_untouched": [
    "0x2160",
@@ -145,12 +125,21 @@
   "slcr_reads": [
    "0xf8000530"
   ],
-  "accesses": 34359
+  "accesses": 34333
  },
  "agree": true,
+ "refused": null,
+ "qualification": {
+  "findings": [],
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
  "chain": [
   "chain[1]: no transaction close; the chain ends here"
  ],
  "session_findings_stored": [],
+ "session_only_here": [],
+ "session_only_stored": [],
  "clean": false
 }

@@ -1,9 +1,10 @@
 {
  "name": "interrupt",
- "wall_s": 1.316,
+ "wall_s": 1.414,
  "records": [
   {
    "seq": 1,
+   "dir": "tx_001",
    "kind": "root",
    "genome_hex": "000000",
    "o": true,
@@ -12,10 +13,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
   },
   {
    "seq": 2,
+   "dir": "tx_002",
    "kind": "normal",
    "genome_hex": "000000",
    "o": false,
@@ -26,6 +36,14 @@
    "phase": "?",
    "findings": [
     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    97,
+    150
+   ],
+   "pcap_range": [
+    204,
+    216
    ]
   }
  ],

@@ -1,0 +1,67 @@
+{
+ "name": "post_event_corrupt",
+ "wall_s": 1.703,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 1,
+   "phase": "P4",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet",
+    "link: the executing side's post_event digest is not the host's view"
+   ],
+   "trace_range": [
+    97,
+    165
+   ],
+   "pcap_range": [
+    204,
+    307
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 34308,
+ "status": 1,
+ "phase": "P4",
+ "reason": "STOP_LINK3: the post-event readback is not the pre-event one (the event changed a frame): no step is applied",
+ "o": false,
+ "o_status": null,
+ "x": null,
+ "ctrl_writes_in_tx": [
+  "0x40",
+  "0x200",
+  "0x400"
+ ],
+ "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_LINK3: the post-event readback is not the pre-event one (the event changed a frame): no step is applied) \u2014 nothing further is signed without a ruling",
+ "signed_after": 0,
+ "want_phase": "P4"
+}

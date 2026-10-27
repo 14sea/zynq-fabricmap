@@ -1,9 +1,10 @@
 {
  "name": "latch_unmodelled",
- "wall_s": 2.011,
+ "wall_s": 2.096,
  "records": [
   {
    "seq": 1,
+   "dir": "tx_001",
    "kind": "root",
    "genome_hex": "000000",
    "o": true,
@@ -12,10 +13,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
   },
   {
    "seq": 2,
+   "dir": "tx_002",
    "kind": "normal",
    "genome_hex": "000450",
    "o": true,
@@ -42,6 +52,14 @@
     "O: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
     "O: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
     "O: O.steps[7].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+   ],
+   "trace_range": [
+    97,
+    252
+   ],
+   "pcap_range": [
+    204,
+    360
    ]
   }
  ],
@@ -65,7 +83,7 @@
   "chain[1]: O.steps[7].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
   "chain[1]: a malformed record; the chain ends here"
  ],
- "accesses": 41155,
+ "accesses": 41162,
  "status": 0,
  "o_status": "complete",
  "findings": [
@@ -73,5 +91,6 @@
   "O: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
   "O: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
  ],
- "unmodelled_reads": 10
+ "unmodelled_reads": 10,
+ "next_refused": "the session is halted: transaction 2: O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None] \u2014 nothing further is signed without a ruling"
 }

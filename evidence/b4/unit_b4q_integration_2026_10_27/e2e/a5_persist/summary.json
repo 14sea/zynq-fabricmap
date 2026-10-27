@@ -1,9 +1,10 @@
 {
  "name": "a5_persist",
- "wall_s": 4.152,
+ "wall_s": 4.37,
  "records": [
   {
    "seq": 1,
+   "dir": "tx_001",
    "kind": "root",
    "genome_hex": "000000",
    "o": true,
@@ -12,10 +13,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
   },
   {
    "seq": 2,
+   "dir": "tx_002",
    "kind": "normal",
    "genome_hex": "000018",
    "o": true,
@@ -24,10 +34,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    97,
+    252
+   ],
+   "pcap_range": [
+    204,
+    360
+   ]
   },
   {
    "seq": 3,
+   "dir": "tx_003",
    "kind": "inject",
    "genome_hex": "000018",
    "o": true,
@@ -36,10 +55,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    252,
+    334
+   ],
+   "pcap_range": [
+    360,
+    462
+   ]
   },
   {
    "seq": 4,
+   "dir": "tx_004",
    "kind": "a5",
    "genome_hex": "000018",
    "o": true,
@@ -48,10 +76,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    334,
+    489
+   ],
+   "pcap_range": [
+    462,
+    618
+   ]
   },
   {
    "seq": 5,
+   "dir": "tx_005",
    "kind": "normal",
    "genome_hex": "000000",
    "o": true,
@@ -60,11 +97,19 @@
    "o_status": "complete",
    "executing_side_status": 0,
    "phase": "",
-   "findings": []
+   "findings": [],
+   "trace_range": [
+    489,
+    644
+   ],
+   "pcap_range": [
+    618,
+    774
+   ]
   }
  ],
  "chain_findings": [],
- "accesses": 89211,
+ "accesses": 89233,
  "a5": "fail",
  "a5_why": "persistence after initialisation; the differing positions are the finding"
 }
