@@ -1,0 +1,315 @@
+{
+  "informational_constant_edit": {
+    "before": {
+      "protocol_sha256": "2c207d519aeadfee3990625d7f25414999b0fba3ae9b05f2c1dddf8fd36c19c6",
+      "architecture_revision": "v0.2.0",
+      "labels": {
+        "gate": "b4-gate-2",
+        "exploration": "b4-sim-4",
+        "retired": [
+          "b4-sim-1",
+          "b4-sim-2"
+        ],
+        "consumed": [
+          "b4-gate-1",
+          "b4-sim-3"
+        ]
+      },
+      "task": "task-v0.2",
+      "k9": "conditional_sr_driven"
+    },
+    "after": {
+      "protocol_sha256": "28cf2af97664d39caa433ee715bb50182a857bcee50e7c69d6199bd626a50521",
+      "architecture_revision": "v0.2.1",
+      "labels": {
+        "gate": "b4-gate-2",
+        "exploration": "b4-sim-4",
+        "retired": [
+          "b4-sim-1",
+          "b4-sim-2"
+        ],
+        "consumed": [
+          "b4-gate-1",
+          "b4-sim-3"
+        ]
+      },
+      "task": "task-v0.2",
+      "k9": "conditional_sr_driven"
+    },
+    "method_changed": true
+  },
+  "baseline": {
+    "status": "complete",
+    "exit_code": 0,
+    "task_state": "complete",
+    "stop": null,
+    "findings": {},
+    "files": [
+      "manifest.json",
+      "pair_000/arm_A0.audit.json",
+      "pair_000/arm_A0.result.json",
+      "pair_000/arm_D.audit.json",
+      "pair_000/arm_D.result.json",
+      "pair_000/arm_F.audit.json",
+      "pair_000/arm_F.result.json",
+      "pair_000/arm_O.audit.json",
+      "pair_000/arm_O.result.json",
+      "pair_000/arm_Omega.audit.json",
+      "pair_000/arm_Omega.result.json",
+      "pair_000/arm_R.audit.json",
+      "pair_000/arm_R.result.json",
+      "pair_000/arm_X.audit.json",
+      "pair_000/arm_X.result.json",
+      "pair_000/controls.json",
+      "pair_000/curves.json",
+      "pair_000/index.json",
+      "pair_000/k10.json",
+      "pair_000/k7.json",
+      "pair_000/k9.json",
+      "pair_000/target_holdout.json",
+      "pair_000/target_search.json",
+      "pair_000/task.json",
+      "pair_000/task_setup.json",
+      "seeds.json",
+      "sim_report.json"
+    ]
+  },
+  "init_none": {
+    "status": "complete",
+    "exit_code": 0,
+    "task_state": "complete",
+    "stop": null,
+    "findings": {},
+    "files": [
+      "manifest.json",
+      "pair_000/arm_A0.audit.json",
+      "pair_000/arm_A0.result.json",
+      "pair_000/arm_D.audit.json",
+      "pair_000/arm_D.result.json",
+      "pair_000/arm_F.audit.json",
+      "pair_000/arm_F.result.json",
+      "pair_000/arm_O.audit.json",
+      "pair_000/arm_O.result.json",
+      "pair_000/arm_Omega.audit.json",
+      "pair_000/arm_Omega.result.json",
+      "pair_000/arm_R.audit.json",
+      "pair_000/arm_R.result.json",
+      "pair_000/arm_X.audit.json",
+      "pair_000/arm_X.result.json",
+      "pair_000/controls.json",
+      "pair_000/curves.json",
+      "pair_000/index.json",
+      "pair_000/k10.json",
+      "pair_000/k7.json",
+      "pair_000/k9.json",
+      "pair_000/target_holdout.json",
+      "pair_000/target_search.json",
+      "pair_000/task.json",
+      "pair_000/task_setup.json",
+      "seeds.json",
+      "sim_report.json"
+    ]
+  },
+  "drift": {
+    "status": "invalid",
+    "exit_code": 1,
+    "task_state": "invalid",
+    "stop": {
+      "deadline": {
+        "checks": 2,
+        "clock": "time.monotonic",
+        "elapsed_s": 0.154,
+        "expired": false,
+        "first_expired_at_s": null,
+        "seconds": 3600
+      },
+      "detail": "the target setup observation (target_holdout) does not come from the first observation's source identity (a drift inside the setup)",
+      "head_at_stop": "4829703a41404831825e02ad85f0a5f2751b3faa",
+      "kind": "target_invalid",
+      "pair": 0,
+      "planned": [
+        {
+          "arms": {
+            "A0": "not_started",
+            "D": "not_started",
+            "F": "not_started",
+            "O": "not_started",
+            "Omega": "not_started",
+            "R": "not_started",
+            "X": "not_started"
+          },
+          "k10": "not_started",
+          "k7": "not_started",
+          "k9": "not_started",
+          "landscape_seed": 7,
+          "operator_seed": 11,
+          "pair": 0,
+          "status": "partial",
+          "task": "invalid"
+        }
+      ],
+      "role": "TARGET",
+      "schema": "b4_sim_stopped",
+      "schema_version": "1.1.0",
+      "stage": "target_setup",
+      "status": "invalid",
+      "stopped_utc": "2026-10-20T14:51:38Z",
+      "traceback": null
+    },
+    "findings": {},
+    "files": [
+      "STOPPED.json",
+      "manifest.json",
+      "pair_000/target_search.json",
+      "pair_000/task_setup.json",
+      "seeds.json",
+      "sim_report.json"
+    ]
+  },
+  "malformed": {
+    "status": "invalid",
+    "exit_code": 1,
+    "task_state": "invalid",
+    "stop": {
+      "deadline": {
+        "checks": 1,
+        "clock": "time.monotonic",
+        "elapsed_s": 0.146,
+        "expired": false,
+        "first_expired_at_s": null,
+        "seconds": 3600
+      },
+      "detail": "the target setup observation (target) raised KeyError: 'q_after'",
+      "head_at_stop": "6cf77d952ab1bc74bf99fc1c1067c27d9f50b8fe",
+      "kind": "unexpected_exception",
+      "pair": 0,
+      "planned": [
+        {
+          "arms": {
+            "A0": "not_started",
+            "D": "not_started",
+            "F": "not_started",
+            "O": "not_started",
+            "Omega": "not_started",
+            "R": "not_started",
+            "X": "not_started"
+          },
+          "k10": "not_started",
+          "k7": "not_started",
+          "k9": "not_started",
+          "landscape_seed": 7,
+          "operator_seed": 11,
+          "pair": 0,
+          "status": "partial",
+          "task": "invalid"
+        }
+      ],
+      "role": "TARGET",
+      "schema": "b4_sim_stopped",
+      "schema_version": "1.1.0",
+      "stage": "target_setup",
+      "status": "invalid",
+      "stopped_utc": "2026-10-20T14:51:38Z",
+      "traceback": null
+    },
+    "findings": {},
+    "files": [
+      "STOPPED.json",
+      "manifest.json",
+      "pair_000/task_setup.json",
+      "seeds.json",
+      "sim_report.json"
+    ]
+  },
+  "interrupt_after_holdout": {
+    "status": "incomplete",
+    "exit_code": 3,
+    "task_state": "partial",
+    "stop": {
+      "deadline": {
+        "checks": 2,
+        "clock": "time.monotonic",
+        "elapsed_s": 0.157,
+        "expired": false,
+        "first_expired_at_s": null,
+        "seconds": 3600
+      },
+      "detail": "KeyboardInterrupt: an external interrupt, not a model event",
+      "head_at_stop": "64f67ea7d9af6fdf9afac4a5ec4a2d32cd652bca",
+      "kind": "interrupted",
+      "pair": 0,
+      "planned": [
+        {
+          "arms": {
+            "A0": "not_started",
+            "D": "not_started",
+            "F": "not_started",
+            "O": "not_started",
+            "Omega": "not_started",
+            "R": "not_started",
+            "X": "not_started"
+          },
+          "k10": "not_started",
+          "k7": "not_started",
+          "k9": "not_started",
+          "landscape_seed": 7,
+          "operator_seed": 11,
+          "pair": 0,
+          "status": "partial",
+          "task": "partial"
+        }
+      ],
+      "role": "TARGET",
+      "schema": "b4_sim_stopped",
+      "schema_version": "1.1.0",
+      "stage": "target_setup",
+      "status": "incomplete",
+      "stopped_utc": "2026-10-20T14:51:38Z",
+      "traceback": null
+    },
+    "findings": {
+      "pair_000/target_holdout.json": [
+        "not a file any pair's recorded state accounts for"
+      ]
+    },
+    "files": [
+      "STOPPED.json",
+      "manifest.json",
+      "pair_000/target_holdout.json",
+      "pair_000/target_search.json",
+      "pair_000/task_setup.json",
+      "seeds.json",
+      "sim_report.json"
+    ]
+  },
+  "impossible_setup_order": {
+    "findings": {},
+    "fresh_exit": 0,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_04385ae_review_repro/fixture_root/evidence/b4/sim/b4-mech-1_impossible_order\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "production_derivation_calls": [
+    0,
+    0
+  ],
+  "gonogo_baseline": {
+    "status": "no_decision",
+    "findings": {}
+  },
+  "gonogo_contract_probes": {
+    "float_count": {
+      "decision_findings": [],
+      "fresh_exit": 0,
+      "fresh_stdout": "{\n \"gonogo_dir\": \"/tmp/owner_04385ae_review_repro/fixture_root/evidence/b4/gonogo/b4-mech-1_owner\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the record follows from its evidence under the fixed policy; a go is not a gate result and not an authorisation\"\n}\n"
+    },
+    "integer_fixture": {
+      "decision_findings": [],
+      "fresh_exit": 0,
+      "fresh_stdout": "{\n \"gonogo_dir\": \"/tmp/owner_04385ae_review_repro/fixture_root/evidence/b4/gonogo/b4-mech-1_owner\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the record follows from its evidence under the fixed policy; a go is not a gate result and not an authorisation\"\n}\n"
+    },
+    "outside_root_path": {
+      "decision_findings": [],
+      "fresh_exit": 0,
+      "fresh_stdout": "{\n \"gonogo_dir\": \"/tmp/owner_04385ae_review_repro/fixture_root/evidence/b4/gonogo/b4-mech-1_owner\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the record follows from its evidence under the fixed policy; a go is not a gate result and not an authorisation\"\n}\n"
+    }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "reviewed_tip": "823f5b08bacaa09dece5747523225534992479c4",
+  "branch": "b4-carrier-v2",
+  "reviewed_commits": [
+    "823f5b08bacaa09dece5747523225534992479c4",
+    "aafffdbde4752e5cb76f3924a79df678dd383a43"
+  ],
+  "utc": "2026-10-21T12:10:54.741596+00:00",
+  "verdict": "HOLD",
+  "findings": {
+    "R1": "P1 current P9 restore/close/idle evidence missing; A5 exception not distinguished",
+    "R2": "P1 GSR drops outstanding AXI B response under valid backpressure",
+    "R3": "P1 accepted STEP reads live mutable command; busy operations silently disappear",
+    "R4": "P1 record producer/validator does not enforce source/status/type/closure/prefix bindings",
+    "R5": "P2 GSR counter vendor-model fidelity and timing-claim limit"
+  },
+  "baseline_host_tests": {
+    "tests": 20,
+    "exit": 0,
+    "zero_skips": true,
+    "root": "isolated git-archive export"
+  },
+  "baseline_benches": {
+    "count": 14,
+    "result": "TB_PASS",
+    "scope": "fixed mechanics fixtures and existing nonce chain only"
+  },
+  "B1_pin_tests": {
+    "tests": 3,
+    "exit": 0
+  },
+  "bitstream_known_answer": {
+    "addresses": 21,
+    "mismatches": 0,
+    "bitstream_sha256": "cbf5f95ce41471bc0bc7a252dae394831955f1dbb4b7f7c740abd76f7cc003a6"
+  },
+  "fresh_vivado_build": false,
+  "new_rtl_counterexamples": [
+    "owner_p9",
+    "owner_open_close",
+    "owner_axi_backpressure",
+    "owner_step_snapshot",
+    "owner_busy_close"
+  ],
+  "record_counterexamples": [
+    "nested_instrument_answer_bits",
+    "nested_init_parameters_answer_bits",
+    "wrong_instrument_variant",
+    "empty_complete_steps",
+    "invalid_complete_preinit_sample",
+    "wrong_step_kind_and_timing",
+    "wrong_predecessor_shape",
+    "same_O_after_sorted_JSON_roundtrip",
+    "malformed_O_list",
+    "boolean_fitness",
+    "short_target_silently_truncates_mask",
+    "closed_X_with_null_samples_nonidle_and_extra_key",
+    "session_open_with_missing_digest_values",
+    "producer_seals_X_before_CLOSE",
+    "rejected_step_removed_from_O_stimulus",
+    "before_any_sample_fault_still_has_fabricated_init_step"
+  ],
+  "gsr_model_comparison": {
+    "behavioral_ns": [
+      40.0,
+      40.0
+    ],
+    "vendor_counter_ns": [
+      0.1,
+      0.1
+    ],
+    "scope": "functional simulation only; not physical or routed pulse timing"
+  },
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "firmware/",
+    "manifests/",
+    "gate_runs/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gonogo/",
+    "evidence/b4/gate/",
+    "rtl/b1/",
+    "host/b1*",
+    "host/b2*",
+    "host/b3*",
+    "tests/test_b1*",
+    "tests/test_b2*",
+    "tests/test_b3*"
+  ],
+  "architecture_before_section_13_unchanged": true,
+  "new_production_task_or_pair_seed_derivation": false,
+  "new_model_observations": "only existing explicit mechanics fixture regenerated in isolated baseline; no task/run/schedule scan",
+  "board_or_provisioning_actions": false,
+  "tracked_files_modified_by_reviewer": false,
+  "checkout_fully_clean_at_arrival": false,
+  "untracked_inputs_not_used": "All source/test inputs exported from committed HEAD; original untracked build checkpoints/logs and sim outputs left untouched",
+  "status_before": "## b4-carrier-v2\n?? builds/b4/build.stdout\n?? builds/b4/post_route.dcp\n?? builds/b4/post_synth.dcp\n?? builds/b4/resume.stdout\n?? sim/b4/out/\n",
+  "status_after": "## b4-carrier-v2\n?? builds/b4/build.stdout\n?? builds/b4/post_route.dcp\n?? builds/b4/post_synth.dcp\n?? builds/b4/resume.stdout\n?? sim/b4/out/\n",
+  "web_primary_sources": [
+    {
+      "title": "UG474 Control Signals",
+      "url": "https://docs.amd.com/r/en-US/ug474_7Series_CLB/Control-Signals",
+      "supports": "CLK/CE/SR shared across storage elements in a slice; SRVAL/INIT attributes distinct"
+    },
+    {
+      "title": "UG474 STARTUPE2 Primitive",
+      "url": "https://docs.amd.com/r/en-US/ug474_7Series_CLB/STARTUPE2-Primitive",
+      "supports": "STARTUPE2 drives global GSR after configuration"
+    }
+  ],
+  "source_files_sha256": {
+    "rtl/b4/b4_axil.v": "151b494cbf1d3ab0825093e509f7fb9ff79f6a0fffbc0288723964254f8c5a60",
+    "rtl/b4/b4_core.v": "5895ad7fec224fcb07d666dcf205f16f2ec32721ecfb3c926cbdc2943725daf3",
+    "rtl/b4/b4_engine.v": "ac633601688c02531162ee352456acb6e025487f527d63e2653f54d653240cea",
+    "rtl/b4/b4_gate.v": "ea7d062e93703060e7359b0e564e744da8fefe4a200f75336b367897e0086a4f",
+    "rtl/b4/b4_gsr_reg.v": "c06ac1030e7ac070ad9726809f7ae1c1b345aae0a5ed6760208ef0b1f788c926",
+    "rtl/b4/b4_slot_ram.v": "6c2966eb65f4adc50a63ca9210492d7dbbd505aa3b52fb25a7d2db0aabd0ba7a",
+    "rtl/b4/b4_target_slice.v": "d573ca2f544d03602a3495aad3ffcef96783caccc64dd484ffa1266eb45aed71",
+    "rtl/b4/b4_top.v": "adb3f2457c01f5e34d30127c73b7bab4eadfad75b48a95367845fe8a6b1c8821",
+    "host/b4carrier_manifest.py": "8a15bba0d039744a581cc3c83a05afec455cfdd8f26bb59f14c679e31ee60638",
+    "host/b4carrier_records.py": "3b399e4d9d3b8ccf9afcc956ef1942aca967454c822807e567c88b0ddd2fd680",
+    "host/b4carrier_regmap.py": "f7ed4666e16bb0903a7854ea907eaf96d1e616d92e8a0a777974e9ada11acab8"
+  }
+}

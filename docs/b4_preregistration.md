@@ -1,4 +1,13 @@
-# B4-FF — the flip-flop configuration-bit class on the board: preregistration (DRAFT v0.0.2 — a SKELETON, host-only, 2026-10-19)
+# B4-FF — the flip-flop configuration-bit class on the board: preregistration (DRAFT v0.0.4 — a SKELETON, host-only, 2026-10-19; pointer revisions 2026-10-21, 2026-10-27)
+
+> **v0.0.3 → v0.0.4 (2026-10-27, the task-v0.3 revision unit; a pointer, nothing resolved):** the task the board study would run is
+> task-v0.3 (`docs/b4_architecture.md` §7.2 — one slice-wide CE / SR value per step, broadcast; the planted target and the executing
+> side's input as task-v0.2), the observation contract is `docs/b4_observation_contract.md` v0.6 (2.2 revised for it), the next
+> exploration label is `b4-sim-5` (reserved, nothing derived) and the go / no-go row of §9.4 (v0.3.0) names its p threshold `p_max_go`.
+> Every `<unresolved>` of this skeleton stays unresolved; no N, B*, seed, prediction, session partition, rate or board execution is
+> supplied; nothing here is frozen.
+
+> **v0.0.2 → v0.0.3 (2026-10-21, the 2c-obs unit; a pointer, nothing resolved):** the observation contract that sections 5, 6 and 8 of this skeleton leave to 2c now exists as a DRAFT — `docs/b4_observation_contract.md` v0.5 (v0.1 held by the owner on `e91650b`, R1–R3; v0.2 held on `d8ef6cf`, C1–C4; v0.3 held on `df3b65e`, R1–R4; v0.4 held on `6927c24`, two P2; v0.5 **accepted as a document contract** by the owner's PASS on `4fc3dc7`, 2026-10-21; all corrected in the same unit: the stimulus, the raw readout as a logical view built from each source's raw wire format through a declared adapter, the three records per transaction with their immutability points, the one-initialisation transaction with its cleanup, session-opening record, session root and witnesses, A5 as a decision table with a qualification-only injection protocol, INIT / SRVAL observed separately with the same-element A8 cross, the two-episode SR-restore evidence and a precedence-ordered outcome table, A8 unresolved, the positive-control rule as a revision proposal of choice 7 with its nine pairs and the data influence disclosed, the two holdouts, the bench / board acceptance lists). **Every `<unresolved>` of this skeleton stays unresolved**: the contract fixes no N, `B*`, prediction, session, seed, holdout instance or initialisation mechanism, and this skeleton is not frozen by it. Sections 5, 6 and 8 carry a one-line pointer each; nothing else changed.
 
 > **v0.0.1 → v0.0.2 (2026-10-19, the owner's P3 on `7cf6c7f`): the reference to B3's lifecycle corrected.** v0.0.1 wrote S0 as
 > "freeze: the pins, the seeds, the plan", S1 as "the prediction" and S2 / S3 as "the sessions and the adjudication". The production
@@ -92,6 +101,8 @@ is re-aimed at the FF names (section 5.4); the permuted fixture must make the ca
 
 ## 5. Raw observation versus scoring (architecture sections 5.1–5.4)
 
+> *v0.0.3 pointer:* the logical observation view, the retained representations (the archive's projections and their four separate commitments, the raw return in quarantine, the carrier record) with their adapters, the physical-Q rule (D1 as ruled) and the model / board scoring-domain limit are drafted in `docs/b4_observation_contract.md` section 3; the three records per transaction (`O`, `F`, `X`), their exact field sets and immutability points and the field-aware A3 validator in its section 4; the schema file names are provisional there (D3), nothing implemented.
+
 Every ledger entry carries the raw observation (the sampled outputs per step, or a digest with the full vector retrievable) **and**,
 separately, the fitness the board computed under the landscape rule (section 7); the adjudicator recomputes the fitness from the
 raw observation and a mismatch is a finding against the board, never corrected. The decode is a third thing, host-only. A semantic
@@ -99,6 +110,8 @@ the observation cannot resolve stays `unknown` (section 5.2), never decoded by a
 observation (A3: it forbids an expected value), its name under `b4/schemas/`, and the digest form of the per-step vector.
 
 ## 6. The carrier's obligations — A1 to A8 (architecture section 5.5; the design unit is judged against them)
+
+> *v0.0.3 pointer:* the A2 positive-control addresses are the **accepted data-informed DRAFT A2 selection** (nine pairs; the rule the accepted revision of choice 7; the data influence disclosed; the owner's PASS on `4fc3dc7`) in `docs/b4_observation_contract.md` section 7 — a selection for later B4Q planning, not a certificate, a legal-composition rule, a whitelist or a board-demonstrated control; A1's transaction, the cleanup and the opening baseline in its section 5; A5's projection, roles and injected state in its section 5.6; A8's same-element 2 × 2 cross, the SR restore evidence, the G6 limit, the three candidate initialisation mechanisms (D2 as ruled) and the conditional outcome table with attribution left to independent evidence in its sections 6.2–6.7 — A8 itself stays unresolved.
 
 | id | obligation (verbatim by reference) | what 2c must name |
 |---|---|---|
@@ -127,6 +140,8 @@ observation (A3: it forbids an expected value), its name under `b4/schemas/`, an
   template; whether B4 adds a stop on A8's demonstration is for the review.
 
 ## 8. Falsifiers — the kinds, to be sharpened against the carrier v2
+
+> *v0.0.3 pointer:* kinds 4–6 take their observable form from `docs/b4_observation_contract.md` sections 5.6, 6.4–6.7 and 7.3; the exact list is still this skeleton's to write.
 
 1. A fitness differs from its recomputation from the raw observation on any record — the image mis-computes or the model is wrong:
    a finding per record; KILL if the served observation contradicts the self-report.

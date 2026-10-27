@@ -1,0 +1,183 @@
+{
+  "K10_counts": {
+    "interacting": 32
+  },
+  "K7_prefix_medians": {
+    "128": 16.5,
+    "16": 3.0,
+    "192": 19.0,
+    "24": 5.0,
+    "256": 21.0,
+    "32": 6.0,
+    "48": 9.0,
+    "64": 11.0,
+    "8": 2.0,
+    "96": 13.0
+  },
+  "K9_medians": {
+    "all_panel": {
+      "ce_mode": 1.0,
+      "clock_mode": 1.0,
+      "ff_init": 1.0,
+      "ff_srval": 0.40625,
+      "sr_kind": 0.4375,
+      "sr_mode": 1.0,
+      "storage_kind": 1.0
+    },
+    "conditional": {
+      "ce_mode": 1.0,
+      "clock_mode": 1.0,
+      "ff_init": 1.0,
+      "ff_srval": 0.8125,
+      "sr_kind": 0.875,
+      "sr_mode": 1.0,
+      "storage_kind": 1.0
+    }
+  },
+  "K9_positive_controls_by_semantic": {
+    "ce_mode": 32,
+    "clock_mode": 32,
+    "ff_init": 32,
+    "ff_srval": 32,
+    "sr_kind": 32,
+    "sr_mode": 32,
+    "storage_kind": 32
+  },
+  "Omega_minus_R_by_budget": {
+    "128": {
+      "cohen_d": -0.30865070014336937,
+      "mean": -1.1875,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 10,
+      "population_variance": 14.33984375,
+      "positives": 5,
+      "sign_test_p": 0.940765380859375,
+      "ties": 17
+    },
+    "16": {
+      "cohen_d": -0.3359847412190017,
+      "mean": -3.875,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 14,
+      "population_variance": 128.859375,
+      "positives": 6,
+      "sign_test_p": 0.9793052673339844,
+      "ties": 12
+    },
+    "192": {
+      "cohen_d": 0.09754311729437715,
+      "mean": 0.40625,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 6,
+      "population_variance": 16.8037109375,
+      "positives": 6,
+      "sign_test_p": 0.61279296875,
+      "ties": 20
+    },
+    "24": {
+      "cohen_d": -0.09757025178093509,
+      "mean": -0.84375,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 12,
+      "population_variance": 72.4443359375,
+      "positives": 7,
+      "sign_test_p": 0.9164657592773438,
+      "ties": 13
+    },
+    "256": {
+      "cohen_d": 0.11536778241162536,
+      "mean": 0.34375,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 5,
+      "population_variance": 8.6005859375,
+      "positives": 7,
+      "sign_test_p": 0.38720703125,
+      "ties": 20
+    },
+    "32": {
+      "cohen_d": -0.19230973161493153,
+      "mean": -1.5,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 14,
+      "population_variance": 58.9375,
+      "positives": 5,
+      "sign_test_p": 0.9903945922851562,
+      "ties": 13
+    },
+    "48": {
+      "cohen_d": -0.1257263280188742,
+      "mean": -0.875,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 11,
+      "population_variance": 46.921875,
+      "positives": 7,
+      "sign_test_p": 0.8810577392578125,
+      "ties": 14
+    },
+    "64": {
+      "cohen_d": -0.3531074633217678,
+      "mean": -1.71875,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 13,
+      "population_variance": 22.9521484375,
+      "positives": 7,
+      "sign_test_p": 0.9423408508300781,
+      "ties": 12
+    },
+    "8": {
+      "cohen_d": -0.16670022639547,
+      "mean": -1.84375,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 13,
+      "population_variance": 118.5068359375,
+      "positives": 7,
+      "sign_test_p": 0.9423408508300781,
+      "ties": 12
+    },
+    "96": {
+      "cohen_d": -0.28556017368430914,
+      "mean": -1.25,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 10,
+      "population_variance": 18.5625,
+      "positives": 9,
+      "sign_test_p": 0.6761970520019531,
+      "ties": 13
+    }
+  },
+  "blob_checks": {
+    "batch": {
+      "all_equal": true,
+      "bytes": 200674002,
+      "files": 771
+    },
+    "decision": {
+      "all_equal": true,
+      "bytes": 11359,
+      "files": 2
+    }
+  },
+  "decision": "no-go",
+  "exclusion": {
+    "after": 2690,
+    "before": 2625,
+    "collisions": 0,
+    "new_values": 65
+  },
+  "method": "standard-library calculations from retained ledgers/grids; K9 uses recorded applicability flags (rechecked by deep verifier); no fabric observation or new seed draw",
+  "production_derivation_calls": {
+    "master_seed": 0,
+    "pair_seeds": 0
+  },
+  "status": "all independent assertions passed"
+}

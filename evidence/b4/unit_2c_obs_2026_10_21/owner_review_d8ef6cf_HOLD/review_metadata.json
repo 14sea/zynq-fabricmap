@@ -1,0 +1,69 @@
+{
+  "utc": "2026-10-21T09:00:55.080252+00:00",
+  "reviewed_tip": "d8ef6cf5b91f24a928e642a45a13a2743138c48b",
+  "verdict": "HOLD",
+  "findings": [
+    {
+      "id": "C1",
+      "priority": "P1",
+      "path": "docs/b4_observation_contract.md",
+      "line": 123,
+      "title": "Legacy payload and digest compatibility still false; legitimate truth source is denied",
+      "prior_finding": "R1"
+    },
+    {
+      "id": "C2",
+      "priority": "P1",
+      "path": "docs/b4_observation_contract.md",
+      "line": 292,
+      "title": "P6 observation seal requires future witnesses; current restore and root records not defined",
+      "prior_finding": "R2"
+    },
+    {
+      "id": "C3",
+      "priority": "P1",
+      "path": "docs/b4_observation_contract.md",
+      "line": 347,
+      "title": "A5 comparison includes the very pre-init state required to differ, and its path violates normal predecessor gate",
+      "prior_finding": "R2"
+    },
+    {
+      "id": "C4",
+      "priority": "P1",
+      "path": "docs/b4_observation_contract.md",
+      "line": 440,
+      "title": "Common A8 stimulus cannot be opposite to both SRVAL values; outcome rows overlap",
+      "prior_finding": "R3"
+    }
+  ],
+  "independent_checks": "static_contract_probes.py / .json / .txt",
+  "pin_tests": {
+    "command": "python3 -B -m unittest -v b4.tests.test_b4_seeds b4.tests.test_b4_thresholds",
+    "count": 29,
+    "result": "OK",
+    "seconds": 0.62
+  },
+  "prior_review_archive_byte_identical": true,
+  "prior_review_checksum_entries": 11,
+  "authorisation_copied_correctly": true,
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "gate_runs/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gonogo/",
+    "evidence/b4/gate/"
+  ],
+  "readonly_scripts_unchanged_and_not_rerun": true,
+  "new_model_or_device_observations": false,
+  "new_production_draws": false,
+  "full_suite_or_mutants_run": false,
+  "tracked_changes_by_reviewer": false,
+  "working_tree_status": "## b4-2c-obs\n",
+  "scope": "same documents-only correction unit; no extra scope or per-fix approval required"
+}

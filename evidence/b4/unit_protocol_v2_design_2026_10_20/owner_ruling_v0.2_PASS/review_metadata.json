@@ -1,0 +1,42 @@
+{
+  "reviewed_head": "d19cc2faf5c42208ac020663ac81edf4bfafdf30",
+  "reviewed_scope": "build/wip/b4_protocol_revision_scope_draft_v2_2026_10_20.md",
+  "scope_sha256": "e955a6074deca6f2c101bbc160ce508c8edf931f61596b6cebe2670fff003318",
+  "verdict": "PASS as scope, subject to binding decisions in README.md",
+  "review_utc": "2026-10-20T12:11:58.085689+00:00",
+  "selected_contract": "H (fixed-program/API boundary; no secrecy claim)",
+  "target": "T-i, one draw including all-zero base",
+  "go_policy": {
+    "S": 32,
+    "B": 64,
+    "one_sided_sign_p_max": 0.2,
+    "positive_more_than_negative": true,
+    "conditional_k9_medians_min": 0.5
+  },
+  "independent_checks": {
+    "code_to_archive_nonarchive_changes": [
+      0,
+      0
+    ],
+    "historical_tool_schema_hashes_matched": [
+      23,
+      25
+    ],
+    "sim3_start_registry_entries": 0,
+    "sim3_archive_registry_entries": 1,
+    "gate1_start_registry_entries": 1,
+    "gate1_archive_registry_entries": 2
+  },
+  "provided_readonly_records_sha256": {
+    "build/wip/b4_protocol_revision_readonly_2026_10_20/README.md": "55dbfa13a19af97dd9be5f3e8ea85fcb7557eca5eaad4a490983083b1501dd87",
+    "build/wip/b4_protocol_revision_readonly_2026_10_20/r5_git_readonly_checks.txt": "77a4035da5fe0fa161921db771713c2b57e5246b64c7e2f20074c8ac23ca3f9b",
+    "build/wip/b4_protocol_revision_readonly_2026_10_20/read_curves.out.txt": "5f43d6641a7d9186d2203796fdf80a5b7e93003dacceb21a281bfad42ef89297",
+    "build/wip/b4_protocol_revision_readonly_2026_10_20/read_curves.py": "d45daea3501df8cb20d749080a87ba549b621d04064d4f5d921796699981309b",
+    "build/wip/b4_protocol_revision_readonly_2026_10_20/read_k9.out.txt": "118d6898fcf6e51a15781ac0708863532c1567f1d9f2b2fdfa3cf1eadf2a9797",
+    "build/wip/b4_protocol_revision_readonly_2026_10_20/read_k9.py": "098fa05c3ee825459314b14690a247f0527195951ed46f963b2e70c2ff446e64",
+    "build/wip/b4_protocol_revision_readonly_2026_10_20/read_k9_k7_extra.out.txt": "f155c7aecda047b48fa52f7323f107c4e48dbe4938d6259cacc4a6cb848f1fae",
+    "build/wip/b4_protocol_revision_readonly_2026_10_20/read_k9_k7_extra.py": "d21716354a2ac93e72a9ba62af2b8f039068885dbb1b01416532ddbea01408b3"
+  },
+  "tracked_changes_by_reviewer": false,
+  "tests_models_replay_or_seed_derivation": false
+}

@@ -1,0 +1,35 @@
+{
+  "reviewed_tip": "bf17574913ef0cf828e643fed5b1186274e2331a",
+  "date_utc": "2026-10-21T16:49:29.956974+00:00",
+  "verdict": "PASS",
+  "unit": "host-only carrier v2 engineering unit",
+  "R1": "resolved",
+  "R2": "resolved",
+  "R3": "resolved",
+  "R4": "resolved",
+  "blocking_findings": [],
+  "host_tests": 30,
+  "B1_pin_tests": 3,
+  "benches": 31,
+  "additional_owner_bus_monitor_core_cases": 29,
+  "known_answer_addresses": 21,
+  "fresh_OOC_synthesis": true,
+  "fresh_full_routed_build": false,
+  "owner_reran_mutant_battery": false,
+  "tracked_changes_by_reviewer": false,
+  "new_production_seed_derivation": false,
+  "board_access": false,
+  "status_after": "## b4-carrier-v2\n",
+  "vendor_sources_sha256": {
+    "glbl.v": "6270251cf35e1fce3119fc79f8fb968912f7983027e43cf030409ba68f048936",
+    "unisims/RAM32X1S.v": "dbdd28d65bd6e3e9971bf96aa918d9e315c8520657a3207c81cf1bcc536ad2ac",
+    "unisims/FDPE.v": "4ec91e1101288ae35ebda302ed5e31b670f5bb5b16cd48922d1cbf891407bcfc",
+    "unisims/STARTUPE2.v": "4a61e40111f1f4bb2e6e91a2e1b4541b1a18a5256e1098626cf0948cf2d0b4bc"
+  },
+  "commands": {
+    "netlist": "/home/test/Xilinx/2025.2/Vivado/bin/vivado -mode batch -source vivado/b4/netlist_core.tcl -tclargs builds/b4",
+    "host_tests": "python3 -B -m unittest tests.test_b4carrier_regmap tests.test_b4carrier_records tests.test_b4carrier_benches",
+    "pins": "python3 -B -m unittest tests.test_b1_pins",
+    "manifest": "python3 -B host/b4carrier_manifest.py builds/b4/b4.bit"
+  }
+}

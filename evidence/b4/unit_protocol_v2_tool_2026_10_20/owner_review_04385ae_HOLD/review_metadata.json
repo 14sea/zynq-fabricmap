@@ -1,0 +1,33 @@
+{
+  "reviewed_head": "04385ae42373a4db33716f8aa5d6c58a4789de09",
+  "parent": "8361068ce974ccfe3de4a88c01cd17be052696af",
+  "completed_utc": "2026-10-20T14:53:53.626055+00:00",
+  "tracked_status": "",
+  "tests_command": "python3 -B -m unittest -v b4.tests.test_b4_carto b4.tests.test_b4_controls b4.tests.test_b4_deadline b4.tests.test_b4_engine b4.tests.test_b4_execution b4.tests.test_b4_ff_hypothesis b4.tests.test_b4_ff_mapping b4.tests.test_b4_ff_model b4.tests.test_b4_gate b4.tests.test_b4_gate_stats b4.tests.test_b4_gonogo b4.tests.test_b4_k10 b4.tests.test_b4_k9 b4.tests.test_b4_landscape b4.tests.test_b4_probe_latch_ginv b4.tests.test_b4_protocol b4.tests.test_b4_replay b4.tests.test_b4_rng b4.tests.test_b4_seeds b4.tests.test_b4_sim b4.tests.test_b4_snapshot b4.tests.test_b4_stats b4.tests.test_b4_target b4.tests.test_b4_thresholds",
+  "tests_exit": 0,
+  "tests_count": 313,
+  "tests_wall_s": 606.832,
+  "e2e_command": "python3 -B evidence/b4/unit_protocol_v2_tool_2026_10_20/e2e_fixtures_v02.py /tmp/owner_04385ae_e2e",
+  "e2e_exit": 0,
+  "e2e_production_derivation_calls": [
+    0,
+    0
+  ],
+  "import_command": "python3 -B evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py",
+  "import_entries": 58,
+  "import_findings": [],
+  "probe_command": "python3 -B /tmp/owner_04385ae_review_probes.py",
+  "probe_exit": 0,
+  "probe_production_derivation_calls": [
+    0,
+    0
+  ],
+  "e2e_canonical_json_total": 908,
+  "e2e_canonical_json_equal": 811,
+  "e2e_canonical_json_different": 97,
+  "verdict": "HOLD",
+  "tracked_changes_by_reviewer": false,
+  "new_production_seed_derivation": false,
+  "full_mutant_battery_rerun_by_reviewer": false,
+  "limits": "Fixture engineering review only; no production run, new scientific result, full proof, push, merge, or board activity."
+}

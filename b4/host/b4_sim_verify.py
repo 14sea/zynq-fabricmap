@@ -5,14 +5,19 @@ F4): what `b4_sim_schema.validate_run_dir` does file by file, this does for the 
     python3 b4/host/b4_sim_verify.py evidence/b4/sim/<label>_<UTC>      # prints the findings as JSON; exit 0 iff none
 
 For a run directory it checks, in this order, and names every difference:
+  0. the PROTOCOL IDENTITY (section 9.5): the manifest's identity against the one rebuilt from this tool's own trusted inventory —
+     an archive of another method version, or one written before the identity existed, is REFUSED BY NAME (re-verify it with its
+     own tool at its recorded HEAD, docs/b4_archive_reverification.md); nothing of it is verified or re-judged here;
   1. the file set: the required files of the recorded status and of every pair's recorded state exist, no file exists that
      the report does not list, no `.part`, no duplicate entry; every listed sha256 / size equals the file on disk;
   2. the linkage: seeds.json ↔ manifest.seeds_sha256 ↔ report.identity; one label, one count, one HEAD across the three;
      the planned pairs are seeds.json's; STOPPED.json exists exactly when the status is not `complete` and equals the
      report's copy; the pair indexes list their pair's files with the same digests;
   3. every file against its typed validator, the pair's task bound (seed, digest, stimulus, provenance);
-  4. (deep) the conclusions, recomputed from the raw readouts with the formal model: every arm result re-audited (the
-     completion checks, the re-execution replay, the ledger recompute, the states) and held to its audit file; the controls
+  4. (deep) the conclusions, recomputed from the raw readouts with the formal model: the task setup reconstructed from the kept
+     records (the rule re-derived from the seed, the targets rebuilt from the kept grids, the task digest; the fabric never asked
+     again); every arm result re-audited (the completion checks, the re-execution replay, the ledger recompute, the states) and
+     held to its audit file; the controls
      (X seed by formula, D's view rebuilt from F's record, Omega / A0 by construction); K7's prefixes recomputed; K9 and K10
      recomputed from the kept grids; the curves from the results; the pooled summary from the rows — all held to the files.
 
@@ -41,15 +46,18 @@ import b4_ff_model as fm  # noqa: E402
 import b4_k10 as k10  # noqa: E402
 import b4_k9 as k9  # noqa: E402
 import b4_landscape as bl  # noqa: E402
+import b4_protocol as bp  # noqa: E402
 import b4_replay as br  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
 import b4_snapshot as sn  # noqa: E402
+import b4_target as bt  # noqa: E402
 import b4_thresholds as th  # noqa: E402
 
 ROLES = sc.ROLES
 GRID = th.GRID
 TOP = ("seeds.json", "manifest.json")
+SETUP_QUARANTINES = {"target": "target_search.QUARANTINE.json", "target_holdout": "target_holdout.QUARANTINE.json"}   # a target setup return kept raw (R2)
 
 
 def _sha(b: bytes) -> str:
@@ -87,6 +95,12 @@ def expected_pair_files(plan: dict) -> tuple[set, set]:
     r = plan["pair"]
     pre = f"pair_{r:03d}/"
     must, may = set(), set()
+    # the task setup: EXACTLY the durable ordered prefix the planned record carries (task_setup -> target_search -> target_holdout -> task),
+    # plus the one quarantined return of an invalid setup, at the phase whose file is the next one not written (the owner's review of
+    # 04385ae R3); the state <-> prefix consistency is the report validator's (b4_sim_schema.setup_prefix_ok)
+    must |= {pre + name for name in bt.SETUP_FILES[:plan.get("task_prefix", 0)]}
+    if plan.get("task_quarantine") in bt.PHASES:
+        must.add(pre + SETUP_QUARANTINES[plan["task_quarantine"]])
     for role, state in plan["arms"].items():
         if state in ("written", "audited"):
             must.add(f"{pre}arm_{role}.result.json")
@@ -158,10 +172,18 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     F = _F()
     if not out.is_dir():
         F.add("run directory", "does not exist"); return F.d
-    disk = {str(p.relative_to(out)): p for p in sorted(out.rglob("*")) if p.is_file()}
+    disk = {str(p.relative_to(out)): p for p in sorted(out.rglob("*")) if p.is_file() and not p.is_symlink()}
     for rel in disk:
         if rel.endswith(".part"):
             F.add(rel, "an unfinished write")
+    for sub in sorted(out.rglob("*")):
+        rel = str(sub.relative_to(out))
+        if sub.is_symlink():
+            F.add(rel, "a symlink: the archive holds real files in real pair directories only")
+        elif sub.is_dir() and not re.fullmatch(r"pair_\d{3}", rel):
+            F.add(rel, "a directory that is not a pair directory directly under the run directory")
+    if F:
+        return F.d
     # --- an initialisation failure: INIT_FAILED.json (with or without seeds.json) and nothing else
     if "INIT_FAILED.json" in disk:
         doc, err = _load(disk["INIT_FAILED.json"])
@@ -174,6 +196,24 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         if "seeds.json" in disk:
             d, e = _load(disk["seeds.json"]); F.add("seeds.json", *([e] if e else sc.seeds_findings(d)))
         return F.d
+    # --- step 0: the protocol identity decides whether this tool verifies this archive at all
+    if "manifest.json" not in disk:
+        F.add("manifest.json", "missing"); return F.d
+    man0, err = _load(disk["manifest.json"])
+    if err:
+        F.add("manifest.json", err); return F.d
+    pr = man0.get("protocol") if isinstance(man0, dict) else None
+    if not isinstance(pr, dict) or "identity" not in pr:
+        F.add("protocol", bp.refusal_for_missing(man0 if isinstance(man0, dict) else {})); return F.d
+    try:
+        mine = bp.identity()
+    except bp.IdentityRefusal as exc:
+        F.add("protocol", f"this tool's own tree is not its inventory: {exc}"); return F.d
+    pf = bp.compare(pr["identity"], mine)
+    if pf:
+        F.add("protocol", *pf); return F.d
+    if pr.get("protocol_sha256") != bp.protocol_sha256(mine):
+        F.add("protocol", "the archive's protocol_sha256 is not the digest of this method version (the identity components agree; the recorded digest does not)"); return F.d
     # --- the report
     if report is None:
         if "sim_report.json" not in disk:
@@ -209,6 +249,8 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         F.add("manifest.json", "the hypothesis / certificate digests are not the pinned ones")
     if ident.get("inputs") != manifest["inputs"]:
         F.add("sim_report.json", "identity.inputs are not the manifest's")
+    if ident.get("protocol_sha256") != manifest["protocol"]["protocol_sha256"]:
+        F.add("sim_report.json", "identity.protocol_sha256 is not the manifest's")
     rc = {"path": bs.EXPOSURE_RECEIPT_REL, "sha256": bs.EXPOSURE_RECEIPT_SHA256}
     s_rc, m_rc = (seeds.get("exclusion") or {}).get("exposure_receipt"), (manifest.get("exclusion") or {}).get("exposure_receipt")
     if not (isinstance(s_rc, dict) and isinstance(m_rc, dict) and {k: s_rc.get(k) for k in rc} == rc and {k: m_rc.get(k) for k in rc} == rc
@@ -239,6 +281,14 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     planned = report["pairs"]
     if _j([[p["landscape_seed"], p["operator_seed"]] for p in planned]) != _j(seeds["pairs"]):
         F.add("linkage", "the planned pairs are not seeds.json's")
+    states = {p["pair"]: p["status"] for p in planned}
+    for sub in sorted(out.iterdir()):
+        if sub.is_dir() and not sub.is_symlink():
+            r = int(sub.name[5:])
+            if r not in states:
+                F.add(sub.name, "a pair directory the plan does not have")
+            elif states[r] == "not_started":
+                F.add(sub.name, "a pair directory of a pair recorded not_started")
     if F:
         return F.d
     # --- the deadline records bound to the declared duration (the manifest's, written before the first observation)
@@ -290,10 +340,62 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         F.add(rel, "not a file any pair's recorded state accounts for")
     if F:
         return F.d
-    # --- every file against its validator, the pair's task bound
+    # --- every file against its validator, the pair's task bound. The task of a pair is REBUILT from its setup records (task-v0.2):
+    # the three setup files validated first; a pair without a complete setup has no task and no arm / diagnostic files
     mapping = bm.site_mapping()
-    tasks = {p["pair"]: bl.make_task(p["landscape_seed"], mapping.addresses) for p in planned}
+    formal_prov_sha = ex.sha256_json(sc.formal_provenance())
     by_pair = {p["pair"]: p for p in planned}
+    tasks: dict = {}
+    setup_docs: dict = {}
+    for plan in planned:
+        r = plan["pair"]
+        pre = f"pair_{r:03d}/"
+        docs_ = {}
+        for name, ph in (("task_setup.json", None), ("target_search.json", "target"), ("target_holdout.json", "target_holdout"), ("task.json", None)):
+            if pre + name not in disk:
+                continue
+            doc, err = _load(disk[pre + name])
+            f = [err] if err else (sc.task_setup_findings(doc) if name == "task_setup.json" else sc.task_findings(doc) if name == "task.json" else sc.target_observation_findings(doc, ph))
+            if f:
+                F.add(pre + name, *f); continue
+            if doc.get("pair") != r:
+                F.add(pre + name, f"names pair {doc.get('pair')!r}, lies in pair {r}"); continue
+            docs_[name] = doc
+        for ph, qname in SETUP_QUARANTINES.items():                   # the quarantined target return of an invalid setup: its own validator, its context bound to the file and the plan
+            if pre + qname not in disk:
+                continue
+            doc, err = _load(disk[pre + qname])
+            f = [err] if err else sc.quarantine_findings(doc)
+            if f:
+                F.add(pre + qname, *f); continue
+            if doc.get("pair") != r or doc.get("role") != "TARGET" or doc.get("stage") != "target_setup" or (doc.get("context") or {}).get("phase") != ph:
+                F.add(pre + qname, f"not pair {r}'s TARGET quarantine of the {ph} return"); continue
+            if plan.get("task_quarantine") != ph or plan.get("task") != "invalid":
+                F.add(pre + qname, "a quarantined target return the planned record does not carry (task_quarantine) as an invalid setup"); continue
+            sd0 = docs_.get("task_setup.json")
+            if sd0 is None:
+                F.add(pre + qname, "a quarantined target return without its plan (task_setup.json)"); continue
+            ctx = doc["context"]
+            if ctx.get("genome") != sd0["planted_genome"] or ctx.get("config_sha256") != sd0["planted_config_sha256"]:
+                F.add(pre + qname, "the quarantine's context is not the plan's planted configuration")
+            # C3 (the owner's review of b29b0fb): the context's stimulus and expected source are DERIVED from trusted inputs, never their own authority
+            parts = bl.public_parts(sd0["landscape_seed"])
+            if ctx.get("stimulus_sha256") != ex.sha256_json(list(parts["stimulus"] if ph == "target" else parts["holdout_stimulus"])):
+                F.add(pre + qname, f"context.stimulus_sha256 is not the digest of the {ph} stimulus derived from the plan's seed")
+            want_src = formal_prov_sha if ph == "target" else (docs_.get("target_search.json") or {}).get("provenance_sha256")
+            if want_src is None:
+                F.add(pre + qname, "a quarantined holdout return without the retained first observation to bind its expected source to")
+            elif ctx.get("expected_provenance_sha256") != want_src:
+                F.add(pre + qname, "context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path")
+        setup_docs[r] = docs_
+        if plan["task"] == "complete" and all(n in docs_ for n in bt.SETUP_FILES):
+            try:
+                task = bt.task_from_dict(docs_["task.json"]["public_task"])
+            except Exception as exc:  # noqa: BLE001
+                F.add(pre + "task.json", f"the public task cannot be rebuilt: {type(exc).__name__}: {exc}"); continue
+            tasks[r] = (task, plan["landscape_seed"])
+    if F:
+        return F.d
     for rel, path in disk.items():
         if rel == "sim_report.json" or rel in TOP or rel == "STOPPED.json":
             continue
@@ -305,6 +407,11 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         if plan is None:
             F.add(rel, "a pair directory the plan does not have"); continue
         expect = None
+        if name in bt.SETUP_FILES or name in SETUP_QUARANTINES.values():
+            continue                                                # validated above
+        if r not in tasks:
+            F.add(rel, "a file of a pair whose task setup is not complete"); continue
+        task, seed = tasks[r]
         am = re.match(r"arm_([A-Za-z0-9]+)\.result\.json$", name)
         if am:
             expect = {"pair": r, "role": am.group(1), "landscape_seed": plan["landscape_seed"], "operator_seed": plan["operator_seed"],
@@ -312,9 +419,9 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
             if am.group(1) not in ROLES:
                 F.add(rel, "not a role's result file"); continue
             doc, err = _load(path)
-            F.add(rel, *([err] if err else sc.arm_result_findings(doc, tasks[r], expect)))
+            F.add(rel, *([err] if err else sc.arm_result_findings(doc, task, expect)))
             continue
-        f = sc.validate_file(path, tasks[r])
+        f = sc.validate_file(path, task, seed)
         F.add(rel, *f)
         if f:
             continue
@@ -354,7 +461,7 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         for rel, e in idx_files.items():
             if listed.get(pre + rel) and (listed[pre + rel]["sha256"], listed[pre + rel]["size"]) != (e["sha256"], e["size"]):
                 F.add(pre + "index.json", f"{rel}: the pair index and the report index disagree")
-        if idx["status"] != "complete" or idx["arms"] != plan["arms"] or (idx["landscape_seed"], idx["operator_seed"]) != (plan["landscape_seed"], plan["operator_seed"]):
+        if idx["status"] != "complete" or idx["arms"] != plan["arms"] or idx["task"] != plan["task"] or (idx["landscape_seed"], idx["operator_seed"]) != (plan["landscape_seed"], plan["operator_seed"]):
             F.add(pre + "index.json", "not the planned record of this pair")
     if F or not deep:
         return F.d
@@ -366,10 +473,23 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     except Exception as exc:  # noqa: BLE001
         F.add("formal inputs", f"the formal model does not load: {type(exc).__name__}: {exc}"); return F.d
     rows = []
+    formal_prov = sc.formal_provenance()
     for plan in planned:
         r = plan["pair"]
         pre = f"pair_{r:03d}/"
-        task = tasks[r]
+        sd = setup_docs.get(r, {})
+        if "task_setup.json" in sd:
+            F.add(pre + "task setup", *bt.setup_findings(sd["task_setup.json"], sd.get("target_search.json"), sd.get("target_holdout.json"), sd.get("task.json"), mapping, formal_prov,
+                                                        {"pair": r, "landscape_seed": plan["landscape_seed"], "operator_seed": plan["operator_seed"]}))
+            if "task.json" in sd:
+                for name in ("task_setup.json", "target_search.json", "target_holdout.json"):
+                    if pre + name in disk and sd["task.json"]["setup_files_sha256"].get(name) != _sha(disk[pre + name].read_bytes()):
+                        F.add(pre + "task.json", f"setup_files_sha256[{name}] is not the file's digest")
+        if r not in tasks:
+            if plan["status"] == "complete":
+                F.add(pre, "a complete pair without a complete task setup")
+            continue
+        task, seed = tasks[r]
         results, views = {}, {}
         controls = _load(disk[pre + "controls.json"])[0] if pre + "controls.json" in disk else None
         if controls is not None:
@@ -398,7 +518,7 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
                 if d["given_view"] != views[role].as_dict():
                     view_f.append("the recorded given view is not the one handed to the arm")
                 if role == "D" and "F" in results:
-                    view_f += ctl.verify_d_view(d["given_view"], results["F"], task)
+                    view_f += ctl.verify_d_view(d["given_view"], results["F"], task, seed)
             if audit is not None:
                 if _j((completion, replay, rc["findings"], states, view_f)) != _j((audit["completion_findings"], audit["replay_findings"], audit["recompute"]["findings"], audit["states"], audit["view_findings"])):
                     F.add(pre + f"arm_{role}.audit.json", "the audit recorded is not the audit recomputed (completion / replay / recompute / states / view)")
@@ -407,7 +527,7 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
             if (plan["status"] == "complete" or plan["arms"][role] == "audited") and (completion or replay or rc["findings"] or view_f):
                 F.add(pre + f"arm_{role}.result.json", "the arm does not re-audit clean: " + "; ".join((completion + replay + rc["findings"] + view_f)[:3]))
         if controls is not None and "F" in results:
-            F.add(pre + "controls.json", *ctl.verify_d_view(controls["d_view"], results["F"], task))
+            F.add(pre + "controls.json", *ctl.verify_d_view(controls["d_view"], results["F"], task, seed))
         if pre + "k7.json" in disk and "O" in results:
             k7 = _load(disk[pre + "k7.json"])[0]
             for B, p in k7["prefixes"].items():
@@ -423,13 +543,11 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
             if not (k9d and k9d.get("complete") is True and k10d and k10d.get("complete") is True):
                 F.add(pre, "a complete pair's row needs complete K9 and K10 documents"); continue
             curves = _load(disk[pre + "curves.json"])[0]
-            want = sim.curves_of(results, r, plan["landscape_seed"], plan["operator_seed"])
+            want = sim.curves_of(results, r, plan["landscape_seed"], plan["operator_seed"], sd["target_search.json"]["q_grid"])
             if _j({k: v for k, v in curves.items() if k != "written_utc"}) != _j({k: v for k, v in want.items() if k != "written_utc"}):
-                F.add(pre + "curves.json", "not the curves of the arm results")
+                F.add(pre + "curves.json", "not the curves of the arm results (and the non-triviality record of the target against R's base trace)")
             k7 = _load(disk[pre + "k7.json"])[0]
-            rows.append({"pair": r, "landscape_seed": plan["landscape_seed"], "operator_seed": plan["operator_seed"], "base_fit": curves["base_fit"], "best_at_grid": curves["best_at_grid"],
-                         "f_end_to_end_at_grid": [e["value"] for e in curves["f_end_to_end_at_grid"]], "k7_not_unknown_at_grid": [k7["prefixes"][str(B)]["not_unknown"] for B in GRID],
-                         "k9": k9d["summary"]["per_semantic"], "k9_all_seven": k9d["summary"]["all_seven_positive_controls"], "k10_max_abs": k10d["max_abs_index"], "k10_outcome": k10d["outcome"]})
+            rows.append(sim.row_of(r, plan["landscape_seed"], plan["operator_seed"], curves, k7["prefixes"], k9d, k10d))
     if status == "complete":
         if len(rows) != report["count"]:
             F.add("sim_report.json", "a complete report without a complete row per pair")

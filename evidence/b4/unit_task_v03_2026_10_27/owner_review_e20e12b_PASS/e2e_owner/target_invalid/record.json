@@ -1,0 +1,65 @@
+{
+ "digests": {
+  "batch": {
+   "STOPPED.json": {
+    "normalised_sha256": "4329cb9fe6e1ac5cbe4d52b2c89e99978f984236d512dee719b03b32760e0db9",
+    "sha256": "6947232f95aa7b149aade01aa36936301b540d81aec5041750edf47c34d73709",
+    "size": 1464
+   },
+   "manifest.json": {
+    "normalised_sha256": "272f3b45db0fbe9d6220669c1ccec42f58973788281902d51b8deca964846188",
+    "sha256": "121501b1066faaa8919980a12410a55e282c5f3e8f6a81c030d527d577963064",
+    "size": 43835
+   },
+   "pair_000/task_setup.json": {
+    "normalised_sha256": "cb5ceac21e5556f30c9bee291bb595f41b208b7edff6a4d7cee2b4891b0d6348",
+    "sha256": "0491949a676353c981f85ca584ee21c5ea390080ce8c864505b0305f48aa3958",
+    "size": 2118
+   },
+   "seeds.json": {
+    "normalised_sha256": "bb2d00e013f1b4b67eec30c777def92cac90f66772cbc2135b9cc74f1d86a13a",
+    "sha256": "b887e7e3a2a42330c1cdf153e5232adf00a8ef7c22f2575aaea74facdf673010",
+    "size": 132362
+   },
+   "sim_report.json": {
+    "normalised_sha256": "a24039cd8b38d98de1cfddc013f6aeeb5ee8f6b20778cdcf2569bd58a89da2b6",
+    "sha256": "746fe61327eb1f16ef062bd0a0f60f07a9f8bdb0e6f2d9e64b403eef0ca10e8f",
+    "size": 15997
+   }
+  }
+ },
+ "exit_code": 1,
+ "expected": {
+  "files": [
+   "task_setup.json"
+  ],
+  "kind": "target_invalid",
+  "prefix": 1,
+  "quarantine": null,
+  "status": "invalid",
+  "task": "invalid"
+ },
+ "fresh_batch_exit": 0,
+ "normalisation": {
+  "files_in_raw_map": 1022,
+  "fixed_point_passes": 23,
+  "substituted_references": 4942
+ },
+ "pair_000": {
+  "status": "partial",
+  "task": "invalid",
+  "task_prefix": 1,
+  "task_quarantine": null
+ },
+ "pair_000_files": [
+  "task_setup.json"
+ ],
+ "raw_links": {
+  "resolved": 4,
+  "unresolved": []
+ },
+ "status": "invalid",
+ "stopped_kind": "target_invalid",
+ "stopped_role": "TARGET",
+ "stopped_stage": "target_setup"
+}

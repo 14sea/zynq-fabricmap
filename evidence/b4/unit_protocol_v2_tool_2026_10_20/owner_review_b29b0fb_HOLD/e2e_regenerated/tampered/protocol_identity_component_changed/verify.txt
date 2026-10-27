@@ -1,0 +1,15 @@
+HEAD b29b0fb838ae62af6bff436505d200402520230d
+expected: exit 1 naming 'k9: judged'
+exit 1
+
+/home/test/zynq_fabricmap/b4/host/b4_sim_verify.py /tmp/b4v02_e2e_nu6gp6d6/evidence/b4/sim/b4-mech-1_complete_tamper_protocol_identity_component_changed
+{
+ "run_dir": "/tmp/b4v02_e2e_nu6gp6d6/evidence/b4/sim/b4-mech-1_complete_tamper_protocol_identity_component_changed",
+ "findings": {
+  "protocol": [
+   "the archive's protocol identity is not this tool's: k9: judged \u2014 re-verify the archive with its own tool at its recorded HEAD (docs/b4_archive_reverification.md)"
+  ]
+ },
+ "clean": false,
+ "limit": "a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth"
+}

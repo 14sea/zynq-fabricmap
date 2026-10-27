@@ -51,6 +51,15 @@ MODE_SEMANTICS = ("ce_mode", "sr_mode", "sr_kind", "storage_kind", "clock_mode")
 PER_ELEMENT = ("ff_init", "ff_srval")
 ELEMENTS = bm.ELEMENTS
 PANEL_VERSION = "k9-panel-v1 (section 9.3: 32 mode combinations x INIT/SRVAL all-0 / all-1)"
+SR_SEMANTICS = ("ff_srval", "sr_kind")
+APPLICABILITY_ALL_PANEL = ("k9-applicability-v1 (section 9.3 clauses 4-5): a per-element semantic when its element is a storage element at both endpoints "
+                           "(not an x5FF element under a latch); sr_kind not under a latch; storage_kind always; a slice-wide mode semantic when an element is "
+                           "applicable at both endpoints")
+APPLICABILITY_CONDITIONAL = ("k9-applicability-v2-sr-driven (section 9.3 clause 6, protocol v0.2.0): applicable_conditional = applicable_all_panel AND "
+                             "sr_mode = driven at both endpoints, for ff_srval and sr_kind (SR tied low leaves SRVAL and the SR kind no path to the trace under "
+                             "the model); the five other semantics as the all-panel rule; the latch / x5FF exclusions kept")
+JUDGED_ESTIMAND = "conditional_sr_driven"                            # K9 (b') is the judged quantity in v0.2.0; the all-panel (b) is kept beside it as a description
+REASON_SR_TIED_LOW = "sr_tied_low: SR is never asserted at both endpoints (sr_mode = tied_low); SRVAL / the SR kind cannot reach the trace under the model"
 
 
 def _bits(mapping) -> tuple[list[int], list[int]]:
@@ -102,26 +111,39 @@ def forced_pairs(mapping, backgrounds: list[int]) -> list[dict]:
 
 
 def applicability(fabric, pair: dict) -> dict:
-    """Read from the host decode of the two endpoints (configuration only): applicable or not, why, and the elements compared."""
+    """Read from the host decode of the two endpoints (configuration only), TWO applicabilities side by side (the owner's choice 4,
+    2026-10-20): `applicable` / `reason` / `scope` — the ALL-PANEL rule of clauses 4-5 (unchanged: it decides which pairs are OBSERVED);
+    `applicable_sr_driven` / `reason_sr_driven` — the CONDITIONAL rule of clause 6: the all-panel rule AND, for ff_srval and sr_kind,
+    sr_mode = driven at both endpoints; the five other semantics identical to the all-panel rule. The old latch / x5FF exclusions are
+    kept in both; a new flag never overwrites an old exclusion."""
     addrs = fabric.mapping.addresses
     d0, d1 = fabric.decode(ex.genome_to_config(pair["g0"], addrs)), fabric.decode(ex.genome_to_config(pair["g1"], addrs))
     latch0, latch1 = d0[ELEMENTS[0]].latch, d1[ELEMENTS[0]].latch
+    sr = [bool(d0[ELEMENTS[0]].sr_driven), bool(d1[ELEMENTS[0]].sr_driven)]           # slice-wide: every element decodes the same SR mode
     both = [e for e in ELEMENTS if d0[e].applicable and d1[e].applicable]
     s = pair["semantic"]
     if s in PER_ELEMENT:
         e = pair["element"]
         ok = d0[e].applicable and d1[e].applicable
-        return {"applicable": ok, "reason": None if ok else f"{e} is not a storage element under a latch (x5FF)", "scope": [e] if ok else [],
+        base = {"applicable": ok, "reason": None if ok else f"{e} is not a storage element under a latch (x5FF)", "scope": [e] if ok else [],
                 "presence_allowed": False, "latch": [latch0, latch1]}
-    if s == "sr_kind":
+    elif s == "sr_kind":
         ok = not (latch0 or latch1)
-        return {"applicable": ok, "reason": None if ok else "sr_kind is not applicable under a latch", "scope": both if ok else [],
+        base = {"applicable": ok, "reason": None if ok else "sr_kind is not applicable under a latch", "scope": both if ok else [],
                 "presence_allowed": False, "latch": [latch0, latch1]}
-    if s == "storage_kind":
-        return {"applicable": True, "reason": None, "scope": list(ELEMENTS), "presence_allowed": True, "latch": [latch0, latch1]}
-    ok = bool(both)
-    return {"applicable": ok, "reason": None if ok else "no element is a storage element at both endpoints", "scope": both,
-            "presence_allowed": False, "latch": [latch0, latch1]}
+    elif s == "storage_kind":
+        base = {"applicable": True, "reason": None, "scope": list(ELEMENTS), "presence_allowed": True, "latch": [latch0, latch1]}
+    else:
+        ok = bool(both)
+        base = {"applicable": ok, "reason": None if ok else "no element is a storage element at both endpoints", "scope": both,
+                "presence_allowed": False, "latch": [latch0, latch1]}
+    if s in SR_SEMANTICS:
+        cond = bool(base["applicable"] and sr[0] and sr[1])
+        reason = base["reason"] if not base["applicable"] else (None if cond else REASON_SR_TIED_LOW)
+    else:
+        cond, reason = bool(base["applicable"]), base["reason"]
+    base.update(applicable_sr_driven=cond, reason_sr_driven=reason, sr_driven=sr)
+    return base
 
 
 def differences(grid0: list, grid1: list, scope: list) -> list[dict]:
@@ -142,16 +164,14 @@ def differences(grid0: list, grid1: list, scope: list) -> list[dict]:
     return out
 
 
-def summarise(pairs: list[dict], mapping) -> dict:
-    """Per semantic: applicable / covered / fraction (None = not assessable) / positive control; per address: the counts;
-    the uncovered applicable pairs; whether all seven semantics have a positive control."""
+def _tally(pairs: list[dict], mapping, flag: str) -> tuple[dict, dict, list]:
     per_sem = {s: {"applicable": 0, "covered": 0, "not_applicable": 0} for s in SEMANTICS}
     per_addr = {a: {"semantic": mapping.entries[a].semantic, "element": mapping.entries[a].element, "applicable": 0, "covered": 0, "not_applicable": 0}
                 for a in mapping.addresses}
     uncovered = []
     for p in pairs:
         s, a = p["semantic"], p["address"]
-        if not p["applicable"]:
+        if not p[flag]:
             per_sem[s]["not_applicable"] += 1; per_addr[a]["not_applicable"] += 1
             continue
         per_sem[s]["applicable"] += 1; per_addr[a]["applicable"] += 1
@@ -166,14 +186,29 @@ def summarise(pairs: list[dict], mapping) -> dict:
         c["conditional_on_A8"] = (s == "ff_init")
     for a, c in per_addr.items():
         c["fraction"] = (c["covered"] / c["applicable"]) if c["applicable"] else None
-    return {"per_semantic": per_sem, "per_address": per_addr, "uncovered_applicable_pairs": uncovered,
-            "all_seven_positive_controls": all(per_sem[s]["positive_control"] for s in SEMANTICS),
-            "semantics_without_positive_control": [s for s in SEMANTICS if not per_sem[s]["positive_control"]]}
+    return per_sem, per_addr, uncovered
 
 
-def coverage(task: ex.PublicTask, port: ex.ObservationPort, mapping, fabric, check=None) -> dict:
-    """The whole K9 computation for one seed. `check` is called before each pair's observations; on StopWork the result is
-    returned with `complete` False and no summary (nothing is judged on a partial set)."""
+def summarise(pairs: list[dict], mapping) -> dict:
+    """TWO records from the same pairs (the owner's choice 4): the JUDGED conditional coverage (b') — per semantic applicable /
+    covered / fraction (None = not assessable) under `applicable_sr_driven` — and the DESCRIPTIVE all-panel coverage (b) under
+    `applicable`, each with its per-address counts and its uncovered pairs; the pairs excluded by the conditional rule listed with
+    their reason; the positive controls (a) from the all-panel record (unchanged). Neither is a correction of the other."""
+    cond_sem, cond_addr, cond_unc = _tally(pairs, mapping, "applicable_sr_driven")
+    all_sem, all_addr, all_unc = _tally(pairs, mapping, "applicable")
+    excluded = [{"address": p["address"], "semantic": p["semantic"], "g0": p["g0"], "g1": p["g1"], "backgrounds": list(p["backgrounds"]), "reason": p["reason_sr_driven"]}
+                for p in pairs if p["applicable"] and not p["applicable_sr_driven"]]
+    return {"judged_estimand": JUDGED_ESTIMAND, "per_semantic": cond_sem, "per_address": cond_addr, "uncovered_applicable_pairs": cond_unc,
+            "per_semantic_all_panel": all_sem, "per_address_all_panel": all_addr, "uncovered_applicable_pairs_all_panel": all_unc,
+            "excluded_by_conditional_rule": excluded,
+            "all_seven_positive_controls": all(all_sem[s]["positive_control"] for s in SEMANTICS),
+            "semantics_without_positive_control": [s for s in SEMANTICS if not all_sem[s]["positive_control"]]}
+
+
+def coverage(task: ex.PublicTask, port: ex.ObservationPort, mapping, fabric, landscape_seed: int, check=None) -> dict:
+    """The whole K9 computation for one seed. `landscape_seed` is the harness's (the task carries none, task-v0.2 / H); the pairs
+    OBSERVED are those applicable under the all-panel rule (the observation set is unchanged); both applicabilities are recorded per
+    pair. `check` is called before each pair's observations; on StopWork the result is returned with `complete` False and no summary."""
     if tuple(port.addresses) != tuple(mapping.addresses) or tuple(task.addresses) != tuple(mapping.addresses):
         raise ValueError("the task, the port and the mapping are not over the same addresses")
     bgs = panel(mapping)
@@ -183,7 +218,8 @@ def coverage(task: ex.PublicTask, port: ex.ObservationPort, mapping, fabric, che
     stopped = None
 
     def record(complete: bool, stopped, invalid) -> dict:
-        return {"panel_version": PANEL_VERSION, "landscape_seed": task.seed, "task_digest": task.digest(), "stimulus_sha256": ex.sha256_json(list(task.stimulus)),
+        return {"panel_version": PANEL_VERSION, "applicability_all_panel": APPLICABILITY_ALL_PANEL, "applicability_conditional": APPLICABILITY_CONDITIONAL, "judged_estimand": JUDGED_ESTIMAND,
+                "landscape_seed": landscape_seed, "task_digest": task.digest(), "stimulus_sha256": ex.sha256_json(list(task.stimulus)),
                 "backgrounds": bgs, "pairs_total": len(pairs), "pairs_done": len(done), "pairs": list(done),
                 "observations": memo.records(), "memo": memo.summary(), "logical_observations": 2 * sum(1 for r in done if r["applicable"]),
                 "complete": complete, "stopped": stopped, "invalid": invalid, "summary": summarise(done, mapping) if complete else None,
@@ -214,8 +250,9 @@ def coverage(task: ex.PublicTask, port: ex.ObservationPort, mapping, fabric, che
     return record(stopped is None, stopped, None)
 
 
-NOTE = ("host-only observability on the fixed section 9.3 set; applicability is read from the configuration's decode, never from the traces; "
-        "identical traces are covered = False and stay in the denominator; these observations enter no ledger and no cartographer")
+NOTE = ("host-only observability on the fixed section 9.3 set; both applicabilities are read from the configuration's decode, never from the traces; "
+        "the pairs observed are the all-panel applicable ones; identical traces are covered = False and stay in the denominator; the conditional (b') "
+        "record removes the SR-tied-low pairs of ff_srval / sr_kind from its denominator with the reason recorded; these observations enter no ledger and no cartographer")
 
 
 def canonical_findings(result: dict, mapping) -> list[str]:
@@ -262,8 +299,8 @@ def recompute(result: dict, task: ex.PublicTask, fabric) -> list[str]:
         if (p["bit"], p["g0"], p["g1"], p["semantic"], p["element"]) != (w["bit"], w["g0"], w["g1"], w["semantic"], w["element"]):
             f.append(f"pair {i}: not the fixed set's pair"); continue
         app = applicability(fabric, p)
-        if (p["applicable"], p["scope"], p["reason"]) != (app["applicable"], app["scope"], app["reason"]):
-            f.append(f"pair {i}: applicability recomputed differently")
+        if any(p.get(k) != app[k] for k in ("applicable", "scope", "reason", "presence_allowed", "latch", "applicable_sr_driven", "reason_sr_driven", "sr_driven")):
+            f.append(f"pair {i}: applicability (all-panel / conditional) recomputed differently")
             continue
         if not app["applicable"]:
             if p["covered"] is not None or p["differences"]:
@@ -279,11 +316,14 @@ def recompute(result: dict, task: ex.PublicTask, fabric) -> list[str]:
             f.append(f"pair {i}: coverage recomputed differently from the kept grids")
     if result["complete"]:
         if result["summary"] != summarise(result["pairs"], mapping):
-            f.append("the summary is not what the pairs give")
+            f.append("the summary (the judged conditional record and the all-panel record) is not what the pairs give")
         if result["stopped"] is not None or result.get("invalid") is not None:
             f.append("a complete result carries a stop or an invalid record")
     elif result["summary"] is not None:
         f.append("an incomplete result carries a summary")
+    for k, want in (("applicability_all_panel", APPLICABILITY_ALL_PANEL), ("applicability_conditional", APPLICABILITY_CONDITIONAL), ("judged_estimand", JUDGED_ESTIMAND)):
+        if result.get(k) != want:
+            f.append(f"{k} is not this version's")
     ids = [o["id"] for o in result["observations"]]
     if ids != list(range(len(ids))):
         f.append("the observation ids are not 0 .. n-1 in order")

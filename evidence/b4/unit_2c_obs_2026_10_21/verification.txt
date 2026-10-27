@@ -1,0 +1,52 @@
+command: python3 -B -m unittest b4.tests.test_b4_seeds b4.tests.test_b4_thresholds
+HEAD before commit: fceedd6fa10f1375b480189a360ed677c33a8611  branch: b4-2c-obs  date: 2026-10-21T08:21:19Z
+.............................
+----------------------------------------------------------------------
+Ran 29 tests in 0.577s
+
+OK
+exit: 0
+
+=== second run, after the correction round (contract v0.2; architecture section 13 / 14 and the skeleton's pointers edited) ===
+command: python3 -B -m unittest b4.tests.test_b4_seeds b4.tests.test_b4_thresholds
+tree: e91650b828bfbb06f24881f8c3e8cc0dac357e6d + working changes  branch: b4-2c-obs  date: 2026-10-21T08:49:41Z
+.............................
+----------------------------------------------------------------------
+Ran 29 tests in 0.642s
+
+OK
+exit: 0
+read-only scripts: logic and data references unchanged since e91650b (the owner's rerun was byte-identical); not rerun
+
+=== third run, after the second correction round (contract v0.3; architecture section 13 / 14 and the skeleton's note edited) ===
+command: python3 -B -m unittest b4.tests.test_b4_seeds b4.tests.test_b4_thresholds
+tree: d8ef6cf5b91f24a928e642a45a13a2743138c48b + working changes  branch: b4-2c-obs  date: 2026-10-21T09:17:03Z
+.............................
+----------------------------------------------------------------------
+Ran 29 tests in 0.642s
+
+OK
+exit: 0
+read-only selection scripts: unchanged since e91650b; not rerun. static_contract_checks.py: run, output beside it
+
+=== fourth run, after the third correction round (contract v0.4; architecture section 13 / 14 and the skeleton's note edited) ===
+command: python3 -B -m unittest b4.tests.test_b4_seeds b4.tests.test_b4_thresholds
+tree: df3b65e8072eaab96d7c19d9d10e177b14e1ff9b + working changes  branch: b4-2c-obs  date: 2026-10-21T09:57:01Z
+.............................
+----------------------------------------------------------------------
+Ran 29 tests in 0.615s
+
+OK
+exit: 0
+read-only selection scripts: unchanged since e91650b; not rerun. static_contract_checks.py: extended with R1-R4, run, output beside it
+
+=== fifth run, after the fourth correction round (contract v0.5; architecture section 13 / 14 and the skeleton's note edited) ===
+command: python3 -B -m unittest b4.tests.test_b4_seeds b4.tests.test_b4_thresholds
+tree: 6927c2452ad7f8ead23d78a0061a3c201b872ac1 + working changes  branch: b4-2c-obs  date: 2026-10-21T10:39:35Z
+.............................
+----------------------------------------------------------------------
+Ran 29 tests in 0.625s
+
+OK
+exit: 0
+read-only selection scripts: unchanged since e91650b; not rerun. static_contract_checks.py: extended with the v0.5 root and constant-restore cases, run, output beside it

@@ -1,0 +1,15 @@
+HEAD 04385ae42373a4db33716f8aa5d6c58a4789de09
+expected: exit 1, refused by name (no protocol identity)
+exit 1
+
+/home/test/zynq_fabricmap/b4/host/b4_sim_verify.py /home/test/zynq_fabricmap/evidence/b4/sim/b4-gate-1_20261020T102526Z --shallow
+{
+ "run_dir": "/home/test/zynq_fabricmap/evidence/b4/sim/b4-gate-1_20261020T102526Z",
+ "findings": {
+  "protocol": [
+   "the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source 'docs/b4_architecture.md section 9 (v0.1.16), fixed before any exploration or gate run', HEAD 'a243ee8ab904d23706bd6b8fee0d76d6ccb200a5'); it is not verified by this tool \u2014 re-verify it with its own tool at its recorded HEAD (docs/b4_archive_reverification.md)"
+  ]
+ },
+ "clean": false,
+ "limit": "a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth"
+}

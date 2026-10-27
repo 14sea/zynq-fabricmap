@@ -1,0 +1,102 @@
+{
+  "C1": {
+    "source": "evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/float_return.json",
+    "note": "legacy config/header only; no new model call",
+    "legacy_config_type": "dict",
+    "legacy_config_entries": 21,
+    "legacy_stimulus_sha256_present": false,
+    "legacy_fabric_kind": "truth",
+    "recorded_config_sha256": "b8b9799882274a3d6a943b0772bb5d42e3ff9d2bcbb0bfe4f97f070680592c16",
+    "legacy_default_json_hash": "b8b9799882274a3d6a943b0772bb5d42e3ff9d2bcbb0bfe4f97f070680592c16",
+    "canonical_dictionary_hash": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+    "proposed_vector_hash": "4e7a0330d581fa344e80a84c2fd85865f3f4c763a0e54f81eaf9a330cdedae13",
+    "model_would_hit_global_truth_string_deny_list": true
+  },
+  "C2": {
+    "observation_required_durable_phase": 6,
+    "required_field_earliest_phase": {
+      "cleanup": 7,
+      "idle_status": 10
+    },
+    "own_current_base_restoration_field_named_in_carrier_closed_set": false,
+    "predecessor_describes": "previous transaction, not this transaction",
+    "normal_sign_precondition": "prior restoration and idle witnesses",
+    "A5_injection_path": "deliberately omits prior P7-P9 and holds nonzero inputs / clock 1"
+  },
+  "C3": {
+    "injection_witness_differs": true,
+    "post_init_samples_equal": true,
+    "cleanup_samples_equal": true,
+    "current_A5_projection_equal": false,
+    "difference": "steps[0].q_before is a copy of excluded initial.q; no trace can satisfy both required initial difference and all-step-field equality"
+  },
+  "C4": {
+    "required_D_at_evidence_edge_by_SRVAL": {
+      "0": [
+        1
+      ],
+      "1": [
+        0
+      ]
+    },
+    "common_D_values": [],
+    "outcome_table_overlap": [
+      {
+        "init_effect": false,
+        "srval_effect": false,
+        "no_cross_tracking": true,
+        "matching_rows": [
+          "neither"
+        ]
+      },
+      {
+        "init_effect": false,
+        "srval_effect": true,
+        "no_cross_tracking": true,
+        "matching_rows": [
+          "SRVAL only",
+          "last row: a main effect absent where the other is present"
+        ]
+      },
+      {
+        "init_effect": true,
+        "srval_effect": false,
+        "no_cross_tracking": true,
+        "matching_rows": [
+          "INIT only",
+          "last row: a main effect absent where the other is present"
+        ]
+      },
+      {
+        "init_effect": true,
+        "srval_effect": true,
+        "no_cross_tracking": true,
+        "matching_rows": [
+          "both main effects"
+        ]
+      }
+    ]
+  },
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "gate_runs/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gonogo/",
+    "evidence/b4/gate/"
+  ],
+  "prior_review_copied_byte_identical": true,
+  "prior_review_original_files": 12,
+  "prior_checksum_entries": 11,
+  "authorisation_and_source_byte_identical": true,
+  "readonly_scripts_and_outputs_unchanged": true,
+  "head": "d8ef6cf5b91f24a928e642a45a13a2743138c48b",
+  "status": "## b4-2c-obs\n",
+  "new_model_or_device_observations": false,
+  "new_production_draws": false
+}

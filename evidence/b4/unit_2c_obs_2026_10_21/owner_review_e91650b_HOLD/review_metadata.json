@@ -1,0 +1,93 @@
+{
+  "utc": "2026-10-21T08:38:09.686942+00:00",
+  "reviewed_tip": "e91650b828bfbb06f24881f8c3e8cc0dac357e6d",
+  "verdict": "HOLD",
+  "scope": "documents-only 2c-obs unit",
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "path": "docs/b4_observation_contract.md",
+      "line": 109,
+      "title": "Shared observation/source schema and physical-versus-model scoring are inconsistent",
+      "sections": [
+        "1",
+        "3.1-3.2",
+        "4.2-4.4"
+      ]
+    },
+    {
+      "id": "R2",
+      "priority": "P1",
+      "path": "docs/b4_observation_contract.md",
+      "line": 184,
+      "title": "Initialization event and cleanup order are not a single implementable lifecycle",
+      "sections": [
+        "2.1-2.3",
+        "3.3",
+        "5.1-5.3",
+        "6.2-6.3",
+        "9.1"
+      ]
+    },
+    {
+      "id": "R3",
+      "priority": "P1",
+      "path": "docs/b4_observation_contract.md",
+      "line": 250,
+      "title": "A8 cross is not a same-element factorial control and outcomes over-attribute",
+      "sections": [
+        "6.1",
+        "6.4-6.5",
+        "7.3",
+        "9.2"
+      ]
+    }
+  ],
+  "pin_tests": {
+    "command": [
+      "python3",
+      "-B",
+      "-m",
+      "unittest",
+      "-v",
+      "b4.tests.test_b4_seeds",
+      "b4.tests.test_b4_thresholds"
+    ],
+    "count": 29,
+    "result": "OK",
+    "seconds": 0.659,
+    "production_derivation": false,
+    "note": "derivation tests use fake anchors/literal masters, not a production set"
+  },
+  "readonly_script_outputs_byte_identical": true,
+  "independent_control_selection_rows": 9,
+  "retained_grid_counterexample": {
+    "source": "pair_000/k10.json retained observation id 20",
+    "genome": 1024,
+    "model_fitness": 24,
+    "masked_undefined_weight": 32,
+    "possible_completion_fitness_low": 24,
+    "possible_completion_fitness_high": 56,
+    "meaning": "hypothetical 0/1 completions demonstrate differing scoring domains; no claim that a board produces either completion"
+  },
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "gate_runs/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gonogo/",
+    "evidence/b4/gate/"
+  ],
+  "tracked_changes_by_reviewer": false,
+  "new_model_observations": false,
+  "production_runs": false,
+  "mutants_or_full_suite_run": false,
+  "authorisation_original_supplied": "owner_authorisation_2026_10_21.txt",
+  "remaining_work_authorized": "complete all corrections within this same documents-only unit and submit once; no new scope-draft round"
+}

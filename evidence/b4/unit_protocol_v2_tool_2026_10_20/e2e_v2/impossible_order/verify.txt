@@ -1,0 +1,18 @@
+HEAD b29b0fb838ae62af6bff436505d200402520230d
+expected: exit 1 naming the missing prefix file and the unaccounted later file
+exit 1
+
+/home/test/zynq_fabricmap/b4/host/b4_sim_verify.py /tmp/b4v02_e2e_3d0oam_7/evidence/b4/sim/b4-mech-1_impossible_order
+{
+ "run_dir": "/tmp/b4v02_e2e_3d0oam_7/evidence/b4/sim/b4-mech-1_impossible_order",
+ "findings": {
+  "pair_000/target_search.json": [
+   "required by pair 0's recorded state (partial) but missing"
+  ],
+  "pair_000/target_holdout.json": [
+   "not a file any pair's recorded state accounts for"
+  ]
+ },
+ "clean": false,
+ "limit": "a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth"
+}

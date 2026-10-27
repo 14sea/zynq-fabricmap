@@ -1,0 +1,40 @@
+{
+ "audited_utc": "2026-10-20T10:29:10Z",
+ "completion_findings": [],
+ "invalid": false,
+ "pair": 57,
+ "recompute": {
+  "applicable": true,
+  "arm": "X",
+  "findings": [],
+  "map_commitment": "0a3c6ec5c44c46d5752a94ee32c9a6d2cca7af3dd3a54de57c1574ce152b7b4d",
+  "map_version": 183,
+  "mode": "relabelled",
+  "relations_final_sha256": "3c3ff35d824754e01ffb7fe9fd3d842eecde3761a1d514c30a8d0b837184d2a6",
+  "states": {
+   "context_dependent": 4,
+   "effect_seen": 11,
+   "no_effect_seen": 6,
+   "unknown": 0
+  }
+ },
+ "replay_findings": [],
+ "role": "X",
+ "schema": "b4_sim_arm_audit",
+ "schema_version": "1.0.0",
+ "states": {
+  "applicable": true,
+  "arm": "X",
+  "findings": [],
+  "mode": "relabelled",
+  "not_unknown": 21,
+  "note": "not K7 (b): K7 (b) is read on arm O's B* prefix only",
+  "states": {
+   "context_dependent": 4,
+   "effect_seen": 11,
+   "no_effect_seen": 6,
+   "unknown": 0
+  }
+ },
+ "view_findings": []
+}

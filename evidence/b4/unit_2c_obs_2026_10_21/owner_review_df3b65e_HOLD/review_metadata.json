@@ -1,0 +1,39 @@
+{
+  "reviewed_tip": "df3b65e8072eaab96d7c19d9d10e177b14e1ff9b",
+  "parent": "d8ef6cf5b91f24a928e642a45a13a2743138c48b",
+  "branch": "b4-2c-obs",
+  "utc": "2026-10-21T09:45:38.598486+00:00",
+  "verdict": "HOLD",
+  "findings": {
+    "R1": "P1 legacy Q-grid digest vs whole raw-record binding; P2 source descriptor shape",
+    "R2": "P1 required future fields on partial invalid O",
+    "R3": "P2 mechanism-c frame/context exceptions inconsistent with universal rules",
+    "R4": "P2 failed capture reference and absent SR-evidence handling"
+  },
+  "independent_pin_tests": {
+    "command": "python3 -B -m unittest b4.tests.test_b4_seeds b4.tests.test_b4_thresholds",
+    "exit": 0,
+    "tests": 29,
+    "result": "OK"
+  },
+  "author_static_rerun": {
+    "exit": 0,
+    "byte_identical_to_committed_output": true,
+    "all_pass": true,
+    "scope_limit": "Does not check ledger-vs-whole-record hashing, mechanism-c frame invariance, failed SR-off reference captures, or deriving 6.7 quantities from missing evidence."
+  },
+  "reviewer_modified_tracked_files": false,
+  "new_production_seed_derivation": false,
+  "new_model_or_board_observations": false,
+  "full_suite_or_mutants_run": false,
+  "protected_paths_unchanged": true,
+  "readonly_selection_scripts_rerun": false,
+  "previous_review_copy_verified": true,
+  "tracked_source_sha256": {
+    "docs/b4_observation_contract.md": "4bea59689e59b6d55b7b228a78ef834a3bd190f930b38a1879b9e6d36a55a36b",
+    "docs/b4_architecture.md": "f1c15a92de187956474d4f2e8b9a6e52dfd5892b162ce6bd193cd5ce7a414b4d",
+    "docs/b4_preregistration.md": "b6a8b2c66cca16ca44f596e3f290cf13bd80ffbc1f494736a781e4ff2a448141",
+    "evidence/b4/unit_2c_obs_2026_10_21/static_contract_checks.py": "f12ca8b67c3d2c796c1534bddc41612ade3c1e651fa99b8ceec26555faf0171d",
+    "evidence/b4/unit_2c_obs_2026_10_21/static_contract_checks.txt": "df953365e32f5be5637978ee89cd5818d9257ba10d40b2143a24aac33f488d43"
+  }
+}

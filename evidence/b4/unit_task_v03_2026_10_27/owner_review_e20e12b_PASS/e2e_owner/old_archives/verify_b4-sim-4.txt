@@ -1,0 +1,15 @@
+HEAD e20e12b246571c929721519fe00f86a81e0069b5
+expected: exit 1, refused by name (another protocol identity: the task component)
+exit 1
+
+/tmp/owner_task_v03_jjw18xk5/b4/host/b4_sim_verify.py /tmp/owner_task_v03_jjw18xk5/evidence/b4/sim/b4-sim-4_20261021T065339Z --shallow
+{
+ "run_dir": "/tmp/owner_task_v03_jjw18xk5/evidence/b4/sim/b4-sim-4_20261021T065339Z",
+ "findings": {
+  "protocol": [
+   "the archive's protocol identity is not this tool's: import_table_sha256; inventory: b4/host/b4_gate.py, b4/host/b4_gonogo.py, b4/host/b4_landscape.py, b4/host/b4_protocol.py, b4/host/b4_seeds.py, b4/host/b4_sim.py, b4/host/b4_sim_schema.py, b4/host/b4_target.py \u2026; labels: consumed, exploration; schemas: b4_exposure_receipt, b4_gate_report, b4_gate_synthetic_summary, b4_gonogo_decision, b4_protocol_identity, b4_sim_arm_audit, b4_sim_arm_result, b4_sim_controls \u2026; stack: gonogo, identity, judgement, seeds, summary, target_setup, validators; task: broadcast, ce_high_one_in, module_sha256, sr_high_one_in, stimulus_rule, version; thresholds_sha256 \u2014 re-verify the archive with its own tool at its recorded HEAD (docs/b4_archive_reverification.md)"
+  ]
+ },
+ "clean": false,
+ "limit": "a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth"
+}

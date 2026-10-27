@@ -1,0 +1,451 @@
+{
+  "status": "invalid",
+  "quarantine": {
+    "context": {
+      "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+      "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+      "genome": 588756,
+      "genome_hex": "08fbd4",
+      "phase": "target",
+      "returned_sha256": "7fde17fa7243f9c4e33262bbcb9dc919d8c194cf0b830c8aafe93210a0c52cb3",
+      "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
+    },
+    "findings": [
+      "step 0, element 0: 0.0 is not 0 / 1 (an int)"
+    ],
+    "pair": 0,
+    "raw": {
+      "config": {
+        "0x00400a00/52/16": 0,
+        "0x00400a01/51/19": 1,
+        "0x00400a01/51/7": 0,
+        "0x00400a01/52/15": 0,
+        "0x00400a01/52/19": 1,
+        "0x00400a01/52/23": 1,
+        "0x00400a01/52/3": 0,
+        "0x00400a01/52/7": 1,
+        "0x00400a1e/51/12": 1,
+        "0x00400a1e/51/30": 1,
+        "0x00400a1e/52/0": 0,
+        "0x00400a1e/52/1": 1,
+        "0x00400a1e/52/18": 1,
+        "0x00400a1f/51/22": 1,
+        "0x00400a1f/51/28": 0,
+        "0x00400a1f/51/3": 1,
+        "0x00400a1f/51/6": 1,
+        "0x00400a1f/52/1": 0,
+        "0x00400a1f/52/19": 1,
+        "0x00400a1f/52/26": 0,
+        "0x00400a1f/52/9": 0
+      },
+      "config_sha256": "b8b9799882274a3d6a943b0772bb5d42e3ff9d2bcbb0bfe4f97f070680592c16",
+      "elements": [
+        "AFF",
+        "A5FF",
+        "BFF",
+        "B5FF",
+        "CFF",
+        "C5FF",
+        "DFF",
+        "D5FF"
+      ],
+      "fabric": {
+        "dropout_count": 0,
+        "dropout_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "effect_sha256": "a1be61d03939f98673eb29b39f00310ba27c4c6b0fe2d768e62f9166bc4829c0",
+        "kind": "truth",
+        "seed": null
+      },
+      "hypothesis": {
+        "fixture": false,
+        "path": "b4/hypothesis/ff_behaviour_v0.3.json",
+        "sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+        "version": "0.3.0"
+      },
+      "initial": {
+        "ce": 0,
+        "clock": 0,
+        "d": 0,
+        "q": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "sr": 0
+      },
+      "mapping": {
+        "certificate": "gate_runs/run_2026_08_05_ff/certificate.json",
+        "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+        "site": "SLICE_X2Y25"
+      },
+      "owner_raw_marker": "preserve_entire_original_target_return",
+      "q_null_means": "no readout is given by the hypothesis for that element in that configuration, or the element was never initialised",
+      "schema": "b4_ff_observation_trace",
+      "schema_version": "0.2.0",
+      "steps": [
+        {
+          "ce": 0,
+          "clock_after": 0,
+          "clock_before": 0,
+          "d": 0,
+          "edge": null,
+          "kind": "init",
+          "prev_event": "none",
+          "q_after": [
+            0.0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            1,
+            0
+          ],
+          "q_before": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "sr": 0,
+          "step": 0
+        },
+        {
+          "ce": 241,
+          "clock_after": 1,
+          "clock_before": 0,
+          "d": 11,
+          "edge": "rising",
+          "kind": "set",
+          "prev_event": "init",
+          "q_after": [
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            1,
+            0
+          ],
+          "q_before": [
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            1,
+            0
+          ],
+          "sr": 24,
+          "step": 1
+        },
+        {
+          "ce": 55,
+          "clock_after": 0,
+          "clock_before": 1,
+          "d": 16,
+          "edge": "falling",
+          "kind": "set",
+          "prev_event": "edge",
+          "q_after": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "q_before": [
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            1,
+            0
+          ],
+          "sr": 0,
+          "step": 2
+        },
+        {
+          "ce": 136,
+          "clock_after": 1,
+          "clock_before": 0,
+          "d": 48,
+          "edge": "rising",
+          "kind": "set",
+          "prev_event": "edge",
+          "q_after": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "q_before": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "sr": 12,
+          "step": 3
+        },
+        {
+          "ce": 3,
+          "clock_after": 0,
+          "clock_before": 1,
+          "d": 7,
+          "edge": "falling",
+          "kind": "set",
+          "prev_event": "edge",
+          "q_after": [
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "q_before": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "sr": 43,
+          "step": 4
+        },
+        {
+          "ce": 242,
+          "clock_after": 1,
+          "clock_before": 0,
+          "d": 212,
+          "edge": "rising",
+          "kind": "set",
+          "prev_event": "edge",
+          "q_after": [
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "q_before": [
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "sr": 241,
+          "step": 5
+        },
+        {
+          "ce": 83,
+          "clock_after": 0,
+          "clock_before": 1,
+          "d": 92,
+          "edge": "falling",
+          "kind": "set",
+          "prev_event": "edge",
+          "q_after": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "q_before": [
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "sr": 118,
+          "step": 6
+        },
+        {
+          "ce": 191,
+          "clock_after": 0,
+          "clock_before": 0,
+          "d": 132,
+          "edge": null,
+          "kind": "set",
+          "prev_event": "edge",
+          "q_after": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "q_before": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "sr": 227,
+          "step": 7
+        },
+        {
+          "ce": 53,
+          "clock_after": 0,
+          "clock_before": 0,
+          "d": 17,
+          "edge": null,
+          "kind": "set",
+          "prev_event": "level",
+          "q_after": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "q_before": [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          "sr": 5,
+          "step": 8
+        }
+      ],
+      "stimulus": [
+        {
+          "kind": "init"
+        },
+        {
+          "ce": 241,
+          "clock": 1,
+          "d": 11,
+          "kind": "set",
+          "sr": 24
+        },
+        {
+          "ce": 55,
+          "clock": 0,
+          "d": 16,
+          "kind": "set",
+          "sr": 0
+        },
+        {
+          "ce": 136,
+          "clock": 1,
+          "d": 48,
+          "kind": "set",
+          "sr": 12
+        },
+        {
+          "ce": 3,
+          "clock": 0,
+          "d": 7,
+          "kind": "set",
+          "sr": 43
+        },
+        {
+          "ce": 242,
+          "clock": 1,
+          "d": 212,
+          "kind": "set",
+          "sr": 241
+        },
+        {
+          "ce": 83,
+          "clock": 0,
+          "d": 92,
+          "kind": "set",
+          "sr": 118
+        },
+        {
+          "ce": 191,
+          "clock": 0,
+          "d": 132,
+          "kind": "set",
+          "sr": 227
+        },
+        {
+          "ce": 53,
+          "clock": 0,
+          "d": 17,
+          "kind": "set",
+          "sr": 5
+        }
+      ],
+      "visibility": "executing_side"
+    },
+    "raw_repr": "{'schema': 'b4_ff_observation_trace', 'schema_version': '0.2.0', 'visibility': 'executing_side', 'q_null_means': 'no readout is given by the hypothesis for that element in that configuration, or the element was never initialised', 'hypothesis': {'path': 'b4/hypothesis/ff_behaviour_v0.3.json', 'sha256': '59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8', 'version': '0.3.0', 'fixture': False}, 'mapping': {'site': 'SLICE_X2Y25', 'certificate': 'gate_runs/run_2026_08_05_ff/certificate.json', 'certificate_sha256': 'c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef'}, 'fabric': {'kind': 'truth', 'effect_sha256': 'a1be61d03939f98673eb29b39f00310ba27c4c6b0fe2d768e62f9166bc4829c0', 'dropout_sha256': '4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945', 'dropout_count': 0, 'seed': None}, 'config': {'0x00400a00/52/16': 0, '0x00400a01/51/7': 0, '0x00400a01/51/19': 1, '0x00400a01/52/3': 0, '0x00400a01/52/7': 1, '0x00400a01/52/15': 0, '0x00400a01/52/19': 1, '0x00400a01/52/23': 1, '0x00400a1e/51/12': 1, '0x00400a1e/51/30': 1, '0x00400a1e/52/0': 0, '0x00400a1e/52/1': 1, '0x00400a1e/52/18': 1, '0x00400a1f/51/3': 1, '0x00400a1f/51/6': 1, '0x00400a1f/51/22': 1, '0x00400a1f/51/28': 0, '0x00400a1f/52/1': 0, '0x00400a1f/52/9': 0, '0x00400a1f/52/19': 1, '0x00400a1f/52/26': 0}, 'config_sha256': 'b8b9799882274a3d6a943b0772bb5d42e3ff9d2bcbb0bfe4f97f070680592c16', 'stimulus': [{'kind': 'init'}, {'kind': 'set', 'clock': 1, 'ce': 241, 'sr': 24, 'd': 11}, {'kind': 'set', 'clock': 0, 'ce': 55, 'sr': 0, 'd': 16}, {'kind': 'set', 'clock': 1, 'ce': 136, 'sr': 12, 'd': 48}, {'kind': 'set', 'clock': 0, 'ce': 3, 'sr': 43, 'd': 7}, {'kind': 'set', 'clock': 1, 'ce': 242, 'sr': 241, 'd': 212}, {'kind': 'set', 'clock': 0, 'ce': 83, 'sr': 118, 'd': 92}, {'kind': 'set', 'clock': 0, 'ce': 191, 'sr': 227, 'd': 132}, {'kind': 'set', 'clock': 0, 'ce': 53, 'sr': 5, 'd': 17}], 'initial': {'clock': 0, 'ce': 0, 'sr': 0, 'd': 0, 'q': [None, None, None, None, None, None, None, None]}, 'elements': ['AFF', 'A5FF', 'BFF', 'B5FF', 'CFF', 'C5FF', 'DFF', 'D5FF'], 'steps': [{'step': 0, 'kind': 'init', 'prev_event': 'none', 'clock_before': 0, 'clock_after': 0, 'edge': None, 'ce': 0, 'sr': 0, 'd': 0, 'q_before': [None, None, None, None, None, None, None, None], 'q_after': [0.0, 0, 1, 0, 1, 1, 1, 0]}, {'step': 1, 'kind': 'set', 'prev_event': 'init', 'clock_before': 0, 'clock_after': 1, 'edge': 'rising', 'ce': 241, 'sr': 24, 'd': 11, 'q_before': [0, 0, 1, 0, 1, 1, 1, 0], 'q_after': [0, 0, 1, 0, 1, 1, 1, 0]}, {'step': 2, 'kind': 'set', 'prev_event': 'edge', 'clock_before': 1, 'clock_after': 0, 'edge': 'falling', 'ce': 55, 'sr': 0, 'd': 16, 'q_before': [0, 0, 1, 0, 1, 1, 1, 0], 'q_after': [0, 0, 0, 0, 1, 0, 1, 0]}, {'step': 3, 'kind': 'set', 'prev_event': 'edge', 'clock_before': 0, 'clock_after': 1, 'edge': 'rising', 'ce': 136, 'sr': 12, 'd': 48, 'q_before': [0, 0, 0, 0, 1, 0, 1, 0], 'q_after': [0, 0, 0, 0, 1, 0, 1, 0]}, {'step': 4, 'kind': 'set', 'prev_event': 'edge', 'clock_before': 1, 'clock_after': 0, 'edge': 'falling', 'ce': 3, 'sr': 43, 'd': 7, 'q_before': [0, 0, 0, 0, 1, 0, 1, 0], 'q_after': [1, 1, 0, 0, 1, 0, 1, 0]}, {'step': 5, 'kind': 'set', 'prev_event': 'edge', 'clock_before': 0, 'clock_after': 1, 'edge': 'rising', 'ce': 242, 'sr': 241, 'd': 212, 'q_before': [1, 1, 0, 0, 1, 0, 1, 0], 'q_after': [1, 1, 0, 0, 1, 0, 1, 0]}, {'step': 6, 'kind': 'set', 'prev_event': 'edge', 'clock_before': 1, 'clock_after': 0, 'edge': 'falling', 'ce': 83, 'sr': 118, 'd': 92, 'q_before': [1, 1, 0, 0, 1, 0, 1, 0], 'q_after': [0, 0, 0, 0, 1, 0, 1, 0]}, {'step': 7, 'kind': 'set', 'prev_event': 'edge', 'clock_before': 0, 'clock_after': 0, 'edge': None, 'ce': 191, 'sr': 227, 'd': 132, 'q_before': [0, 0, 0, 0, 1, 0, 1, 0], 'q_after': [0, 0, 0, 0, 1, 0, 1, 0]}, {'step': 8, 'kind': 'set', 'prev_event': 'level', 'clock_before': 0, 'clock_after': 0, 'edge': None, 'ce': 53, 'sr': 5, 'd': 17, 'q_before': [0, 0, 0, 0, 1, 0, 1, 0], 'q_after': [0, 0, 0, 0, 1, 0, 1, 0]}], 'owner_raw_marker': 'preserve_entire_original_target_return'}",
+    "role": "TARGET",
+    "schema": "b4_sim_quarantine",
+    "schema_version": "1.1.0",
+    "stage": "target_setup",
+    "written_utc": "2026-10-21T04:43:12Z"
+  },
+  "marker_kept": true,
+  "verify": {},
+  "fresh_verify": {
+    "exit": 0,
+    "stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_float_return\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "production_derivation_calls": [
+    0,
+    0
+  ]
+}

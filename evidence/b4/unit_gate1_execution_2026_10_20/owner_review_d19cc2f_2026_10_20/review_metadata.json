@@ -1,0 +1,28 @@
+{
+  "reviewed_tip": "d19cc2faf5c42208ac020663ac81edf4bfafdf30",
+  "archive_commit": "507096741e80fec8bd6f0d90e8ce604bf80d6072",
+  "execution_head": "a243ee8ab904d23706bd6b8fee0d76d6ccb200a5",
+  "review_completed_utc": "2026-10-20T11:30:01.739453+00:00",
+  "review_status": "PASS",
+  "gate_status": "valid FAIL",
+  "commands": [
+    {
+      "command": "python3 -B b4/host/b4_sim_verify.py evidence/b4/sim/b4-gate-1_20261020T102526Z",
+      "exit": 0
+    },
+    {
+      "command": "python3 -B b4/host/b4_gate_verify.py evidence/b4/gate/b4-gate-1_20261020T102526Z",
+      "exit": 0
+    },
+    {
+      "command": "python3 -B evidence/b4/unit_gate1_execution_2026_10_20/blob_digest_check.py 5070967",
+      "exit": 0,
+      "equal": 4005,
+      "only_in_commit": 0,
+      "only_on_disk": 0,
+      "different": 0
+    }
+  ],
+  "tracked_changes_by_reviewer": false,
+  "new_seed_derivation": false
+}

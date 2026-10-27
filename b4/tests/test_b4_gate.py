@@ -38,6 +38,7 @@ import b4_gate_verify as gv  # noqa: E402
 import b4_k9 as k9  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim as sim  # noqa: E402
+import b4_protocol as bp  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
 import b4_sim_verify as sv  # noqa: E402
 import b4_stats as st  # noqa: E402
@@ -81,7 +82,7 @@ def _arm(mean, spread=5.0):
 
 def synthetic_summary(S=200, b_star=64, N=16, power=0.95, *, d1=(5.0, 150, 20, 30), f=(5.0, 150, 20, 30), x=(0.1, 60, 70, 70), d=(0.1, 60, 70, 70),
                       om=(8.0, 190, 5, 5), a0=(0.0, 50, 50, 100), var=4.0, var1=None, r_mean=12.0, base=4.0, omega_p95=None, k7_median=15, k9_medians=None, k9_na=None,
-                      k9_all=None, nonreject=0.97, k10=None, f_end=11.0) -> dict:
+                      k9_all=None, nonreject=0.97, k10=None, f_end=11.0, k9_medians_all_panel=None) -> dict:
     """A PASS-shaped summary built from primitives so that every binding of the summary contract holds: the arm means from the deltas,
     the delta records from (mean, positives, negatives, ties) and the common variance, K1 from the arm values, the N scan from N and the
     power, the eligible list and B* by the budget rule, the at-B* record copied from the per-budget originals, K9 / K10 from their counts.
@@ -93,6 +94,7 @@ def synthetic_summary(S=200, b_star=64, N=16, power=0.95, *, d1=(5.0, 150, 20, 3
     k9_all = S if k9_all is None else k9_all
     k10 = (S, 0, 0, 0) if k10 is None else k10
     k9_medians = dict.fromkeys(k9.SEMANTICS, 1.0) | (k9_medians or {})
+    k9_medians_all = dict(k9_medians) | (k9_medians_all_panel or {})          # the all-panel (b) record beside the judged (b'); equal unless given (the SR semantics may differ)
     k9_na = dict.fromkeys(k9.SEMANTICS, 0) | (k9_na or {})
     means = {"R": r_mean, "O": r_mean + d1[0], "F": r_mean + f[0], "X": r_mean + x[0], "D": r_mean + d[0], "Omega": r_mean + om[0], "A0": r_mean + a0[0]}
     per_budget = {}
@@ -138,9 +140,11 @@ def synthetic_summary(S=200, b_star=64, N=16, power=0.95, *, d1=(5.0, 150, 20, 3
         cb = {"value": None, "reason_if_none": "no grid budget has both K1 eligibility and an N: the budget rule's candidate does not exist on this S (not invented)", "note": T["B_star"]["no_eligible_budget"]}
     k9s = {s: {"seeds_with_positive_control": S, "not_assessable_seeds": k9_na[s], "median_coverage_over_all_S": None if k9_na[s] > 0 else k9_medians[s],
                "median_rule": T["K9"]["median_population"], "conditional_on_A8": s == "ff_init"} for s in k9.SEMANTICS}
+    k9s_all = {s: {"seeds_with_positive_control": S, "not_assessable_seeds": k9_na[s], "median_coverage_over_all_S": None if k9_na[s] > 0 else k9_medians_all[s],
+                   "median_rule": T["K9"]["median_population"], "conditional_on_A8": s == "ff_init"} for s in k9.SEMANTICS}
     counts = dict(zip(st.OUTCOMES, k10))
     return {"S": S, "grid": list(GRID), "per_budget": per_budget, "eligible_budgets": eligible, "candidate_B_star": cb, "at_candidate_B_star": at,
-            "k9": {"per_semantic": k9s, "seeds_with_all_seven_positive_controls": k9_all, "fraction_of_S": k9_all / S},
+            "k9": {"judged_estimand": k9.JUDGED_ESTIMAND, "per_semantic": k9s, "per_semantic_all_panel": k9s_all, "seeds_with_all_seven_positive_controls": k9_all, "fraction_of_S": k9_all / S},
             "k10": {"tau": T["K10"]["tau"], "S": S, "counts": counts, "fraction_interacting_over_S": counts[st.INTERACTING] / S, "note": bg.K10_NOTE},
             "thresholds_for_reference": T, "standing": sim.STANDING}
 
@@ -249,7 +253,7 @@ class TheJudge(unittest.TestCase):
         d = synthetic_doc(synthetic_summary(), label=bg.PINNED_GATE_LABEL, fixture=False)
         j = bg.judge(d, "batch_archive")
         self.assertTrue(j["formal"]); self.assertEqual(j["formal_reasons"], []); self.assertEqual(j["verdict"]["status"], "PASS"); self.assertNotIn("NOT", j["verdict"]["reason"])
-        for kind, over in (("synthetic_summary", {}), ("batch_archive", {"fixture": True}), ("batch_archive", {"label": "b4-gate-2"}), ("batch_archive", {"count": 199}), ("batch_archive", {"status": "invalid"})):
+        for kind, over in (("synthetic_summary", {}), ("batch_archive", {"fixture": True}), ("batch_archive", {"label": "b4-gate-3"}), ("batch_archive", {"count": 199}), ("batch_archive", {"status": "invalid"})):
             dd = dict(d, **over)
             if "count" in over:
                 dd["summary"] = synthetic_summary(S=199)
@@ -284,6 +288,7 @@ class TheJudge(unittest.TestCase):
         case({"k7_median": 10}, "K7", "< 11")
         case({"k9_all": 179}, "K9", "(a)")
         case({"k9_medians": {"ff_srval": 0.4270833}}, "K9", "ff_srval 0.427083")
+        case({"k9_medians": {"sr_kind": 0.25}, "k9_medians_all_panel": {"sr_kind": 0.5}}, "K9", "(b') conditional median coverage below 0.50: sr_kind 0.25")
         case({"k9_na": {"sr_kind": 3}}, "K9", "not assessable: sr_kind (3 seeds")
         case({"k10": (99, 0, 0, 101)}, "K10", "< 0.50")
         case({"N": 21}, "K5", "4 000")                                                          # N = 21 at B* = 64: 4 032 search evaluations
@@ -305,6 +310,29 @@ class TheJudge(unittest.TestCase):
         self.assertEqual(bg.summary_contract_findings(s, 200), [])
         rows = rows_by_id(bg.judge(synthetic_doc(s), "synthetic_summary"))
         self.assertEqual((rows["K5"]["status"], rows["K5"]["value"]["cohen_d_delta1"], rows["K2"]["status"]), ("PASS", {"value": None, "special": "+inf"}, "FAIL"), "a legitimate +inf d is kept as such, never as 0")
+
+    def test_k9_judges_the_conditional_record_and_carries_the_all_panel_one_beside_it(self):
+        """Protocol v0.2.0 (the owner's choice 4): the judged (b') is the conditional record; the all-panel (b) is reported in the row's value and
+        never judged — a summary whose all-panel ff_srval median is the gate-1 value 0.40625 PASSES K9 when the conditional median is ≥ 0.50,
+        and the row says so; a non-SR semantic whose two records disagree breaks the contract."""
+        s = synthetic_summary(k9_medians={"ff_srval": 0.8125, "sr_kind": 1.0}, k9_medians_all_panel={"ff_srval": 0.40625, "sr_kind": 0.5})
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
+        j = bg.judge(synthetic_doc(s), "synthetic_summary")
+        row = rows_by_id(j)["K9"]
+        self.assertEqual(row["status"], "PASS", row["reason"]); self.assertIn("(b')", row["reason"]); self.assertIn("not judged", row["reason"])
+        self.assertEqual(row["value"]["judged_estimand"], k9.JUDGED_ESTIMAND)
+        self.assertEqual(row["value"]["per_semantic_conditional_judged"]["ff_srval"]["median_coverage_over_all_S"], 0.8125)
+        self.assertEqual(row["value"]["per_semantic_all_panel_descriptive"]["ff_srval"]["median_coverage_over_all_S"], 0.40625)
+        self.assertEqual(row["threshold"]["judged_estimand"], "conditional_sr_driven"); self.assertIn("applicable_conditional", row["threshold"]["applicability_judged"])
+        self.assertIn("(b')", row["method"]); self.assertIn("all-panel", row["method"])
+        s = synthetic_summary(k9_medians={"ff_srval": 0.4}, k9_medians_all_panel={"ff_srval": 0.9})
+        self.assertEqual(rows_by_id(bg.judge(synthetic_doc(s), "synthetic_summary"))["K9"]["status"], "FAIL", "the all-panel record cannot rescue a failing conditional one")
+        s = synthetic_summary(k9_medians={"ce_mode": 0.9}, k9_medians_all_panel={"ce_mode": 1.0})
+        self.assertTrue(any("non-SR semantic" in x for x in bg.summary_contract_findings(s, 200)), "the conditional rule changes ff_srval / sr_kind only")
+        s = synthetic_summary(); s["k9"]["judged_estimand"] = "all_panel"
+        self.assertTrue(any("judged_estimand" in x for x in bg.summary_contract_findings(s, 200)))
+        s = synthetic_summary(); del s["k9"]["per_semantic_all_panel"]
+        self.assertTrue(bg.summary_contract_findings(s, 200), "both records are required")
 
     def test_k5_is_delta1_o_minus_r_not_f_minus_r(self):
         s = synthetic_summary(f=(0.2, 110, 60, 30))                                                 # F - R weak, delta1 strong: K5 PASSES
@@ -614,33 +642,28 @@ class TheJudge(unittest.TestCase):
         self.assertEqual((rows_by_id(j)["K5"]["status"], j["verdict"]["status"], j["formal"]), ("FAIL", "FAIL", False))
         self.assertEqual(th.THRESHOLDS["K5"]["cohen_d_min"], 0.5, "the frozen threshold, unchanged: no epsilon")
 
-    def test_the_committed_exploration_report_as_a_read_only_reference(self):
-        """The S = 32 exploration of 2026-10-19 judged in memory: not formal (an exploration label, S = 32), the budget rule FAILS (no N),
-        K6 FAILS on S, K9 FAILS on ff_srval's median 0.427083, K8 / K10 PASS. Nothing is written; the archive is not touched; the real
-        summary passes the full contract."""
-        before = SIM3_REPORT.read_bytes()
-        rep = json.loads(before)
-        self.assertEqual(bg.summary_contract_findings(rep["summary"], rep["count"]), [], "the harness's own summary is coherent under the contract")
-        j = bg.judge(rep, "batch_archive")
-        self.assertEqual(SIM3_REPORT.read_bytes(), before)
-        self.assertFalse(j["formal"]); self.assertEqual(len(j["formal_reasons"]), 2)
-        self.assertEqual(j["contract_findings"], [])
-        self.assertEqual(j["budget_rule"]["status"], "FAIL"); self.assertEqual(j["budget_rule"]["k1_eligibility_by_budget"], {str(B): True for B in GRID})
-        st_ = {r["id"]: r["status"] for r in j["rows"]}
-        self.assertEqual(st_, {"K1": "not_assessable", "K2": "not_assessable", "K3": "not_assessable", "K4": "not_assessable", "K5": "not_assessable", "K6": "FAIL",
-                               "K7": "not_assessable", "K8": "PASS", "K9": "FAIL", "K10": "PASS"})
-        rows = rows_by_id(j)
-        self.assertIn("ff_srval 0.427083", rows["K9"]["reason"]); self.assertNotIn("sr_kind", rows["K9"]["reason"], "sr_kind's median 0.5 meets the >= 0.50 written with an equal sign")
-        self.assertEqual(rows["K9"]["value"]["per_semantic"]["sr_kind"]["median_coverage_over_all_S"], 0.5)
-        self.assertEqual(rows["K10"]["value"]["counts"]["interacting"], 32)
-        self.assertEqual(j["verdict"]["status"], "FAIL")
+    def test_the_committed_v0_1_16_archives_are_another_method_version_never_judged_here(self):
+        """Protocol v0.2.0: the committed S = 32 exploration and the production gate-1 archive were written by the v0.1.16 tool. Their summaries
+        do not carry K9's two records, so the judge's contract refuses them (invalid, nothing judged) and `judge_batch` refuses them BY NAME
+        before anything is written (no protocol identity; the re-verification procedure named). Nothing is touched; their verdicts stand
+        as the records of their own version (docs/b4_archive_reverification.md)."""
+        for path in (SIM3_REPORT, R / "evidence/b4/sim/b4-gate-1_20261020T102526Z/sim_report.json"):
+            before = path.read_bytes()
+            rep = json.loads(before)
+            self.assertTrue(bg.summary_contract_findings(rep["summary"], rep["count"]), "a v0.1.16 summary breaks the v0.2.0 contract (the K9 records)")
+            j = bg.judge(rep, "batch_archive")
+            self.assertEqual(j["verdict"]["status"], "invalid"); self.assertTrue(j["contract_findings"]); self.assertEqual([r["status"] for r in j["rows"]], ["not_assessable"] * 10)
+            r = bg.judge_batch(R, path.parent)
+            self.assertEqual((r["status"], r["gate_out"]), ("refused", None)); self.assertIn("no protocol identity", r["reason"]); self.assertIn("b4_archive_reverification", r["reason"])
+            self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(sorted(p.name for p in (R / bg.GATE_REL).iterdir()), ["b4-gate-1_20261020T102526Z"], "nothing was written to the repository's gate namespace")
 
     def test_standing_for_the_harness_s_labels(self):
         self.assertEqual(sim.standing_for("b4-sim-3"), sim.STANDING); self.assertEqual(sim.standing_for("b4-mech-1"), sim.STANDING)
         self.assertEqual(sim.standing_for("b4-gate-1"), sim.STANDING_GATE); self.assertNotEqual(sim.STANDING_GATE, sim.STANDING)
         self.assertIn("not a gate verdict", sim.STANDING_GATE); self.assertIn("b4_gate.py", sim.STANDING_GATE)
-        self.assertIn("v0.1.15", sim.STANDING, "the archived explorations' text is never edited")
-        self.assertEqual(sc.report_findings(json.loads(SIM3_REPORT.read_bytes())), [], "the committed exploration report still validates")
+        self.assertIn("protocol v0.3.0", sim.STANDING); self.assertIn("task-v0.3", sim.STANDING); self.assertIn("(b')", sim.STANDING)
+        self.assertTrue(any(bp.RECORD_SCHEMAS["b4_sim_report"][0] in x for x in sc.report_findings(json.loads(SIM3_REPORT.read_bytes()))), "the committed v0.1.16 report is another schema version: not this tool's")
 
     def test_the_synthetic_summary_s_own_findings(self):
         d = synthetic_doc(synthetic_summary())
@@ -776,6 +799,10 @@ class EndToEnd(Base):
         self.assertEqual(doc["self_validation"], {}); self.assertEqual(doc["contract_findings"], [])
         self.assertTrue(doc["clean_tree"], "the tree carried nothing but the batch's own output when the judgement was written")
         self.assertEqual(doc["thresholds"], th.THRESHOLDS); self.assertEqual(doc["identity"]["hypothesis_sha256"], th.THRESHOLDS["anchor"]["hypothesis_sha256"])
+        import b4_protocol as bp
+        self.assertEqual(doc["identity"]["protocol_sha256"], bp.protocol_sha256(bp.identity())); self.assertEqual(doc["identity"]["architecture_revision"], th.ARCHITECTURE_REVISION)
+        self.assertEqual(doc["identity"]["gate_label"], "b4-gate-2")
+        bm_ = json.loads((b / "manifest.json").read_text()); self.assertEqual(bm_["protocol"]["protocol_sha256"], doc["identity"]["protocol_sha256"], "the judgement and its evidence are of one method version")
         self.assertEqual([e["path"] for e in doc["files"]], [bg.REPORT_MD]); self.assertEqual(doc["files"][0]["sha256"], sim.sha_file(g / bg.REPORT_MD))
         self.assertEqual((g / bg.REPORT_MD).read_bytes(), bg.render_md(doc).encode("utf-8"))
         md = (g / bg.REPORT_MD).read_text()
@@ -839,7 +866,7 @@ class EndToEnd(Base):
             self.assertTrue(f, (where_part, msg_part))
             self.assertTrue(any(where_part in k and any(msg_part in m for m in v) for k, v in f.items()), (where_part, msg_part, f))
         # a row's status alone (the verdict kept): the rows are recomputed
-        tamper(lambda d: d["rows"][8].__setitem__("status", "PASS"), bg.REPORT_JSON, "rows are not the ones recomputed")
+        tamper(lambda d: d["rows"][5].__setitem__("status", "PASS"), bg.REPORT_JSON, "rows are not the ones recomputed")       # K6 (FAIL at S = 2) flipped; K9 PASSES on the fixture under (b')
         # the verdict alone: PASS with a failing row is refused by the validator; FAIL -> incomplete by the validator
         tamper(lambda d: d["verdict"].__setitem__("status", "PASS"), bg.REPORT_JSON, "verdict PASS with")
         tamper(lambda d: d["verdict"].__setitem__("status", "incomplete"), bg.REPORT_JSON, "incomplete on a complete batch")
@@ -864,6 +891,8 @@ class EndToEnd(Base):
         tamper(lambda d: d.__setitem__("self_validation", {"x": ["y"]}), bg.REPORT_JSON, "self-validation")
         tamper(lambda d: d["diagnostics"].__setitem__("per_budget", {}), bg.REPORT_JSON, "diagnostics")
         tamper(lambda d: d.__setitem__("evidence_kind", "synthetic_summary"), bg.REPORT_JSON, "evidence record")
+        tamper(lambda d: d["identity"].__setitem__("protocol_sha256", "0" * 64), "protocol", "not this tool's")
+        tamper(lambda d: d["identity"].__setitem__("architecture_revision", 7), bg.REPORT_JSON, "identity")
         # a self-validation record with the verdict made invalid consistently: never clean
         def self_inv(d):
             d["self_validation"] = {"batch: x": ["y"]}; d["verdict"] = {"status": "invalid", "reason": "self"}
@@ -985,13 +1014,17 @@ class EndToEnd(Base):
         before_s = sorted(p.name for p in self.ns.iterdir())
         # the production path: another label, S != 200 — refused before any tree is read
         with mock.patch.object(sim, "porcelain", side_effect=AssertionError("the tree was read")):
-            r = bg.run_gate(self.root, "b4-gate-2", 200, 60); self.assertEqual(r["status"], "refused"); self.assertIn("pinned", r["reason"])
-            r = bg.run_gate(self.root, "b4-gate-1", 2, 60); self.assertEqual(r["status"], "refused"); self.assertIn("S = 200", r["reason"])
+            r = bg.run_gate(self.root, "b4-gate-3", 200, 60); self.assertEqual(r["status"], "refused"); self.assertIn("pinned", r["reason"])
+            r = bg.run_gate(self.root, "b4-gate-1", 200, 60); self.assertEqual(r["status"], "refused"); self.assertIn("consumed", r["reason"])
+            r = bg.run_gate(self.root, "b4-gate-2", 2, 60); self.assertEqual(r["status"], "refused"); self.assertIn("S = 200", r["reason"])
             r = bg.run_gate(self.root, "b4-sim-3", 32, 60); self.assertEqual(r["status"], "refused")
+            r = bg.run_gate(self.root, "b4-sim-4", 32, 60); self.assertEqual(r["status"], "refused"); self.assertIn("pinned", r["reason"])
             r = bg.run_gate(self.root, "b4-mech-1", 2, 60); self.assertEqual(r["status"], "refused"), "a mechanics label without a schedule is a production label mismatch"
         # a fixture batch under an exploration-mode harness is still refused the gate label; mode gate refuses exploration labels
-        r = sim.run_batch(self.root, "b4-gate-1", 2, 60, self.ns / "b4-gate-1_x"); self.assertEqual(r["status"], "refused"); self.assertIn("mode gate only", r["reason"])
-        r = sim.run_batch(self.root, "b4-sim-3", 2, 60, self.ns / "b4-sim-3_x", mode="gate"); self.assertEqual(r["status"], "refused"); self.assertIn("not a gate label", r["reason"])
+        r = sim.run_batch(self.root, "b4-gate-2", 2, 60, self.ns / "b4-gate-2_x"); self.assertEqual(r["status"], "refused"); self.assertIn("mode gate only", r["reason"])
+        r = sim.run_batch(self.root, "b4-sim-4", 2, 60, self.ns / "b4-sim-4_x", mode="gate"); self.assertEqual(r["status"], "refused"); self.assertIn("not a gate label", r["reason"])
+        with mock.patch.object(sim, "porcelain", side_effect=AssertionError("the tree was read")):
+            r = sim.run_batch(self.root, "b4-gate-1", 200, 60, None, mode="gate"); self.assertEqual(r["status"], "refused"); self.assertIn("consumed", r["reason"])
         r = sim.run_batch(self.root, "b4-mech-1", 2, 60, self.ns / "b4-mech-1_x", schedule=SCHED1, mode="other"); self.assertEqual(r["status"], "refused"); self.assertIn("mode", r["reason"])
         # the gate directory: existing, a symlink, elsewhere, misnamed
         existing = self.gns / "b4-mech-1_exists"; existing.mkdir(parents=True, exist_ok=True)
@@ -1042,8 +1075,9 @@ class EndToEnd(Base):
             self.assertNotIn(bad, src, bad)
         with mock.patch.object(sim, "porcelain", side_effect=AssertionError("the tree was read")), mock.patch("sys.stdout"), mock.patch("sys.stderr"):
             self.assertEqual(bg.main(["run", "--label", "b4-mech-1", "--seeds", "2", "--deadline-s", "60"]), 2)
-            self.assertEqual(bg.main(["run", "--label", "b4-gate-1", "--seeds", "2", "--deadline-s", "60"]), 2)
-            self.assertEqual(bg.main(["run", "--label", "b4-gate-2", "--seeds", "200", "--deadline-s", "60"]), 2)
+            self.assertEqual(bg.main(["run", "--label", "b4-gate-1", "--seeds", "200", "--deadline-s", "60"]), 2)
+            self.assertEqual(bg.main(["run", "--label", "b4-gate-2", "--seeds", "2", "--deadline-s", "60"]), 2)
+            self.assertEqual(bg.main(["run", "--label", "b4-gate-3", "--seeds", "200", "--deadline-s", "60"]), 2)
             with self.assertRaises(SystemExit):
                 bg.main(["run", "--label", "b4-gate-1", "--seeds", "200"])                       # --deadline-s has no default
         with mock.patch.object(sim, "porcelain", return_value=[" M x"]), mock.patch("sys.stdout"):

@@ -5,12 +5,16 @@ docs/b4_architecture.md section 9 with the thresholds of `b4_thresholds.THRESHOL
 status, reason — and writes the judgement as `gate_report.json` + `gate_report.md` in a gate directory under
 evidence/b4/gate/, bound to the batch archive by digest.
 
-    b4_gate.py run   --label b4-gate-1 --seeds 200 --deadline-s <s>     # the production run: the batch (b4_sim, mode gate) then the judgement
+    b4_gate.py run   --label b4-gate-2 --seeds 200 --deadline-s <s>     # the production run: the batch (b4_sim, mode gate) then the judgement
     b4_gate.py judge <batch_dir>                                         # the judgement of an existing production batch archive (runs nothing)
 
-NOTHING IS AUTHORISED BY THIS FILE. The production run derives the gate's master and pairs (section 9.2, label b4-gate-1)
-— that derivation is withheld by the ruling until the tool is accepted and an execution plan is ruled. The CLI has no
-fixture path, no allow-dirty, no other S than the planned 200 and no label but the pinned gate label of section 9.2.
+NOTHING IS AUTHORISED BY THIS FILE. The production run derives the gate's master and pairs (section 9.2, the pinned gate label
+of protocol v0.2.0, b4-gate-2; b4-gate-1 is consumed by its records) — that derivation needs its own execution ruling. The CLI
+has no fixture path, no allow-dirty, no other S than the planned 200 and no label but the pinned gate label of section 9.2.
+PROTOCOL v0.2.0 (the owner's rulings of 2026-10-20), carried unchanged into v0.3.0 (the owner's ruling of 2026-10-27: the task-v0.3
+slice-wide stimulus; the panel, both applicabilities and every number unchanged): K9's judged row is (b') — the conditional coverage under SR-driven backgrounds
+— with the all-panel (b) reported beside it; the judgement carries the protocol identity's digest (section 9.5) and a batch archive of
+another method version, or one without an identity, is refused by name and never judged.
 
 THE DISTINCTIONS THE RULING NAMES (section 3), kept by `judge`:
   - a complete, valid batch whose criterion fails on its data is a FAIL (never retuned, never resampled);
@@ -52,6 +56,7 @@ import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
 import b4_gate_stats as gs  # noqa: E402
 import b4_k9 as k9  # noqa: E402
+import b4_protocol as bp  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim as sim  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
@@ -63,7 +68,7 @@ GATE_LABEL_RE = sim.GATE_LABEL_RE
 FIXTURE_LABEL_RE = bs.FIXTURE_LABEL_RE
 PINNED_GATE_LABEL = th.THRESHOLDS["anchor"]["gate_label"]              # "b4-gate-1": the only production label (another label needs a revision of section 9.2)
 S_GATE = th.THRESHOLDS["K6"]["S_gate"]                                 # 200
-GATE_SCHEMA = ("b4_gate_report", "1.0.0")
+GATE_SCHEMA = ("b4_gate_report", "1.1.0")
 SYNTHETIC_SCHEMA = ("b4_gate_synthetic_summary", "1.0.0")
 REPORT_JSON, REPORT_MD, SYNTHETIC_JSON = "gate_report.json", "gate_report.md", "synthetic_summary.json"
 EVIDENCE_KINDS = ("batch_archive", "synthetic_summary")
@@ -494,17 +499,21 @@ def summary_contract_findings(s, S) -> list[str]:
         if at is not None:
             f.append("no B*: at_candidate_B_star must be null")
     k9s = s["k9"]
-    if _exact(k9s, {"per_semantic", "seeds_with_all_seven_positive_controls", "fraction_of_S"}, f, "k9"):
+    if _exact(k9s, {"judged_estimand", "per_semantic", "per_semantic_all_panel", "seeds_with_all_seven_positive_controls", "fraction_of_S"}, f, "k9"):
+        if k9s["judged_estimand"] != k9.JUDGED_ESTIMAND:
+            f.append(f"k9.judged_estimand {k9s['judged_estimand']!r} is not this version's {k9.JUDGED_ESTIMAND!r}")
         k9_all = k9s["seeds_with_all_seven_positive_controls"]
         if not (_int(k9_all) and 0 <= k9_all <= S):
             f.append("k9.seeds_with_all_seven_positive_controls is not an int in [0, S]")
         elif not _same(k9s["fraction_of_S"], k9_all / S):
             f.append("k9.fraction_of_S is not seeds_with_all_seven_positive_controls / S")
-        per = k9s["per_semantic"]
-        if _exact(per, set(SEMANTICS), f, "k9.per_semantic"):
+        for block in ("per_semantic", "per_semantic_all_panel"):
+            per = k9s[block]
+            if not _exact(per, set(SEMANTICS), f, f"k9.{block}"):
+                continue
             for sem in SEMANTICS:
                 rec = per[sem]
-                w = f"k9.per_semantic.{sem}"
+                w = f"k9.{block}.{sem}"
                 if not _exact(rec, {"seeds_with_positive_control", "not_assessable_seeds", "median_coverage_over_all_S", "median_rule", "conditional_on_A8"}, f, w):
                     continue
                 if not (_int(rec["seeds_with_positive_control"]) and 0 <= rec["seeds_with_positive_control"] <= S and _int(rec["not_assessable_seeds"]) and 0 <= rec["not_assessable_seeds"] <= S):
@@ -521,6 +530,12 @@ def summary_contract_findings(s, S) -> list[str]:
                     f.append(f"{w}.median_rule is not the table's")
                 if rec["conditional_on_A8"] is not (sem == "ff_init"):
                     f.append(f"{w}.conditional_on_A8 is not {sem == 'ff_init'}")
+        if isinstance(k9s["per_semantic"], dict) and isinstance(k9s["per_semantic_all_panel"], dict):
+            for sem in SEMANTICS:
+                a, b = k9s["per_semantic"].get(sem), k9s["per_semantic_all_panel"].get(sem)
+                if isinstance(a, dict) and isinstance(b, dict) and sem not in k9.SR_SEMANTICS and _same(a.get("not_assessable_seeds"), b.get("not_assessable_seeds")) \
+                        and not _same(a.get("median_coverage_over_all_S"), b.get("median_coverage_over_all_S")):
+                    f.append(f"k9.{sem}: the judged and the all-panel medians differ on a non-SR semantic (the conditional rule changes ff_srval / sr_kind only)")
     k10s = s["k10"]
     if _exact(k10s, {"tau", "S", "counts", "fraction_interacting_over_S", "note"}, f, "k10"):
         if not (_same(k10s["tau"], T["K10"]["tau"]) and _same(k10s["S"], S)):
@@ -595,7 +610,11 @@ def judge(doc: dict, evidence_kind: str = "batch_archive") -> dict:
         "K6": "S = 200 planned (never the number completed) and N >= 8",
         "K7": "(a) zero recomputation mismatches on every arm's own ledger (the completion contract: each audit's recompute findings empty, re-audited by the archive-wide verifier); (b) median_r over seeds of the addresses whose state is not unknown in arm O's B* prefix >= 11 of 21",
         "K8": "the replay of every executed run reports no finding, the recorded q grid recomputes the recorded fitness, X's shadow isomorphism and the source-identity / fixture boundary hold (the completion contract; a break is invalid under 9.1)",
-        "K9": "on the fixed comparison set of 9.3: (a) >= 90 % of all S seeds have, for each of the seven semantics, an applicable pair whose readouts differ; (b) per semantic, the median over all S seeds of the coverage fraction >= 0.50 (a semantic not assessable for one seed has no median and does not meet (b))",
+        "K9": ("on the fixed comparison set of 9.3: (a) >= 90 % of all S seeds have, for each of the seven semantics, an applicable pair whose readouts differ (the all-panel record); "
+               "(b') JUDGED (protocol v0.2.0, unchanged in v0.3.0): per semantic, the median over all S seeds of the CONDITIONAL coverage fraction >= 0.50 — applicable_conditional = applicable_all_panel AND "
+               "sr_mode = driven at both endpoints for ff_srval and sr_kind, the five other semantics as the all-panel rule, the latch / x5FF exclusions kept (a semantic not assessable "
+               "for one seed has no median and does not meet (b')); (b) the all-panel coverage of clauses 4-5 is recomputed from the same retained raw grids and reported beside (b') "
+               "as a description, not judged"),
         "K10": "tau = 2: interacting seeds (max|I| > 2 over both fixed backgrounds, all 210 pairs) / all S >= 0.50; not-assessable seeds stay in the denominator",
     }
     crit = {"K1": "non-saturation", "K2": "not a definitional lock", "K3": "wrong maps do not profit", "K4": "headroom against the certificate-derived grouping",
@@ -608,7 +627,8 @@ def judge(doc: dict, evidence_kind: str = "batch_archive") -> dict:
            "K6": {"S_gate": T["K6"]["S_gate"], "N_min": T["K6"]["N_min"]},
            "K7": {"recomputation_mismatches": T["K7"]["recomputation_mismatches"], "o_prefix_median_not_unknown_min": T["K7"]["o_prefix_median_not_unknown_min"]},
            "K8": {"replay": T["K8"]["replay"]},
-           "K9": {"seeds_with_all_seven_positive_controls_min": T["K9"]["seeds_with_all_seven_positive_controls_min"], "median_coverage_per_semantic_min": T["K9"]["median_coverage_per_semantic_min"]},
+           "K9": {"seeds_with_all_seven_positive_controls_min": T["K9"]["seeds_with_all_seven_positive_controls_min"], "median_coverage_per_semantic_min": T["K9"]["median_coverage_per_semantic_min"],
+                  "judged_estimand": T["K9"]["judged_estimand"], "applicability_judged": T["K9"]["applicability_judged"]},
            "K10": {"tau": T["K10"]["tau"], "interacting_seeds_over_S_min": T["K10"]["interacting_seeds_over_S_min"]}}
 
     def all_na(reason: str, budget_status: str, budget_reason: str, verdict: str, verdict_reason: str) -> dict:
@@ -738,24 +758,29 @@ def judge(doc: dict, evidence_kind: str = "batch_archive") -> dict:
 
 
 def _k9_row(s, crit, meth, thr, T) -> dict:
+    """(a) from the all-panel positive controls; (b') JUDGED from the conditional record; (b) the all-panel record carried beside it, not judged."""
     k = s["k9"]
     frac = k["fraction_of_S"]
     a_ok = _num(frac) and frac >= T["K9"]["seeds_with_all_seven_positive_controls_min"]
-    per = {}
+    per, per_all = {}, {}
     below, na = [], []
     for sem in SEMANTICS:
         rec = k["per_semantic"][sem]
         m = rec["median_coverage_over_all_S"]
         per[sem] = {"median_coverage_over_all_S": m, "not_assessable_seeds": rec["not_assessable_seeds"], "seeds_with_positive_control": rec.get("seeds_with_positive_control"), "conditional_on_A8": rec.get("conditional_on_A8")}
+        ra = k["per_semantic_all_panel"][sem]
+        per_all[sem] = {"median_coverage_over_all_S": ra["median_coverage_over_all_S"], "not_assessable_seeds": ra["not_assessable_seeds"]}
         if m is None:
             na.append(f"{sem} ({rec['not_assessable_seeds']} seeds not assessable)")
         elif m < T["K9"]["median_coverage_per_semantic_min"]:
             below.append(f"{sem} {m:.6g}")
     reasons = [] if a_ok else [f"(a) seeds with all seven positive controls {frac!r} < 0.90 of S"]
-    reasons += [f"(b) median coverage below 0.50: {', '.join(below)}"] if below else []
-    reasons += [f"(b) not assessable: {', '.join(na)}"] if na else []
-    return _row("K9", crit["K9"], meth["K9"], thr["K9"], {"fraction_of_S_with_all_seven_positive_controls": frac, "seeds_with_all_seven_positive_controls": k.get("seeds_with_all_seven_positive_controls"), "per_semantic": per},
-                "PASS" if not reasons else "FAIL", "(a) >= 90 % of seeds and (b) every semantic's median coverage >= 0.50" if not reasons else "; ".join(reasons))
+    reasons += [f"(b') conditional median coverage below 0.50: {', '.join(below)}"] if below else []
+    reasons += [f"(b') not assessable: {', '.join(na)}"] if na else []
+    return _row("K9", crit["K9"], meth["K9"], thr["K9"],
+                {"fraction_of_S_with_all_seven_positive_controls": frac, "seeds_with_all_seven_positive_controls": k.get("seeds_with_all_seven_positive_controls"),
+                 "judged_estimand": k.get("judged_estimand"), "per_semantic_conditional_judged": per, "per_semantic_all_panel_descriptive": per_all},
+                "PASS" if not reasons else "FAIL", "(a) >= 90 % of seeds and (b') every semantic's conditional median coverage >= 0.50 (the all-panel (b) reported beside it, not judged)" if not reasons else "; ".join(reasons))
 
 
 def _k10_row(s, crit, meth, thr, T) -> dict:
@@ -849,9 +874,11 @@ def gate_report_findings(doc) -> list[str]:
             and all(b[k] is None or (isinstance(b[k], str) and HEX64.match(b[k])) for k in ("seeds_sha256", "manifest_sha256"))):
         f.append("batch: the evidence record (kind, a relative path, status, label / count / fixture as the judgement's, digests)")
     ident = doc["identity"]
-    if not (isinstance(ident, dict) and ident.get("hypothesis_sha256") == hy.HYPOTHESIS_SHA256 and ident.get("certificate_sha256") == bm.CERTIFICATE_SHA256
-            and ident.get("thresholds_source") == th.THRESHOLDS["source"] and ident.get("gate_label") == PINNED_GATE_LABEL):
-        f.append("identity: the pinned hypothesis / certificate digests, the thresholds' source, the pinned gate label")
+    if not (isinstance(ident, dict) and set(ident) == {"hypothesis_sha256", "certificate_sha256", "thresholds_source", "gate_label", "protocol_sha256", "architecture_revision"}
+            and ident.get("hypothesis_sha256") == hy.HYPOTHESIS_SHA256 and ident.get("certificate_sha256") == bm.CERTIFICATE_SHA256
+            and ident.get("thresholds_source") == th.THRESHOLDS["source"] and ident.get("gate_label") == PINNED_GATE_LABEL
+            and isinstance(ident.get("protocol_sha256"), str) and HEX64.match(ident["protocol_sha256"]) and isinstance(ident.get("architecture_revision"), str)):
+        f.append("identity: the pinned hypothesis / certificate digests, the thresholds' source, the pinned gate label, the protocol digest and the document's revision")
     if sc.canonical(doc["thresholds"]) != sc.canonical(th.THRESHOLDS):
         f.append("thresholds: not the module's table")
     br = doc["budget_rule"]
@@ -914,7 +941,8 @@ def render_md(doc: dict) -> str:
              f"(status {doc['batch']['status']}, label {doc['batch']['label']}, S = {doc['batch']['count']}, fixture {doc['batch']['fixture']}, sha256 `{doc['batch']['sha256']}`; "
              f"seeds `{doc['batch']['seeds_sha256']}`, manifest `{doc['batch']['manifest_sha256']}`; batch HEAD `{doc['batch']['head']}`).")
     L.append("")
-    L.append(f"Hypothesis `{doc['identity']['hypothesis_sha256']}`, certificate `{doc['identity']['certificate_sha256']}`; thresholds: {doc['identity']['thresholds_source']}.")
+    L.append(f"Hypothesis `{doc['identity']['hypothesis_sha256']}`, certificate `{doc['identity']['certificate_sha256']}`; thresholds: {doc['identity']['thresholds_source']}; "
+             f"protocol identity `{doc['identity']['protocol_sha256']}` (architecture {doc['identity']['architecture_revision']}, informational).")
     L.append("")
     L.append(f"**Standing.** {doc['standing']}")
     L.append("")
@@ -979,7 +1007,8 @@ def _diagnostics(doc: dict, evidence_kind: str) -> dict:
                                           "F_minus_R": v.get("deltas", {}).get("F_minus_R"), "X_minus_R": v.get("deltas", {}).get("X_minus_R"), "arm_medians": {k: x.get("median") for k, x in (v.get("arm_values") or {}).items()},
                                           "base_median": (v.get("base") or {}).get("median"), "k1": v.get("k1"), "N": (v.get("required_pairs") or {}).get("N"), "power_at_N_or_last": (v.get("required_pairs") or {}).get("power_at_N_or_last")}
         if isinstance(s.get("k9"), dict):
-            d["k9_per_semantic"] = s["k9"].get("per_semantic")
+            d["k9_per_semantic_conditional_judged"] = s["k9"].get("per_semantic")
+            d["k9_per_semantic_all_panel_descriptive"] = s["k9"].get("per_semantic_all_panel")
         if isinstance(s.get("k10"), dict):
             d["k10"] = s["k10"]
     return d
@@ -1053,13 +1082,15 @@ def write_judgement(root: Path, gate_out: Path, evidence_doc: dict, evidence_kin
     import b4_gate_verify as gv  # imported here: the verifier imports this module
     root = Path(root).resolve()
     head, clean = _tree_state(root, evidence_rel if evidence_kind == "batch_archive" else None)
+    protocol = bp.identity()                                          # this tool's method identity (refused by name when the tree is not its inventory)
     j = judge(evidence_doc, evidence_kind)
     doc = {"schema": GATE_SCHEMA[0], "schema_version": GATE_SCHEMA[1], "generated_utc": utc(), "head": head, "clean_tree": clean, "label": j["label"], "S": j["S"], "fixture": j["fixture"],
            "evidence_kind": evidence_kind, "formal": j["formal"], "formal_reasons": j["formal_reasons"],
            "standing": STANDING_FORMAL if j["formal"] else STANDING_NOT_FORMAL.format(kind=evidence_kind, label=j["label"]), "scope": SCOPE,
            "batch": {"kind": evidence_kind, "path": evidence_rel, "status": evidence_doc.get("status"), "label": evidence_doc.get("label"), "count": evidence_doc.get("count"), "fixture": evidence_doc.get("fixture"),
                      "head": evidence_doc.get("head"), "generated_utc": evidence_doc.get("generated_utc"), "sha256": evidence_sha, "seeds_sha256": seeds_sha, "manifest_sha256": manifest_sha},
-           "identity": {"hypothesis_sha256": hy.HYPOTHESIS_SHA256, "certificate_sha256": bm.CERTIFICATE_SHA256, "thresholds_source": th.THRESHOLDS["source"], "gate_label": PINNED_GATE_LABEL},
+           "identity": {"hypothesis_sha256": hy.HYPOTHESIS_SHA256, "certificate_sha256": bm.CERTIFICATE_SHA256, "thresholds_source": th.THRESHOLDS["source"], "gate_label": PINNED_GATE_LABEL,
+                        "protocol_sha256": bp.protocol_sha256(protocol), "architecture_revision": protocol["architecture_revision"]},
            "thresholds": th.THRESHOLDS, "budget_rule": j["budget_rule"], "rows": j["rows"], "verdict": j["verdict"], "contract_findings": j["contract_findings"],
            "diagnostics": _diagnostics(evidence_doc, evidence_kind), "self_validation": {}, "files": []}
     _create_gate_dir(root, gate_out)
@@ -1110,6 +1141,9 @@ def judge_batch(root: Path, batch_dir: Path, gate_out: Path | None = None, stamp
         report = json.loads(raw)
     except ValueError as exc:
         return {"status": "refused", "exit_code": 2, "gate_out": None, "reason": f"{rel}/sim_report.json is not JSON: {exc}"}
+    pf = archive_identity_findings(batch_dir)                          # FIRST: an archive of another method version (or none) is never judged by this tool
+    if pf:
+        return {"status": "refused", "exit_code": 2, "gate_out": None, "reason": f"{rel}: " + "; ".join(pf[:2])}
     rf = numeric_findings(report, "sim_report") or sc.report_findings(report)
     if rf:
         return {"status": "refused", "exit_code": 2, "gate_out": None, "reason": f"{rel}/sim_report.json does not validate: " + "; ".join(rf[:4])}
@@ -1128,6 +1162,28 @@ def judge_batch(root: Path, batch_dir: Path, gate_out: Path | None = None, stamp
         return write_judgement(root, out_p, report, "batch_archive", rel, sha_bytes(raw), seeds_sha, manifest_sha)
     except (Refusal, FileExistsError) as exc:
         return {"status": "refused", "exit_code": 2, "gate_out": None, "reason": str(exc)}
+
+
+def archive_identity_findings(batch_dir: Path) -> list[str]:
+    """The batch archive's protocol identity (its manifest's) against this tool's: empty when it is this method version; a named
+    refusal otherwise (missing, malformed, another version). Total."""
+    try:
+        man = json.loads((Path(batch_dir) / "manifest.json").read_bytes())
+    except (OSError, ValueError) as exc:
+        return [f"manifest.json unreadable: {type(exc).__name__}: {exc}"]
+    pr = man.get("protocol") if isinstance(man, dict) else None
+    if not isinstance(pr, dict) or "identity" not in pr:
+        return [bp.refusal_for_missing(man if isinstance(man, dict) else {})]
+    try:
+        mine = bp.identity()
+    except bp.IdentityRefusal as exc:
+        return [f"this tool's own tree is not its inventory: {exc}"]
+    f = bp.compare(pr["identity"], mine)
+    if f:
+        return f
+    if pr.get("protocol_sha256") != bp.protocol_sha256(mine):
+        return ["the archive's protocol_sha256 is not the digest of this method version"]
+    return []
 
 
 def judge_synthetic(root: Path, doc: dict, gate_out: Path | None = None) -> dict:
@@ -1156,6 +1212,8 @@ def run_gate(root: Path, label: str, count: int, deadline_s: int, *, out_batch: 
     b4-mech batch and judges it with formal = false."""
     root = Path(root).resolve()
     if schedule is None:
+        if label in bs.CONSUMED_LABELS or label in bs.RETIRED_LABELS:
+            return {"status": "refused", "exit_code": 2, "out": None, "gate_out": None, "reason": f"the label {label!r} is {'consumed by its archived records' if label in bs.CONSUMED_LABELS else 'retired'} (section 9.2): never derived again; the pinned gate label is {PINNED_GATE_LABEL!r}"}
         if label != PINNED_GATE_LABEL:
             return {"status": "refused", "exit_code": 2, "out": None, "gate_out": None, "reason": f"the production gate label is the pinned {PINNED_GATE_LABEL!r} (section 9.2); {label!r} needs a revision of the thresholds table"}
         if count != S_GATE:

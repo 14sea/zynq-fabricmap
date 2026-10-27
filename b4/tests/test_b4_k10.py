@@ -23,6 +23,7 @@ import b4_landscape as bl  # noqa: E402
 import b4_stats as st  # noqa: E402
 from b4_deadline import StopWork  # noqa: E402
 from b4_rng import Rng  # noqa: E402
+from b4_test_fixtures import v02_task  # noqa: E402
 
 
 class RefusingPort(ex.ObservationPort):
@@ -44,7 +45,7 @@ class Base(unittest.TestCase):
     def setUpClass(cls):
         cls.m, cls.h = bm.site_mapping(), hy.load()
         cls.fab = fm.Fabric(cls.m, cls.h)
-        cls.task = bl.make_task(7, cls.m.addresses)
+        cls.task = v02_task(7, cls.fab)
 
 
 class Backgrounds(unittest.TestCase):
@@ -70,7 +71,7 @@ class Backgrounds(unittest.TestCase):
 class TheComputation(Base):
     def test_the_formal_model_end_to_end_on_an_exposed_seed(self):
         port = ex.ObservationPort(self.fab)
-        r = k10.seed_k10(self.task, port)
+        r = k10.seed_k10(self.task, port, 7)
         self.assertTrue(r["complete"]); self.assertIsNone(r["stopped"]); self.assertIsNone(r["invalid"])
         self.assertEqual((r["units_total"], len(r["units"]), r["tau"]), (420, 420, 2))
         self.assertEqual(r["backgrounds"], k10.backgrounds(7))
@@ -90,7 +91,7 @@ class TheComputation(Base):
         self.assertEqual(k10.recompute(r, self.task), [])
 
     def test_recompute_names_a_tampered_record(self):
-        r = k10.seed_k10(self.task, ex.ObservationPort(self.fab))
+        r = k10.seed_k10(self.task, ex.ObservationPort(self.fab), 7)
         bad = json.loads(json.dumps(r)); bad["units"][5]["corners"]["11"]["score"] += 1
         self.assertTrue(any("score recomputed" in f for f in k10.recompute(bad, self.task)))
         bad = json.loads(json.dumps(r)); bad["units"][5]["index"] += 1
@@ -115,7 +116,7 @@ class TheComputation(Base):
         probe = st.four_corner(lambda g: 0 if g != refuse else (_ for _ in ()).throw(fm.DomainRefusal()), bg0, 3, 5)
         self.assertFalse(probe["comparable"], "b4_stats.four_corner itself absorbs DOMAIN into comparable = False — the driver must not")
         with self.assertRaises(k10.K10Invalid) as cm:
-            k10.seed_k10(self.task, port)
+            k10.seed_k10(self.task, port, 7)
         p = cm.exception.partial
         self.assertFalse(p["complete"]); self.assertIsNotNone(p["invalid"])
         self.assertEqual(p["invalid"]["illegal_corners"], ["11"])
@@ -133,7 +134,7 @@ class TheComputation(Base):
         for at, obs_kept, corner in ((1, 0, "00"), (2, 1, "01"), (4, 3, "11")):
             port = InjectingPort(self.fab, at)
             with self.assertRaises(k10.K10Invalid) as cm:
-                k10.seed_k10(self.task, port)
+                k10.seed_k10(self.task, port, 7)
             p = cm.exception.partial
             self.assertEqual(port.calls, at, f"refused at call {at}: no further corner observed")
             self.assertEqual((len(p["observations"]), len(p["units"]), p["units"][0]["comparable"], p["units"][0]["illegal_corners"]), (obs_kept, 1, False, [corner]))
@@ -142,18 +143,18 @@ class TheComputation(Base):
             self.assertEqual(k10.recompute(p, self.task), [], "the partial recomputes clean")
         port = InjectingPort(self.fab, 6, KeyboardInterrupt())
         with self.assertRaises(KeyboardInterrupt) as cm:
-            k10.seed_k10(self.task, port)
+            k10.seed_k10(self.task, port, 7)
         p = cm.exception.k10_partial
         self.assertEqual((p["invalid"], p["stopped"]["before_unit_index"], len(p["units"]), len(p["observations"])), (None, 1, 1, 5), "an interrupt inside the second unit: a stop, the first unit kept")
         port = InjectingPort(self.fab, 6, ex.SourceRefusal("injected"))
         with self.assertRaises(ex.SourceRefusal) as cm:
-            k10.seed_k10(self.task, port)
+            k10.seed_k10(self.task, port, 7)
         self.assertEqual(cm.exception.k10_partial["invalid"]["exception"], "SourceRefusal")
 
     def test_duplicated_or_missing_units_in_a_complete_record_are_named(self):
         """F3 of the owner's review: the fixed comparison set is enforced — the first unit repeated 420 times, a unit dropped,
         or an empty complete record are all named by `recompute`."""
-        full = k10.seed_k10(self.task, ex.ObservationPort(self.fab))
+        full = k10.seed_k10(self.task, ex.ObservationPort(self.fab), 7)
         self.assertEqual(k10.recompute(full, self.task), [])
         self.assertEqual([(u["background_index"], u["a"], u["b"]) for u in full["units"]], k10.canonical_units())
         bad = json.loads(json.dumps(full)); bad["units"] = [json.loads(json.dumps(bad["units"][0])) for _ in range(420)]
@@ -171,11 +172,11 @@ class TheComputation(Base):
             if budget["left"] == 0:
                 raise StopWork("expired")
             budget["left"] -= 1
-        r = k10.seed_k10(self.task, ex.ObservationPort(self.fab), check=check)
+        r = k10.seed_k10(self.task, ex.ObservationPort(self.fab), 7, check=check)
         self.assertEqual((r["complete"], len(r["units"]), r["stopped"]["before_unit_index"], r["outcome"], r["max_abs_index"]), (False, 7, 7, None, None))
-        full = k10.seed_k10(self.task, ex.ObservationPort(self.fab), check=lambda: None)
+        full = k10.seed_k10(self.task, ex.ObservationPort(self.fab), 7, check=lambda: None)
         self.assertEqual([u["index"] for u in r["units"]], [u["index"] for u in full["units"][:7]])
-        self.assertEqual(full["units"], k10.seed_k10(self.task, ex.ObservationPort(self.fab))["units"], "a never-raising check changes nothing")
+        self.assertEqual(full["units"], k10.seed_k10(self.task, ex.ObservationPort(self.fab), 7)["units"], "a never-raising check changes nothing")
         self.assertEqual(k10.recompute(r, self.task), [])
 
 

@@ -216,6 +216,86 @@ class Latches(Base):
         self.assertEqual(self.fab.diagnose(c)["decoded"]["DFF"]["primitive"], "LDPE")
 
 
+class SliceWideControls(Base):
+    """task-v0.3 (docs/b4_architecture.md section 7.2; the owner's ruling of 2026-10-27): under a BROADCAST ce / sr vector (0x00 / 0xFF)
+    the model's per-element evaluation gives every element the same control value — a reference model that reads ONE control bit per
+    step (the slice-wide semantics: one CE pin, one SR pin per slice) produces the identical trace on every configuration of the domain
+    — so the model's state machine needs no change for task-v0.3; and a NON-broadcast vector is where the two models part, which is
+    exactly what the generator never produces and the validators refuse. Nothing here is a statement about silicon."""
+
+    def reference(self, config, stimulus) -> list:
+        """A slice-wide twin: one ce bit and one sr bit per step, applied to every element, through the formal model's own decode and flags."""
+        fab = self.fab
+        decoded = fab.decode(config)
+        h = fab.hypothesis
+        q = [None] * 8
+        clock = 0
+        grids = []
+        for st in stimulus:
+            if st["kind"] == "init":
+                q = [decoded[e].init if decoded[e].applicable else None for e in E]
+                grids.append(list(q)); continue
+            ce1, sr1, d = (st["ce"] == 0xFF), (st["sr"] == 0xFF), st["d"]
+            def settle(level):
+                for i, e in enumerate(E):
+                    cfg = decoded[e]
+                    if not cfg.applicable:
+                        continue
+                    sr_act = (sr1 if (cfg.sr_driven or not h.flag("sr_tied_low_when_not_driven")) else False)
+                    if sr_act and (cfg.latch or not cfg.sync or not h.flag("sync_sr_acts_on_edge_only")) and h.flag("async_sr_acts_on_level"):
+                        q[i] = cfg.srval; continue
+                    if cfg.latch and h.flag("latch_transparent_when_gate_high_and_ge"):
+                        gate = (level ^ (1 if (cfg.clk_inverted and h.flag("clock_inversion_swaps_edge")) else 0)) if h.flag("latch_gate_is_physical_clock") else level
+                        ce_ok = (ce1 if (cfg.ce_driven and h.flag("ce_gates_capture")) else True)
+                        if gate and ce_ok:
+                            q[i] = (d >> i) & 1
+            settle(clock)
+            before, clock = clock, st["clock"]
+            if before != clock:
+                capture = "rising" if h.flag("ff_capture_on_physical_rising_edge") else "falling"
+                for i, e in enumerate(E):
+                    cfg = decoded[e]
+                    if not cfg.applicable or cfg.latch:
+                        continue
+                    inv = 1 if (cfg.clk_inverted and h.flag("clock_inversion_swaps_edge")) else 0
+                    pb, pa = before ^ inv, clock ^ inv
+                    edge = "rising" if (pb, pa) == (0, 1) else "falling" if (pb, pa) == (1, 0) else None
+                    if edge != capture:
+                        continue
+                    sr_act = (sr1 if (cfg.sr_driven or not h.flag("sr_tied_low_when_not_driven")) else False)
+                    ce_ok = (ce1 if (cfg.ce_driven and h.flag("ce_gates_capture")) else True)
+                    if cfg.sync and sr_act and h.flag("sr_has_priority_over_capture"):
+                        q[i] = cfg.srval
+                    elif ce_ok:
+                        q[i] = (d >> i) & 1
+            settle(clock)
+            grids.append(list(q))
+        return grids
+
+    def test_a_broadcast_stimulus_gives_the_slice_wide_twin_s_trace_on_every_sampled_configuration(self):
+        import b4_landscape as bl
+        rng = random.Random(7)
+        stimuli = [bl.public_parts(s)["stimulus"] for s in (3, 5, 7, 8)] + [bl.public_parts(s)["holdout_stimulus"] for s in (11, 12)]
+        n_checked = 0
+        for _ in range(60):
+            genome = rng.getrandbits(21)
+            config = {a: (genome >> i) & 1 for i, a in enumerate(self.m.addresses)}
+            for stim in stimuli:
+                self.assertEqual(bl.stimulus_findings(stim), [])
+                trace = self.fab.observe(config, list(stim))
+                self.assertEqual(q_after(trace), self.reference(config, stim), (genome,)); n_checked += 1
+        self.assertGreater(n_checked, 300)
+        # where the two models part: a per-element vector (not a task-v0.3 stimulus) — the formal model reads bit i, the twin cannot
+        config = base_config(self.m)
+        stim = [fm.init(), fm.set_(1, ce=0x0F, sr=0x00, d=0xFF), fm.set_(0, ce=0x0F, sr=0x00, d=0xFF)]
+        t = self.fab.observe(config, stim)
+        self.assertEqual(q_after(t)[1], [1, 1, 1, 1, 1, 1, 1, 1], "INIT = 1 everywhere; CE gates the capture of d = 0xFF per element (no change where ce bit is 0 — INIT 1 stays 1)")
+        stim = [fm.init(), fm.set_(1, ce=0x0F, sr=0x00, d=0x00), fm.set_(0, ce=0x0F, sr=0x00, d=0x00)]
+        t = self.fab.observe(config, stim)
+        self.assertEqual(q_after(t)[1], [0, 0, 0, 0, 1, 1, 1, 1], "a per-element ce captures d = 0 on the low nibble only: the per-element reading the task no longer produces")
+        self.assertTrue(bl.stimulus_findings(stim), "and the validator names it")
+
+
 class Isolation(Base):
     def test_an_observation_starts_from_nothing_and_init_gives_the_value(self):
         a = self.fab.observe(self.cfg(), [fm.init(), *fm.pulse(ce=ALL, d=0)])

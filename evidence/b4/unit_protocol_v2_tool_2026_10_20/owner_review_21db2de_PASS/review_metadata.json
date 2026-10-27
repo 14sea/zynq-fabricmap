@@ -1,0 +1,117 @@
+{
+  "utc": "2026-10-21T04:55:50.014708+00:00",
+  "verdict": "PASS",
+  "scope": "v0.2.0 host tool engineering acceptance; unit closed",
+  "head": "21db2de362b4f1f3bac635d01803ac765b931e3e",
+  "parent": "b29b0fb838ae62af6bff436505d200402520230d",
+  "status": {
+    "command": [
+      "git",
+      "status",
+      "--short",
+      "--branch"
+    ],
+    "exit": 0,
+    "stdout": "## b4-protocol-v2\n",
+    "stderr": ""
+  },
+  "main": "a243ee8ab904d23706bd6b8fee0d76d6ccb200a5",
+  "full_tests": {
+    "count": 326,
+    "seconds": 574.339,
+    "result": "OK",
+    "log": "tests.txt",
+    "command": "python3 -B -m unittest -v b4.tests.test_b4_carto b4.tests.test_b4_controls b4.tests.test_b4_deadline b4.tests.test_b4_engine b4.tests.test_b4_execution b4.tests.test_b4_ff_hypothesis b4.tests.test_b4_ff_mapping b4.tests.test_b4_ff_model b4.tests.test_b4_gate b4.tests.test_b4_gate_stats b4.tests.test_b4_gonogo b4.tests.test_b4_k10 b4.tests.test_b4_k9 b4.tests.test_b4_landscape b4.tests.test_b4_probe_latch_ginv b4.tests.test_b4_protocol b4.tests.test_b4_replay b4.tests.test_b4_rng b4.tests.test_b4_seeds b4.tests.test_b4_sim b4.tests.test_b4_snapshot b4.tests.test_b4_stats b4.tests.test_b4_target b4.tests.test_b4_thresholds"
+  },
+  "fresh_e2e_command": "python3 -B /tmp/owner_21db2de_e2e_cached.py /tmp/owner_21db2de_e2e",
+  "fresh_comparison": {
+    "command": [
+      "python3",
+      "-B",
+      "evidence/b4/unit_protocol_v2_tool_2026_10_20/e2e_v2_compare.py",
+      "evidence/b4/unit_protocol_v2_tool_2026_10_20/e2e_v2",
+      "/tmp/owner_21db2de_e2e"
+    ],
+    "exit": 0,
+    "stdout": "{\n \"per_directory\": {\n  \"complete/batch\": {\n   \"comparable\": 51,\n   \"equal\": 51,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"complete/gate\": {\n   \"comparable\": 1,\n   \"equal\": 1,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": [\n    \"gate_report.md\"\n   ]\n  },\n  \"complete/gonogo\": {\n   \"comparable\": 1,\n   \"equal\": 1,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": [\n    \"gonogo.md\"\n   ]\n  },\n  \"complete_32/batch\": {\n   \"comparable\": 771,\n   \"equal\": 771,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"complete_32/gonogo\": {\n   \"comparable\": 1,\n   \"equal\": 1,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": [\n    \"gonogo.md\"\n   ]\n  },\n  \"incomplete/batch\": {\n   \"comparable\": 25,\n   \"equal\": 25,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"incomplete/gate\": {\n   \"comparable\": 1,\n   \"equal\": 1,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": [\n    \"gate_report.md\"\n   ]\n  },\n  \"interrupt_after_first_quarantine/batch\": {\n   \"comparable\": 6,\n   \"equal\": 6,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"interrupt_after_holdout/batch\": {\n   \"comparable\": 7,\n   \"equal\": 7,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"interrupt_after_second_quarantine/batch\": {\n   \"comparable\": 7,\n   \"equal\": 7,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"invalid/batch\": {\n   \"comparable\": 39,\n   \"equal\": 39,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"invalid/gate\": {\n   \"comparable\": 1,\n   \"equal\": 1,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": [\n    \"gate_report.md\"\n   ]\n  },\n  \"return_bad_cell/batch\": {\n   \"comparable\": 6,\n   \"equal\": 6,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"return_float_first/batch\": {\n   \"comparable\": 6,\n   \"equal\": 6,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"return_float_second/batch\": {\n   \"comparable\": 7,\n   \"equal\": 7,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"return_init_none/batch\": {\n   \"comparable\": 6,\n   \"equal\": 6,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"return_malformed/batch\": {\n   \"comparable\": 6,\n   \"equal\": 6,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"return_nonserialisable/batch\": {\n   \"comparable\": 6,\n   \"equal\": 6,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"source_drift/batch\": {\n   \"comparable\": 7,\n   \"equal\": 7,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"target_invalid/batch\": {\n   \"comparable\": 5,\n   \"equal\": 5,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  },\n  \"target_partial/batch\": {\n   \"comparable\": 6,\n   \"equal\": 6,\n   \"different\": [],\n   \"missing_in_b\": [],\n   \"extra_in_b\": [],\n   \"renderings_skipped\": []\n  }\n },\n \"total\": {\n  \"comparable\": 966,\n  \"equal\": 966,\n  \"different\": 0,\n  \"missing\": 0\n },\n \"pass\": true\n}\n",
+    "stderr": ""
+  },
+  "selected_mutants": {
+    "selection": [
+      "M39",
+      "M51",
+      "M52",
+      "M53",
+      "M54",
+      "M55",
+      "M56",
+      "M57"
+    ],
+    "killed": 7,
+    "survived_equivalent": [
+      "M39"
+    ],
+    "log": "selected_mutants.txt"
+  },
+  "author_full_mutants_inspected": {
+    "killed": 54,
+    "survived": [
+      "M31",
+      "M39",
+      "M45"
+    ],
+    "independently_rerun_full_battery": false
+  },
+  "protected_diff": {
+    "command": [
+      "git",
+      "diff",
+      "--exit-code",
+      "b29b0fb",
+      "HEAD",
+      "--",
+      "b3/",
+      "host/",
+      "tests/",
+      "firmware/",
+      "manifests/",
+      "evidence/b3/",
+      "evidence/b4/sim/",
+      "evidence/b4/gate/",
+      "b4/hypothesis/",
+      "b4/host/b4_ff_model.py",
+      "b4/host/b4_ff_hypothesis.py",
+      "b4/host/b4_ff_mapping.py",
+      "b4/host/b4_gate_stats.py",
+      "b4/host/b4_rng.py",
+      "b4/host/b4_thresholds.py",
+      "b4/host/b4_protocol.py"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "prior_review_archive": {
+    "missing": [],
+    "different": [],
+    "source": "/home/test/zynq_fabricmap/build/wip/owner_review_b29b0fb_2026_10_20",
+    "archive": "/home/test/zynq_fabricmap/evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_b29b0fb_HOLD"
+  },
+  "diff_check": {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "b29b0fb",
+      "HEAD"
+    ],
+    "exit": 2,
+    "stdout": "evidence/b4/unit_protocol_v2_tool_2026_10_20/tests_b29b0fb.txt:2: trailing whitespace.\n+# cmd: python3 -B -m unittest -v b4.tests.test_b4_carto b4.tests.test_b4_controls b4.tests.test_b4_deadline b4.tests.test_b4_engine b4.tests.test_b4_execution b4.tests.test_b4_ff_hypothesis b4.tests.test_b4_ff_mapping b4.tests.test_b4_ff_model b4.tests.test_b4_gate b4.tests.test_b4_gate_stats b4.tests.test_b4_gonogo b4.tests.test_b4_k10 b4.tests.test_b4_k9 b4.tests.test_b4_landscape b4.tests.test_b4_probe_latch_ginv b4.tests.test_b4_protocol b4.tests.test_b4_replay b4.tests.test_b4_rng b4.tests.test_b4_seeds b4.tests.test_b4_sim b4.tests.test_b4_snapshot b4.tests.test_b4_stats b4.tests.test_b4_target b4.tests.test_b4_thresholds \n",
+    "stderr": ""
+  },
+  "new_production_seed_derivation": false,
+  "tracked_changes_by_reviewer": false,
+  "production_runs_by_reviewer": false,
+  "production_archive_changes": false,
+  "next_authorization": "pure-document b4-sim-4 execution plan only; no preflight, seeds, run, push or merge"
+}

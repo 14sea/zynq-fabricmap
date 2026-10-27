@@ -13,6 +13,8 @@ for p in (R / "b4/host",):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 import b4_k10 as k10  # noqa: E402
+import b4_landscape as bl  # noqa: E402
+import b4_protocol as bp  # noqa: E402
 import b4_thresholds as th  # noqa: E402
 from b4_ff_hypothesis import HYPOTHESIS_SHA256  # noqa: E402
 
@@ -25,8 +27,10 @@ def rows_of_section_9(doc: str) -> dict:
     i93 = doc.index("\n### 9.3 ")
     i10 = doc.index("\n## 10. ")
     i8 = doc.index("\n## 8. Controls")
+    i71 = doc.index("\n### 7.1 ")
+    i72 = doc.index("\n### 7.2 ")
     sec9 = doc[i9:i91]
-    out = {"9-intro": sec9[:sec9.index("| id | criterion |")], "9.2": doc[i92:i93], "9.3": doc[i93:i10], "8": doc[i8:i9]}
+    out = {"9-intro": sec9[:sec9.index("| id | criterion |")], "9.2": doc[i92:i93], "9.3": doc[i93:i10], "8": doc[i8:i9], "7.1": doc[i71:i72], "7.2": doc[i72:i8]}
     for m in re.finditer(r"^\| (K\d+) [^|]*\|(.*)$", sec9, re.M):
         out[m.group(1)] = m.group(0)
     out["K-grid"] = sec9[sec9.index("**The budget grid and `B*`.**"):]
@@ -60,16 +64,51 @@ class ThePins(unittest.TestCase):
         self.assertEqual((T["K10"]["tau"], T["K10"]["interacting_seeds_over_S_min"], T["K10"]["pairs_per_background"], T["K10"]["backgrounds"], T["K10"]["background_salt"]), (2, 0.50, 210, 2, 0x4C0A4E55))
         self.assertEqual((T["K10"]["tau"], T["K10"]["background_salt"]), (k10.TAU, k10.SALT), "the driver's constants are the table's")
         self.assertEqual(T["anchor"]["hypothesis_sha256"], HYPOTHESIS_SHA256)
-        self.assertEqual((T["anchor"]["gate_label"], T["anchor"]["exploration_label"]), ("b4-gate-1", "b4-sim-3"), "the retired labels are never the exploration label")
-        self.assertEqual(sorted(T["anchor"]["retired_exploration_labels"]), ["b4-sim-1", "b4-sim-2"])
+        self.assertEqual((T["anchor"]["gate_label"], T["anchor"]["exploration_label"]), ("b4-gate-2", "b4-sim-5"), "protocol v0.3.0: the next labels; the retired and consumed ones never")
+        self.assertEqual(sorted(T["anchor"]["retired_exploration_labels"]), ["b4-sim-1", "b4-sim-2"]); self.assertEqual(sorted(T["anchor"]["consumed_labels"]), ["b4-gate-1", "b4-sim-3", "b4-sim-4"])
         import b4_seeds as bs
         self.assertEqual((set(T["anchor"]["retired_exploration_labels"]), T["anchor"]["exploration_label"]), (set(bs.RETIRED_LABELS), bs.EXPLORATION_LABEL), "the table and the loader agree")
-        self.assertNotIn(bs.EXPLORATION_LABEL, bs.RETIRED_LABELS)
+        self.assertEqual((set(T["anchor"]["consumed_labels"]), T["anchor"]["gate_label"]), (set(bs.CONSUMED_LABELS), bs.GATE_LABEL))
+        self.assertNotIn(bs.EXPLORATION_LABEL, bs.RETIRED_LABELS | bs.CONSUMED_LABELS); self.assertNotIn(bs.GATE_LABEL, bs.RETIRED_LABELS | bs.CONSUMED_LABELS)
         self.assertEqual(T["delta2_F_shift"], 21)
+        self.assertEqual((T["task"]["version"], T["task"]["target_salt"], T["task"]["setup_observations_per_pair"]), ("task-v0.3", 0x54415247, 2))
+        self.assertEqual((T["gonogo"]["S"], T["gonogo"]["B_go"], T["gonogo"]["p_max_go"], T["gonogo"]["k9_conditional_medians_min"]), (32, 64, 0.20, 0.50))
+        self.assertNotIn("alpha_go", T["gonogo"], "the p threshold is a cost threshold, not an alpha (the owner's ruling of 2026-10-27)"); self.assertIn("not the alpha", T["gonogo"]["p_max_go_standing"])
+        self.assertIn("b4-sim-5", T["gonogo"]["applies_to"]); self.assertIn("b4-sim-4", T["gonogo"]["applies_to"])
+        # task-v0.3 (section 7.2): the slice-wide stimulus rule of the table is the generator's
+        self.assertEqual((bl.CE_HIGH_ONE_IN, bl.SR_HIGH_ONE_IN, bl.BROADCAST), (2, 4, {0: 0x00, 1: 0xFF}))
+        self.assertIn("1/2", T["task"]["stimulus"]["ce"]); self.assertIn("1/4", T["task"]["stimulus"]["sr"]); self.assertEqual(T["task"]["stimulus"]["draw_order"], "ce, sr, d")
+        self.assertEqual((T["task"]["stimulus"]["K"], T["task"]["stimulus"]["level_steps"]), ({"search": bl.K_DEFAULT, "holdout": bl.K_HOLDOUT}, bl.LEVEL_STEPS))
+        self.assertIn("task-v0.2", T["task"]["stimulus"]["previous"]); self.assertEqual(bl.PREVIOUS_TASK_VERSION, "task-v0.2")
+        self.assertEqual(T["K9"]["judged_estimand"], "conditional_sr_driven")
+        self.assertEqual((bl.TASK_VERSION, bl.SALT_TARGET), (T["task"]["version"], T["task"]["target_salt"]), "the generator's constants are the table's")
 
-    def test_the_document_version_is_the_table_s(self):
-        self.assertIn("v0.1.16", th.ARCHITECTURE_SECTION)
-        self.assertIn("(DRAFT v0.1.16,", self.doc.splitlines()[0])
+    def test_the_document_version_is_informational_outside_the_table_and_outside_the_method_digest(self):
+        """The new pin / identity contract (the owner's choice 6, 2026-10-20): the document's first line carries the revision the table was written
+        against (an informational constant, not a table field); the table's source text carries no version; the thresholds digest and the
+        protocol identity's digest do not move when the revision text moves."""
+        self.assertRegex(th.ARCHITECTURE_REVISION, th.ARCHITECTURE_REVISION_RE, "no revision literal here either: this test must stay green across a documentation-only revision (R1)")
+        self.assertIn(f"(DRAFT {th.ARCHITECTURE_REVISION},", self.doc.splitlines()[0])
+        self.assertNotIn("v0.", th.THRESHOLDS["source"]); self.assertNotIn("v0.", th.ARCHITECTURE_SECTION)
+        self.assertNotIn("architecture_revision", th.THRESHOLDS)
+        self.assertEqual(bp.thresholds_sha256(dict(th.THRESHOLDS, source="x")), bp.thresholds_sha256(th.THRESHOLDS))
+        p = bp.identity(); q = dict(p, architecture_revision="v0.3.0")
+        self.assertEqual(bp.protocol_sha256(p), bp.protocol_sha256(q)); self.assertEqual(bp.compare(q, p), [])
+        self.assertEqual(p["architecture_revision"], th.ARCHITECTURE_REVISION)
+        # R1 (the owner's review of 04385ae): the revision is READ from b4/architecture_revision.json — a file outside the identity's inventory,
+        # not a tool file — so that a documentation-only revision touches no inventoried byte (the fresh-interpreter workflow is test_b4_protocol's)
+        self.assertEqual(th.read_architecture_revision(R), th.ARCHITECTURE_REVISION)
+        self.assertNotIn(th.ARCHITECTURE_REVISION_REL, bp.inventory()); self.assertFalse(th.ARCHITECTURE_REVISION_REL.startswith(("b4/host/", "b4/schemas/")))
+        for tool in sorted((R / "b4/host").glob("*.py")):
+            self.assertNotIn('ARCHITECTURE_REVISION = "v', tool.read_text(), f"{tool.name}: the revision literal is not in a tool file")
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="b4rev_") as tmp:
+            (Path(tmp) / "b4").mkdir()
+            with self.assertRaises(RuntimeError):
+                th.read_architecture_revision(Path(tmp))
+            (Path(tmp) / th.ARCHITECTURE_REVISION_REL).write_text('{"schema": "b4_architecture_revision", "document": "docs/b4_architecture.md", "revision": "0.2"}')
+            with self.assertRaises(RuntimeError):
+                th.read_architecture_revision(Path(tmp))
 
     def test_a_changed_number_would_be_caught(self):
         rows = dict(self.rows)

@@ -1,0 +1,7 @@
+{"schema": "b4_carrier_build", "schema_version": "1.0.0", "part": "xc7z010clg400-1", "top": "b4_top",
+ "vivado": "2025.2", "routed": true, "cell_isolation": "passed", "wns_ns": 7.263, "icape2_cells": 0,
+ "startupe2_cells": 1, "ram32x1s_cells": 279, "bitstream": "b4.bit", "bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9", "nonce_seed": "0x9E3779B97F4A7C15",
+ "gate": "b4_gate (the B1 gate without the sweep; persistent nonce / armed / fault); VARIANT 0x2034 = 0x42340001",
+ "init_mechanism": "(b) GSR through STARTUPE2, driven by b4_engine; the key, nonce, fault, armed latch, samples and witnesses in RAM32X1S",
+ "key": "runtime-provisioned, write-once, persistent across the init event; not in this bitstream",
+ "resumed_from": "post_route.dcp (the isolation checker's BEL string corrected after the first routed build; no re-synthesis, no re-route)"}

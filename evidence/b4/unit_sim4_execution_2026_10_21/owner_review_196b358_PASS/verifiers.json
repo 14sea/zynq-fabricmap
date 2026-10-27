@@ -1,0 +1,39 @@
+[
+  {
+    "name": "sim_verify",
+    "command": [
+      "python3",
+      "-B",
+      "b4/host/b4_sim_verify.py",
+      "evidence/b4/sim/b4-sim-4_20261021T065339Z"
+    ],
+    "start_utc": "2026-10-21T07:27:19.459176+00:00",
+    "elapsed_s": 75.59594172303332,
+    "exit": 0,
+    "result": {
+      "run_dir": "evidence/b4/sim/b4-sim-4_20261021T065339Z",
+      "findings": {},
+      "clean": true,
+      "limit": "a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth"
+    }
+  },
+  {
+    "name": "gonogo_verify",
+    "command": [
+      "python3",
+      "-B",
+      "b4/host/b4_gonogo.py",
+      "verify",
+      "evidence/b4/gonogo/b4-sim-4_20261021T065857Z"
+    ],
+    "start_utc": "2026-10-21T07:28:35.061344+00:00",
+    "elapsed_s": 123.38912625401281,
+    "exit": 0,
+    "result": {
+      "gonogo_dir": "evidence/b4/gonogo/b4-sim-4_20261021T065857Z",
+      "findings": {},
+      "clean": true,
+      "limit": "a clean verification shows the record follows from its evidence under the fixed policy; a go is not a gate result and not an authorisation"
+    }
+  }
+]

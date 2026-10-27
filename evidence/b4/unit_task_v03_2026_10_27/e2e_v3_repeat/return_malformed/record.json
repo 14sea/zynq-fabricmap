@@ -1,0 +1,88 @@
+{
+ "digests": {
+  "batch": {
+   "STOPPED.json": {
+    "normalised_sha256": "08461db2f35ca2ff6b7583d326bf693d3211d747734dcd14a4e7b820929e5716",
+    "sha256": "c96a69b2393213d8eb811de9295c786341cf50d9b3791f782fc3396ade4dbd3c",
+    "size": 1520
+   },
+   "manifest.json": {
+    "normalised_sha256": "56f5989ae91db4cc4230d1033b18b5d912d4f74ca17b56938e8fabbff32e4ed9",
+    "sha256": "41c416328ed20f6a84f56d4647c6bdb561175147d4bb4e62dcf7b0471fac28f0",
+    "size": 44584
+   },
+   "pair_000/target_search.QUARANTINE.json": {
+    "normalised_sha256": "10d7ad203c6922aabea47e6dbf3d8e0e87cd251f106fd0824f31f70099c249d5",
+    "sha256": "c633618768788f560b1b85b565391e48f7ba2bdde5afd6769da522698c9538fe",
+    "size": 9945
+   },
+   "pair_000/task_setup.json": {
+    "normalised_sha256": "cb5ceac21e5556f30c9bee291bb595f41b208b7edff6a4d7cee2b4891b0d6348",
+    "sha256": "9ae7149a56cb358c3cd01212c92cf3ef31fd3bcbb3f2b07aded4273388607cd2",
+    "size": 2118
+   },
+   "seeds.json": {
+    "normalised_sha256": "eaca254055aba525cacb6cd44664a026c0333415d107afd06c4384e159b1c6b4",
+    "sha256": "64cae2c8058d0daf70ec47ff97e7d4193182bb361df6f40d6a58a57547d0c159",
+    "size": 132810
+   },
+   "sim_report.json": {
+    "normalised_sha256": "b350879ae3957bea2a3ba246cb68d6266501ec4c54feed66957567473bf1a0ac",
+    "sha256": "c35ba4e1fc6fdb24fc928013f114fa9ae67ee170a67301835e5da076c50de449",
+    "size": 16217
+   }
+  }
+ },
+ "exit_code": 1,
+ "expected": {
+  "files": [
+   "target_search.QUARANTINE.json",
+   "task_setup.json"
+  ],
+  "kind": "target_invalid",
+  "prefix": 1,
+  "quarantine": "target",
+  "status": "invalid",
+  "task": "invalid"
+ },
+ "fresh_batch_exit": 0,
+ "normalisation": {
+  "files_in_raw_map": 1020,
+  "fixed_point_passes": 23,
+  "substituted_references": 4942
+ },
+ "pair_000": {
+  "status": "partial",
+  "task": "invalid",
+  "task_prefix": 1,
+  "task_quarantine": "target"
+ },
+ "pair_000_files": [
+  "target_search.QUARANTINE.json",
+  "task_setup.json"
+ ],
+ "quarantine": {
+  "context": {
+   "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+   "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+   "genome": 588756,
+   "genome_hex": "08fbd4",
+   "phase": "target",
+   "returned_sha256": "f33e90129e801b47cef2a27531b768be98768ec2fc54c224897fa388a8267e9f",
+   "stimulus_sha256": "50a25b4164f6e985efde77b0bb2d2101439794110327f435189269dda6e5462e"
+  },
+  "findings": [
+   "step 0: no q_after row of 8 cells"
+  ],
+  "marker_found": true,
+  "raw_is_null": false
+ },
+ "raw_links": {
+  "resolved": 5,
+  "unresolved": []
+ },
+ "status": "invalid",
+ "stopped_kind": "target_invalid",
+ "stopped_role": "TARGET",
+ "stopped_stage": "target_setup"
+}

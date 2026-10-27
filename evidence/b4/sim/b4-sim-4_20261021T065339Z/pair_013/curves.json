@@ -1,0 +1,169 @@
+{
+ "base_fit": 32,
+ "best_at_grid": {
+  "A0": [
+   32,
+   32,
+   32,
+   32,
+   42,
+   46,
+   50,
+   55,
+   57,
+   58
+  ],
+  "D": [
+   32,
+   32,
+   32,
+   39,
+   53,
+   56,
+   57,
+   58,
+   58,
+   58
+  ],
+  "F": [
+   32,
+   38,
+   40,
+   46,
+   50,
+   56,
+   58,
+   59,
+   60,
+   62
+  ],
+  "O": [
+   32,
+   32,
+   32,
+   36,
+   49,
+   54,
+   56,
+   57,
+   58,
+   58
+  ],
+  "Omega": [
+   32,
+   32,
+   32,
+   36,
+   39,
+   47,
+   55,
+   59,
+   63,
+   64
+  ],
+  "R": [
+   32,
+   32,
+   35,
+   35,
+   46,
+   55,
+   60,
+   60,
+   61,
+   61
+  ],
+  "X": [
+   32,
+   32,
+   32,
+   36,
+   49,
+   53,
+   56,
+   57,
+   58,
+   61
+  ]
+ },
+ "f_end_to_end_at_grid": [
+  {
+   "T": 8,
+   "mapping_in_progress": true,
+   "value": 32
+  },
+  {
+   "T": 16,
+   "mapping_in_progress": true,
+   "value": 32
+  },
+  {
+   "T": 24,
+   "mapping_in_progress": false,
+   "value": 32
+  },
+  {
+   "T": 32,
+   "mapping_in_progress": false,
+   "value": 32
+  },
+  {
+   "T": 48,
+   "mapping_in_progress": false,
+   "value": 46
+  },
+  {
+   "T": 64,
+   "mapping_in_progress": false,
+   "value": 50
+  },
+  {
+   "T": 96,
+   "mapping_in_progress": false,
+   "value": 56
+  },
+  {
+   "T": 128,
+   "mapping_in_progress": false,
+   "value": 59
+  },
+  {
+   "T": 192,
+   "mapping_in_progress": false,
+   "value": 59
+  },
+  {
+   "T": 256,
+   "mapping_in_progress": false,
+   "value": 62
+  }
+ ],
+ "grid": [
+  8,
+  16,
+  24,
+  32,
+  48,
+  64,
+  96,
+  128,
+  192,
+  256
+ ],
+ "holdout": {
+  "A0": 61,
+  "D": 61,
+  "F": 65,
+  "O": 61,
+  "Omega": 78,
+  "R": 69,
+  "X": 73
+ },
+ "landscape_seed": 2259348546,
+ "operator_seed": 293838523,
+ "pair": 13,
+ "schema": "b4_sim_curves",
+ "schema_version": "1.1.0",
+ "target_equals_R_base_search_trace": false,
+ "written_utc": "2026-10-21T06:54:33Z"
+}

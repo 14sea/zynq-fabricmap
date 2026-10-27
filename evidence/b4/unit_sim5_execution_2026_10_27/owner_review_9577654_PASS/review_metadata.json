@@ -1,0 +1,31 @@
+{
+  "utc": "2026-10-27T17:31:01.899172+00:00",
+  "reviewed_tip": "95776549b7e97b3de91a24cf8246cec6abe46a3e",
+  "verdict": "PASS",
+  "recorded_policy_decision": "no-go",
+  "execution_HEAD": "ae7fc3547e1f9271a430b38ffee7fd469b89a7ee",
+  "archive_commit": "d1e0e2cc33e9cdfbdf65270a89277599a17ccd74",
+  "decision_commit": "61733c55e49ed39737f537eae4f01aaf700f8ca4",
+  "tracked_changes_by_reviewer": false,
+  "new_seed_derivation": false,
+  "new_fabric_observations": false,
+  "fresh_process_checks": [
+    {
+      "command": "python3 -B b4/host/b4_sim_verify.py evidence/b4/sim/b4-sim-5_20261027T170605Z",
+      "exit": 0,
+      "output": "sim_verify.txt"
+    },
+    {
+      "command": "python3 -B b4/host/b4_gonogo.py verify evidence/b4/gonogo/b4-sim-5_20261027T171342Z",
+      "exit": 0,
+      "output": "gonogo_verify.txt"
+    }
+  ],
+  "additional_commands": [
+    "python3 -B build/wip/owner_review_9577654_2026_10_27/independent_checks.py",
+    "python3 -B -m unittest discover -s b4/tests -p test_b4_thresholds.py",
+    "git diff --check ae7fc35 HEAD"
+  ],
+  "routine_document_closure_authorised": true,
+  "new_execution_authorised": false
+}

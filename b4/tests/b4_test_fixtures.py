@@ -18,6 +18,25 @@ import b4_execution as ex  # noqa: E402
 import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
+import b4_landscape as bl  # noqa: E402
+import b4_target as bt  # noqa: E402
+
+
+def v02_setup(seed: int, fabric: fm.Fabric, operator_seed: int = 0, pair: int = 0):
+    """A task-v0.2 task built the harness's way on the given fabric: the plan (the planted flip-flop genome by the fixed rule), the two
+    setup observations through an ordinary port, the PublicTask. Returns (task, plan, search record, holdout record). The seeds used by
+    the tests are already-exposed values (section 9.2); nothing production-like is derived."""
+    m = fabric.mapping
+    plan = bt.plan(pair, seed, operator_seed, m)
+    port = ex.ObservationPort(fabric)
+    parts = bl.public_parts(seed)
+    r1 = bt.observe_target(port, plan["planted_genome"], parts["stimulus"], m.addresses, "target")
+    r2 = bt.observe_target(port, plan["planted_genome"], parts["holdout_stimulus"], m.addresses, "target_holdout")
+    return bt.rebuild_task(plan, r1, r2), plan, r1, r2
+
+
+def v02_task(seed: int, fabric: fm.Fabric, operator_seed: int = 0) -> ex.PublicTask:
+    return v02_setup(seed, fabric, operator_seed)[0]
 
 
 def mechanics_hypothesis() -> hy.Hypothesis:

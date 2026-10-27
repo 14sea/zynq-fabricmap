@@ -25,7 +25,7 @@ import b4_replay as br  # noqa: E402
 from unittest import mock  # noqa: E402
 
 
-from b4_test_fixtures import InjectingPort, V021_SHA256, v021_hole_fabric  # noqa: E402
+from b4_test_fixtures import InjectingPort, V021_SHA256, v021_hole_fabric, v02_task  # noqa: E402
 
 
 def failing_isomorphism(at_call: int):
@@ -49,7 +49,7 @@ class Base(unittest.TestCase):
         cls.m, cls.h = bm.site_mapping(), hy.load()
         cls.hfix = cls.h.with_reading("clock_mode", "not_inverted", "not_inverted", "mechanics", context="latch")
         cls.fab = fm.Fabric(cls.m, cls.hfix)
-        cls.task = bl.make_task(7, cls.m.addresses)
+        cls.task = v02_task(7, cls.fab)
 
     def port(self):
         return ex.ObservationPort(self.fab)

@@ -76,11 +76,11 @@ def backgrounds(landscape_seed: int) -> list[int]:
     return [0, rng.uniform(1 << 21)]
 
 
-def seed_k10(task: ex.PublicTask, port: ex.ObservationPort, tau: float = TAU, check=None) -> dict:
+def seed_k10(task: ex.PublicTask, port: ex.ObservationPort, landscape_seed: int, tau: float = TAU, check=None) -> dict:
     n = len(task.addresses)
     if n != 21:
         raise ValueError("K10 is written for the 21-address universe")
-    bgs = backgrounds(task.seed)
+    bgs = backgrounds(landscape_seed)                           # the harness's seed: the task (task-v0.2 / H) carries none
     memo = Memo(port)
     stim = list(task.stimulus)
     corner_obs: dict[str, int] = {}
@@ -101,7 +101,7 @@ def seed_k10(task: ex.PublicTask, port: ex.ObservationPort, tau: float = TAU, ch
 
     units: list[dict] = []
     stopped = None
-    partial = lambda: {"landscape_seed": task.seed, "task_digest": task.digest(), "stimulus_sha256": ex.sha256_json(stim), "tau": tau,  # noqa: E731
+    partial = lambda: {"landscape_seed": landscape_seed, "task_digest": task.digest(), "stimulus_sha256": ex.sha256_json(stim), "tau": tau,  # noqa: E731
                        "backgrounds": bgs, "backgrounds_equal": bgs[0] == bgs[1], "units_total": 2 * (n * (n - 1) // 2), "units": units,
                        "observations": memo.records(), "memo": memo.summary()}
 
@@ -185,7 +185,7 @@ def recompute(result: dict, task: ex.PublicTask) -> list[str]:
     """Offline: every corner's score from its kept q grid under the task's mask, every index from the four scores, the
     per-seed max and outcome from the units; the backgrounds from the seed. Names every difference."""
     f: list[str] = []
-    if result["backgrounds"] != backgrounds(task.seed):
+    if result["backgrounds"] != backgrounds(result["landscape_seed"]):
         f.append("the backgrounds are not the seed's")
     f += canonical_findings(result)
     if len(result["units"]) > len(canonical_units()):

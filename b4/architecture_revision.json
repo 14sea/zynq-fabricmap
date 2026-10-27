@@ -1,0 +1,7 @@
+{
+ "schema": "b4_architecture_revision",
+ "schema_version": "1.0.0",
+ "document": "docs/b4_architecture.md",
+ "revision": "v0.3.0",
+ "note": "PROVENANCE, NOT METHOD (docs/b4_architecture.md section 9.5; the owner's choice 6 of 2026-10-20 and the owner's review of 04385ae, R1): the revision text of the architecture document that the current tool tree was written against. The static pin test holds the document's first line to this value; the protocol identity carries it as an informational field EXCLUDED from the method digest and from the equality. This file is outside the identity's inventory (b4/host, b4/schemas) on purpose: a documentation-only revision changes this file and the document, nothing under b4/host, and the method's identity does not move. It is listed in b4/IMPORT.json like every file under b4/, but its table entry is not part of the identity's import_table_sha256 projection."
+}

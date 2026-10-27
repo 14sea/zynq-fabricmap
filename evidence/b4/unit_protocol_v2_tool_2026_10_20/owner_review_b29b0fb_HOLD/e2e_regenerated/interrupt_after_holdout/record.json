@@ -1,0 +1,79 @@
+{
+ "digests": {
+  "batch": {
+   "STOPPED.json": {
+    "normalised_sha256": "319a0e05da1a57ffa8854b369cf00b6ec1a8e9c03edba09843d85fc9331fb427",
+    "sha256": "32f01ed89cc3a4818629681e56d0c7fdddd8abff7a468e0ca8f8117d02bc5cdf",
+    "size": 1397
+   },
+   "manifest.json": {
+    "normalised_sha256": "be96eb13ec640bde4362d31ce1ee404f7880d3ac11ab31189a667c0eb6efaf93",
+    "sha256": "5ebec7c1cd2f49736f7dfd76ee68bfd20503189802af2ff156fc57d67e0bfc65",
+    "size": 40778
+   },
+   "pair_000/target_holdout.json": {
+    "normalised_sha256": "31485b261e124c77cb5af8859d0d5ac230b94eddd4b6f5aac5de6dff13db2ecb",
+    "sha256": "95e075bd46cf45ad86542d64a1e0bc87c3ab6b635317b15b60f50091b545dc14",
+    "size": 1897
+   },
+   "pair_000/target_search.json": {
+    "normalised_sha256": "286da0cc6e6ab489f78ebf7cbc2ba9fcee5beb5219d64d13579a63eab89b761b",
+    "sha256": "4ce6f190447205b76ec2a3292c12bb94c770aebbbbe02e6cde3a79af93deaf73",
+    "size": 1777
+   },
+   "pair_000/task_setup.json": {
+    "normalised_sha256": "588ec68e41643dcabff186104a63ae0ba5e4b4b417429bda327f682b2a61d19d",
+    "sha256": "d3ad632a53cf6aa7da6b82a1f64aa551a94b8468ff9b3964d4c280bad6bc5f13",
+    "size": 2118
+   },
+   "seeds.json": {
+    "normalised_sha256": "b2e2e7fef4f4573bb3342aa82f72137f9a89c3a350f973933296d17f12eadc14",
+    "sha256": "92823823f20ccc026cc44e582d8f4402bf9f57f95a539c40054b3a062bbb76f6",
+    "size": 132128
+   },
+   "sim_report.json": {
+    "normalised_sha256": "81569e5e9c7f64d51f3722c460a5785022edb1d35d7fa384c96109dc56c016a3",
+    "sha256": "cf0778fe0a17721fa301db20f4c6b65c486a52647a2759b7863f4012d8417305",
+    "size": 15359
+   }
+  }
+ },
+ "exit_code": 3,
+ "expected": {
+  "files": [
+   "target_holdout.json",
+   "target_search.json",
+   "task_setup.json"
+  ],
+  "kind": "interrupted",
+  "prefix": 3,
+  "quarantine": null,
+  "status": "incomplete",
+  "task": "partial"
+ },
+ "fresh_batch_exit": 0,
+ "normalisation": {
+  "files_in_raw_map": 995,
+  "fixed_point_passes": 19,
+  "substituted_references": 4290
+ },
+ "pair_000": {
+  "status": "partial",
+  "task": "partial",
+  "task_prefix": 3,
+  "task_quarantine": null
+ },
+ "pair_000_files": [
+  "target_holdout.json",
+  "target_search.json",
+  "task_setup.json"
+ ],
+ "raw_links": {
+  "resolved": 6,
+  "unresolved": []
+ },
+ "status": "incomplete",
+ "stopped_kind": "interrupted",
+ "stopped_role": "TARGET",
+ "stopped_stage": "target_setup"
+}

@@ -1,0 +1,14 @@
+{
+  "RTL": "TB_PASS owner_post_fault\ntb/b4/owner_phase.v:372: $finish called at 25040000 (1ps)",
+  "P6_O_status": "complete",
+  "P6_O_findings": [],
+  "after_fault_O_status": "invalid",
+  "after_fault_O_fault": {
+    "code": "sequence",
+    "phase_reached": "P5",
+    "step_reached": 7
+  },
+  "close_result": {
+    "raised": "a closed X needs the cleanup sample, the carrier's BASE_STATE read and the base readback"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "reviewed_tip": "ce3ca6d5d9ce5cfd50847ab2842f131fd188d79f",
+  "repair_body": "b124052",
+  "verdict": "HOLD",
+  "date_utc": "2026-10-21T16:11:13.210910+00:00",
+  "findings": [
+    "R1 P1 loaded-image versus restored-base reference binding",
+    "R2 P2 premature cleanup incorrectly seals an incomplete observation",
+    "R3 P2 standalone Lite W-before-AW lost across GSR",
+    "R4 P2 chain dereferences malformed source values"
+  ],
+  "host_tests": 28,
+  "B1_pin_tests": 3,
+  "benches": 28,
+  "known_answer_addresses": 21,
+  "fresh_OOC_core_synthesis": true,
+  "fresh_full_routed_build": false,
+  "tracked_changes_by_reviewer": false,
+  "new_production_seed_derivation": false,
+  "board_access": false,
+  "status_after": "## b4-carrier-v2\n",
+  "commands": {
+    "OOC_core": "/home/test/Xilinx/2025.2/Vivado/bin/vivado -mode batch -source vivado/b4/netlist_core.tcl -tclargs builds/b4",
+    "host_tests": "python3 -B -m unittest tests.test_b4carrier_regmap tests.test_b4carrier_records tests.test_b4carrier_benches",
+    "B1_pin_tests": "python3 -B -m unittest tests.test_b1_pins",
+    "known_answer": "python3 -B host/b4carrier_manifest.py builds/b4/b4.bit"
+  }
+}

@@ -34,6 +34,7 @@ for p in (REPO_ROOT / "b4/host",):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 import b4_gate as bg  # noqa: E402
+import b4_protocol as bp  # noqa: E402
 import b4_sim as sim  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
 import b4_sim_verify as sv  # noqa: E402
@@ -105,6 +106,13 @@ def verify_gate_dir(gate_dir: Path, doc: dict | None = None, root: Path | None =
     rf = bg.gate_report_findings(doc)
     if rf:
         F.add(bg.REPORT_JSON, *rf); return F.d
+    # --- the protocol identity (section 9.5): a judgement of another method version is refused by name, never re-judged here
+    try:
+        mine = bp.protocol_sha256(bp.identity())
+    except bp.IdentityRefusal as exc:
+        F.add("protocol", f"this tool's own tree is not its inventory: {exc}"); return F.d
+    if doc["identity"]["protocol_sha256"] != mine:
+        F.add("protocol", f"the judgement's protocol identity {doc['identity']['protocol_sha256'][:16]}… is not this tool's {mine[:16]}… — re-verify it with its own tool at its recorded HEAD (docs/b4_archive_reverification.md)"); return F.d
     kind = doc["evidence_kind"]
     expected = {bg.REPORT_MD} | ({bg.REPORT_JSON} if from_disk else set()) | ({bg.SYNTHETIC_JSON} if kind == "synthetic_summary" else set())
     if not check_md:
@@ -155,6 +163,7 @@ def verify_gate_dir(gate_dir: Path, doc: dict | None = None, root: Path | None =
             F.add("batch", "the archive's identity (label / count / fixture / status / HEAD / time) is not the recorded one")
         if not (sim.GATE_LABEL_RE.match(rep["label"]) or sim.FIXTURE_LABEL_RE.match(rep["label"])):
             F.add("batch", f"the archive's label {rep['label']!r} is neither a gate label nor a mechanics fixture label: an exploration archive is never a gate's evidence")
+        F.add("batch: protocol", *bg.archive_identity_findings(bdir))      # the archive's own identity, shallow or deep
         if F:
             return F.d
         if deep:

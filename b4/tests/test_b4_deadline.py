@@ -18,7 +18,7 @@ import b4_landscape as bl  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
 from b4_deadline import Deadline, StopWork  # noqa: E402
 from b4_observe import Memo  # noqa: E402
-from b4_test_fixtures import InjectingPort, mechanics_fabric  # noqa: E402
+from b4_test_fixtures import InjectingPort, mechanics_fabric, v02_task  # noqa: E402
 
 
 class FakeClock:
@@ -81,7 +81,7 @@ class TheMemo(unittest.TestCase):
     def setUpClass(cls):
         cls.m, cls.h = bm.site_mapping(), hy.load()
         cls.fab = fm.Fabric(cls.m, cls.h)
-        cls.task = bl.make_task(7, cls.m.addresses)
+        cls.task = v02_task(7, cls.fab)
 
     def test_hits_change_the_call_count_only(self):
         port = ex.ObservationPort(self.fab)

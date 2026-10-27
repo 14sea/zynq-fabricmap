@@ -127,8 +127,7 @@ def population_commitment(pop: list[Individual]) -> str:
 @dataclass
 class RunResult:
     arm: str
-    task_digest: str
-    landscape_seed: int
+    task_digest: str                          # the task by its digest only (task-v0.2 / H): the engine never holds the landscape seed
     operator_seed: int
     budget: int
     completed: bool = False
@@ -185,7 +184,7 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
         raise ValueError("a given view is for the frozen arm only")
     n = len(task.addresses)
     rng = Rng(operator_seed)
-    res = RunResult(arm, task.digest(), task.seed, operator_seed, budget)
+    res = RunResult(arm, task.digest(), operator_seed, budget)
     x_perm: list[int] | None = None
     if arm == "X":
         # π from the CONTROL generator, before any observation; fixed for the run, every attempt kept
@@ -206,7 +205,7 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
     attempt = 0
 
     def ctx() -> dict:
-        return {"landscape_seed": task.seed, "operator_seed": operator_seed, "budget": budget, "successful_observations": res.observations,
+        return {"task_digest": res.task_digest, "operator_seed": operator_seed, "budget": budget, "successful_observations": res.observations,
                 "rng_state": rng.state(), "population_commitment": population_commitment(pop),
                 "map_commitment": (carto.commitment() if carto else (frozen.commitment if frozen else "")),
                 "map_version": (carto.version if carto else (frozen.version if frozen else 0))}

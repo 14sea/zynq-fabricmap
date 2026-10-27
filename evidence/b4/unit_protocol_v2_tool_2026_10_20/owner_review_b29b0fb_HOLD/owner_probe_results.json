@@ -1,0 +1,402 @@
+{
+  "first_quarantine": {
+    "status": "invalid",
+    "pair": {
+      "arms": {
+        "A0": "not_started",
+        "D": "not_started",
+        "F": "not_started",
+        "O": "not_started",
+        "Omega": "not_started",
+        "R": "not_started",
+        "X": "not_started"
+      },
+      "k10": "not_started",
+      "k7": "not_started",
+      "k9": "not_started",
+      "landscape_seed": 7,
+      "operator_seed": 11,
+      "pair": 0,
+      "status": "partial",
+      "task": "invalid",
+      "task_prefix": 1,
+      "task_quarantine": "target"
+    },
+    "stopped": {
+      "deadline": {
+        "checks": 1,
+        "clock": "time.monotonic",
+        "elapsed_s": 0.173,
+        "expired": false,
+        "first_expired_at_s": null,
+        "seconds": 3600
+      },
+      "detail": "the target setup observation (target) returned an object that is not a target observation \u2014 kept in pair_000/target_search.QUARANTINE.json: step 0: no q_after row of 8 cells",
+      "head_at_stop": "16a86a9775fe3af131f694320d20b1c3bdf6bb9a",
+      "kind": "target_invalid",
+      "pair": 0,
+      "planned": [
+        {
+          "arms": {
+            "A0": "not_started",
+            "D": "not_started",
+            "F": "not_started",
+            "O": "not_started",
+            "Omega": "not_started",
+            "R": "not_started",
+            "X": "not_started"
+          },
+          "k10": "not_started",
+          "k7": "not_started",
+          "k9": "not_started",
+          "landscape_seed": 7,
+          "operator_seed": 11,
+          "pair": 0,
+          "status": "partial",
+          "task": "invalid",
+          "task_prefix": 1,
+          "task_quarantine": "target"
+        }
+      ],
+      "role": "TARGET",
+      "schema": "b4_sim_stopped",
+      "schema_version": "1.2.0",
+      "stage": "target_setup",
+      "status": "invalid",
+      "stopped_utc": "2026-10-20T20:53:24Z",
+      "traceback": null
+    },
+    "files": [
+      "STOPPED.json",
+      "manifest.json",
+      "pair_000/target_search.QUARANTINE.json",
+      "pair_000/task_setup.json",
+      "seeds.json",
+      "sim_report.json"
+    ],
+    "verify": {},
+    "fresh_verify": {
+      "exit": 0,
+      "stdout": "{\n \"run_dir\": \"/tmp/owner_b29b0fb_final_probes/root/evidence/b4/sim/b4-mech-1_first_quarantine\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n",
+      "stderr": ""
+    }
+  },
+  "second_quarantine": {
+    "status": "invalid",
+    "pair": {
+      "arms": {
+        "A0": "not_started",
+        "D": "not_started",
+        "F": "not_started",
+        "O": "not_started",
+        "Omega": "not_started",
+        "R": "not_started",
+        "X": "not_started"
+      },
+      "k10": "not_started",
+      "k7": "not_started",
+      "k9": "not_started",
+      "landscape_seed": 7,
+      "operator_seed": 11,
+      "pair": 0,
+      "status": "partial",
+      "task": "invalid",
+      "task_prefix": 2,
+      "task_quarantine": "target_holdout"
+    },
+    "stopped": {
+      "deadline": {
+        "checks": 2,
+        "clock": "time.monotonic",
+        "elapsed_s": 0.293,
+        "expired": false,
+        "first_expired_at_s": null,
+        "seconds": 3600
+      },
+      "detail": "the target setup observation (target_holdout) returned an object that is not a target observation \u2014 kept in pair_000/target_holdout.QUARANTINE.json: step 0: no q_after row of 8 cells",
+      "head_at_stop": "c0814fd6f200c11b10b0fe44863e65268ccc0963",
+      "kind": "target_invalid",
+      "pair": 0,
+      "planned": [
+        {
+          "arms": {
+            "A0": "not_started",
+            "D": "not_started",
+            "F": "not_started",
+            "O": "not_started",
+            "Omega": "not_started",
+            "R": "not_started",
+            "X": "not_started"
+          },
+          "k10": "not_started",
+          "k7": "not_started",
+          "k9": "not_started",
+          "landscape_seed": 7,
+          "operator_seed": 11,
+          "pair": 0,
+          "status": "partial",
+          "task": "invalid",
+          "task_prefix": 2,
+          "task_quarantine": "target_holdout"
+        }
+      ],
+      "role": "TARGET",
+      "schema": "b4_sim_stopped",
+      "schema_version": "1.2.0",
+      "stage": "target_setup",
+      "status": "invalid",
+      "stopped_utc": "2026-10-20T20:53:24Z",
+      "traceback": null
+    },
+    "files": [
+      "STOPPED.json",
+      "manifest.json",
+      "pair_000/target_holdout.QUARANTINE.json",
+      "pair_000/target_search.json",
+      "pair_000/task_setup.json",
+      "seeds.json",
+      "sim_report.json"
+    ],
+    "verify": {},
+    "fresh_verify": {
+      "exit": 0,
+      "stdout": "{\n \"run_dir\": \"/tmp/owner_b29b0fb_final_probes/root/evidence/b4/sim/b4-mech-1_second_quarantine\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n",
+      "stderr": ""
+    }
+  },
+  "interrupt_first_quarantine": {
+    "status": "incomplete",
+    "pair": {
+      "arms": {
+        "A0": "not_started",
+        "D": "not_started",
+        "F": "not_started",
+        "O": "not_started",
+        "Omega": "not_started",
+        "R": "not_started",
+        "X": "not_started"
+      },
+      "k10": "not_started",
+      "k7": "not_started",
+      "k9": "not_started",
+      "landscape_seed": 7,
+      "operator_seed": 11,
+      "pair": 0,
+      "status": "partial",
+      "task": "in_progress",
+      "task_prefix": 1,
+      "task_quarantine": null
+    },
+    "stopped": {
+      "deadline": {
+        "checks": 1,
+        "clock": "time.monotonic",
+        "elapsed_s": 0.282,
+        "expired": false,
+        "first_expired_at_s": null,
+        "seconds": 3600
+      },
+      "detail": "KeyboardInterrupt: an external interrupt, not a model event",
+      "head_at_stop": "425e0fdf3a478040ed6044ca611cdbf0f0715636",
+      "kind": "interrupted",
+      "pair": 0,
+      "planned": [
+        {
+          "arms": {
+            "A0": "not_started",
+            "D": "not_started",
+            "F": "not_started",
+            "O": "not_started",
+            "Omega": "not_started",
+            "R": "not_started",
+            "X": "not_started"
+          },
+          "k10": "not_started",
+          "k7": "not_started",
+          "k9": "not_started",
+          "landscape_seed": 7,
+          "operator_seed": 11,
+          "pair": 0,
+          "status": "partial",
+          "task": "in_progress",
+          "task_prefix": 1,
+          "task_quarantine": null
+        }
+      ],
+      "role": "TARGET",
+      "schema": "b4_sim_stopped",
+      "schema_version": "1.2.0",
+      "stage": "target_setup",
+      "status": "incomplete",
+      "stopped_utc": "2026-10-20T20:53:25Z",
+      "traceback": null
+    },
+    "files": [
+      "STOPPED.json",
+      "manifest.json",
+      "pair_000/target_search.QUARANTINE.json",
+      "pair_000/task_setup.json",
+      "seeds.json",
+      "sim_report.json"
+    ],
+    "verify": {
+      "pair_000/target_search.QUARANTINE.json": [
+        "not a file any pair's recorded state accounts for"
+      ]
+    },
+    "fresh_verify": {
+      "exit": 1,
+      "stdout": "{\n \"run_dir\": \"/tmp/owner_b29b0fb_final_probes/root/evidence/b4/sim/b4-mech-1_interrupt_first_quarantine\",\n \"findings\": {\n  \"pair_000/target_search.QUARANTINE.json\": [\n   \"not a file any pair's recorded state accounts for\"\n  ]\n },\n \"clean\": false,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n",
+      "stderr": ""
+    }
+  },
+  "interrupt_second_quarantine": {
+    "status": "incomplete",
+    "pair": {
+      "arms": {
+        "A0": "not_started",
+        "D": "not_started",
+        "F": "not_started",
+        "O": "not_started",
+        "Omega": "not_started",
+        "R": "not_started",
+        "X": "not_started"
+      },
+      "k10": "not_started",
+      "k7": "not_started",
+      "k9": "not_started",
+      "landscape_seed": 7,
+      "operator_seed": 11,
+      "pair": 0,
+      "status": "partial",
+      "task": "partial",
+      "task_prefix": 2,
+      "task_quarantine": null
+    },
+    "stopped": {
+      "deadline": {
+        "checks": 2,
+        "clock": "time.monotonic",
+        "elapsed_s": 0.277,
+        "expired": false,
+        "first_expired_at_s": null,
+        "seconds": 3600
+      },
+      "detail": "KeyboardInterrupt: an external interrupt, not a model event",
+      "head_at_stop": "ee99fb3fa61d30bc3f0792a0068621fd2d79d4e4",
+      "kind": "interrupted",
+      "pair": 0,
+      "planned": [
+        {
+          "arms": {
+            "A0": "not_started",
+            "D": "not_started",
+            "F": "not_started",
+            "O": "not_started",
+            "Omega": "not_started",
+            "R": "not_started",
+            "X": "not_started"
+          },
+          "k10": "not_started",
+          "k7": "not_started",
+          "k9": "not_started",
+          "landscape_seed": 7,
+          "operator_seed": 11,
+          "pair": 0,
+          "status": "partial",
+          "task": "partial",
+          "task_prefix": 2,
+          "task_quarantine": null
+        }
+      ],
+      "role": "TARGET",
+      "schema": "b4_sim_stopped",
+      "schema_version": "1.2.0",
+      "stage": "target_setup",
+      "status": "incomplete",
+      "stopped_utc": "2026-10-20T20:53:26Z",
+      "traceback": null
+    },
+    "files": [
+      "STOPPED.json",
+      "manifest.json",
+      "pair_000/target_holdout.QUARANTINE.json",
+      "pair_000/target_search.json",
+      "pair_000/task_setup.json",
+      "seeds.json",
+      "sim_report.json"
+    ],
+    "verify": {
+      "pair_000/target_holdout.QUARANTINE.json": [
+        "not a file any pair's recorded state accounts for"
+      ]
+    },
+    "fresh_verify": {
+      "exit": 1,
+      "stdout": "{\n \"run_dir\": \"/tmp/owner_b29b0fb_final_probes/root/evidence/b4/sim/b4-mech-1_interrupt_second_quarantine\",\n \"findings\": {\n  \"pair_000/target_holdout.QUARANTINE.json\": [\n   \"not a file any pair's recorded state accounts for\"\n  ]\n },\n \"clean\": false,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n",
+      "stderr": ""
+    }
+  },
+  "wrong_stimulus": {
+    "schema_findings": [],
+    "verify": {},
+    "fresh_verify": {
+      "exit": 0,
+      "stdout": "{\n \"run_dir\": \"/tmp/owner_b29b0fb_final_probes/root/evidence/b4/sim/b4-mech-1_wrong_stimulus\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n",
+      "stderr": ""
+    }
+  },
+  "wrong_expected_source": {
+    "schema_findings": [],
+    "verify": {},
+    "fresh_verify": {
+      "exit": 0,
+      "stdout": "{\n \"run_dir\": \"/tmp/owner_b29b0fb_final_probes/root/evidence/b4/sim/b4-mech-1_wrong_expected_source\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n",
+      "stderr": ""
+    }
+  },
+  "missing_expected_source": {
+    "schema_findings": [],
+    "verify": {},
+    "fresh_verify": {
+      "exit": 0,
+      "stdout": "{\n \"run_dir\": \"/tmp/owner_b29b0fb_final_probes/root/evidence/b4/sim/b4-mech-1_missing_expected_source\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n",
+      "stderr": ""
+    }
+  },
+  "production_derivation_calls": [
+    0,
+    0
+  ],
+  "semantic_reasons_normalised_away": {
+    "equal": true,
+    "before": {
+      "digests": {
+        "record": {
+          "gate_report.json": {
+            "sha256": "585a93a21c6db8770feeb94afd74f7057a5f7003a6bdef81772f4338bf0877f4",
+            "size": 155,
+            "normalised_sha256": "4ac16074f32bd71a9ae53e4dd836fd346fa9d8620eabc9d66c5b422cbd8b3728"
+          }
+        }
+      },
+      "fixed_point_passes": 2,
+      "substituted_references": 0,
+      "files_in_raw_map": 1
+    },
+    "after": {
+      "digests": {
+        "record": {
+          "gate_report.json": {
+            "sha256": "9df387b474fb768e9a9f299b900dcb3b5b86fa24b60e8b45307cc625b30980c8",
+            "size": 164,
+            "normalised_sha256": "4ac16074f32bd71a9ae53e4dd836fd346fa9d8620eabc9d66c5b422cbd8b3728"
+          }
+        }
+      },
+      "fixed_point_passes": 2,
+      "substituted_references": 0,
+      "files_in_raw_map": 1
+    }
+  }
+}

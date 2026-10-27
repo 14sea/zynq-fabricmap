@@ -1,0 +1,20 @@
+HEAD 8361068ce974ccfe3de4a88c01cd17be052696af
+expected: exit 1 naming 'rebuilt'
+exit 1
+
+/home/test/zynq_fabricmap/b4/host/b4_sim_verify.py /tmp/b4v02_e2e_pgf3du_y/evidence/b4/sim/b4-mech-1_complete_tamper_target_grid_cell_flipped
+{
+ "run_dir": "/tmp/b4v02_e2e_pgf3du_y/evidence/b4/sim/b4-mech-1_complete_tamper_target_grid_cell_flipped",
+ "findings": {
+  "pair_000/task setup": [
+   "task.public_task is not the task rebuilt from the setup records",
+   "task.task_digest is not the rebuilt task's digest",
+   "task: target_source_sha256 is not the commitment to the two setup observations"
+  ],
+  "pair_000/task.json": [
+   "setup_files_sha256[target_search.json] is not the file's digest"
+  ]
+ },
+ "clean": false,
+ "limit": "a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth"
+}

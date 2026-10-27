@@ -438,9 +438,18 @@ class TheExposureReceipt(unittest.TestCase):
         for label in ("b4-sim-1", "b4-sim-2"):
             with self.assertRaises(bs.RetiredLabelRefusal) as cm:
                 bs.check_label_not_retired(label)
-            self.assertIn("b4-sim-3", str(cm.exception))
-        bs.check_label_not_retired("b4-sim-3"); bs.check_label_not_retired(bs.EXPLORATION_LABEL)
-        self.assertNotIn(bs.EXPLORATION_LABEL, bs.RETIRED_LABELS); self.assertEqual(bs.RETIRED_LABELS, {"b4-sim-1", "b4-sim-2"})
+            self.assertIn("b4-sim-5", str(cm.exception)); self.assertNotIsInstance(cm.exception, bs.ConsumedLabelRefusal)
+        for label in ("b4-sim-3", "b4-gate-1", "b4-sim-4"):          # consumed by their archived records (v0.1.16: sim-3 / gate-1; v0.2.0: sim-4), never derived again
+            with self.assertRaises(bs.ConsumedLabelRefusal) as cm:
+                bs.check_label_not_retired(label)
+            self.assertIn("consumed", str(cm.exception)); self.assertIn("b4-sim-5", str(cm.exception)); self.assertIn("b4-gate-2", str(cm.exception))
+            self.assertIsInstance(cm.exception, bs.RetiredLabelRefusal, "a consumed label is refused on the same path as a retired one")
+        bs.check_label_not_retired("b4-sim-5"); bs.check_label_not_retired(bs.EXPLORATION_LABEL); bs.check_label_not_retired(bs.GATE_LABEL)
+        self.assertEqual((bs.EXPLORATION_LABEL, bs.GATE_LABEL), ("b4-sim-5", "b4-gate-2"))
+        self.assertNotIn(bs.EXPLORATION_LABEL, bs.RETIRED_LABELS | bs.CONSUMED_LABELS); self.assertEqual(bs.RETIRED_LABELS, {"b4-sim-1", "b4-sim-2"}); self.assertEqual(bs.CONSUMED_LABELS, {"b4-sim-3", "b4-gate-1", "b4-sim-4"})
+        # protocol v0.3.0: the b4-sim-4 archive under evidence/b4/sim/ is in the registry the real tree reads (its 65 values pooled); the label is consumed by it
+        regs, _ = bs.sim_registry(R)
+        self.assertTrue(any(r.dir.startswith("evidence/b4/sim/b4-sim-4_") and r.status == "seeds" and len(r.values) == 65 for r in regs), "the b4-sim-4 archive is read by the registry")
         v1 = next(v for v in self.doc["variants"] if v["id"] == "V1"); v8 = next(v for v in self.doc["variants"] if v["id"] == "V8")
         anchor = self.doc["historical_inputs"]["anchor_hypothesis_sha256"]
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,0 +1,18 @@
+HEAD e20e12b246571c929721519fe00f86a81e0069b5
+expected: exit 1, refused by name
+exit 1
+
+/tmp/owner_task_v03_jjw18xk5/b4/host/b4_gate_verify.py /tmp/owner_task_v03_jjw18xk5/evidence/b4/gate/b4-gate-1_20261020T102526Z --shallow
+{
+ "gate_dir": "/tmp/owner_task_v03_jjw18xk5/evidence/b4/gate/b4-gate-1_20261020T102526Z",
+ "findings": {
+  "gate_report.json": [
+   "schema / schema_version",
+   "a formal judgement is a production batch archive under the pinned gate label with S = 200",
+   "identity: the pinned hypothesis / certificate digests, the thresholds' source, the pinned gate label, the protocol digest and the document's revision",
+   "thresholds: not the module's table"
+  ]
+ },
+ "clean": false,
+ "limit": "a clean verification shows the judgement follows from its evidence under the fixed criteria; it is not itself a PASS, and a fixture or synthetic judgement is never a gate result"
+}

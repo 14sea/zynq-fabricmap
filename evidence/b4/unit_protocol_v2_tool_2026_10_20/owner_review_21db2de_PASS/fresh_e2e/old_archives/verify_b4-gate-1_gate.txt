@@ -1,0 +1,18 @@
+HEAD 21db2de362b4f1f3bac635d01803ac765b931e3e
+expected: exit 1, refused by name
+exit 1
+
+/home/test/zynq_fabricmap/b4/host/b4_gate_verify.py /home/test/zynq_fabricmap/evidence/b4/gate/b4-gate-1_20261020T102526Z --shallow
+{
+ "gate_dir": "/home/test/zynq_fabricmap/evidence/b4/gate/b4-gate-1_20261020T102526Z",
+ "findings": {
+  "gate_report.json": [
+   "schema / schema_version",
+   "a formal judgement is a production batch archive under the pinned gate label with S = 200",
+   "identity: the pinned hypothesis / certificate digests, the thresholds' source, the pinned gate label, the protocol digest and the document's revision",
+   "thresholds: not the module's table"
+  ]
+ },
+ "clean": false,
+ "limit": "a clean verification shows the judgement follows from its evidence under the fixed criteria; it is not itself a PASS, and a fixture or synthetic judgement is never a gate result"
+}

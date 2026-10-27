@@ -1,0 +1,21 @@
+# output of read_k9.py as captured in the 2026-10-20 session (archive bytes = commit 5070967)
+slice-wide semantic -> genome bit: {'sr_kind': 0, 'sr_mode': 3, 'ce_mode': 4, 'clock_mode': 6, 'storage_kind': 10}
+ff_srval driven    async ff    applicable  12800 covered  11480 fraction 0.8969
+ff_srval driven    async latch applicable   6400 covered   5688 fraction 0.8888
+ff_srval driven    sync  ff    applicable  12800 covered   7360 fraction 0.5750
+ff_srval driven    sync  latch applicable   6400 covered   5688 fraction 0.8888
+ff_srval tied_low  async ff    applicable  12800 covered      0 fraction 0.0000
+ff_srval tied_low  async latch applicable   6400 covered      0 fraction 0.0000
+ff_srval tied_low  sync  ff    applicable  12800 covered      0 fraction 0.0000
+ff_srval tied_low  sync  latch applicable   6400 covered      0 fraction 0.0000
+sr_kind  driven    async ff    applicable   1600 covered   1460 fraction 0.9125
+sr_kind  tied_low  async ff    applicable   1600 covered      0 fraction 0.0000
+sr_mode  tied_low  async ff    applicable   1600 covered   1586 fraction 0.9912
+sr_mode  tied_low  async latch applicable   1600 covered   1561 fraction 0.9756
+sr_mode  tied_low  sync  ff    applicable   1600 covered   1462 fraction 0.9137
+sr_mode  tied_low  sync  latch applicable   1600 covered   1561 fraction 0.9756
+ff_srval seed-level fraction: median 0.40625 mean 0.39344 min 0.20833 max 0.48958; seeds >= 0.5: 0
+sr_kind seed-level fraction: median 0.50000 mean 0.45625 min 0.25000 max 0.50000; seeds >= 0.5: 103
+sr_mode seed-level fraction: median 0.96875 mean 0.96406 min 0.68750 max 1.00000; seeds >= 0.5: 200
+ff_srval coverage among SR-DRIVEN applicable pairs only, per seed: median 0.81250 mean 0.78687 min 0.41667 max 0.97917; seeds >= 0.5: 198
+# note: the 'sr_kind'/'sr_mode' rows are keyed by the g0 endpoint's own bits, so for the sr_mode semantic the row label 'tied_low' is the g0 endpoint (g1 = driven) and for sr_kind the 'async' label is g0 (g1 = sync); the g1 endpoint of a slice-wide pair differs from g0 in that bit only.

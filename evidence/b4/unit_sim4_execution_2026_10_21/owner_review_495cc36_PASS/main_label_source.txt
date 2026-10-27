@@ -1,0 +1,16 @@
+READ-ONLY SOURCE EXCERPTS: git show a243ee8:<path>; NO preflight or derivation invoked
+
+b4_sim.py:92: LABEL_RE = re.compile(r"^b4-sim-[1-9][0-9]*$")                      # production exploration labels (the CLI's only labels)
+b4_sim.py:93: GATE_LABEL_RE = re.compile(r"^b4-gate-[1-9][0-9]*$")                 # the formal gate's labels: accepted in mode "gate" only (b4_gate.py, unit 2b-4); the exploration CLI refuses them
+b4_sim.py:95: FIXTURE_LABEL_RE = bs.FIXTURE_LABEL_RE                              # mechanics fixture labels (Python API only)
+b4_sim.py:114:     return STANDING_GATE if isinstance(label, str) and GATE_LABEL_RE.match(label) else STANDING
+b4_sim.py:138:         if not (isinstance(self.label, str) and FIXTURE_LABEL_RE.match(self.label)):
+b4_sim.py:282: def preflight(root: Path, label: str, count: int, deadline_s: int, out: Path | None, schedule: FixtureSchedule | None = None, mode: str = "exploration") -> dict:
+b4_sim.py:287:             if not isinstance(label, str) or not GATE_LABEL_RE.match(label):
+b4_sim.py:289:         elif not isinstance(label, str) or not LABEL_RE.match(label):
+b4_sim.py:292:             bs.check_label_not_retired(label)                   # a retired label is refused here, before any tree is read and before any master is formed
+b4_sim.py:298:         if not isinstance(label, str) or not FIXTURE_LABEL_RE.match(label):
+b4_sim.py:411:             bs.check_label_not_retired(c["label"])                                  # defence in depth: the pre-flight refused already
+
+b4_seeds.py:65: RETIRED_LABELS = frozenset({"b4-sim-1", "b4-sim-2"})         # consumed by the pre-repair exposure (the owner's ruling of 2026-10-19, section 1): never derived again
+b4_seeds.py:153: def check_label_not_retired(label) -> None:

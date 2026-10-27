@@ -21,8 +21,10 @@ import b4_ff_model as fm  # noqa: E402
 import b4_k9 as k9  # noqa: E402
 import b4_landscape as bl  # noqa: E402
 from b4_deadline import StopWork  # noqa: E402
+from b4_test_fixtures import v02_task  # noqa: E402
 
-HAND_APPLICABLE = {"ff_init": 384, "ff_srval": 384, "ce_mode": 32, "sr_mode": 32, "sr_kind": 16, "storage_kind": 32, "clock_mode": 32}
+HAND_APPLICABLE = {"ff_init": 384, "ff_srval": 384, "ce_mode": 32, "sr_mode": 32, "sr_kind": 16, "storage_kind": 32, "clock_mode": 32}          # the all-panel rule (clauses 4-5)
+HAND_CONDITIONAL = {"ff_init": 384, "ff_srval": 192, "ce_mode": 32, "sr_mode": 32, "sr_kind": 8, "storage_kind": 32, "clock_mode": 32}          # clause 6: the SR semantics under SR-driven backgrounds only
 
 
 class Base(unittest.TestCase):
@@ -30,7 +32,7 @@ class Base(unittest.TestCase):
     def setUpClass(cls):
         cls.m, cls.h = bm.site_mapping(), hy.load()
         cls.fab = fm.Fabric(cls.m, cls.h)
-        cls.task = bl.make_task(7, cls.m.addresses)
+        cls.task = v02_task(7, cls.fab)
 
 
 class ThePanel(Base):
@@ -65,8 +67,21 @@ class ThePanel(Base):
     def test_applicability_denominators_by_hand_and_from_the_configuration(self):
         pairs = k9.forced_pairs(self.m, k9.panel(self.m))
         counts = {s: 0 for s in k9.SEMANTICS}
+        cond = {s: 0 for s in k9.SEMANTICS}
         for p in pairs:
             a = k9.applicability(self.fab, p)
+            self.assertEqual(set(a), {"applicable", "reason", "scope", "presence_allowed", "latch", "applicable_sr_driven", "reason_sr_driven", "sr_driven"})
+            self.assertTrue(isinstance(a["sr_driven"], list) and len(a["sr_driven"]) == 2 and all(isinstance(x, bool) for x in a["sr_driven"]))
+            if a["applicable_sr_driven"]:
+                cond[p["semantic"]] += 1
+                self.assertTrue(a["applicable"], "the conditional rule never adds a pair")
+            if p["semantic"] in k9.SR_SEMANTICS:
+                self.assertEqual(a["applicable_sr_driven"], bool(a["applicable"] and a["sr_driven"][0] and a["sr_driven"][1]))
+                if a["applicable"] and not a["applicable_sr_driven"]:
+                    self.assertEqual(a["reason_sr_driven"], k9.REASON_SR_TIED_LOW); self.assertEqual(a["sr_driven"], [False, False])
+                self.assertEqual(a["sr_driven"][0], a["sr_driven"][1], "a slice-wide address of another semantic: both endpoints decode the same SR mode")
+            else:
+                self.assertEqual((a["applicable_sr_driven"], a["reason_sr_driven"]), (a["applicable"], a["reason"]), "the five other semantics: the all-panel rule")
             if a["applicable"]:
                 counts[p["semantic"]] += 1
                 if p["semantic"] in k9.PER_ELEMENT:
@@ -78,7 +93,7 @@ class ThePanel(Base):
             else:
                 self.assertIn("latch", a["reason"])
                 self.assertEqual(a["scope"], [])
-        self.assertEqual(counts, HAND_APPLICABLE)
+        self.assertEqual(counts, HAND_APPLICABLE); self.assertEqual(cond, HAND_CONDITIONAL)
 
 
 class Differences(unittest.TestCase):
@@ -96,11 +111,20 @@ class Differences(unittest.TestCase):
 class TheComputation(Base):
     def test_the_formal_model_end_to_end_on_an_exposed_seed(self):
         port = ex.ObservationPort(self.fab)
-        r = k9.coverage(self.task, port, self.m, self.fab)
+        r = k9.coverage(self.task, port, self.m, self.fab, 7)
         self.assertTrue(r["complete"]); self.assertIsNone(r["stopped"])
         self.assertEqual((r["pairs_total"], r["pairs_done"]), (1184, 1184))
-        s = r["summary"]["per_semantic"]
-        self.assertEqual({k: v["applicable"] for k, v in s.items()}, HAND_APPLICABLE)
+        self.assertEqual(r["summary"]["judged_estimand"], k9.JUDGED_ESTIMAND); self.assertEqual((r["applicability_all_panel"], r["applicability_conditional"]), (k9.APPLICABILITY_ALL_PANEL, k9.APPLICABILITY_CONDITIONAL))
+        sc_ = r["summary"]["per_semantic"]
+        self.assertEqual({k: v["applicable"] for k, v in sc_.items()}, HAND_CONDITIONAL, "the judged (b') record")
+        s = r["summary"]["per_semantic_all_panel"]
+        self.assertEqual({k: v["applicable"] for k, v in s.items()}, HAND_APPLICABLE, "the all-panel (b) record beside it")
+        self.assertEqual(len(r["summary"]["excluded_by_conditional_rule"]), 384 - 192 + 16 - 8, "the SR-tied-low pairs of ff_srval / sr_kind, listed with their reason")
+        self.assertTrue(all(e["reason"] == k9.REASON_SR_TIED_LOW for e in r["summary"]["excluded_by_conditional_rule"]))
+        self.assertEqual(sc_["ff_srval"]["covered"], s["ff_srval"]["covered"], "the conditional rule removes uncovered pairs only (tied-low pairs are never covered under the model)")
+        for sem in k9.SEMANTICS:
+            if sem not in k9.SR_SEMANTICS:
+                self.assertEqual(sc_[sem], s[sem], sem)
         for k, v in s.items():
             self.assertTrue(v["assessable"]); self.assertLessEqual(v["covered"], v["applicable"])
             self.assertEqual(v["fraction"], v["covered"] / v["applicable"])
@@ -122,7 +146,11 @@ class TheComputation(Base):
                 self.assertIsNone(p["covered"]); self.assertEqual(p["differences"], [])
         identical = [p for p in r["pairs"] if p["applicable"] and not p["covered"]]
         self.assertTrue(identical, "some applicable pair has identical traces under this stimulus")
-        self.assertIn(identical[0]["semantic"], [u["semantic"] for u in r["summary"]["uncovered_applicable_pairs"]], "it stays in the denominator and is listed")
+        unc_all = {(u["address"], u["g0"], u["g1"]) for u in r["summary"]["uncovered_applicable_pairs_all_panel"]}
+        unc_cond = {(u["address"], u["g0"], u["g1"]) for u in r["summary"]["uncovered_applicable_pairs"]}
+        for p in identical:
+            self.assertIn((p["address"], p["g0"], p["g1"]), unc_all, "it stays in the all-panel denominator and is listed there")
+            self.assertEqual((p["address"], p["g0"], p["g1"]) in unc_cond, bool(p["applicable_sr_driven"]), "and in the judged (b') list exactly when conditionally applicable")
         json.dumps(r, allow_nan=False)
         self.assertEqual(k9.recompute(r, self.task, self.fab), [])
 
@@ -135,8 +163,10 @@ class TheComputation(Base):
             sem = self.m.entries[a].semantic
             applicable = sem != "sr_kind"
             covered = (sem != "clock_mode") if applicable else None
-            pairs.append({"semantic": sem, "address": a, "applicable": applicable, "covered": covered, "g0": 0, "g1": 1})
+            pairs.append({"semantic": sem, "address": a, "applicable": applicable, "applicable_sr_driven": applicable, "reason_sr_driven": None, "backgrounds": [0], "covered": covered, "g0": 0, "g1": 1})
         s = k9.summarise(pairs, self.m)
+        self.assertEqual(s["per_semantic"], s["per_semantic_all_panel"], "with no SR-tied-low exclusion the two records agree")
+        self.assertEqual(s["excluded_by_conditional_rule"], [])
         ps = s["per_semantic"]
         self.assertEqual((ps["sr_kind"]["applicable"], ps["sr_kind"]["fraction"], ps["sr_kind"]["assessable"], ps["sr_kind"]["positive_control"]), (0, None, False, False))
         self.assertGreater(ps["sr_kind"]["not_applicable"], 0)
@@ -157,7 +187,7 @@ class TheComputation(Base):
         from b4_test_fixtures import InjectingPort
         port = InjectingPort(self.fab, 2)
         with self.assertRaises(fm.DomainRefusal) as cm:
-            k9.coverage(self.task, port, self.m, self.fab)
+            k9.coverage(self.task, port, self.m, self.fab, 7)
         p = cm.exception.k9_partial
         self.assertEqual((p["complete"], p["stopped"], p["pairs_done"], len(p["observations"]), p["summary"]), (False, None, 0, 1, None))
         self.assertEqual((p["invalid"]["pair_index"], p["invalid"]["exception"]), (0, "DomainRefusal"))
@@ -165,10 +195,10 @@ class TheComputation(Base):
         self.assertEqual(k9.recompute(p, self.task, self.fab), [], "a partial record recomputes clean")
         port = InjectingPort(self.fab, 3, KeyboardInterrupt())
         with self.assertRaises(KeyboardInterrupt) as cm:
-            k9.coverage(self.task, port, self.m, self.fab)
+            k9.coverage(self.task, port, self.m, self.fab, 7)
         p = cm.exception.k9_partial
         self.assertEqual((p["invalid"], p["stopped"]["before_pair_index"], p["pairs_done"], len(p["observations"])), (None, 1, 1, 2), "an interrupt is a stop, not an invalid event")
-        full = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab)
+        full = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab, 7)
         bad = json.loads(json.dumps(full)); bad["pairs"] = []; bad["pairs_done"] = 0; bad["summary"] = k9.summarise([], self.m); bad["logical_observations"] = 0
         self.assertTrue(any("fixed set has 1184" in f for f in k9.recompute(bad, self.task, self.fab)), "an emptied complete record is named")
         bad = json.loads(json.dumps(full)); bad["pairs"] = bad["pairs"][:10] + bad["pairs"][11:]; bad["pairs_done"] -= 1
@@ -177,15 +207,15 @@ class TheComputation(Base):
         self.assertTrue(any("more than the fixed set" in f for f in k9.recompute(bad, self.task, self.fab)), "a duplicated pair is named")
 
     def test_the_denominators_do_not_depend_on_the_seed(self):
-        r7 = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab)
-        r8 = k9.coverage(bl.make_task(8, self.m.addresses), ex.ObservationPort(self.fab), self.m, self.fab)
+        r7 = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab, 7)
+        r8 = k9.coverage(v02_task(8, self.fab), ex.ObservationPort(self.fab), self.m, self.fab, 8)
         a7 = {k: v["applicable"] for k, v in r7["summary"]["per_semantic"].items()}
         a8 = {k: v["applicable"] for k, v in r8["summary"]["per_semantic"].items()}
         self.assertEqual(a7, a8)
         self.assertEqual([(p["applicable"], p["scope"]) for p in r7["pairs"]], [(p["applicable"], p["scope"]) for p in r8["pairs"]])
 
     def test_recompute_names_a_tampered_record(self):
-        r = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab)
+        r = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab, 7)
         bad = json.loads(json.dumps(r))
         p = next(p for p in bad["pairs"] if p["applicable"] and p["covered"])
         p["covered"] = False; p["differences"] = []
@@ -209,12 +239,12 @@ class TheComputation(Base):
             if budget["left"] == 0:
                 raise StopWork("expired")
             budget["left"] -= 1
-        r = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab, check=check)
+        r = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab, 7, check=check)
         self.assertEqual((r["complete"], r["pairs_done"], r["stopped"]["before_pair_index"]), (False, 5, 5))
         self.assertIsNone(r["summary"], "nothing is judged on a partial set")
-        full = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab, check=lambda: None)
+        full = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab, 7, check=lambda: None)
         self.assertEqual([p["covered"] for p in r["pairs"]], [p["covered"] for p in full["pairs"][:5]], "the chunk computed is the unchunked value")
-        self.assertEqual(full["summary"], k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab)["summary"], "a never-raising check changes nothing")
+        self.assertEqual(full["summary"], k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab, 7)["summary"], "a never-raising check changes nothing")
         self.assertEqual(k9.recompute(r, self.task, self.fab), [])
         bad = json.loads(json.dumps(r)); bad["summary"] = {}
         self.assertTrue(any("incomplete" in f for f in k9.recompute(bad, self.task, self.fab)))

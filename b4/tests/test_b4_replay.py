@@ -25,7 +25,7 @@ import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
 import b4_landscape as bl  # noqa: E402
 import b4_replay as br  # noqa: E402
-from b4_test_fixtures import InjectingPort, mechanics_fabric  # noqa: E402
+from b4_test_fixtures import InjectingPort, mechanics_fabric, v02_task  # noqa: E402
 
 
 class Replay(unittest.TestCase):
@@ -33,7 +33,7 @@ class Replay(unittest.TestCase):
     def setUpClass(cls):
         cls.fab = mechanics_fabric()
         cls.m = cls.fab.mapping
-        cls.task = bl.make_task(7, cls.m.addresses)
+        cls.task = v02_task(7, cls.fab)
         port = lambda: ex.ObservationPort(cls.fab)  # noqa: E731
         cls.o = be.run("O", cls.task, port(), 11, 24).as_dict()
         cls.t = be.run("O", cls.task, InjectingPort(cls.fab, 6), 11, 24).as_dict()
@@ -64,13 +64,14 @@ class Replay(unittest.TestCase):
         ):
             with self.subTest(run=name):
                 self.assertEqual(br.replay(result, self.task), [])
-        self.assertNotEqual(br.replay(self.o, bl.make_task(8, self.task.addresses)), [])
+        self.assertNotEqual(br.replay(self.o, v02_task(8, self.fab)), [])
 
     def test_the_owner_s_nine_tampers_are_named(self):
         t, o, ff = self.t, self.o, self.ff
         self.named(lambda d: d["terminal"].update(genome=0, config_sha256=ex.sha256_json(ex.genome_to_config(0, self.task.addresses))), "the terminal candidate / stimulus is not what the re-execution asked for", base=t)
-        self.named(lambda d: d["terminal"].update(code="NOT_DOMAIN", phase="base", operator_seed=42, landscape_seed=42, budget=999, stimulus_sha256="0" * 64, map_version=999), "the terminal code is 'NOT_DOMAIN'", base=t)
+        self.named(lambda d: d["terminal"].update(code="NOT_DOMAIN", phase="base", operator_seed=42, task_digest="0" * 64, budget=999, stimulus_sha256="0" * 64, map_version=999), "the terminal code is 'NOT_DOMAIN'", base=t)
         self.named(lambda d: d["terminal"].update(phase="base"), "result.terminal.phase", base=t)
+        self.named(lambda d: d["terminal"].update(task_digest="0" * 64), "the terminal event's task / seed / budget are not the run's", base=t)
         self.named(lambda d: d["terminal"].update(map_version=999), "result.terminal.map_version", base=t)
         self.named(lambda d: (d["terminal"].__setitem__("rng_state", 0), d.__setitem__("rng_state_final", 0)), "result.rng_state_final", base=t)
         self.named(lambda d: d.__setitem__("pending_children", []), "result.pending_children", base=t)

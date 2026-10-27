@@ -1,10 +1,25 @@
 #!/usr/bin/env python3
-"""B4 — the HOST-ONLY EXPLORATION HARNESS (docs/b4_architecture.md sections 8, 9, 9.1–9.3; the owner's ruling of 2026-10-18 on
-unit 2b-4a; repaired after the owner's review of cdf2c53, F1–F9). It runs the seven arms per pair on the FORMAL model, audits
-every run, computes K7 / K9 / K10's data and the descriptive statistics, and archives everything typed — values beside the
-fixed thresholds, NEVER a gate verdict.
+"""B4 — the HOST-ONLY EXPLORATION HARNESS (docs/b4_architecture.md sections 7.1, 8, 9, 9.1–9.5; the owner's ruling of 2026-10-18 on
+unit 2b-4a; repaired after the owner's review of cdf2c53, F1–F9; protocol v0.2.0 after the owner's rulings of 2026-10-20). It sets
+up each pair's task-v0.2 target (the planted configuration observed through the port, persisted call by call), runs the seven arms
+per pair on the FORMAL model, audits every run, computes K7 / K9 / K10's data and the descriptive statistics, and archives
+everything typed — values beside the fixed thresholds, NEVER a gate verdict.
 
-    b4_sim.py --label b4-sim-3 --seeds 32 --deadline-s 3600 [--out evidence/b4/sim/<label>_<UTC>]   # b4-sim-1 / b4-sim-2 are retired (the ruling of 2026-10-19)
+    b4_sim.py --label b4-sim-5 --seeds 32 --deadline-s 3600 [--out evidence/b4/sim/<label>_<UTC>]   # b4-sim-1 / b4-sim-2 retired; b4-sim-3 / b4-gate-1 / b4-sim-4 consumed
+
+TASK-V0.3 (section 7.2; the owner's ruling of 2026-10-27): the stimulus the generator writes is slice-wide — one CE and one SR value
+per set step, broadcast over the eight elements — and every task record is held to that shape (b4_landscape.stimulus_findings) by the
+validators and the offline reconstruction. The setup, the planted target (T-i) and the PublicTask boundary (H) are task-v0.2's:
+
+TASK-V0.2 (section 7.1; the owner's choices 1-3 and the target-setup contract). Per pair, BEFORE any arm: task_setup.json (the
+private record — the seeds, the planted flip-flop genome g* by the fixed rule, the stimulus digests — persisted before the first
+target call) → the search-stimulus observation of g* through a dedicated port, its raw trace and provenance saved at once
+(target_search.json) → the holdout-stimulus observation, saved at once (target_holdout.json) → task.json (the PublicTask the arms
+receive: no seed, no g*, no private record; its digest; the setup files' digests). Two port calls per pair, shared by the seven
+arms; the arms' counts unchanged. A DOMAIN, a SourceRefusal, a drift between the two observations or a None in a formal target
+is `invalid` (kind `target_invalid`); the deadline or an interrupt is `incomplete` with whatever was written kept; a pair whose
+setup began is `in_progress` / `partial`, never `not_started`; nothing is redrawn. The setup observations enter no ledger and no
+cartographer. The manifest carries the PROTOCOL IDENTITY (section 9.5, b4_protocol) and its digest.
 
 NOTHING IS AUTHORISED BY THIS FILE: running it is a separate authorisation (ruling section 5). The CLI has no fixture,
 no allow-dirty, no test mode; a test drives `run_batch` on a hermetic repository copy with its own `port_factory` and a
@@ -79,12 +94,14 @@ import b4_gate_stats as gs  # noqa: E402
 import b4_k10 as k10  # noqa: E402
 import b4_k9 as k9  # noqa: E402
 import b4_landscape as bl  # noqa: E402
+import b4_protocol as bp  # noqa: E402
 import b4_replay as br  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
 import b4_sim_verify as sv  # noqa: E402
 import b4_snapshot as sn  # noqa: E402
 import b4_stats as st  # noqa: E402
+import b4_target as bt  # noqa: E402
 import b4_thresholds as th  # noqa: E402
 from b4_deadline import Deadline, StopWork  # noqa: E402
 
@@ -99,10 +116,11 @@ GRID = th.GRID
 B_MAX = th.B_MAX
 PROBES = th.PROBES
 EXPECTED_COST = {role: {"base": 1, "probes": PROBES if role == "F" else 0, "search": B_MAX, "holdout": 1} for role in ROLES}
+SETUP_ROLE = "TARGET"                                                # the port role of the per-pair target setup (two calls, shared by the seven arms)
 STANDING = ("exploration data under the label given, S as planned; not a gate verdict; the thresholds of docs/b4_architecture.md "
-            "v0.1.15 section 9 are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's")
-# (the text above is the one every archived exploration carries in its summary; the archive-wide verifier recomputes the summary
-# with it, so it is never edited — the "v0.1.15" it names is the section-9 revision the exploration was written against)
+            "section 9 (protocol v0.3.0: task-v0.3 slice-wide stimulus, K9 (b') judged) are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's")
+# (the text every archived v0.3.0 exploration carries in its summary; the archive-wide verifier recomputes the summary with it. The
+# v0.1.x and v0.2.0 explorations carried their own text and are verified by their own tool at their recorded HEAD — docs/b4_archive_reverification.md)
 STANDING_GATE = ("the batch of the formal gate under the label given, S as planned; values beside the thresholds of docs/b4_architecture.md section 9 "
                  "and not a gate verdict here: the verdict is b4_gate.py's, written in a gate directory under evidence/b4/gate/ and bound to this "
                  "archive by digest (unit 2b-4); candidate B* / N are the budget rule's on this batch")
@@ -306,6 +324,10 @@ def preflight(root: Path, label: str, count: int, deadline_s: int, out: Path | N
         raise Refusal("--seeds must be a positive int")
     if not isinstance(deadline_s, int) or isinstance(deadline_s, bool) or deadline_s <= 0:
         raise Refusal("--deadline-s must be a positive int (no default)")
+    try:
+        protocol = bp.identity(REPO_ROOT)                        # the method's identity from the code tree's trusted inventory: refused when the tree is not its inventory
+    except bp.IdentityRefusal as exc:
+        raise Refusal(f"no protocol identity can be built from the code tree: {exc}") from None
     root = Path(root).resolve()
     dirty = porcelain(root)
     if dirty:
@@ -344,7 +366,7 @@ def preflight(root: Path, label: str, count: int, deadline_s: int, out: Path | N
         raise Refusal(f"the output directory {out_p} exists (or is a symlink); nothing is overwritten")
     return {"root": root, "head": head, "hypothesis": hypothesis, "mapping": mapping, "fabric": fabric, "inputs": inputs, "external": external, "tools": tools,
             "registry": registry, "exclusion": exclusion, "out": out_p, "label": label, "count": count, "deadline_s": deadline_s, "schedule": schedule,
-            "code_root": code_root_state()}
+            "code_root": code_root_state(), "protocol": {"identity": protocol, "protocol_sha256": bp.protocol_sha256(protocol)}}
 
 
 def create_out_dir(ctx: dict) -> None:
@@ -384,14 +406,20 @@ class Batch:
         self.files.append(e)
         return e
 
-    def quarantine(self, rel: str, pair: int, role: str | None, stage: str, findings: list[str], obj) -> dict:
-        """Keep a returned object that did not validate, raw, with the findings that refused it (F6)."""
+    def quarantine(self, rel: str, pair: int, role: str | None, stage: str, findings: list[str], obj, context: dict | None = None) -> dict:
+        """Keep a returned object that did not validate, raw, with the findings that refused it (F6); a target setup return carries
+        its context (the phase, the planted configuration, the digests; R2 of the owner's review of 04385ae)."""
         raw, rep = raw_projection(obj)
-        doc = {"schema": "b4_sim_quarantine", "schema_version": "1.0.0", "pair": pair, "role": role, "stage": stage, "findings": list(findings), "raw": raw, "raw_repr": rep, "written_utc": utc()}
+        if context is not None:
+            context = dict(context, returned_sha256=None if raw is None else ex.sha256_json(raw))
+        doc = {"schema": "b4_sim_quarantine", "schema_version": "1.1.0", "pair": pair, "role": role, "stage": stage, "findings": list(findings), "raw": raw, "raw_repr": rep,
+               "context": context, "written_utc": utc()}
         try:
             return self.write(rel, doc, sc.quarantine_findings)
         except Invalid:
             doc["raw"] = None                                       # a raw projection that is not finite JSON: keep the repr only
+            if context is not None:
+                doc["context"] = dict(context, returned_sha256=None)
             return self.write(rel, doc, sc.quarantine_findings)
 
     def write_or_quarantine(self, rel: str, doc, validator, pair: int, role: str | None, stage: str) -> bool:
@@ -424,11 +452,12 @@ class Batch:
                                "exposure_receipt": exd["exposure_receipt"], "pooled_total": exd["pooled_total"]},
                  "generated_utc": utc()}
         self.seeds_sha = self.write("seeds.json", seeds, sc.seeds_findings)["sha256"]
-        self.planned = [{"pair": r, "landscape_seed": l, "operator_seed": o, "status": "not_started", "arms": {role: "not_started" for role in ROLES},
-                         "k7": "not_started", "k9": "not_started", "k10": "not_started"} for r, (l, o) in enumerate(self.pairs)]
+        self.planned = [{"pair": r, "landscape_seed": l, "operator_seed": o, "status": "not_started", "task": "not_started", "task_prefix": 0, "task_quarantine": None,
+                         "arms": {role: "not_started" for role in ROLES}, "k7": "not_started", "k9": "not_started", "k10": "not_started"} for r, (l, o) in enumerate(self.pairs)]
         h, m = c["hypothesis"], c["mapping"]
         cr = c["code_root"]
-        manifest = {"schema": "b4_sim_manifest", "schema_version": "1.1.0", "label": c["label"], "fixture": fixture, "count": c["count"], "generated_utc": utc(), "head": c["head"],
+        manifest = {"schema": "b4_sim_manifest", "schema_version": "1.2.0", "label": c["label"], "fixture": fixture, "count": c["count"], "generated_utc": utc(), "head": c["head"],
+                    "protocol": c["protocol"],
                     "repo_root_kind": "the repository root the batch read its inputs from (git HEAD above); the model code is the b4/host tree of the tool files (code_root)",
                     "code_root": {"head": cr["head"], "clean": cr["clean"], "same_as_input_root": REPO_ROOT.resolve() == c["root"]},
                     "deadline_s": c["deadline_s"], "arm_order": list(ROLES), "engine_arm": dict(ENGINE_ARM), "budget": B_MAX, "grid": list(GRID),
@@ -478,15 +507,88 @@ class Batch:
                 raise Invalid("input_drift", f"the working tree carries a change that is not this batch's output: {ln!r}", stage="final")
 
     # -- one pair
+    def setup_task(self, r: int, pdir: Path) -> tuple[ex.PublicTask, dict]:
+        """task-v0.2 (section 7.1): the private plan persisted before the first target call; each setup observation saved on return
+        before the next call; the PublicTask and task.json last. The pair's planned record carries the DURABLE ORDERED PREFIX
+        (`task_prefix`: how many of task_setup / target_search / target_holdout / task exist, in order) and `task_quarantine` (the
+        phase whose RETURN was kept in quarantine before the stop, or None). A DOMAIN returns nothing and is `invalid`; a returned
+        object that is not a valid target observation (malformed, a None or non-0/1 cell anywhere in the grid, a drift of the source
+        identity) is QUARANTINED raw with its findings and context, then `invalid` (the owner's review of 04385ae R2 / R3 / R4);
+        nothing is redrawn. Returns (task, the search-target record)."""
+        c = self.c
+        l, o = self.pairs[r]
+        plan = self.planned[r]
+        fabric, mapping = c["fabric"], c["mapping"]
+        self.current = {"pair": r, "stage": "target_setup", "role": SETUP_ROLE}
+        setup = dict(bt.plan(r, l, o, mapping), written_utc=utc())
+        digests = {"task_setup.json": self.write(f"pair_{r:03d}/task_setup.json", setup, sc.task_setup_findings)["sha256"]}
+        plan["task"], plan["task_prefix"] = "in_progress", 1
+        port = self.port_factory(fabric, SETUP_ROLE, r)
+        parts = bl.public_parts(l)
+        recs: dict[str, dict] = {}
+        expected_prov = ex.sha256_json(sc.formal_provenance())                  # the first return must carry the batch's (formal) source identity; the second, the first's
+        for phase, stim, name in (("target", parts["stimulus"], "target_search.json"), ("target_holdout", parts["holdout_stimulus"], "target_holdout.json")):
+            self.dl.check()                                                     # a deadline here is `incomplete` with what was written kept
+            trace = None
+            try:
+                trace = bt.observe_raw(port, setup["planted_genome"], stim, mapping.addresses)
+                f0 = bt.observation_findings(trace, len(list(stim)), expected_prov)
+                if f0:
+                    raise bt.ReturnRefusal(f0, trace)
+                rec = bt.record_from_trace(trace, setup["planted_genome"], stim, mapping.addresses, phase)
+            except KeyboardInterrupt:
+                raise                                                           # the plan's task state stays in_progress / partial: nothing is lost, nothing fabricated
+            except fm.DomainRefusal:
+                plan["task"] = "invalid"
+                raise Invalid("target_invalid", f"the target setup observation ({phase}) of the planted configuration was refused: DOMAIN — a contract break, never a redraw", role=SETUP_ROLE, stage="target_setup")
+            except bt.ReturnRefusal as exc:                                     # something came back: kept raw BEFORE the pair is invalid; never written as an observation
+                qrel = f"pair_{r:03d}/{name.replace('.json', '.QUARANTINE.json')}"
+                ctx = bt.quarantine_context(phase, setup["planted_genome"], mapping.addresses, stim, exc.returned, expected_prov)
+                self.quarantine(qrel, r, SETUP_ROLE, "target_setup", exc.findings, exc.returned, context=ctx)
+                plan["task"], plan["task_quarantine"] = "invalid", phase
+                raise Invalid("target_invalid", f"the target setup observation ({phase}) returned an object that is not a target observation — kept in {qrel}: {exc.findings[0]}", role=SETUP_ROLE, stage="target_setup")
+            except ex.SourceRefusal as exc:                                     # the port itself refused (nothing returned)
+                plan["task"] = "invalid"
+                raise Invalid("target_invalid", f"the target setup observation ({phase}): {exc}", role=SETUP_ROLE, stage="target_setup")
+            except Exception as exc:  # noqa: BLE001
+                plan["task"] = "invalid"
+                raise Invalid("unexpected_exception", f"the target setup observation ({phase}) raised {type(exc).__name__}: {exc}", role=SETUP_ROLE, stage="target_setup")
+            doc = {"schema": bt.TARGET_SCHEMA[0], "schema_version": bt.TARGET_SCHEMA[1], "pair": r, "written_utc": utc(), **rec}
+            f = sc.target_observation_findings(doc, phase)
+            if f:                                                               # defence in depth: a record the validator refuses — the ORIGINAL return is what is kept (C1), never the derived record
+                qrel = f"pair_{r:03d}/{name.replace('.json', '.QUARANTINE.json')}"
+                ctx = bt.quarantine_context(phase, setup["planted_genome"], mapping.addresses, stim, trace, expected_prov)
+                self.quarantine(qrel, r, SETUP_ROLE, "target_setup", ["the derived record was refused by its validator; the original return is kept: " + f[0]] + f, trace, context=ctx)
+                plan["task"], plan["task_quarantine"] = "invalid", phase
+                raise Invalid("target_invalid", f"the target setup observation ({phase}) does not validate — kept in {qrel}: {f[0]}", role=SETUP_ROLE, stage="target_setup")
+            digests[name] = self.write(f"pair_{r:03d}/{name}", doc, lambda d, ph=phase: sc.target_observation_findings(d, ph))["sha256"]   # saved at once, before the next call
+            recs[phase] = doc
+            plan["task"], plan["task_prefix"] = "partial", plan["task_prefix"] + 1
+            expected_prov = rec["provenance_sha256"]
+        if port.calls != sum(bt.SETUP_COST.values()):
+            plan["task"] = "invalid"
+            raise Invalid("target_invalid", f"the target setup made {port.calls} port calls, not {sum(bt.SETUP_COST.values())}", role=SETUP_ROLE, stage="target_setup")
+        if recs["target"]["provenance_sha256"] != recs["target_holdout"]["provenance_sha256"]:
+            plan["task"] = "invalid"
+            raise Invalid("target_invalid", "the two setup observations do not come from one source identity (a drift inside the setup)", role=SETUP_ROLE, stage="target_setup")
+        try:
+            task, tdoc = bt.finish(setup, recs["target"], recs["target_holdout"], digests)
+        except bl.TargetRefusal as exc:
+            plan["task"] = "invalid"
+            raise Invalid("target_invalid", f"the planted configuration's trace is not a target: {exc}", role=SETUP_ROLE, stage="target_setup")
+        self.write(f"pair_{r:03d}/task.json", dict(tdoc, written_utc=utc()), sc.task_findings)
+        plan["task"], plan["task_prefix"] = "complete", 4
+        return task, recs["target"]
+
     def run_pair(self, r: int) -> None:
         c = self.c
         l, o = self.pairs[r]
         plan = self.planned[r]
         plan["status"] = "in_progress"
-        self.current = {"pair": r, "stage": "arms", "role": None}
         pdir = self.out / f"pair_{r:03d}"
         pdir.mkdir(exist_ok=False)
-        task = bl.make_task(l, c["mapping"].addresses)
+        task, target_search = self.setup_task(r, pdir)
+        self.current = {"pair": r, "stage": "arms", "role": None}
         fabric, mapping = c["fabric"], c["mapping"]
         results: dict[str, dict] = {}
         views: dict[str, bc.MapView] = {}
@@ -539,7 +641,7 @@ class Batch:
                 if d["given_view"] != views[role].as_dict():
                     view_f.append("the recorded given view is not the one handed to the arm")
                 if role == "D":
-                    view_f += ctl.verify_d_view(d["given_view"], results["F"], task)
+                    view_f += ctl.verify_d_view(d["given_view"], results["F"], task, l)
             invalid = bool(completion or replay or rc["findings"] or view_f)
             self.write(f"pair_{r:03d}/arm_{role}.audit.json",
                        {"schema": "b4_sim_arm_audit", "schema_version": "1.0.0", "pair": r, "role": role, "completion_findings": completion, "replay_findings": replay,
@@ -552,7 +654,7 @@ class Batch:
             if role == "F":
                 self.dl.check()
                 try:
-                    dv, dinfo = ctl.d_view(d, task)
+                    dv, dinfo = ctl.d_view(d, task, l)
                 except ctl.ControlInputRefusal as exc:
                     raise Invalid("contract", f"D's input cannot be built from F's record: {exc}", role="D", stage="controls")
                 views["D"], views["Omega"], views["A0"] = dv, bc.oracle_view(mapping), bc.address_only_view(mapping.addresses)
@@ -575,17 +677,17 @@ class Batch:
         plan["k9"] = "in_progress"
         self.dl.check()
         try:
-            k9r = k9.coverage(task, self.port_factory(fabric, "K9", r), mapping, fabric, check=self.dl.check)
+            k9r = k9.coverage(task, self.port_factory(fabric, "K9", r), mapping, fabric, l, check=self.dl.check)
         except KeyboardInterrupt as exc:
             # `partial` promises a stopped document on disk; an interrupt before anything returned (nothing carried, or the
             # partial not even quarantinable) leaves the stage `in_progress`: entered, no record (the owner's review of 2026-10-19)
-            plan["k9"] = "partial" if self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt") else "in_progress"
+            plan["k9"] = "partial" if self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task, l), "K9", "interrupt") else "in_progress"
             raise
         except Exception as exc:  # noqa: BLE001 — DOMAIN, another refusal or an error: invalid, the partial kept
             plan["k9"] = "invalid"
-            kept = self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "refusal")
+            kept = self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task, l), "K9", "refusal")
             raise Invalid("k9_invalid", f"K9 observation refused or failed: {type(exc).__name__}: {exc}" + ("" if kept else " [no partial record was available]"), role="K9", stage="k9")
-        if not self.write_or_quarantine(f"pair_{r:03d}/k9.json", {"schema": "b4_sim_k9", "schema_version": "1.1.0", "pair": r, **k9r}, lambda doc: sc.k9_findings(doc, task), r, "K9", "k9_return"):
+        if not self.write_or_quarantine(f"pair_{r:03d}/k9.json", {"schema": "b4_sim_k9", "schema_version": "1.2.0", "pair": r, **k9r}, lambda doc: sc.k9_findings(doc, task, l), r, "K9", "k9_return"):
             plan["k9"] = "invalid"
             raise Invalid("schema", "k9.json: the K9 record returned does not validate (quarantined)", role="K9", stage="k9")
         if not k9r["complete"]:
@@ -597,21 +699,21 @@ class Batch:
         plan["k10"] = "in_progress"
         self.dl.check()
         try:
-            k10r = k10.seed_k10(task, self.port_factory(fabric, "K10", r), tau=k10.TAU, check=self.dl.check)
+            k10r = k10.seed_k10(task, self.port_factory(fabric, "K10", r), l, tau=k10.TAU, check=self.dl.check)
         except k10.K10Invalid as exc:
             plan["k10"] = "invalid"
-            self._keep_partial(r, "k10", exc.partial, lambda doc: sc.k10_findings(doc, task), "K10", "refusal")
+            self._keep_partial(r, "k10", exc.partial, lambda doc: sc.k10_findings(doc, task, l), "K10", "refusal")
             raise Invalid("k10_invalid", str(exc), role="K10", stage="k10")
         except KeyboardInterrupt as exc:
             # `partial` promises a stopped document on disk; an interrupt before anything returned (nothing carried, or the
             # partial not even quarantinable) leaves the stage `in_progress`: entered, no record (the owner's review of 2026-10-19)
-            plan["k10"] = "partial" if self._keep_partial(r, "k10", getattr(exc, "k10_partial", None), lambda doc: sc.k10_findings(doc, task), "K10", "interrupt") else "in_progress"
+            plan["k10"] = "partial" if self._keep_partial(r, "k10", getattr(exc, "k10_partial", None), lambda doc: sc.k10_findings(doc, task, l), "K10", "interrupt") else "in_progress"
             raise
         except Exception as exc:  # noqa: BLE001
             plan["k10"] = "invalid"
-            kept = self._keep_partial(r, "k10", getattr(exc, "k10_partial", None), lambda doc: sc.k10_findings(doc, task), "K10", "refusal")
+            kept = self._keep_partial(r, "k10", getattr(exc, "k10_partial", None), lambda doc: sc.k10_findings(doc, task, l), "K10", "refusal")
             raise Invalid("k10_invalid", f"K10 observation refused or failed: {type(exc).__name__}: {exc}" + ("" if kept else " [no partial record was available]"), role="K10", stage="k10")
-        if not self.write_or_quarantine(f"pair_{r:03d}/k10.json", {"schema": "b4_sim_k10", "schema_version": "1.0.0", "pair": r, **k10r}, lambda doc: sc.k10_findings(doc, task), r, "K10", "k10_return"):
+        if not self.write_or_quarantine(f"pair_{r:03d}/k10.json", {"schema": "b4_sim_k10", "schema_version": "1.0.0", "pair": r, **k10r}, lambda doc: sc.k10_findings(doc, task, l), r, "K10", "k10_return"):
             plan["k10"] = "invalid"
             raise Invalid("schema", "k10.json: the K10 record returned does not validate (quarantined)", role="K10", stage="k10")
         if not k10r["complete"]:
@@ -621,24 +723,20 @@ class Batch:
         # curves and the row the statistics use
         self.current.update(stage="curves", role=None)
         self.dl.check()
-        curves = curves_of(results, r, l, o)
+        curves = curves_of(results, r, l, o, target_search["q_grid"])
         self.write(f"pair_{r:03d}/curves.json", curves, sc.curves_findings)
-        self.rows.append({"pair": r, "landscape_seed": l, "operator_seed": o, "base_fit": curves["base_fit"], "best_at_grid": curves["best_at_grid"],
-                          "f_end_to_end_at_grid": [e["value"] for e in curves["f_end_to_end_at_grid"]],
-                          "k7_not_unknown_at_grid": [prefixes[str(B)]["not_unknown"] for B in GRID],
-                          "k9": k9r["summary"]["per_semantic"], "k9_all_seven": k9r["summary"]["all_seven_positive_controls"],
-                          "k10_max_abs": k10r["max_abs_index"], "k10_outcome": k10r["outcome"]})
+        self.rows.append(row_of(r, l, o, curves, prefixes, k9r, k10r))
         self.hold_inputs(f"pair {r} end")
         plan["status"] = "complete"
-        self.write(f"pair_{r:03d}/index.json", {"schema": "b4_sim_pair_index", "schema_version": "1.0.0", "pair": r, "landscape_seed": l, "operator_seed": o, "status": "complete",
-                                                "arms": dict(plan["arms"]), "files": [dict(e, path=e["path"].split("/", 1)[1]) for e in self.files if e["path"].startswith(f"pair_{r:03d}/")],
+        self.write(f"pair_{r:03d}/index.json", {"schema": "b4_sim_pair_index", "schema_version": "1.1.0", "pair": r, "landscape_seed": l, "operator_seed": o, "status": "complete",
+                                                "task": plan["task"], "arms": dict(plan["arms"]), "files": [dict(e, path=e["path"].split("/", 1)[1]) for e in self.files if e["path"].startswith(f"pair_{r:03d}/")],
                                                 "written_utc": utc()}, sc.pair_index_findings)
 
     def _keep_partial(self, r: int, name: str, partial: dict | None, validator, role: str, stage: str) -> bool:
         """Write the partial K9 / K10 record (or its quarantine when it does not validate); False when none was carried."""
         if partial is None:
             return False
-        version = "1.1.0" if name == "k9" else "1.0.0"
+        version = "1.2.0" if name == "k9" else "1.0.0"
         doc = {"schema": f"b4_sim_{name}", "schema_version": version, "pair": r, **partial}
         try:
             self.write_or_quarantine(f"pair_{r:03d}/{name}.json", doc, validator, r, role, stage)
@@ -652,8 +750,39 @@ class Batch:
         self.summary, self.stats_record = summarise_batch(self.rows, self.c["count"], check=self.dl.check, standing=standing_for(self.c["label"]))
 
     # -- the end: the archive verified, the report written — both conditions of success (F4, F8)
+    def reconcile_setup(self) -> None:
+        """At the stop: every pair's task state and prefix held to what is DURABLY on disk — an external interrupt can land between a
+        setup file's link and the in-memory state / index entry that follows it (the owner's review of 04385ae, R3: the record describes
+        the files that exist, in order). The leading setup files in order give the prefix; a file the interrupt kept out of the index is
+        indexed from disk; a quarantined return likewise. Nothing is written here and nothing is fabricated."""
+        indexed = {e["path"] for e in self.files}
+
+        def index(rel: str, p: Path) -> None:
+            if rel not in indexed:
+                b = p.read_bytes(); self.files.append({"path": rel, "sha256": sha_bytes(b), "size": len(b)}); indexed.add(rel)
+        for plan in self.planned:
+            r = plan["pair"]; pre = f"pair_{r:03d}/"; pdir = self.out / f"pair_{r:03d}"
+            if not pdir.is_dir():
+                continue
+            n = 0
+            for name in bt.SETUP_FILES:
+                if not (pdir / name).is_file():
+                    break
+                n += 1; index(pre + name, pdir / name)
+            for ph, qname in (("target", "target_search.QUARANTINE.json"), ("target_holdout", "target_holdout.QUARANTINE.json")):
+                if (pdir / qname).is_file():
+                    index(pre + qname, pdir / qname)
+                    if plan["task_quarantine"] is None and n == {"target": 1, "target_holdout": 2}[ph]:      # the interrupt landed after the quarantine's link, before the state (C2)
+                        plan["task"], plan["task_quarantine"] = "invalid", ph
+            plan["task_prefix"] = n
+            if plan["task"] != "invalid":
+                plan["task"] = "complete" if n == 4 else "partial" if n >= 2 else "in_progress" if n == 1 else plan["task"]
+            if plan["task"] != "not_started" and plan["status"] == "not_started":
+                plan["status"] = "partial"
+
     def finish(self, status: str, stop: dict | None, exit_code: int) -> dict:
         self.current["stage"] = "finish"
+        self.reconcile_setup()
         if status == "complete":
             try:
                 self.dl.check()                                     # a finalisation unit never starts after the expiry
@@ -664,7 +793,7 @@ class Batch:
                 p["status"] = "partial"
         stopped_doc = None
         if stop is not None:
-            stopped_doc = {"schema": "b4_sim_stopped", "schema_version": "1.0.0", "status": status, "kind": stop["kind"], "detail": stop["detail"], "pair": self.current.get("pair"),
+            stopped_doc = {"schema": "b4_sim_stopped", "schema_version": "1.2.0", "status": status, "kind": stop["kind"], "detail": stop["detail"], "pair": self.current.get("pair"),
                            "stage": stop.get("stage") or self.current.get("stage") or "", "role": stop.get("role"), "stopped_utc": utc(), "deadline": self.dl.record(),
                            "planned": [dict(p) for p in self.planned], "head_at_stop": _head_or_none(self.c["root"]), "traceback": stop.get("traceback")}
             try:
@@ -676,11 +805,11 @@ class Batch:
             missing.append("no pooled numeric summary: the batch did not complete")
             for p in self.planned:
                 if p["status"] != "complete":
-                    missing.append(f"pair {p['pair']}: {p['status']} (arms {p['arms']}, k7 {p['k7']}, k9 {p['k9']}, k10 {p['k10']})")
-        report = {"schema": "b4_sim_report", "schema_version": "1.0.0", "status": status, "label": self.c["label"], "fixture": self.c["schedule"] is not None, "count": self.c["count"],
+                    missing.append(f"pair {p['pair']}: {p['status']} (task {p['task']}, arms {p['arms']}, k7 {p['k7']}, k9 {p['k9']}, k10 {p['k10']})")
+        report = {"schema": "b4_sim_report", "schema_version": "1.2.0", "status": status, "label": self.c["label"], "fixture": self.c["schedule"] is not None, "count": self.c["count"],
                   "head": self.c["head"], "generated_utc": utc(), "deadline": self.dl.record(), "standing": standing_for(self.c["label"]), "thresholds": th.THRESHOLDS,
                   "identity": {"seeds_sha256": self.seeds_sha, "manifest_sha256": self.manifest_sha, "hypothesis_sha256": hy.HYPOTHESIS_SHA256, "certificate_sha256": bm.CERTIFICATE_SHA256,
-                               "inputs": self.c["inputs"], "out": self.own_rel},
+                               "inputs": self.c["inputs"], "out": self.own_rel, "protocol_sha256": self.c["protocol"]["protocol_sha256"]},
                   "pairs": [dict(p) for p in self.planned], "files": [dict(e) for e in self.files], "stopped": stopped_doc,
                   "summary": self.summary if status == "complete" else None, "missing": missing, "self_validation": {}}
         try:
@@ -722,7 +851,12 @@ class Batch:
 def manifest_constants() -> dict:
     """The constants a manifest records; the verifier binds a manifest to exactly these (R2)."""
     return {"engine": {"version": be.ENGINE_VERSION, "mu": be.MU, "lambda": be.LAMBDA, "kmax": be.KMAX}, "cartographer": bc.CARTO_VERSION,
-            "task": bl.TASK_VERSION, "probes_per_F": PROBES, "expected_cost": EXPECTED_COST, "k9_panel": k9.PANEL_VERSION, "k10_salt": k10.SALT, "tau": k10.TAU,
+            "task": bl.TASK_VERSION, "target": {"rule": bl.PLANTED_RULE, "salt": bl.SALT_TARGET, "setup_cost": bt.SETUP_COST, "setup_role": SETUP_ROLE},
+            "stimulus": {"rule": bl.STIMULUS_RULE, "ce_high_one_in": bl.CE_HIGH_ONE_IN, "sr_high_one_in": bl.SR_HIGH_ONE_IN, "broadcast": {str(k): v for k, v in bl.BROADCAST.items()},
+                         "model_input_contract": bl.MODEL_INPUT_CONTRACT},
+            "probes_per_F": PROBES, "expected_cost": EXPECTED_COST, "k9_panel": k9.PANEL_VERSION,
+            "k9_applicability": {"all_panel": k9.APPLICABILITY_ALL_PANEL, "conditional": k9.APPLICABILITY_CONDITIONAL, "judged": k9.JUDGED_ESTIMAND},
+            "k10_salt": k10.SALT, "tau": k10.TAU, "gonogo": th.THRESHOLDS["gonogo"],
             "prng": "b4_rng.Rng (xorshift64, a derived copy of b1_carto.Rng); the bootstrap random.Random", "anchor": th.THRESHOLDS["anchor"], "controls": th.THRESHOLDS["controls"]}
 
 
@@ -751,8 +885,8 @@ def completion_findings(d: dict, role: str, task: ex.PublicTask, port_calls: int
     L = d.get("ledger") or []
     if sum(1 for e in L if e.get("phase") == "holdout") != 1 or not L or L[-1].get("phase") != "holdout":
         f.append("the holdout is not exactly the last record, once")
-    if d.get("arm") != ENGINE_ARM[role] or d.get("budget") != B_MAX or d.get("landscape_seed") != task.seed or d.get("task_digest") != task.digest():
-        f.append("arm / budget / seed / task do not match the plan")
+    if d.get("arm") != ENGINE_ARM[role] or d.get("budget") != B_MAX or d.get("task_digest") != task.digest():
+        f.append("arm / budget / task do not match the plan")
     prov = d.get("provenance") or {}
     if d.get("fixture") is not False or d.get("fabric_fixture") is not False or prov.get("hypothesis", {}).get("sha256") != hy.HYPOTHESIS_SHA256 \
             or prov.get("hypothesis", {}).get("fixture") is not False or prov.get("fabric", {}).get("kind") != "truth":
@@ -771,9 +905,12 @@ def completion_findings(d: dict, role: str, task: ex.PublicTask, port_calls: int
     return f
 
 
-def curves_of(results: dict, r: int, l: int, o: int) -> dict:
+def curves_of(results: dict, r: int, l: int, o: int, target_search_grid: list) -> dict:
+    """The best-so-far at the grid per arm, F's end-to-end values, the holdouts, and the NON-TRIVIALITY record of section 7.1: whether
+    the target's search trace equals arm R's EXISTING base observation under the same stimulus (read from records; no observation added)."""
     best = {role: [results[role]["best_trace"][B - 1] for B in GRID] for role in ROLES}
     base = results["R"]["base_fit"]
+    r_base_grid = results["R"]["ledger"][0]["q_grid"] if results["R"].get("ledger") else None
     f_trace = results["F"]["best_trace"]
     fe = []
     for T in GRID:
@@ -781,8 +918,18 @@ def curves_of(results: dict, r: int, l: int, o: int) -> dict:
             fe.append({"T": T, "value": results["F"]["base_fit"], "mapping_in_progress": True})
         else:
             fe.append({"T": T, "value": f_trace[T - PROBES - 1], "mapping_in_progress": False})
-    return {"schema": "b4_sim_curves", "schema_version": "1.0.0", "pair": r, "landscape_seed": l, "operator_seed": o, "grid": list(GRID), "base_fit": base,
-            "best_at_grid": best, "f_end_to_end_at_grid": fe, "holdout": {role: results[role]["champion_holdout"] for role in ROLES}, "written_utc": utc()}
+    return {"schema": "b4_sim_curves", "schema_version": "1.1.0", "pair": r, "landscape_seed": l, "operator_seed": o, "grid": list(GRID), "base_fit": base,
+            "best_at_grid": best, "f_end_to_end_at_grid": fe, "holdout": {role: results[role]["champion_holdout"] for role in ROLES},
+            "target_equals_R_base_search_trace": r_base_grid is not None and ex.sha256_json(r_base_grid) == ex.sha256_json(target_search_grid), "written_utc": utc()}
+
+
+def row_of(r: int, l: int, o: int, curves: dict, prefixes: dict, k9r: dict, k10r: dict) -> dict:
+    """The row of the pooled statistics: the curves, K7's counts, BOTH K9 records (the judged conditional and the all-panel), K10."""
+    return {"pair": r, "landscape_seed": l, "operator_seed": o, "base_fit": curves["base_fit"], "best_at_grid": curves["best_at_grid"],
+            "f_end_to_end_at_grid": [e["value"] for e in curves["f_end_to_end_at_grid"]],
+            "k7_not_unknown_at_grid": [prefixes[str(B)]["not_unknown"] for B in GRID],
+            "k9": k9r["summary"]["per_semantic"], "k9_all_panel": k9r["summary"]["per_semantic_all_panel"], "k9_all_seven": k9r["summary"]["all_seven_positive_controls"],
+            "k10_max_abs": k10r["max_abs_index"], "k10_outcome": k10r["outcome"]}
 
 
 # ------------------------------------------------------------------ the descriptive statistics (values beside thresholds; no verdict)
@@ -860,15 +1007,19 @@ def summarise_batch(rows: list[dict], S: int, check=None, standing: str = STANDI
                      "F_over_Omega": _ratio(dl["F_minus_R"]["mean"], dl["Omega_minus_R"]["mean"])},
               "k5": {"cohen_d_delta1": dl["delta1_O_minus_R"]["cohen_d"], "N": N, "cost": pb["cost_N_x_3_x_B"]},
               "k7": {"median_O_prefix_not_unknown": pb["k7_O_prefix_not_unknown"]["median"], "values": pb["k7_O_prefix_not_unknown"]["values"]}}
-    # K9 over all S rows
+    # K9 over all S rows: the JUDGED conditional record (b') and the DESCRIPTIVE all-panel record (b), each per semantic; (a) from the all-panel positive controls
     if check:
         check()
-    k9s: dict = {}
-    for s in k9.SEMANTICS:
-        fr = [row["k9"][s]["fraction"] for row in rows]
-        na = sum(1 for x in fr if x is None)
-        k9s[s] = {"seeds_with_positive_control": sum(1 for row in rows if row["k9"][s]["positive_control"]), "not_assessable_seeds": na,
-                  "median_coverage_over_all_S": (gs.median(fr) if na == 0 else None), "median_rule": T["K9"]["median_population"], "conditional_on_A8": s == "ff_init"}
+
+    def k9_block(key: str) -> dict:
+        out: dict = {}
+        for s in k9.SEMANTICS:
+            fr = [row[key][s]["fraction"] for row in rows]
+            na = sum(1 for x in fr if x is None)
+            out[s] = {"seeds_with_positive_control": sum(1 for row in rows if row["k9_all_panel"][s]["positive_control"]), "not_assessable_seeds": na,
+                      "median_coverage_over_all_S": (gs.median(fr) if na == 0 else None), "median_rule": T["K9"]["median_population"], "conditional_on_A8": s == "ff_init"}
+        return out
+    k9s, k9s_all = k9_block("k9"), k9_block("k9_all_panel")
     k9_all = sum(1 for row in rows if row["k9_all_seven"])
     # K10 over all S rows
     if check:
@@ -876,7 +1027,7 @@ def summarise_batch(rows: list[dict], S: int, check=None, standing: str = STANDI
     k10s = st.summarise([row["k10_max_abs"] for row in rows], k10.TAU, S)
     summary = {"S": S, "grid": list(GRID), "per_budget": per_budget, "eligible_budgets": eligible,
                "candidate_B_star": {"value": b_star, "reason_if_none": reason, "note": T["B_star"]["no_eligible_budget"]}, "at_candidate_B_star": at,
-               "k9": {"per_semantic": k9s, "seeds_with_all_seven_positive_controls": k9_all, "fraction_of_S": k9_all / S},
+               "k9": {"judged_estimand": k9.JUDGED_ESTIMAND, "per_semantic": k9s, "per_semantic_all_panel": k9s_all, "seeds_with_all_seven_positive_controls": k9_all, "fraction_of_S": k9_all / S},
                "k10": k10s, "thresholds_for_reference": T, "standing": standing}
     return summary, record
 
@@ -933,7 +1084,7 @@ def run_batch(root: Path, label: str, count: int, deadline_s: int, out: Path | N
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="B4 host-only exploration harness (values beside thresholds; no gate verdict). Running it needs the owner's authorisation. "
                                              "Production labels only: a mechanics fixture batch has no CLI.")
-    ap.add_argument("--label", required=True, help="b4-sim-<n> (b4-sim-1 and b4-sim-2 are retired; the next exploration label is b4-sim-3)")
+    ap.add_argument("--label", required=True, help="b4-sim-<n> (b4-sim-1 / b4-sim-2 retired, b4-sim-3 / b4-gate-1 / b4-sim-4 consumed; the next exploration label is b4-sim-5)")
     ap.add_argument("--seeds", required=True, type=int, help="S, the number of pairs planned")
     ap.add_argument("--deadline-s", required=True, type=int, help="the soft monotonic deadline in seconds, from the pre-flight on (no default)")
     ap.add_argument("--out", default=None, help=f"the output directory, directly under {SIM_REL}/ and named <label>_…; default <label>_<UTC>")

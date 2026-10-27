@@ -1,0 +1,168 @@
+{
+  "pairs": 200,
+  "budgets": [
+    {
+      "B": 8,
+      "delta1_mean": -0.485,
+      "d": -0.24624775769768323,
+      "sign_p": 0.9999009802743313,
+      "K7_median": 2.0,
+      "N": null,
+      "power_at_200": 0.0
+    },
+    {
+      "B": 16,
+      "delta1_mean": -0.64,
+      "d": -0.2989441408246561,
+      "sign_p": 0.9998905451184948,
+      "K7_median": 3.0,
+      "N": null,
+      "power_at_200": 0.0
+    },
+    {
+      "B": 24,
+      "delta1_mean": -0.83,
+      "d": -0.33382068116775204,
+      "sign_p": 0.9999991776150617,
+      "K7_median": 4.5,
+      "N": null,
+      "power_at_200": 0.0
+    },
+    {
+      "B": 32,
+      "delta1_mean": -0.85,
+      "d": -0.31386537963442107,
+      "sign_p": 0.9999982481349159,
+      "K7_median": 6.0,
+      "N": null,
+      "power_at_200": 0.0
+    },
+    {
+      "B": 48,
+      "delta1_mean": -0.94,
+      "d": -0.36342909113690697,
+      "sign_p": 0.9999999860831114,
+      "K7_median": 8.0,
+      "N": null,
+      "power_at_200": 0.0
+    },
+    {
+      "B": 64,
+      "delta1_mean": -0.9,
+      "d": -0.3714904265069308,
+      "sign_p": 0.9999999995046622,
+      "K7_median": 10.0,
+      "N": null,
+      "power_at_200": 0.0
+    },
+    {
+      "B": 96,
+      "delta1_mean": -0.92,
+      "d": -0.3835877507339144,
+      "sign_p": 0.9999999833925,
+      "K7_median": 14.0,
+      "N": null,
+      "power_at_200": 0.0
+    },
+    {
+      "B": 128,
+      "delta1_mean": -0.9,
+      "d": -0.3859716595765849,
+      "sign_p": 0.9999998403021217,
+      "K7_median": 17.0,
+      "N": null,
+      "power_at_200": 0.0
+    },
+    {
+      "B": 192,
+      "delta1_mean": -0.815,
+      "d": -0.3307674911334117,
+      "sign_p": 0.9999994098310279,
+      "K7_median": 19.0,
+      "N": null,
+      "power_at_200": 0.0
+    },
+    {
+      "B": 256,
+      "delta1_mean": -0.58,
+      "d": -0.2307997151174868,
+      "sign_p": 0.999980574927867,
+      "K7_median": 21.0,
+      "N": null,
+      "power_at_200": 0.0
+    }
+  ],
+  "k9_medians": {
+    "ce_mode": 1.0,
+    "clock_mode": 1.0,
+    "ff_init": 1.0,
+    "ff_srval": 0.40625,
+    "sr_kind": 0.5,
+    "sr_mode": 0.96875,
+    "storage_kind": 1.0
+  },
+  "all_seven_controls": 200,
+  "k10_counts": {
+    "interacting": 200
+  },
+  "K10_units_recomputed": 84000,
+  "verdict": "FAIL",
+  "rows": [
+    [
+      "K1",
+      "not_assessable"
+    ],
+    [
+      "K2",
+      "not_assessable"
+    ],
+    [
+      "K3",
+      "not_assessable"
+    ],
+    [
+      "K4",
+      "not_assessable"
+    ],
+    [
+      "K5",
+      "not_assessable"
+    ],
+    [
+      "K6",
+      "not_assessable"
+    ],
+    [
+      "K7",
+      "not_assessable"
+    ],
+    [
+      "K8",
+      "PASS"
+    ],
+    [
+      "K9",
+      "FAIL"
+    ],
+    [
+      "K10",
+      "PASS"
+    ]
+  ],
+  "exclusion_check": {
+    "source_files": 38,
+    "prior_pool": 2224,
+    "receipt_values": 66,
+    "receipt_sha256": "68764bbc1a51ec2506bf9d9bcbb3f55f88f3d7642b5eb46c6fd3dd39f8dae146",
+    "archived_gate_values": 401,
+    "collisions_with_prior_pool": 0,
+    "current_pool": 2625,
+    "note": "Existing committed values read only; no seed derivation called."
+  },
+  "source_hash_check": {
+    "inputs": 45,
+    "tool_files": 25,
+    "external_inputs": 6
+  },
+  "baseline_tool_schema_entries_equal": 25
+}

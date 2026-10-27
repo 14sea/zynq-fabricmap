@@ -1,0 +1,19 @@
+identity probe {'before': {'protocol_sha256': '2c207d519aeadfee3990625d7f25414999b0fba3ae9b05f2c1dddf8fd36c19c6', 'architecture_revision': 'v0.2.0', 'labels': {'gate': 'b4-gate-2', 'exploration': 'b4-sim-4', 'retired': ['b4-sim-1', 'b4-sim-2'], 'consumed': ['b4-gate-1', 'b4-sim-3']}, 'task': 'task-v0.2', 'k9': 'conditional_sr_driven'}, 'after': {'protocol_sha256': '28cf2af97664d39caa433ee715bb50182a857bcee50e7c69d6199bd626a50521', 'architecture_revision': 'v0.2.1', 'labels': {'gate': 'b4-gate-2', 'exploration': 'b4-sim-4', 'retired': ['b4-sim-1', 'b4-sim-2'], 'consumed': ['b4-gate-1', 'b4-sim-3']}, 'task': 'task-v0.2', 'k9': 'conditional_sr_driven'}, 'method_changed': True}
+baseline {'status': 'complete', 'task_state': 'complete', 'findings': {}}
+init_none {'status': 'complete', 'task_state': 'complete', 'findings': {}}
+drift {'status': 'invalid', 'task_state': 'invalid', 'findings': {}}
+malformed {'status': 'invalid', 'task_state': 'invalid', 'findings': {}}
+interrupt_after_holdout {'status': 'incomplete', 'task_state': 'partial', 'findings': {'pair_000/target_holdout.json': ["not a file any pair's recorded state accounts for"]}}
+Traceback (most recent call last):
+  File "/tmp/owner_04385ae_probes.py", line 104, in <module>
+    reindex(forged)
+  File "/home/test/zynq_fabricmap/b4/tests/test_b4_sim.py", line 905, in reindex
+    idx = json.loads((out / "pair_000/index.json").read_text())
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_04385ae_probes/fixture_root/evidence/b4/sim/b4-mech-1_impossible_order/pair_000/index.json'

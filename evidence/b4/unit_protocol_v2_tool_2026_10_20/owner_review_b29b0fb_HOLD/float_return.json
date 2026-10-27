@@ -1,0 +1,161 @@
+{
+  "status": "invalid",
+  "quarantine": {
+    "context": {
+      "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+      "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+      "genome": 588756,
+      "genome_hex": "08fbd4",
+      "phase": "target",
+      "returned_sha256": "292a4c5d0f703923c5885491de25f54ed8d62df665d4986af5a14a004a783e4d",
+      "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
+    },
+    "findings": [
+      "q_grid[0]: not 8 cells of 0 / 1 / null"
+    ],
+    "pair": 0,
+    "raw": {
+      "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+      "fabric_kind": "truth",
+      "fixture": false,
+      "genome": 588756,
+      "genome_hex": "08fbd4",
+      "pair": 0,
+      "phase": "target",
+      "provenance": {
+        "fabric": {
+          "dropout_count": 0,
+          "dropout_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "effect_sha256": "a1be61d03939f98673eb29b39f00310ba27c4c6b0fe2d768e62f9166bc4829c0",
+          "kind": "truth",
+          "seed": null
+        },
+        "hypothesis": {
+          "fixture": false,
+          "path": "b4/hypothesis/ff_behaviour_v0.3.json",
+          "sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+          "version": "0.3.0"
+        },
+        "mapping": {
+          "certificate": "gate_runs/run_2026_08_05_ff/certificate.json",
+          "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+          "site": "SLICE_X2Y25"
+        }
+      },
+      "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+      "q_grid": [
+        [
+          0.0,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          1,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0
+        ]
+      ],
+      "schema": "b4_sim_target_observation",
+      "schema_version": "1.0.0",
+      "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2",
+      "trace_sha256": "f67793dacd08902ce30476ed589f4854dc296ec3d6031d20b05bedf334a5132a",
+      "written_utc": "2026-10-20T20:53:27Z"
+    },
+    "raw_repr": "{'schema': 'b4_sim_target_observation', 'schema_version': '1.0.0', 'pair': 0, 'written_utc': '2026-10-20T20:53:27Z', 'phase': 'target', 'genome': 588756, 'genome_hex': '08fbd4', 'config_sha256': 'a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef', 'stimulus_sha256': 'a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2', 'trace_sha256': 'f67793dacd08902ce30476ed589f4854dc296ec3d6031d20b05bedf334a5132a', 'q_grid': [[0.0, 0, 1, 0, 1, 1, 1, 0], [0, 0, 1, 0, 1, 1, 1, 0], [0, 0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 1, 0, 1, 0], [1, 1, 0, 0, 1, 0, 1, 0], [1, 1, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 1, 0, 1, 0]], 'provenance': {'hypothesis': {'path': 'b4/hypothesis/ff_behaviour_v0.3.json', 'sha256': '59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8', 'version': '0.3.0', 'fixture': False}, 'mapping': {'site': 'SLICE_X2Y25', 'certificate': 'gate_runs/run_2026_08_05_ff/certificate.json', 'certificate_sha256': 'c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef'}, 'fabric': {'kind': 'truth', 'effect_sha256': 'a1be61d03939f98673eb29b39f00310ba27c4c6b0fe2d768e62f9166bc4829c0', 'dropout_sha256': '4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945', 'dropout_count': 0, 'seed': None}}, 'provenance_sha256': '5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac', 'fixture': False, 'fabric_kind': 'truth'}",
+    "role": "TARGET",
+    "schema": "b4_sim_quarantine",
+    "schema_version": "1.1.0",
+    "stage": "target_setup",
+    "written_utc": "2026-10-20T20:53:27Z"
+  },
+  "marker_kept": false,
+  "verify": {},
+  "fresh_verify": {
+    "exit": 0,
+    "stdout": "{\n \"run_dir\": \"/tmp/owner_b29b0fb_final_probes/root/evidence/b4/sim/b4-mech-1_float_return\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "production_derivation_calls": [
+    0,
+    0
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "head": "6927c2452ad7f8ead23d78a0061a3c201b872ac1",
+  "author_static_rerun_byte_identical": true,
+  "author_all_pass": true,
+  "prior_review_byte_identical": true,
+  "prior_review_files": 8,
+  "accepted_R1_representation_bindings": {
+    "ledger_target_memo_grid_and_configuration_hashes_checked": true
+  },
+  "R1_root_reference": {
+    "mechanism": "c",
+    "predecessor": {
+      "kind": "session_root",
+      "seq": null,
+      "close_sha256": null
+    },
+    "prior_X_available": false,
+    "section_5_4_requires": "pre-event equals predecessor X.base_readback_sha256",
+    "section_5_5_terminating_case": "session_root has seq=null and close_sha256=null; first X not yet written",
+    "effect": "The root cannot resolve its required reference; using its own later X would be circular and use a future value.",
+    "author_helper_issue": "frame_binding_ok accepts a supplied base_ref for session_root but never resolves where it came from, and no root case is in r3 checks."
+  },
+  "R2_constant_restore_cases": [
+    {
+      "constant_restore_value": 0,
+      "init_main_effect_present": false,
+      "derived_written_quantities": {
+        "row": 1,
+        "not_assessable": false,
+        "init_effect": false,
+        "init_absent": true,
+        "srval_effect": false,
+        "srval_absent": false,
+        "cross_tracking": false,
+        "inconsistent": true
+      },
+      "expected_row_under_absent_main_effect_policy": 5,
+      "actual_author_helper_row": 1
+    },
+    {
+      "constant_restore_value": 0,
+      "init_main_effect_present": true,
+      "derived_written_quantities": {
+        "row": 1,
+        "not_assessable": false,
+        "init_effect": true,
+        "init_absent": false,
+        "srval_effect": false,
+        "srval_absent": false,
+        "cross_tracking": false,
+        "inconsistent": true
+      },
+      "expected_row_under_absent_main_effect_policy": 4,
+      "actual_author_helper_row": 1
+    },
+    {
+      "constant_restore_value": 1,
+      "init_main_effect_present": false,
+      "derived_written_quantities": {
+        "row": 1,
+        "not_assessable": false,
+        "init_effect": false,
+        "init_absent": true,
+        "srval_effect": false,
+        "srval_absent": false,
+        "cross_tracking": false,
+        "inconsistent": true
+      },
+      "expected_row_under_absent_main_effect_policy": 5,
+      "actual_author_helper_row": 1
+    },
+    {
+      "constant_restore_value": 1,
+      "init_main_effect_present": true,
+      "derived_written_quantities": {
+        "row": 1,
+        "not_assessable": false,
+        "init_effect": true,
+        "init_absent": false,
+        "srval_effect": false,
+        "srval_absent": false,
+        "cross_tracking": false,
+        "inconsistent": true
+      },
+      "expected_row_under_absent_main_effect_policy": 4,
+      "actual_author_helper_row": 1
+    }
+  ],
+  "fixed_reference_and_priors_cases_accepted": true,
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "gate_runs/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gate/",
+    "evidence/b4/gonogo/"
+  ],
+  "selection_scripts_and_outputs_unchanged": true,
+  "new_model_or_board_observations": false,
+  "production_module_imports_or_seed_derivations": false,
+  "tree_clean": true
+}

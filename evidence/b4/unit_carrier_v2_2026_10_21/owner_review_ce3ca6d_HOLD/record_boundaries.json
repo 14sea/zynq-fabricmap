@@ -1,0 +1,43 @@
+{
+  "root_shape": [],
+  "candidate_shape": [],
+  "root_close_shape": [],
+  "candidate_close_shape": [],
+  "loaded_reference": "4b8f1d7cfaad24ba261e5116446bd9f2db689beaf3f45fd68ffc3923c3a1470f",
+  "restored_base_reference": "20fc6fac20acf46258531befeb94a21c1c1f479e40d7ca8fcd7f686a8565e72e",
+  "honest_distinct_reference_chain": [
+    "chain[0]: session_open does not name the pinned loaded-frame reference the transaction restores to",
+    "chain[1]: session_open does not name the pinned loaded-frame reference the transaction restores to"
+  ],
+  "ordinary_fixture_chain": [],
+  "malformed_chain_inputs": {
+    "session_open_None": {
+      "raised": "AttributeError",
+      "message": "'NoneType' object has no attribute 'get'"
+    },
+    "session_open_[]": {
+      "raised": "AttributeError",
+      "message": "'list' object has no attribute 'get'"
+    },
+    "session_open_5": {
+      "raised": "AttributeError",
+      "message": "'int' object has no attribute 'get'"
+    },
+    "predecessor_None": {
+      "raised": "AttributeError",
+      "message": "'NoneType' object has no attribute 'get'"
+    },
+    "predecessor_[]": {
+      "raised": "AttributeError",
+      "message": "'list' object has no attribute 'get'"
+    },
+    "predecessor_5": {
+      "raised": "AttributeError",
+      "message": "'int' object has no attribute 'get'"
+    },
+    "faulted_X_bad_fault": {
+      "raised": "AttributeError",
+      "message": "'str' object has no attribute 'get'"
+    }
+  }
+}

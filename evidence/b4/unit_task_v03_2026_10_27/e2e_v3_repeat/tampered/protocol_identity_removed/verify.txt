@@ -1,0 +1,15 @@
+HEAD bf0274679e922d59e084df2718c0b0e07dac9a99
+expected: exit 1 naming 'no protocol identity'
+exit 1
+
+/home/test/zynq_fabricmap/b4/host/b4_sim_verify.py /tmp/b4v02_e2e_9s1sl32k/evidence/b4/sim/b4-mech-1_complete_tamper_protocol_identity_removed
+{
+ "run_dir": "/tmp/b4v02_e2e_9s1sl32k/evidence/b4/sim/b4-mech-1_complete_tamper_protocol_identity_removed",
+ "findings": {
+  "protocol": [
+   "the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source \"docs/b4_architecture.md section 9, fixed before any exploration or gate run (the document's revision is an informational field of the protocol identity, outside this table)\", HEAD '751ea981ae8a58f393b1317aac60d3d979518d9c'); it is not verified by this tool \u2014 re-verify it with its own tool at its recorded HEAD (docs/b4_archive_reverification.md)"
+  ]
+ },
+ "clean": false,
+ "limit": "a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth"
+}

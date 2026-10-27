@@ -1,0 +1,59 @@
+{
+  "root_shape": [],
+  "candidate_shape": [],
+  "root_close_shape": [],
+  "candidate_close_shape": [],
+  "loaded_reference": "4b8f1d7cfaad24ba261e5116446bd9f2db689beaf3f45fd68ffc3923c3a1470f",
+  "restored_base_reference": "20fc6fac20acf46258531befeb94a21c1c1f479e40d7ca8fcd7f686a8565e72e",
+  "honest_distinct_reference_chain": [],
+  "ordinary_fixture_chain": [
+    "chain[0]: session_open does not name the pinned loaded-image frame reference"
+  ],
+  "malformed_chain_inputs": {
+    "session_open_None": {
+      "findings": [
+        "session_open: not an object",
+        "chain: the session-opening record is malformed; no transaction can be bound to it"
+      ]
+    },
+    "session_open_[]": {
+      "findings": [
+        "session_open: not an object",
+        "chain: the session-opening record is malformed; no transaction can be bound to it"
+      ]
+    },
+    "session_open_5": {
+      "findings": [
+        "session_open: not an object",
+        "chain: the session-opening record is malformed; no transaction can be bound to it"
+      ]
+    },
+    "predecessor_None": {
+      "findings": [
+        "chain[0]: O.predecessor: bad value None",
+        "chain[0]: O.predecessor: not an object",
+        "chain[0]: a malformed record; the chain ends here"
+      ]
+    },
+    "predecessor_[]": {
+      "findings": [
+        "chain[0]: O.predecessor: bad value []",
+        "chain[0]: O.predecessor: not an object",
+        "chain[0]: a malformed record; the chain ends here"
+      ]
+    },
+    "predecessor_5": {
+      "findings": [
+        "chain[0]: O.predecessor: bad value 5",
+        "chain[0]: O.predecessor: not an object",
+        "chain[0]: a malformed record; the chain ends here"
+      ]
+    },
+    "faulted_X_bad_fault": {
+      "findings": [
+        "chain[0]: X.fault: bad value 'bad'",
+        "chain[0]: a malformed record; the chain ends here"
+      ]
+    }
+  }
+}

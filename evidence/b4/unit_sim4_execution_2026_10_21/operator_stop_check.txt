@@ -1,0 +1,28 @@
+UTC 2026-10-21T06:53:35.751899+00:00
+[OK] date is 2026-10-21 or 2026-10-22 UTC (the corrected ruling): 2026-10-21
+[OK] HEAD == execution HEAD: 495cc360c97aba58bda959a2e867e6b43dbf4f7f
+[OK] branch == b4-sim-4-execution: b4-sim-4-execution
+[OK] main untouched (a243ee8): a243ee8ab904d23706bd6b8fee0d76d6ccb200a5
+[OK] clean tree (porcelain, untracked=all): empty
+[OK] b4/ bytes identical to baseline 21db2de: git diff --stat empty
+[OK] IMPORT.json 59 entries, sha a6af67ef…: 59 a6af67efd18d47829a91f6041a53b98a240d2d16802cda8f45f233f7fbe91b4e
+   import_check: HEAD 495cc360c97aba58bda959a2e867e6b43dbf4f7f | 59 entries; file digests, base digests and copied-function digests all equal: True | tracked files under b4/ without an entry: none
+[OK] import_check all equal, no untabled file: exit 0
+[OK] protocol_sha256: 2f096d4adbd83e0ec6350e6da2942cc862e99df4e81539719fa7261dad5a258c
+   architecture_revision v0.2.0 (informational)
+[OK] labels: exploration b4-sim-4 gate b4-gate-2 retired ['b4-sim-1', 'b4-sim-2'] consumed ['b4-gate-1', 'b4-sim-3']
+[OK] gonogo policy S 32 / B_go 64 / alpha 0.2 / K9 min 0.5: {"B_go": 64, "S": 32, "alpha_go": 0.2, "k9_conditional_medians_min": 0.5, "precondition": "every planned pair complete and valid, else no decision", "standing": "an engineering cost policy for spending the gate's budget: not a significance result, not a gate, not an authorisation; no automatic successor", "statistic": "one-sided exact sign test on Omega - R at B_go, ties excluded from n and counted; positives > negatives"}
+[OK] receipt sha 68764bbc…: 68764bbc1a51ec2506bf9d9bcbb3f55f88f3d7642b5eb46c6fd3dd39f8dae146
+[OK] receipt 66 values, pinned 66: len=66 pinned=66
+   registry note: evidence/b4/sim/ holds 2 run directories
+   registry entry: dir=evidence/b4/sim/b4-gate-1_20261020T102526Z status=seeds seeds_sha256=785e76988d4e6ec49cfb86b7b896358b484e5899d48700ee1bcfffd6e034bced count=401
+   registry entry: dir=evidence/b4/sim/b4-sim-3_20261019T121833Z status=seeds seeds_sha256=1a0d1e7b91132ed6814a9e369e23f2c55f28886448fa5efd55d722182f50b17d count=65
+[OK] registry exactly the two named directories / status / digests / counts: 2 entries
+[OK] evidence/b4/sim/ holds nothing else: ['b4-gate-1_20261020T102526Z', 'b4-sim-3_20261019T121833Z']
+[OK] pooled exclusion 2625 values, 38 historical sources: 2625 values, 38 sources
+[OK] evidence/b4/gonogo/ absent: absent
+[OK] no b4-sim-4 output directory exists: none
+[OK] disk >= 2 GB free: 511.9 GB
+[OK] no competing b4 process: none
+seed derivation called: NO (master_seed / pair_seeds not invoked)
+ALL CHECKS PASS — the run may start

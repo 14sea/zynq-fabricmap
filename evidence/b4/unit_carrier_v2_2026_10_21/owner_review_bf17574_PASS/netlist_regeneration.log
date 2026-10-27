@@ -1,0 +1,411 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Wed Oct 21 17:41:27 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source vivado/b4/netlist_core.tcl
+# set outdir [lindex $argv 0]
+# set part   xc7z010clg400-1
+# set here   [file dirname [file normalize [info script]]]
+# set repo   [file dirname [file dirname $here]]
+# file mkdir $outdir
+# create_project -in_memory -part $part
+# add_files -norecurse [list $repo/rtl/b4/b4_core.v $repo/rtl/b4/b4_axil.v $repo/rtl/b4/b4_gate.v $repo/rtl/b4/b4_engine.v \
+#     $repo/rtl/b4/b4_gsr_reg.v $repo/rtl/b4/b4_slot_ram.v $repo/rtl/b4/b4_gsr_ram32.v $repo/rtl/b4/b4_axi_gate.v $repo/rtl/b1/p3_siphash.v]
+# synth_design -top b4_core -part $part -mode out_of_context -flatten_hierarchy none
+Command: synth_design -top b4_core -part xc7z010clg400-1 -mode out_of_context -flatten_hierarchy none
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7z010'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7z010'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 121
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2018.133 ; gain = 397.758 ; free physical = 15853 ; free virtual = 26885
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'b4_core' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_core.v:7]
+INFO: [Synth 8-6157] synthesizing module 'b4_axi_gate' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_axi_gate.v:27]
+INFO: [Synth 8-6155] done synthesizing module 'b4_axi_gate' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_axi_gate.v:27]
+INFO: [Synth 8-6157] synthesizing module 'b4_axil' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_axil.v:37]
+	Parameter VARIANT_WORD bound to: 1110704129 - type: integer 
+	Parameter TIMING_WORD bound to: 32'b01000100000001000001000000001000 
+	Parameter MECHANISM bound to: 8'b00000010 
+	Parameter PULSE_WORD bound to: 8'b00000010 
+INFO: [Synth 8-6157] synthesizing module 'b4_gsr_reg' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+	Parameter W bound to: 128 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'RAM32X1S' [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:154341]
+	Parameter INIT bound to: 32'b00000000000000000000000000000000 
+INFO: [Synth 8-6155] done synthesizing module 'RAM32X1S' (0#1) [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:154341]
+INFO: [Synth 8-6155] done synthesizing module 'b4_gsr_reg' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+INFO: [Synth 8-6157] synthesizing module 'b4_gsr_reg__parameterized0' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+	Parameter W bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'b4_gsr_reg__parameterized0' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+INFO: [Synth 8-6155] done synthesizing module 'b4_axil' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_axil.v:37]
+INFO: [Synth 8-6157] synthesizing module 'b4_gate' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gate.v:10]
+	Parameter NONCE_SEED bound to: 64'b1001111000110111011110011011100101111111010010100111110000010101 
+INFO: [Synth 8-6157] synthesizing module 'b4_gsr_reg__parameterized1' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+	Parameter W bound to: 64 - type: integer 
+	Parameter INIT bound to: 64'b1001111000110111011110011011100101111111010010100111110000010101 
+INFO: [Synth 8-6157] synthesizing module 'RAM32X1S__parameterized0' [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:154341]
+	Parameter INIT bound to: 32'b00000000000000000000000000000001 
+INFO: [Synth 8-6155] done synthesizing module 'RAM32X1S__parameterized0' (0#1) [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:154341]
+INFO: [Synth 8-6155] done synthesizing module 'b4_gsr_reg__parameterized1' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+INFO: [Synth 8-6157] synthesizing module 'b4_gsr_reg__parameterized2' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+	Parameter W bound to: 4 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'b4_gsr_reg__parameterized2' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+INFO: [Synth 8-6157] synthesizing module 'p3_siphash' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b1/p3_siphash.v:12]
+	Parameter MSG_WORDS bound to: 20 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'p3_siphash' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b1/p3_siphash.v:12]
+INFO: [Synth 8-6155] done synthesizing module 'b4_gate' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gate.v:10]
+INFO: [Synth 8-6157] synthesizing module 'b4_engine' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_engine.v:29]
+	Parameter ASSERT_DELAY bound to: 8 - type: integer 
+	Parameter PULSE bound to: 2 - type: integer 
+	Parameter RELEASE bound to: 16 - type: integer 
+	Parameter SAMPLE_OFFSET bound to: 4 - type: integer 
+	Parameter SETTLE bound to: 4 - type: integer 
+	Parameter HOLD bound to: 4 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'b4_gsr_reg__parameterized3' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+	Parameter W bound to: 10 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'b4_gsr_reg__parameterized3' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+INFO: [Synth 8-6157] synthesizing module 'b4_gsr_reg__parameterized4' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+	Parameter W bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'b4_gsr_reg__parameterized4' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_reg.v:12]
+INFO: [Synth 8-6157] synthesizing module 'b4_slot_ram' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_slot_ram.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'b4_slot_ram' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_slot_ram.v:6]
+INFO: [Synth 8-6157] synthesizing module 'b4_gsr_ram32' [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_ram32.v:5]
+INFO: [Synth 8-6155] done synthesizing module 'b4_gsr_ram32' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_gsr_ram32.v:5]
+INFO: [Synth 8-6155] done synthesizing module 'b4_engine' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_engine.v:29]
+INFO: [Synth 8-6155] done synthesizing module 'b4_core' (0#1) [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_core.v:7]
+WARNING: [Synth 8-6014] Unused sequential element k_reg was removed.  [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_axil.v:126]
+WARNING: [Synth 8-6014] Unused sequential element j_reg was removed.  [/tmp/owner_carrier_bf17574_ncoqqon1/rtl/b4/b4_axil.v:176]
+WARNING: [Synth 8-7129] Port s_wstrb[3] in module b4_axil is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_wstrb[2] in module b4_axil is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_wstrb[1] in module b4_axil is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_wstrb[0] in module b4_axil is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 2127.102 ; gain = 506.727 ; free physical = 15732 ; free virtual = 26765
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2141.945 ; gain = 521.570 ; free physical = 15739 ; free virtual = 26773
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7z010clg400-1
+INFO: [Device 21-403] Loading part xc7z010clg400-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2141.945 ; gain = 521.570 ; free physical = 15740 ; free virtual = 26773
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'phase_reg' in module 'p3_siphash'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'b4_engine'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                  iSTATE |                             0001 |                              000
+                 iSTATE0 |                             0010 |                              001
+                 iSTATE1 |                             0100 |                              010
+                 iSTATE2 |                             1000 |                              011
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'phase_reg' using encoding 'one-hot' in module 'p3_siphash'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                  S_IDLE |                             0000 |                             0000
+               S_RELEASE |                             0001 |                             0010
+                S_OFFSET |                             0010 |                             0011
+       S_PRECLEAN_SETTLE |                             0011 |                             1100
+         S_PRECLEAN_HOLD |                             0100 |                             1101
+                S_LAUNCH |                             0101 |                             0001
+             S_STEP_CTRL |                             0110 |                             0100
+             S_STEP_DATA |                             0111 |                             0101
+           S_STEP_SETTLE |                             1000 |                             0110
+             S_STEP_HOLD |                             1001 |                             0111
+          S_CLEAN_SETTLE |                             1010 |                             1000
+            S_CLEAN_HOLD |                             1011 |                             1001
+                 S_WRITE |                             1100 |                             1010
+                  S_POST |                             1101 |                             1011
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'b4_engine'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:08 ; elapsed = 00:00:07 . Memory (MB): peak = 2166.867 ; gain = 546.492 ; free physical = 15728 ; free virtual = 26762
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   64 Bit       Adders := 8     
+	   2 Input   33 Bit       Adders := 3     
+	   2 Input   32 Bit       Adders := 6     
+	   2 Input   14 Bit       Adders := 1     
+	   2 Input   10 Bit       Adders := 7     
+	   2 Input    9 Bit       Adders := 2     
+	   2 Input    8 Bit       Adders := 4     
+	   2 Input    6 Bit       Adders := 7     
+	   2 Input    5 Bit       Adders := 3     
+	   2 Input    3 Bit       Adders := 1     
++---XORs : 
+	   4 Input     64 Bit         XORs := 1     
+	   2 Input     64 Bit         XORs := 19    
++---Registers : 
+	              640 Bit    Registers := 1     
+	              256 Bit    Registers := 2     
+	              128 Bit    Registers := 3     
+	               64 Bit    Registers := 2     
+	               32 Bit    Registers := 3     
+	               25 Bit    Registers := 2     
+	               16 Bit    Registers := 1     
+	               10 Bit    Registers := 2     
+	                8 Bit    Registers := 7     
+	                5 Bit    Registers := 2     
+	                4 Bit    Registers := 2     
+	                3 Bit    Registers := 1     
+	                2 Bit    Registers := 2     
+	                1 Bit    Registers := 41    
++---Muxes : 
+	   2 Input  640 Bit        Muxes := 6     
+	   4 Input  256 Bit        Muxes := 4     
+	   2 Input  256 Bit        Muxes := 8     
+	   4 Input  128 Bit        Muxes := 3     
+	   2 Input  128 Bit        Muxes := 6     
+	   4 Input   64 Bit        Muxes := 2     
+	   2 Input   64 Bit        Muxes := 3     
+	   2 Input   32 Bit        Muxes := 2     
+	  14 Input   32 Bit        Muxes := 1     
+	   2 Input   10 Bit        Muxes := 2     
+	  14 Input   10 Bit        Muxes := 2     
+	   4 Input    8 Bit        Muxes := 9     
+	   2 Input    8 Bit        Muxes := 9     
+	  14 Input    8 Bit        Muxes := 2     
+	  14 Input    5 Bit        Muxes := 1     
+	   2 Input    5 Bit        Muxes := 1     
+	   2 Input    4 Bit        Muxes := 6     
+	  22 Input    4 Bit        Muxes := 1     
+	   7 Input    4 Bit        Muxes := 1     
+	   2 Input    3 Bit        Muxes := 3     
+	   4 Input    3 Bit        Muxes := 2     
+	   2 Input    2 Bit        Muxes := 5     
+	   2 Input    1 Bit        Muxes := 59    
+	   4 Input    1 Bit        Muxes := 8     
+	  14 Input    1 Bit        Muxes := 26    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 80 (col length:40)
+BRAMs: 120 (col length: RAMB18 40 RAMB36 20)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port P[5] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port P[4] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port P[3] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port P[2] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port P[1] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port P[0] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O2[5] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O2[4] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O2[3] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O2[2] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O2[1] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O2[0] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O4[5] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O4[4] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O4[3] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O4[2] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O4[1] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O4[0] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O6[5] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O6[4] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O6[3] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O6[2] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O6[1] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O6[0] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O8[5] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O8[4] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O8[3] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O8[2] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O8[1] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O8[0] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O10[5] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O10[4] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O10[3] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O10[2] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O10[1] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O10[0] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O12[5] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O12[4] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O12[3] driven by constant 1
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O12[2] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O12[1] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O12[0] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O14[5] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O14[4] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O14[3] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O14[2] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O14[1] driven by constant 0
+WARNING: [Synth 8-3917] design p3_siphash__GB0 has port O14[0] driven by constant 0
+WARNING: [Synth 8-7129] Port s_wstrb[3] in module b4_axil is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_wstrb[2] in module b4_axil is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_wstrb[1] in module b4_axil is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s_wstrb[0] in module b4_axil is either unconnected or has no load
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[8]' (FDCE) to 'engine/slot_in_d_reg[9]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[9]' (FDCE) to 'engine/slot_in_d_reg[10]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[10]' (FDCE) to 'engine/slot_in_d_reg[11]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[11]' (FDCE) to 'engine/slot_in_d_reg[12]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[12]' (FDCE) to 'engine/slot_in_d_reg[13]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[13]' (FDCE) to 'engine/slot_in_d_reg[14]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[14]' (FDCE) to 'engine/slot_in_d_reg[15]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[16]' (FDCE) to 'engine/slot_in_d_reg[17]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[17]' (FDCE) to 'engine/slot_in_d_reg[18]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[18]' (FDCE) to 'engine/slot_in_d_reg[19]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[19]' (FDCE) to 'engine/slot_in_d_reg[20]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[20]' (FDCE) to 'engine/slot_in_d_reg[21]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[21]' (FDCE) to 'engine/slot_in_d_reg[22]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[22]' (FDCE) to 'engine/slot_in_d_reg[23]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[25]' (FDCE) to 'engine/slot_in_d_reg[31]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[26]' (FDCE) to 'engine/slot_in_d_reg[31]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[27]' (FDCE) to 'engine/slot_in_d_reg[31]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[28]' (FDCE) to 'engine/slot_in_d_reg[31]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[29]' (FDCE) to 'engine/slot_in_d_reg[31]'
+INFO: [Synth 8-3886] merging instance 'engine/slot_in_d_reg[30]' (FDCE) to 'engine/slot_in_d_reg[31]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (engine/\slot_in_d_reg[31] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (axil/\s_rresp_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (axil/\s_bresp_reg[0] )
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:16 ; elapsed = 00:00:32 . Memory (MB): peak = 2322.840 ; gain = 702.465 ; free physical = 11446 ; free virtual = 22483
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:17 ; elapsed = 00:00:36 . Memory (MB): peak = 2322.844 ; gain = 702.469 ; free physical = 11593 ; free virtual = 22630
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:18 ; elapsed = 00:00:38 . Memory (MB): peak = 2322.844 ; gain = 702.469 ; free physical = 11259 ; free virtual = 22299
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:21 ; elapsed = 00:00:41 . Memory (MB): peak = 2482.738 ; gain = 862.363 ; free physical = 10416 ; free virtual = 21456
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:21 ; elapsed = 00:00:41 . Memory (MB): peak = 2482.738 ; gain = 862.363 ; free physical = 10416 ; free virtual = 21456
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:21 ; elapsed = 00:00:41 . Memory (MB): peak = 2482.738 ; gain = 862.363 ; free physical = 10415 ; free virtual = 21455
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+---------+------+
+|      |Cell     |Count |
++------+---------+------+
+|1     |CARRY4   |   187|
+|2     |LUT1     |   151|
+|3     |LUT2     |   272|
+|4     |LUT3     |   512|
+|5     |LUT4     |   586|
+|6     |LUT5     |   189|
+|7     |LUT6     |  1171|
+|8     |RAM32X1S |   279|
+|9     |FDCE     |  1963|
+|10    |FDPE     |     1|
+|11    |FDRE     |     8|
++------+---------+------+
+
+Report Instance Areas: 
++------+---------------------+------------------------------+------+
+|      |Instance             |Module                        |Cells |
++------+---------------------+------------------------------+------+
+|1     |top                  |                              |  5319|
+|2     |  gate               |b4_gate                       |  2768|
+|3     |    siphash          |p3_siphash                    |  2206|
+|4     |    nonce_store      |b4_gsr_reg__parameterized1    |    64|
+|5     |    armed_store      |b4_gsr_reg__parameterized0__1 |     1|
+|6     |    fault_store      |b4_gsr_reg__parameterized2__1 |     4|
+|7     |    recovery_store   |b4_gsr_reg__parameterized0__2 |     1|
+|8     |  lite_gate          |b4_axi_gate                   |    18|
+|9     |  axil               |b4_axil                       |  2105|
+|10    |    key_store        |b4_gsr_reg                    |   128|
+|11    |    key_loaded_store |b4_gsr_reg__parameterized0    |     1|
+|12    |  engine             |b4_engine                     |   384|
+|13    |    flags_store      |b4_gsr_reg__parameterized3__1 |    10|
+|14    |    gsr_store        |b4_gsr_reg__parameterized4__1 |     8|
+|15    |    idx_store        |b4_gsr_reg__parameterized3    |    10|
+|16    |    base_store       |b4_gsr_reg__parameterized4    |     8|
+|17    |    slots            |b4_slot_ram                   |     8|
+|18    |    slots_in         |b4_gsr_ram32                  |    32|
+|19    |    pulse_store      |b4_gsr_reg__parameterized2    |     4|
++------+---------------------+------------------------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:21 ; elapsed = 00:00:41 . Memory (MB): peak = 2482.738 ; gain = 862.363 ; free physical = 10415 ; free virtual = 21455
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 58 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:34 ; elapsed = 00:00:46 . Memory (MB): peak = 2486.652 ; gain = 866.277 ; free physical = 15590 ; free virtual = 26630
+Synthesis Optimization Complete : Time (s): cpu = 00:00:34 ; elapsed = 00:00:46 . Memory (MB): peak = 2486.652 ; gain = 866.277 ; free physical = 15590 ; free virtual = 26625
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 2497.613 ; gain = 0.000 ; free physical = 15575 ; free virtual = 26610
+INFO: [Netlist 29-17] Analyzing 466 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2649.168 ; gain = 0.000 ; free physical = 15491 ; free virtual = 26526
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 279 instances were transformed.
+  RAM32X1S => RAM32X1S (RAMS32): 279 instances
+
+Synth Design complete | Checksum: fb058a33
+INFO: [Common 17-83] Releasing license: Synthesis
+71 Infos, 58 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:37 ; elapsed = 00:00:48 . Memory (MB): peak = 2649.203 ; gain = 1028.828 ; free physical = 15366 ; free virtual = 26401
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 7132.322; main = 2062.442; forked = 5680.054
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 12940.082; main = 2649.168; forked = 10523.766
+# set ffs [llength [get_cells -hierarchical -filter {REF_NAME =~ "FD*"}]]
+# set rams [llength [get_cells -hierarchical -filter {REF_NAME == RAM32X1S}]]
+# write_verilog -force -mode funcsim $outdir/b4_core_funcsim.v
+# set sha [lindex [exec sha256sum $outdir/b4_core_funcsim.v] 0]
+# set fh [open $outdir/b4_core_funcsim.json w]
+# puts $fh "{\"schema\": \"b4_core_funcsim\", \"schema_version\": \"1.0.0\", \"top\": \"b4_core\", \"mode\": \"post-synthesis, out of context\", \"vivado\": \"[version -short]\","
+# puts $fh " \"flip_flops\": $ffs, \"ram32x1s\": $rams, \"netlist_sha256\": \"$sha\"}"
+# close $fh
+# puts "B4 CORE NETLIST OK -> $outdir/b4_core_funcsim.v ($sha) FFs=$ffs RAM32X1S=$rams"
+B4 CORE NETLIST OK -> builds/b4/b4_core_funcsim.v (614e825a13cae2a2cadb622273312060052557998dcb78c603ee1ed8ef5ce302) FFs=1972 RAM32X1S=279
+INFO: [Common 17-206] Exiting Vivado at Wed Oct 21 17:42:19 2026...

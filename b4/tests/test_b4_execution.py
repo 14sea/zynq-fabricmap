@@ -19,7 +19,7 @@ import b4_ff_model as fm  # noqa: E402
 import b4_landscape as bl  # noqa: E402
 
 
-from b4_test_fixtures import mechanics_fabric, v021_hole_fabric  # noqa: E402
+from b4_test_fixtures import mechanics_fabric, v021_hole_fabric, v02_task  # noqa: E402
 
 
 class ThePort(unittest.TestCase):
@@ -36,7 +36,7 @@ class ThePort(unittest.TestCase):
     def test_an_engine_run_touches_only_observe_and_addresses(self):
         fab = mechanics_fabric()
         spy = ex.SpyPort(fab)
-        task = bl.make_task(7, spy.addresses)
+        task = v02_task(7, fab)
         for arm, kw in (("R", {}), ("O", {}), ("F", {})):
             spy.touched.clear()
             be.run(arm, task, spy, 11, 16, **kw)
@@ -49,7 +49,7 @@ class ThePort(unittest.TestCase):
         m = bm.site_mapping()
         port = ex.ObservationPort(v021_hole_fabric())                          # the kept 0.2.1 reading: its domain has the hole
         latch_only = 1 << m.genome_bit(m.address_of(None, "storage_kind"))     # CLKINV clear: outside the 0.2.1 domain (in v0.3's)
-        ctx = {"landscape_seed": 7, "operator_seed": 11, "budget": 40, "successful_observations": 3, "rng_state": 12345,
+        ctx = {"task_digest": "t" * 64, "operator_seed": 11, "budget": 40, "successful_observations": 3, "rng_state": 12345,
                "population_commitment": "p" * 64, "map_commitment": "m" * 64, "map_version": 2}
         with self.assertRaises(ex.Terminated) as cm:
             ex.observe_candidate(port, latch_only, [{"kind": "init"}], "search", 4, ctx)
@@ -57,7 +57,7 @@ class ThePort(unittest.TestCase):
         self.assertEqual((e.code, e.phase, e.attempt, e.genome, e.successful_observations, e.rng_state, e.map_version), ("DOMAIN", "search", 4, latch_only, 3, 12345, 2))
         self.assertEqual((e.population_commitment, e.map_commitment), ("p" * 64, "m" * 64))
         self.assertEqual(len(e.config_sha256), 64)
-        self.assertEqual(set(e.as_dict()), {"code", "phase", "attempt", "genome", "config_sha256", "stimulus_sha256", "landscape_seed", "operator_seed", "budget",
+        self.assertEqual(set(e.as_dict()), {"code", "phase", "attempt", "genome", "config_sha256", "stimulus_sha256", "task_digest", "operator_seed", "budget",
                                             "successful_observations", "rng_state", "population_commitment", "map_commitment", "map_version"})
         for word in ("clock", "latch", "unknown", "reading"):
             self.assertNotIn(word, str(e.as_dict()).lower())
@@ -71,7 +71,7 @@ class ThePort(unittest.TestCase):
                 raise fm.ModelRefusal("boom")
         port = Bad(mechanics_fabric())
         with self.assertRaises(fm.ModelRefusal) as cm:
-            ex.observe_candidate(port, 0, [{"kind": "init"}], "base", 1, {"landscape_seed": 0, "operator_seed": 0, "budget": 1, "successful_observations": 0,
+            ex.observe_candidate(port, 0, [{"kind": "init"}], "base", 1, {"task_digest": "t" * 64, "operator_seed": 0, "budget": 1, "successful_observations": 0,
                                                                             "rng_state": 0, "population_commitment": "", "map_commitment": "", "map_version": 0})
         self.assertEqual(str(cm.exception), "boom")
         self.assertNotIsInstance(cm.exception, fm.DomainRefusal)
@@ -105,8 +105,8 @@ class ThePort(unittest.TestCase):
 
     def test_the_task_and_the_genome_helpers(self):
         fab = mechanics_fabric()
-        task = bl.make_task(3, fab.mapping.addresses)
-        self.assertEqual(task.digest(), bl.make_task(3, fab.mapping.addresses).digest())
+        task = v02_task(3, fab)
+        self.assertEqual(task.digest(), v02_task(3, fab).digest())
         cfg = ex.genome_to_config(0b101, task.addresses)
         self.assertEqual([cfg[a] for a in task.addresses[:3]], [1, 0, 1])
         self.assertEqual(ex.genome_hex(0b101, 21), "000005")

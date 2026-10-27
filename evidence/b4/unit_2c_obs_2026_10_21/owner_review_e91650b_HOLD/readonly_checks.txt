@@ -1,0 +1,171 @@
+{
+  "k9_address_record": {
+    "exit": 0,
+    "output_byte_identical": true,
+    "sha256": "81e3dc74b74b9ef62913288a0594a65797d360560d99f0f92377741d42a5b46e"
+  },
+  "positive_control_choice": {
+    "exit": 0,
+    "output_byte_identical": true,
+    "sha256": "6199d6e677c8a47716a60c2a10a60929c24cf587467545420b80512017375751"
+  },
+  "independent_selection": [
+    {
+      "label": "ce_mode",
+      "address": "0x00400a01/52/7",
+      "element": null,
+      "covered": 1021,
+      "applicable": 1024,
+      "fraction": "1021/1024",
+      "g0": "0x0",
+      "g1": "0x10",
+      "background_covered": 32,
+      "background_applicable": 32
+    },
+    {
+      "label": "clock_mode",
+      "address": "0x00400a01/52/19",
+      "element": null,
+      "covered": 988,
+      "applicable": 1024,
+      "fraction": "247/256",
+      "g0": "0x0",
+      "g1": "0x40",
+      "background_covered": 32,
+      "background_applicable": 32
+    },
+    {
+      "label": "sr_kind",
+      "address": "0x00400a00/52/16",
+      "element": null,
+      "covered": 229,
+      "applicable": 256,
+      "fraction": "229/256",
+      "g0": "0x8",
+      "g1": "0x9",
+      "background_covered": 32,
+      "background_applicable": 32
+    },
+    {
+      "label": "sr_mode",
+      "address": "0x00400a01/52/3",
+      "element": null,
+      "covered": 990,
+      "applicable": 1024,
+      "fraction": "495/512",
+      "g0": "0x0",
+      "g1": "0x8",
+      "background_covered": 32,
+      "background_applicable": 32
+    },
+    {
+      "label": "storage_kind",
+      "address": "0x00400a1e/52/0",
+      "element": null,
+      "covered": 1024,
+      "applicable": 1024,
+      "fraction": "1",
+      "g0": "0x0",
+      "g1": "0x400",
+      "background_covered": 32,
+      "background_applicable": 32
+    },
+    {
+      "label": "ff_init (main)",
+      "address": "0x00400a1f/51/3",
+      "element": "AFF",
+      "covered": 2048,
+      "applicable": 2048,
+      "fraction": "1",
+      "g0": "0x0",
+      "g1": "0x2000",
+      "background_covered": 32,
+      "background_applicable": 32
+    },
+    {
+      "label": "ff_init (x5FF)",
+      "address": "0x00400a1f/51/6",
+      "element": "A5FF",
+      "covered": 1024,
+      "applicable": 1024,
+      "fraction": "1",
+      "g0": "0x0",
+      "g1": "0x4000",
+      "background_covered": 32,
+      "background_applicable": 32
+    },
+    {
+      "label": "ff_srval (main)",
+      "address": "0x00400a1e/51/30",
+      "element": "BFF",
+      "covered": 896,
+      "applicable": 1024,
+      "fraction": "7/8",
+      "g0": "0x8",
+      "g1": "0x208",
+      "background_covered": 31,
+      "background_applicable": 32
+    },
+    {
+      "label": "ff_srval (x5FF)",
+      "address": "0x00400a01/52/15",
+      "element": "C5FF",
+      "covered": 392,
+      "applicable": 512,
+      "fraction": "49/64",
+      "g0": "0x8",
+      "g1": "0x28",
+      "background_covered": 30,
+      "background_applicable": 32
+    }
+  ],
+  "D1_scoring_counterexample": {
+    "source": "pair_000/k10.json retained observation id 20",
+    "genome": 1024,
+    "model_fitness": 24,
+    "masked_undefined_weight": 32,
+    "possible_completion_fitness_low": 24,
+    "possible_completion_fitness_high": 56,
+    "meaning": "hypothetical 0/1 completions demonstrate differing scoring domains; no claim that a board produces either completion"
+  },
+  "existing_model_trace_top_keys": [
+    "schema",
+    "schema_version",
+    "visibility",
+    "q_null_means",
+    "hypothesis",
+    "mapping",
+    "fabric",
+    "config",
+    "config_sha256",
+    "stimulus",
+    "initial",
+    "elements",
+    "steps"
+  ],
+  "carrier_only_fields_missing_from_legacy_model": [
+    "source",
+    "configuration",
+    "init_event",
+    "timing",
+    "stimulus_sha256",
+    "nonce",
+    "session_label"
+  ],
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "gate_runs/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gonogo/",
+    "evidence/b4/gate/"
+  ],
+  "status": "## b4-2c-obs\n",
+  "head": "e91650b828bfbb06f24881f8c3e8cc0dac357e6d",
+  "diff_check": ""
+}

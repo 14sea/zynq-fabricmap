@@ -1,0 +1,3 @@
+OWNER_BURST stall=1 ps_quiet=0 shim_state=4 WVALID=1 WREADY=0 BVALID=0 gsr_count=0 lite_quiet=1
+OWNER_REPRODUCED: accepted AXI3 burst cannot drain after its first INIT_REQ beat
+tb/b4/owner_axi_burst.v:87: $finish called at 9360000 (1ps)

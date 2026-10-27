@@ -1,0 +1,21 @@
+{
+  "behavioral_counter": {
+    "exit": 0,
+    "pulse_width_ns_in_this_functional_simulation": [
+      40.0,
+      40.0
+    ],
+    "TB_PASS": true,
+    "output": "OWNER_GSR_WIDTH_NS 40.000\nOWNER_GSR_WIDTH_NS 40.000\nTB_PASS unisim\n/home/test/zynq_fabricmap/build/wip/owner_review_823f5b0_2026_10_21/tb_vendor_counter_probe.v:65: $finish called at 10840000 (1ps)\n"
+  },
+  "vendor_FDCE_counter": {
+    "exit": 0,
+    "pulse_width_ns_in_this_functional_simulation": [
+      0.1,
+      0.1
+    ],
+    "TB_PASS": true,
+    "output": "OWNER_GSR_WIDTH_NS 0.100\nOWNER_GSR_WIDTH_NS 0.100\nTB_PASS unisim\n/home/test/zynq_fabricmap/build/wip/owner_review_823f5b0_2026_10_21/tb_vendor_counter_probe.v:65: $finish called at 10840000 (1ps)\n"
+  },
+  "limit": "The vendor-mapped counter models global GSR on pulse flops, which RTL reg simulation omits. Widths are model results, not silicon timing measurements. The committed timing report identifies pulse_cnt registers as FDCE."
+}

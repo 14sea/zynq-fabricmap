@@ -1,0 +1,95 @@
+{
+ "digests": {
+  "batch": {
+   "STOPPED.json": {
+    "normalised_sha256": "82e2cfdcca720480fb18a90737926c9a9e315915332d71c2a95a9ea3ed20ef1f",
+    "sha256": "c9e0bf8f5b6766b0a8f70955b5caac5a95dc7725ce1fee36be08a6a01452d631",
+    "size": 1574
+   },
+   "manifest.json": {
+    "normalised_sha256": "ec29cc96eec0d7d0764c70bb5305a16a151a9203c89609e70508362bf81d99de",
+    "sha256": "0db7181cac75c4b58762c53d3008b36490d55e63074e9b7a147ffc43de0d268a",
+    "size": 41548
+   },
+   "pair_000/target_holdout.QUARANTINE.json": {
+    "normalised_sha256": "bacea2a09c18caefe2555e6b64da2f2bca55a80674f07e43b1dd1cae7ebac15e",
+    "sha256": "87ffb365a0a98be5cb7004c4544075b743577af9cb80eb6e3d91cca80068cbfe",
+    "size": 12016
+   },
+   "pair_000/target_search.json": {
+    "normalised_sha256": "286da0cc6e6ab489f78ebf7cbc2ba9fcee5beb5219d64d13579a63eab89b761b",
+    "sha256": "767390b8d4d1b5883baf9ac239316810664d363a9e41ef00fae8b197762cbddd",
+    "size": 1777
+   },
+   "pair_000/task_setup.json": {
+    "normalised_sha256": "588ec68e41643dcabff186104a63ae0ba5e4b4b417429bda327f682b2a61d19d",
+    "sha256": "d9b7da4ba34a3a9a393090304f3864eec6eee091a6127fd7bd5e777498bc475e",
+    "size": 2118
+   },
+   "seeds.json": {
+    "normalised_sha256": "98248be5477fed8bd17d863c16a5f83807543d6211788b33f3219b03113aa339",
+    "sha256": "af613ec4946bf460a0f917310a5e1267fd05fbf6e78be0d5e61198f876e61f4f",
+    "size": 132587
+   },
+   "sim_report.json": {
+    "normalised_sha256": "c350cccd9eb65d311b6140ac42d8ce98daa80ef39bee43a1e8255ecdbe6ddfa5",
+    "sha256": "4bfda072b8d48275c97c53a26037bf117443e2d535f5331352f2eabcc8b5db7c",
+    "size": 15546
+   }
+  }
+ },
+ "exit_code": 1,
+ "expected": {
+  "files": [
+   "target_holdout.QUARANTINE.json",
+   "target_search.json",
+   "task_setup.json"
+  ],
+  "kind": "target_invalid",
+  "prefix": 2,
+  "quarantine": "target_holdout",
+  "status": "invalid",
+  "task": "invalid"
+ },
+ "fresh_batch_exit": 0,
+ "normalisation": {
+  "files_in_raw_map": 995,
+  "fixed_point_passes": 19,
+  "substituted_references": 4290
+ },
+ "pair_000": {
+  "status": "partial",
+  "task": "invalid",
+  "task_prefix": 2,
+  "task_quarantine": "target_holdout"
+ },
+ "pair_000_files": [
+  "target_holdout.QUARANTINE.json",
+  "target_search.json",
+  "task_setup.json"
+ ],
+ "quarantine": {
+  "context": {
+   "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+   "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+   "genome": 588756,
+   "genome_hex": "08fbd4",
+   "phase": "target_holdout",
+   "returned_sha256": "e8bf66231a4b4fcd655968ad8d9d346cc0a0ba89ab3bd5fd75f0b67231d28fc0",
+   "stimulus_sha256": "b7635314ae9020681615fa5f32a85e4debc460bd9439807d9cb8bbd2251821d4"
+  },
+  "findings": [
+   "the source identity is not the expected one (a drift inside the setup)"
+  ],
+  "marker_found": true,
+  "raw_is_null": false
+ },
+ "raw_links": {
+  "resolved": 6,
+  "unresolved": []
+ },
+ "status": "invalid",
+ "stopped_kind": "target_invalid",
+ "stopped_role": "TARGET",
+ "stopped_stage": "target_setup"
+}

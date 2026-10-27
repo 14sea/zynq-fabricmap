@@ -1,0 +1,18 @@
+The owner's clarification of the execution ruling's organisational bounds (relayed by the user on 2026-10-21 UTC, after the executed
+unit's three commits 580c0e5 / adce027 / 196b358 were complete; verbatim). It replaces the corresponding restrictions of the ruling in
+owner_review_495cc36_PASS/README.md section 3 and of owner_date_correction_2026_10_21.txt; it changes nothing that was executed.
+
+你還加了什麽別的不必要的限制嗎？
+
+有。我把幾項方便審查的安排，升格成了沒有必要的硬閘門。以下更正立即取代我前兩份回覆的對應限制：
+
+- 日期與有效期取消。 我剛才改成「10-21 或 10-22」仍然多加了期限。既有執行授權不因日曆過期；起跑時確認方法與前置條件仍符合即可。
+- 分支名稱不必固定。 b4-sim-4-execution 是整理歷史的建議，無須因名稱不同停工。
+- 不必恰好三筆 commit。 工具確實要求 archive 先提交、樹乾淨才能 decide；後面的 decision 與單位紀錄可以合理合併提交。
+- 已授權的結案／P3 純文件提交可以先做。 方法、正式輸入與 registry 未變時，記錄實際 execution HEAD 即可，不需只為文件造成的 hash 變動重新請示。
+- 不用禁止所有其他工作。 可做不改輸入、不干擾輸出與 registry 的只讀工作；應避免的是競爭寫入及同時啟動另一批實驗。
+- 等待期間不用保持機器清醒。 避免休眠只適用於正在執行、受 deadline 約束的批次。
+
+仍有實質理由保留的是：固定方法與門檻、S=32、3600 秒、一次批次、禁止提前抽 seed／smoke、異常即停且不自動重抽、原始證據完整保留，以及必要的驗證與來源綁定。
+
+本次探索授權繼續有效；push／merge、gate-2 與板上工作沒有因此擴大授權。往後我會把科學契約、工具要求、整理建議分清楚，不再把整理建議變成反覆請示的理由。

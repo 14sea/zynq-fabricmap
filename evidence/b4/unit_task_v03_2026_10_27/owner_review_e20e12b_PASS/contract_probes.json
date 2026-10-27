@@ -1,0 +1,97 @@
+{
+  "scope": "explicit already exposed mechanics seeds only; no batch/production draw; self-score is not search success",
+  "seed_fixture_values": [
+    3,
+    5,
+    7,
+    8
+  ],
+  "scripted_draws": {
+    "uniform_arguments": [
+      2,
+      4,
+      256,
+      2,
+      4,
+      256
+    ],
+    "steps": [
+      {
+        "kind": "set",
+        "clock": 1,
+        "ce": 255,
+        "sr": 255,
+        "d": 165
+      },
+      {
+        "kind": "set",
+        "clock": 0,
+        "ce": 0,
+        "sr": 0,
+        "d": 90
+      }
+    ]
+  },
+  "planted_checks": [
+    {
+      "fixture_seed": 3,
+      "search_score_on_planted_trace": 64,
+      "holdout_score_on_planted_trace": 80,
+      "setup_findings": [],
+      "old_shape_refused": [
+        "public_task.stimulus: not a task-v0.3 stimulus: step 2: ce = 128 is not a slice-wide broadcast (0x00 / 0xFF): not a task-v0.3 stimulus"
+      ]
+    },
+    {
+      "fixture_seed": 5,
+      "search_score_on_planted_trace": 64,
+      "holdout_score_on_planted_trace": 80,
+      "setup_findings": [],
+      "old_shape_refused": [
+        "public_task.stimulus: not a task-v0.3 stimulus: step 2: ce = 128 is not a slice-wide broadcast (0x00 / 0xFF): not a task-v0.3 stimulus"
+      ]
+    },
+    {
+      "fixture_seed": 7,
+      "search_score_on_planted_trace": 64,
+      "holdout_score_on_planted_trace": 80,
+      "setup_findings": [],
+      "old_shape_refused": [
+        "public_task.stimulus: not a task-v0.3 stimulus: step 2: ce = 128 is not a slice-wide broadcast (0x00 / 0xFF): not a task-v0.3 stimulus"
+      ]
+    },
+    {
+      "fixture_seed": 8,
+      "search_score_on_planted_trace": 64,
+      "holdout_score_on_planted_trace": 80,
+      "setup_findings": [],
+      "old_shape_refused": [
+        "public_task.stimulus: not a task-v0.3 stimulus: step 2: ce = 128 is not a slice-wide broadcast (0x00 / 0xFF): not a task-v0.3 stimulus"
+      ]
+    }
+  ],
+  "protocol_sha256": "5bba53c78d08f3ad32e41a90ef37d2639ea584e97fbf74996d941cec4fe14e7f",
+  "task_identity": {
+    "version": "task-v0.3",
+    "planted_rule": "Rng((landscape_seed ^ 0x54415247) & 0xffffffff).uniform(1 << 20), the first call, mapped onto the 20 non-storage_kind bits in address order; the storage_kind bit fixed to 0 (flip-flop); the all-zero base included; nothing redrawn",
+    "salt": 1413567047,
+    "k_default": 6,
+    "k_holdout": 8,
+    "level_steps": 2,
+    "holdout_salt": 2779096485,
+    "n_bits": 21,
+    "stimulus_rule": "task-v0.3 (the owner's ruling of 2026-10-27): per set step ONE slice-wide CE value, high with probability 1/2 (uniform(2) == 0), and ONE slice-wide SR value, high with probability 1/4 (uniform(4) == 0), the two draws independent, each broadcast over the eight elements as 0xFF / 0x00; d a per-element uniform 8-bit draw; the draw order ce, sr, d; K = 6 / 8, two level steps, the mask, the weights and the ceilings 64 / 80 as task-v0.2",
+    "ce_high_one_in": 2,
+    "sr_high_one_in": 4,
+    "broadcast": {
+      "0": 0,
+      "1": 255
+    },
+    "module_sha256": "fb36fec88cd21c8381caa9e441fa4c4cda176f7eba69277709877ab009faa1f9"
+  },
+  "architecture_revision": "v0.3.0",
+  "production_derivation_calls": [
+    0,
+    0
+  ]
+}
