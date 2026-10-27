@@ -1,0 +1,30 @@
+UTC 2026-10-27T16:59:03Z
+HEAD ae7fc3547e1f9271a430b38ffee7fd469b89a7ee branch b4-task-v03
+main a243ee8ab904d23706bd6b8fee0d76d6ccb200a5
+porcelain entries 0 (this unit's own untracked files, if any, listed): []
+b4/ bytes vs baseline e20e12b: git diff --stat empty = True
+b4/ bytes vs the v0.2.0 baseline 21db2de: git diff --stat empty = False (expected False: task-v0.3)
+protocol_sha256 5bba53c78d08f3ad32e41a90ef37d2639ea584e97fbf74996d941cec4fe14e7f | architecture_revision v0.3.0 (informational, excluded from the digest)
+identity task component {"broadcast": {"0": 0, "1": 255}, "ce_high_one_in": 2, "holdout_salt": 2779096485, "k_default": 6, "k_holdout": 8, "level_steps": 2, "module_sha256": "fb36fec88cd21c8381caa9e441fa4c4cda176f7eba69277709877ab009faa1f9", "n_bits": 21, "planted_rule": "Rng((landscape_seed ^ 0x54415247) & 0xffffffff).uniform(1 << 20), the first call, mapped onto the 20 non-storage_kind bits in address order; the storage_kind bit fixed to 0 (flip-flop); the all-zero base included; nothing redrawn", "salt": 1413567047, "sr_high_one_in": 4, "stimulus_rule": "task-v0.3 (the owner's ruling of 2026-10-27): per set step ONE slice-wide CE value, high with probability 1/2 (uniform(2) == 0), and ONE slice-wide SR value, high with probability 1/4 (uniform(4) == 0), the two draws independent, each broadcast over the eight elements as 0xFF / 0x00; d a per-element uniform 8-bit draw; the draw order ce, sr, d; K = 6 / 8, two level steps, the mask, the weights and the ceilings 64 / 80 as task-v0.2", "version": "task-v0.3"}
+IMPORT.json entries 59 sha256 9de52e257e2b5c733118b097ffdb5ba69b941726b815bace302a6d1d8eecf02b
+architecture document sha256 8fa1fbf550f19768a0cb96ceafb806a9c083bc1f37359abe3940576148b35989 (a root input recorded in the manifest, not pinned)
+labels: exploration b4-sim-5 | gate b4-gate-2 | retired ['b4-sim-1', 'b4-sim-2'] | consumed ['b4-gate-1', 'b4-sim-3', 'b4-sim-4']
+thresholds anchor labels b4-sim-5 b4-gate-2 | hypothesis 59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8
+gonogo policy {"B_go": 64, "S": 32, "applies_to": "b4-sim-5 (protocol v0.3.0); b4-sim-4 was decided no-go under v0.2.0 and is not re-decided", "k9_conditional_medians_min": 0.5, "p_max_go": 0.2, "p_max_go_standing": "an engineering cost threshold on the sign test's p, not the alpha of a formal scientific test", "precondition": "every planned pair complete and valid, else no decision", "standing": "an engineering cost policy for spending the gate's budget: not a significance result, not a gate, not an authorisation; no automatic successor", "statistic": "one-sided exact sign test on Omega - R at B_go, ties excluded from n and counted; positives > negatives"}
+task block {"ceilings": {"holdout": 80, "search": 64}, "setup_observations_per_pair": 2, "stimulus": {"K": {"holdout": 8, "search": 6}, "ce": "slice-wide: one value per set step, high with probability 1/2 (uniform(2) == 0), broadcast as 0xFF / 0x00", "d": "per-element uniform 8-bit draw (unchanged)", "draw_order": "ce, sr, d", "level_steps": 2, "previous": "task-v0.2: ce a per-element uniform 8-bit draw, sr each element with probability 1/4 (not realisable on one CE / SR pin per slice; consumed by b4-sim-4)", "sr": "slice-wide: one value per set step, high with probability 1/4 (uniform(4) == 0), independent of ce, broadcast as 0xFF / 0x00"}, "target_salt": 1413567047, "version": "task-v0.3"}
+landscape constants {"BROADCAST": {"0": 0, "1": 255}, "CE_HIGH_ONE_IN": 2, "SR_HIGH_ONE_IN": 4, "TASK_VERSION": "task-v0.3"}
+exposure receipt 68764bbc1a51ec2506bf9d9bcbb3f55f88f3d7642b5eb46c6fd3dd39f8dae146 values 66 pinned 68764bbc1a51ec2506bf9d9bcbb3f55f88f3d7642b5eb46c6fd3dd39f8dae146 pinned count 66
+registry note: evidence/b4/sim/ holds 3 run directories
+  registry entry evidence/b4/sim/b4-gate-1_20261020T102526Z seeds 785e76988d4e6ec49cfb86b7b896358b484e5899d48700ee1bcfffd6e034bced values 401
+  registry entry evidence/b4/sim/b4-sim-3_20261019T121833Z seeds 1a0d1e7b91132ed6814a9e369e23f2c55f28886448fa5efd55d722182f50b17d values 65
+  registry entry evidence/b4/sim/b4-sim-4_20261021T065339Z seeds ae179c376282ae61f7057765a061105badee5e0d576a161af5fa43dd6c7e0296 values 65
+pooled exclusion 2690 | historical sources 38
+evidence/b4/sim exists  | entries ['b4-gate-1_20261020T102526Z', 'b4-sim-3_20261019T121833Z', 'b4-sim-4_20261021T065339Z']
+evidence/b4/gate exists  | entries ['b4-gate-1_20261020T102526Z']
+evidence/b4/gonogo exists  | entries ['b4-sim-4_20261021T065857Z']
+evidence/b4/sim/b4-sim-3_20261019T121833Z files 643 bytes 193230267 | status complete | elapsed_s 209.702 of 3600 | protocol_sha256 None
+evidence/b4/sim/b4-gate-1_20261020T102526Z files 4003 bytes 1202331492 | status complete | elapsed_s 1372.077 of 3600 | protocol_sha256 None
+evidence/b4/sim/b4-sim-4_20261021T065339Z files 771 bytes 200674002 | status complete | elapsed_s 199.256 of 3600 | protocol_sha256 2f096d4adbd83e0ec6350e6da2942cc862e99df4e81539719fa7261dad5a258c
+gonogo record b4-sim-4: decision no-go | formal True | head 580c0e5d06079dfe9ad885e69aaec23ff13ffcaa | policy keys ['B_go', 'S', 'alpha_go', 'k9_conditional_medians_min', 'precondition', 'standing', 'statistic']
+disk free GB 483.3 of 1081.1
+seed derivation called: NO (master_seed / pair_seeds not invoked by this inventory)

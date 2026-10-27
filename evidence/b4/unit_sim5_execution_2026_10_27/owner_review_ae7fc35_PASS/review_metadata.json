@@ -1,0 +1,22 @@
+{
+  "reviewed_head": "ae7fc3547e1f9271a430b38ffee7fd469b89a7ee",
+  "verdict": "PASS",
+  "utc": "2026-10-27T17:01:32.792083+00:00",
+  "tracked_changes_by_reviewer": false,
+  "new_seed_derivation": false,
+  "production_execution_by_reviewer": false,
+  "execution_authorised_for_implementer": {
+    "head": "ae7fc3547e1f9271a430b38ffee7fd469b89a7ee",
+    "label": "b4-sim-5",
+    "S": 32,
+    "soft_deadline_s": 3600,
+    "calendar_gate": null
+  },
+  "commands": [
+    "python3 -B build/wip/owner_review_ae7fc35_2026_10_27/check_plan.py",
+    "python3 -B build/wip/owner_review_ae7fc35_2026_10_27/record_checks.py",
+    "python3 -B -m unittest discover -s b4/tests -p test_b4_thresholds.py",
+    "git diff --check e20e12b HEAD"
+  ],
+  "checks": "independent_checks.json; record_checks.json; inventory_owner.txt; import_check.txt; pins.txt"
+}

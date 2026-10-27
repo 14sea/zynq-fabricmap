@@ -1,0 +1,136 @@
+[
+  {
+    "archive": "b4-sim-3_20261019T121833Z",
+    "report_sha256": "a7ab0aaa75a552d01d79ef865acd84d57f7ca2629b4be604e656ba95bc412c89",
+    "recorded_count": 32,
+    "recorded_deadline": {
+      "checks": 52715,
+      "clock": "time.monotonic",
+      "elapsed_s": 209.702,
+      "expired": false,
+      "first_expired_at_s": null,
+      "seconds": 3600
+    },
+    "Omega_minus_R_B64": {
+      "cohen_d": {
+        "special": null,
+        "value": -0.06879102531574614
+      },
+      "mean": -0.21875,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 12,
+      "population_variance": 9.7958984375,
+      "positives": 10,
+      "sign_test_p": 0.7382664680480957,
+      "ties": 10
+    },
+    "K9": {
+      "ce_mode": 1.0,
+      "clock_mode": 1.0,
+      "ff_init": 1.0,
+      "ff_srval": 0.4270833333333333,
+      "sr_kind": 0.5,
+      "sr_mode": 1.0,
+      "storage_kind": 1.0
+    },
+    "K9_all_panel": null,
+    "B_star": {
+      "note": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)",
+      "reason_if_none": "no grid budget has both K1 eligibility and an N: the budget rule's candidate does not exist on this S (not invented)",
+      "value": null
+    }
+  },
+  {
+    "archive": "b4-gate-1_20261020T102526Z",
+    "report_sha256": "dab33280753ca5a8fca5f02064eb6afe441913924cae88b000f5061285ce4a07",
+    "recorded_count": 200,
+    "recorded_deadline": {
+      "checks": 329747,
+      "clock": "time.monotonic",
+      "elapsed_s": 1372.077,
+      "expired": false,
+      "first_expired_at_s": null,
+      "seconds": 3600
+    },
+    "Omega_minus_R_B64": {
+      "cohen_d": {
+        "special": null,
+        "value": -0.16794554149476018
+      },
+      "mean": -0.49,
+      "median": 0.0,
+      "n": 200,
+      "negatives": 95,
+      "population_variance": 8.4699,
+      "positives": 56,
+      "sign_test_p": 0.9994676372796186,
+      "ties": 49
+    },
+    "K9": {
+      "ce_mode": 1.0,
+      "clock_mode": 1.0,
+      "ff_init": 1.0,
+      "ff_srval": 0.40625,
+      "sr_kind": 0.5,
+      "sr_mode": 0.96875,
+      "storage_kind": 1.0
+    },
+    "K9_all_panel": null,
+    "B_star": {
+      "note": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)",
+      "reason_if_none": "no grid budget has both K1 eligibility and an N: the budget rule's candidate does not exist on this S (not invented)",
+      "value": null
+    }
+  },
+  {
+    "archive": "b4-sim-4_20261021T065339Z",
+    "report_sha256": "01744b39598b10bbf7d4371be1e5b9355c08fc39a8877ef6957866ac8178f1fa",
+    "recorded_count": 32,
+    "recorded_deadline": {
+      "checks": 52779,
+      "clock": "time.monotonic",
+      "elapsed_s": 199.256,
+      "expired": false,
+      "first_expired_at_s": null,
+      "seconds": 3600
+    },
+    "Omega_minus_R_B64": {
+      "cohen_d": {
+        "special": null,
+        "value": -0.3531074633217678
+      },
+      "mean": -1.71875,
+      "median": 0.0,
+      "n": 32,
+      "negatives": 13,
+      "population_variance": 22.9521484375,
+      "positives": 7,
+      "sign_test_p": 0.9423408508300781,
+      "ties": 12
+    },
+    "K9": {
+      "ce_mode": 1.0,
+      "clock_mode": 1.0,
+      "ff_init": 1.0,
+      "ff_srval": 0.8125,
+      "sr_kind": 0.875,
+      "sr_mode": 1.0,
+      "storage_kind": 1.0
+    },
+    "K9_all_panel": {
+      "ce_mode": 1.0,
+      "clock_mode": 1.0,
+      "ff_init": 1.0,
+      "ff_srval": 0.40625,
+      "sr_kind": 0.4375,
+      "sr_mode": 1.0,
+      "storage_kind": 1.0
+    },
+    "B_star": {
+      "note": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)",
+      "reason_if_none": "no grid budget has both K1 eligibility and an N: the budget rule's candidate does not exist on this S (not invented)",
+      "value": null
+    }
+  }
+]
