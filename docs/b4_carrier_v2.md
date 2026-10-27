@@ -1,4 +1,13 @@
-# B4 carrier v2 — design, mechanism selection, sampling path, interface and acceptance (v0.4, host-only, 2026-10-21)
+# B4 carrier v2 — design, mechanism selection, sampling path, interface and acceptance (v0.4, host-only, 2026-10-21) — accepted and closed (the owner's PASS on `bf17574`, 2026-10-21)
+
+> **Standing note (the owner's review of `bf17574`, 2026-10-21 — PASS; archived in
+> `evidence/b4/unit_carrier_v2_2026_10_21/owner_review_bf17574_PASS/`, unit README §11).** This document and the delivered RTL,
+> bench, build, host records and tests are accepted as the **host-only carrier v2 engineering unit**, R1–R4 resolved. The PASS
+> does not establish A8, silicon behaviour, electrical timing, legal compositions, a gate result, a preregistration freeze or the
+> future firmware / schema / adapter; the shared CE / SR / CLK finding of §0 and its protocol consequence are **not** resolved by it
+> (the task-v0.3 revision is a separate unit under the owner's ruling of 2026-10-27). The carrier's RTL, register map and record
+> layer are kept as accepted; task-v0.3 maps its slice-wide control values onto this interface (`0x00` / `0xFF` broadcast), the
+> interface itself unchanged.
 
 > **v0.1 → v0.2 (the owner's HOLD on `823f5b0`, R1–R5, 2026-10-21; the same unit, repaired).** R1 — P9 is the current
 > transaction's: `RESTORE_INIT` raises the declared event on the restored base and samples it into `BASE_STATE`; a normal

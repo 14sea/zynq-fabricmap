@@ -1,0 +1,26 @@
+{
+  "host_tests": 30,
+  "core_scenarios": 27,
+  "benches_including_siphash": 31,
+  "owner_core_bus_monitor_cases": 29,
+  "fresh_OOC_synthesis": {
+    "schema": "b4_core_funcsim",
+    "schema_version": "1.0.0",
+    "top": "b4_core",
+    "mode": "post-synthesis, out of context",
+    "vivado": "2025.2",
+    "flip_flops": 1972,
+    "ram32x1s": 279,
+    "netlist_sha256": "614e825a13cae2a2cadb622273312060052557998dcb78c603ee1ed8ef5ce302"
+  },
+  "fresh_full_routed_build": false,
+  "committed_bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "previous_review_payload_hashes_match": 34,
+  "protected_paths_unchanged": true,
+  "fixed_fixture_byte_identical": true,
+  "author_mutants_affected_subset": {
+    "killed_rows": 34,
+    "owner_reran_battery": false,
+    "log_sha256": "c52ddcddb239bc8932f4262a92ec8a0183af640ea773ddc44ed80ed217a02840"
+  }
+}
