@@ -1,0 +1,12 @@
+{"i": 12, "line": "EV open startup_readback=e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421 "}
+{"i": 13, "line": "MARK transaction_begin"}
+{"i": 64, "line": "EV P2 commit=ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7 pre_event=ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7"}
+{"i": 79, "line": "EV P4 post_event=ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7 "}
+{"i": 81, "line": "MARK P6_sealed"}
+{"i": 89, "line": "EV P8 base_readback=ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7 "}
+{"i": 97, "line": "MARK transaction_end"}
+{"i": 98, "line": "MARK transaction_begin"}
+{"i": 100, "line": "EV sign: no valid SIGNREPLY after 3 attempts: no SIGNREPLY within the bound"}
+{"i": 101, "line": "MARK transaction_end"}
+{"i": 101, "line": "END {\"kind\": \"COMPLETED\", \"reason\": \"the host closed the session\", \"lines\": 29, \"hb\": 12, \"nacks\": 0, \"sign_requests\": 4, \"sign_replies\": 1, \"transactions\": 2, \"kicks\": 29, \"watchdog_armed\": 1, \"opened\": 1}"}
+{"i": 101, "line": "HALT kicks=30"}

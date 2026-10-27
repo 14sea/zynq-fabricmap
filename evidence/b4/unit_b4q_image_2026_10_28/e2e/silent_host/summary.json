@@ -1,0 +1,58 @@
+{
+ "name": "silent_host",
+ "wall_s": 1.292,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 22882,
+ "end": {
+  "kind": "STOPPED",
+  "reason": "no host command within the idle bound",
+  "lines": 18,
+  "hb": 8,
+  "nacks": 0,
+  "sign_requests": 1,
+  "sign_replies": 1,
+  "transactions": 1,
+  "kicks": 18,
+  "watchdog_armed": 1,
+  "opened": 1
+ },
+ "stats": {
+  "hb": 8,
+  "nack": 0,
+  "signreq": 1,
+  "signreply": 1,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0
+ },
+ "console_lines": 21,
+ "halted": null,
+ "open_findings": [],
+ "platform_kicks": null,
+ "served": 6
+}

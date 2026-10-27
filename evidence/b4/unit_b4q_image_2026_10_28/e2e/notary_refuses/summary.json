@@ -1,0 +1,94 @@
+{
+ "name": "notary_refuses",
+ "wall_s": 1.259,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 1,
+   "phase": "P1",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    97,
+    101
+   ],
+   "pcap_range": [
+    204,
+    204
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 22884,
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 15,
+  "hb": 0,
+  "nacks": 0,
+  "sign_requests": 2,
+  "sign_replies": 2,
+  "transactions": 2,
+  "kicks": 15,
+  "watchdog_armed": 1,
+  "opened": 1
+ },
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 2,
+  "signreply": 2,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0
+ },
+ "console_lines": 21,
+ "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
+ "open_findings": [],
+ "platform_kicks": 16,
+ "tx": {
+  "status": 1,
+  "reason": "STOP_SIGN: the notary refused the candidate",
+  "phase": "P1",
+  "o": false,
+  "x": null,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ },
+ "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate) \u2014 nothing further is signed without a ruling",
+ "sign_events": [
+  "EV sign: refused: 11 the bench notary refuses this genome (a configured refusal)"
+ ]
+}

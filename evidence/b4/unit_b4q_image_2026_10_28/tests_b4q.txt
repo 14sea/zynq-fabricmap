@@ -1,0 +1,46 @@
+HEAD c4f9613ee97746855d4ef6df4b262f928dec9da5
+order: the carrier benches first (they generate sim/b4/out/flow.jsonl, which the schema suite's bench test reads), then the rest
+== tests.test_b4carrier_benches
+Ran 1 test in 12.467s
+
+OK
+== tests.test_b4carrier_records
+Ran 18 tests in 0.052s
+
+OK
+== tests.test_b4carrier_regmap
+Ran 11 tests in 0.002s
+
+OK
+== tests.test_b4q_derive
+Ran 8 tests in 0.377s
+
+OK
+== tests.test_b4q_emu
+Ran 7 tests in 4.286s
+
+OK
+== tests.test_b4q_schema
+Ran 5 tests in 0.118s
+
+OK
+== tests.test_b4q_view
+Ran 6 tests in 0.081s
+
+OK
+== tests.test_b4q_firmware
+Ran 5 tests in 0.608s
+
+OK
+== tests.test_b4q_session
+Ran 10 tests in 65.389s
+
+OK
+== tests.test_b4q_wire
+Ran 8 tests in 0.087s
+
+OK
+== tests.test_b4q_app
+Ran 11 tests in 38.557s
+
+OK
