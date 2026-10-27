@@ -1690,6 +1690,32 @@ class TheSummaryAndTheValidators(unittest.TestCase):
             self.assertFalse((Path(tmp) / "b.json").exists())
             self.assertEqual([q.name for q in Path(tmp).iterdir()], ["a.json"], "no .part file is left behind")
 
+    def test_a_task_record_of_the_previous_shape_is_refused_by_the_validator_and_by_the_reconstruction(self):
+        """task-v0.3 (section 7.2): a task.json whose public stimulus carries a per-element ce / sr vector (task-v0.2's shape, or any
+        tampering toward it) with the task digest refreshed is named by `task_findings`; the offline reconstruction names a public
+        stimulus the generator re-derives that is not slice-wide (the generator mocked to the previous shape). Exposed seeds only."""
+        from unittest import mock
+        from b4_test_fixtures import v02_setup
+        import b4_ff_model as fm
+        fab = fm.Fabric(bm.site_mapping(), hy.load())
+        task, plan, r1, r2 = v02_setup(7, fab)
+        digests = {n: "0" * 64 for n in bt.SETUP_FILES[:3]}
+        _, doc = bt.finish(plan, r1, r2, digests)
+        doc = json.loads(sim.json_text(dict(doc, written_utc="x")))
+        self.assertEqual(sc.task_findings(doc), [])
+        for name, field, val in (("stimulus", "ce", 0x80), ("holdout_stimulus", "sr", 0x01), ("stimulus", "ce", 0x7F)):
+            bad = json.loads(json.dumps(doc)); bad["public_task"][name][2][field] = val
+            bad["task_digest"] = bt.task_from_dict(bad["public_task"]).digest()                 # the digest refreshed: the shape itself is what is refused
+            f = sc.task_findings(bad)
+            self.assertTrue(any(f"public_task.{name}: not a task-v0.3 stimulus" in x and "broadcast" in x for x in f), (name, field, f))
+        # the reconstruction: the public parts re-derived from the plan's seed are held to the shape
+        parts = bl.public_parts(7)
+        rng = bl.Rng(99); per_element = [dict(s, ce=rng.uniform(256)) if s["kind"] == "set" else s for s in parts["stimulus"]]
+        with mock.patch.object(bl, "public_parts", return_value=dict(parts, stimulus=tuple(per_element))):
+            f = bt.setup_findings(plan, r1, r2, doc, bm.site_mapping(), None)
+        self.assertTrue(any("task_setup: the public stimulus is not a task-v0.3 stimulus" in x for x in f), f)
+        self.assertEqual([x for x in bt.setup_findings(plan, r1, r2, doc, bm.site_mapping(), None) if "not a task-v0.3 stimulus" in x], [], "the genuine records are clean")
+
     def test_the_fixture_schedule_s_own_findings(self):
         self.assertEqual(SCHED1.findings(), [])
         self.assertTrue(sim.FixtureSchedule("b4-sim-1", ((7, 11),)).findings())
