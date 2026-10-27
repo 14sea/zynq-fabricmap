@@ -1,0 +1,72 @@
+{
+ "digests": {
+  "batch": {
+   "STOPPED.json": {
+    "normalised_sha256": "1c273a0f838efdd667918770857cba20b83d95d0061ff913cf6bdecfee3d9420",
+    "sha256": "de522039a9e116cc54cf7ea3369db9e4c63a4c6d2f5c8803b3f4c30ec0880835",
+    "size": 1397
+   },
+   "manifest.json": {
+    "normalised_sha256": "d9c4bd9d60fc91fa2e99ae6751adb904f0f2a63f2fceaa7967b0faf9c2fe7879",
+    "sha256": "a06ec78743c2758e5b1deb8ce3663be656563b9414c6ba1141510bbd5d4ec9ee",
+    "size": 43066
+   },
+   "pair_000/target_search.json": {
+    "normalised_sha256": "03edd57eb5fb0f26aa8cb29de88b85939ffb36ca6f221ff3c8f10ecd177be973",
+    "sha256": "8b0ef8b29b6362aff710b99163e626e7147353b1a5642ed861f55266e904e9cc",
+    "size": 1777
+   },
+   "pair_000/task_setup.json": {
+    "normalised_sha256": "cb5ceac21e5556f30c9bee291bb595f41b208b7edff6a4d7cee2b4891b0d6348",
+    "sha256": "1c88b4534d62b93620fb64ad11c85389032c3871890258c50f0a3a5a39868865",
+    "size": 2118
+   },
+   "seeds.json": {
+    "normalised_sha256": "14754acf39e217ebd59c9f03880bc095922136965d7f5832e641c630cd1eaa2d",
+    "sha256": "3693ca4861b3424086878dc9aca2662b41066edfc11ba917546c5eb9016a7ca4",
+    "size": 131903
+   },
+   "sim_report.json": {
+    "normalised_sha256": "fa3c1d6ba1813100a30a627023530a0135495cf5db67b7cc81d09372cbf2cfcf",
+    "sha256": "96ff5b7dc6343d3387de56a9b8e6c0023ba78b320af768cc900c34dcae3c8456",
+    "size": 16080
+   }
+  }
+ },
+ "exit_code": 3,
+ "expected": {
+  "files": [
+   "target_search.json",
+   "task_setup.json"
+  ],
+  "kind": "interrupted",
+  "prefix": 2,
+  "quarantine": null,
+  "status": "incomplete",
+  "task": "partial"
+ },
+ "fresh_batch_exit": 0,
+ "normalisation": {
+  "files_in_raw_map": 1019,
+  "fixed_point_passes": 23,
+  "substituted_references": 4942
+ },
+ "pair_000": {
+  "status": "partial",
+  "task": "partial",
+  "task_prefix": 2,
+  "task_quarantine": null
+ },
+ "pair_000_files": [
+  "target_search.json",
+  "task_setup.json"
+ ],
+ "raw_links": {
+  "resolved": 5,
+  "unresolved": []
+ },
+ "status": "incomplete",
+ "stopped_kind": "interrupted",
+ "stopped_role": "TARGET",
+ "stopped_stage": "target_setup"
+}

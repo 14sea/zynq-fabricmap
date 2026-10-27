@@ -1,15 +1,6 @@
-........................................................................................................................F..................................................................................................................................................................................................................
-======================================================================
-FAIL: test_standing_for_the_harness_s_labels (b4.tests.test_b4_gate.TheJudge.test_standing_for_the_harness_s_labels)
+............................................................................................................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/test/zynq_fabricmap/b4/tests/test_b4_gate.py", line 665, in test_standing_for_the_harness_s_labels
-    self.assertIn("protocol v0.2.0", sim.STANDING); self.assertIn("(b')", sim.STANDING)
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError: 'protocol v0.2.0' not found in "exploration data under the label given, S as planned; not a gate verdict; the thresholds of docs/b4_architecture.md section 9 (protocol v0.3.0: task-v0.3 slice-wide stimulus, K9 (b') judged) are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's"
+Ran 332 tests in 679.988s
 
-----------------------------------------------------------------------
-Ran 331 tests in 547.475s
-
-FAILED (failures=1)
-exit=1
+OK
+exit=0

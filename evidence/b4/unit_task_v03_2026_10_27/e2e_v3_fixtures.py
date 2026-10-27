@@ -446,10 +446,17 @@ def main() -> int:
             g = json.loads((edir / bg.REPORT_JSON).read_text()); g["verdict"]["reason"] = "another explanation of the same verdict"; next(r for r in g["rows"] if r["id"] == "K6")["reason"] = "a different criterion text"
             (edir / bg.REPORT_MD).write_bytes(bg.render_md(g).encode("utf-8")); b_ = (edir / bg.REPORT_MD).read_bytes(); g["files"] = [{"path": bg.REPORT_MD, "sha256": sha(b_), "size": len(b_)}]
             (edir / bg.REPORT_JSON).write_bytes(sim.json_text(g)); commit()
-            # --- the committed v0.1.16 archives, read-only
+            # --- the committed archives of OTHER versions, read-only: the two v0.1.16 ones (no identity) and the v0.2.0 b4-sim-4 (another identity)
             olds = {"b4-sim-3": R / "evidence/b4/sim/b4-sim-3_20261019T121833Z", "b4-gate-1": R / "evidence/b4/sim/b4-gate-1_20261020T102526Z"}
+            other = {"b4-sim-4": R / "evidence/b4/sim/b4-sim-4_20261021T065339Z"}
             gate1 = R / "evidence/b4/gate/b4-gate-1_20261020T102526Z"
-            before = {k: sorted((p.name, sha(p.read_bytes())) for p in d.iterdir() if p.is_file()) for k, d in olds.items()}
+            gonogo4 = R / "evidence/b4/gonogo/b4-sim-4_20261021T065857Z"
+            def listing():
+                dirs = dict(olds, **other); dirs["gate1"] = gate1; dirs["gonogo4"] = gonogo4
+                files = {k: sorted((p.name, sha(p.read_bytes())) for p in d.iterdir() if p.is_file()) for k, d in dirs.items()}
+                files["_namespaces"] = {rel: sorted(p.name for p in (R / rel).iterdir()) if (R / rel).exists() else None for rel in (sim.SIM_REL, bg.GATE_REL, gg.GONOGO_REL)}
+                return files
+            before = listing()
             orec = {}
             (out / "old_archives").mkdir()
             for k, d in olds.items():
@@ -458,11 +465,26 @@ def main() -> int:
                 j = bg.judge_batch(R, d); dd = gg.write_decision(R, d)
                 orec[k] = {"fresh_verifier_exit": code, "named": "no protocol identity" in text, "judge": j["status"], "judge_reason": (j.get("reason") or "")[:200], "gonogo": dd["status"], "gonogo_reason": (dd.get("reason") or "")[:200]}
                 bad += (code != 1) + (not orec[k]["named"]) + (j["status"] != "refused") + (dd["status"] != "refused") + (j.get("gate_out") is not None) + (dd.get("gonogo_out") is not None)
+            for k, d in other.items():                                   # v0.3.0: the v0.2.0 archive is of ANOTHER identity — refused by name with the differing components, never judged or decided
+                code, text = fresh("sim", d, "--shallow")
+                (out / "old_archives" / f"verify_{k}.txt").write_text(f"HEAD {head}\nexpected: exit 1, refused by name (another protocol identity: the task component)\nexit {code}\n\n{text}")
+                j = bg.judge_batch(R, d); dd = gg.write_decision(R, d)
+                orec[k] = {"fresh_verifier_exit": code, "named": "not this tool's" in text and "task" in text, "judge": j["status"], "judge_reason": (j.get("reason") or "")[:200], "gonogo": dd["status"], "gonogo_reason": (dd.get("reason") or "")[:200]}
+                bad += (code != 1) + (not orec[k]["named"]) + (j["status"] != "refused") + (dd["status"] != "refused") + (j.get("gate_out") is not None) + (dd.get("gonogo_out") is not None)
             code, text = fresh("gate", gate1, "--shallow")
             (out / "old_archives" / "verify_b4-gate-1_gate.txt").write_text(f"HEAD {head}\nexpected: exit 1, refused by name\nexit {code}\n\n{text}")
             orec["b4-gate-1_gate_dir"] = {"fresh_verifier_exit": code, "named": "not this tool's" in text or "protocol" in text}; bad += (code != 1) + (not orec["b4-gate-1_gate_dir"]["named"])
-            after = {k: sorted((p.name, sha(p.read_bytes())) for p in d.iterdir() if p.is_file()) for k, d in olds.items()}
-            orec["untouched"] = before == after and not (R / gg.GONOGO_REL).exists(); bad += (not orec["untouched"])
+            code, text = fresh("gonogo", gonogo4, "--shallow")
+            (out / "old_archives" / "verify_b4-sim-4_gonogo.txt").write_text(f"HEAD {head}\nexpected: exit 1, refused by name (another protocol identity)\nexit {code}\n\n{text}")
+            # the gonogo verifier validates the record's shape (its `policy` against the table's) BEFORE it compares the identity: a v0.2.0 record,
+            # whose policy block carries `alpha_go`, is refused by name at that step ("policy: not the table's"); either refusal text is the named one
+            orec["b4-sim-4_gonogo_dir"] = {"fresh_verifier_exit": code, "named": ("not this tool's" in text) or ("policy: not the table's" in text),
+                                           "refused_at": "identity" if "not this tool's" in text else ("policy shape" if "policy: not the table's" in text else None)}
+            bad += (code != 1) + (not orec["b4-sim-4_gonogo_dir"]["named"])
+            after = listing()
+            # untouched: every file of the five committed directories byte-identical, and the three namespaces' listings unchanged (the repository's gonogo
+            # namespace EXISTS since the b4-sim-4 decision of 2026-10-21 — the v0.2.0 driver's "no gonogo directory" assumption is retired, not the check)
+            orec["untouched"] = before == after; bad += (not orec["untouched"])
             summary["old_archives"] = orec; print("old_archives", orec, flush=True)
             # --- the owner's R1 probe, fresh interpreters on a copy of the tool files
             with tempfile.TemporaryDirectory(prefix="b4ident_") as itmp:

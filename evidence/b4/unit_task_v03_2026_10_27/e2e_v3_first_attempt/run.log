@@ -1,0 +1,30 @@
+complete {'status': 'FAIL', 'exit_code': 0, 'verdict': 'FAIL', 'decision': 'no_decision', 'fresh_batch_exit': 0, 'fresh_gate_exit': 0, 'fresh_gonogo_exit': 0}
+complete_32 {'status': 'complete', 'exit_code': 0, 'decision': 'no-go', 'fresh_batch_exit': 0, 'fresh_gonogo_exit': 0}
+invalid {'status': 'invalid', 'exit_code': 1, 'stopped_kind': 'domain', 'verdict': 'invalid', 'fresh_batch_exit': 0, 'fresh_gate_exit': 0}
+incomplete {'status': 'incomplete', 'exit_code': 3, 'stopped_kind': 'deadline', 'verdict': 'incomplete', 'fresh_batch_exit': 0, 'fresh_gate_exit': 0}
+target_partial {'status': 'incomplete', 'exit_code': 3, 'stopped_kind': 'interrupted', 'fresh_batch_exit': 0}
+interrupt_after_holdout {'status': 'incomplete', 'exit_code': 3, 'stopped_kind': 'interrupted', 'fresh_batch_exit': 0}
+target_invalid {'status': 'invalid', 'exit_code': 1, 'stopped_kind': 'target_invalid', 'fresh_batch_exit': 0}
+source_drift {'status': 'invalid', 'exit_code': 1, 'stopped_kind': 'target_invalid', 'fresh_batch_exit': 0}
+return_malformed {'status': 'invalid', 'exit_code': 1, 'stopped_kind': 'target_invalid', 'fresh_batch_exit': 0}
+return_init_none {'status': 'invalid', 'exit_code': 1, 'stopped_kind': 'target_invalid', 'fresh_batch_exit': 0}
+return_bad_cell {'status': 'invalid', 'exit_code': 1, 'stopped_kind': 'target_invalid', 'fresh_batch_exit': 0}
+return_nonserialisable {'status': 'invalid', 'exit_code': 1, 'stopped_kind': 'target_invalid', 'fresh_batch_exit': 0}
+return_float_first {'status': 'invalid', 'exit_code': 1, 'stopped_kind': 'target_invalid', 'fresh_batch_exit': 0}
+return_float_second {'status': 'invalid', 'exit_code': 1, 'stopped_kind': 'target_invalid', 'fresh_batch_exit': 0}
+interrupt_after_first_quarantine {'status': 'incomplete', 'exit_code': 3, 'stopped_kind': 'interrupted', 'fresh_batch_exit': 0}
+interrupt_after_second_quarantine {'status': 'incomplete', 'exit_code': 3, 'stopped_kind': 'interrupted', 'fresh_batch_exit': 0}
+impossible_order {'fresh_verifier_exit': 1, 'named': True}
+gonogo_contract {'float_count': {'fresh_verifier_exit': 1, 'named': True}, 'integer_fixture': {'fresh_verifier_exit': 1, 'named': True}, 'outside_root_path': {'fresh_verifier_exit': 1, 'named': True}, 'extra_subdirectory': {'fresh_verifier_exit': 1, 'named': True}, 'restored': {'fresh_verifier_exit': 0}}
+tampered task_target_flipped exit 1 named True
+tampered target_grid_cell_flipped exit 1 named True
+tampered planted_genome_changed exit 1 named True
+tampered protocol_identity_removed exit 1 named True
+tampered protocol_identity_component_changed exit 1 named True
+tampered gate_identity_digest_changed exit 1 named True
+old_archives {'b4-sim-3': {'fresh_verifier_exit': 1, 'named': True, 'judge': 'refused', 'judge_reason': "evidence/b4/sim/b4-sim-3_20261019T121833Z: the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source 'docs/b4_architecture.md section 9 (v0.1.16), ", 'gonogo': 'refused', 'gonogo_reason': "evidence/b4/sim/b4-sim-3_20261019T121833Z: the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source 'docs/b4_architecture.md section 9 (v0.1.16), "}, 'b4-gate-1': {'fresh_verifier_exit': 1, 'named': True, 'judge': 'refused', 'judge_reason': "evidence/b4/sim/b4-gate-1_20261020T102526Z: the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source 'docs/b4_architecture.md section 9 (v0.1.16),", 'gonogo': 'refused', 'gonogo_reason': "evidence/b4/sim/b4-gate-1_20261020T102526Z: the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source 'docs/b4_architecture.md section 9 (v0.1.16),"}, 'b4-gate-1_gate_dir': {'fresh_verifier_exit': 1, 'named': True}, 'untouched': False}
+identity_revision {'threshold_changed_unrefreshed': {'exit': 2, 'refused_by_name': True}, 'method_unchanged_by_the_revision': True, 'method_changed_by_the_number': True}
+explanation_tamper {'differ': ['gate_report.json'], 'expected_to_differ': ['gate_report.json'], 'renderings_not_compared': ['gate_report.md'], 'localised': True}
+semantic_tamper {'differ': ['pair_000/index.json', 'pair_000/target_search.json', 'pair_000/task.json', 'sim_report.json'], 'expected_to_differ': ['pair_000/index.json', 'pair_000/target_search.json', 'pair_000/task.json', 'sim_report.json'], 'equal_count': 47, 'localised': True}
+[0, 0] as expected: False bad: 1
+exit=1
