@@ -78,8 +78,11 @@ static uint32_t axi_rd(uint32_t off)
 
 static uint32_t axi_wr(uint32_t off, uint32_t v)
 {
+    uint32_t resp;
     if (!axi_writable(off)) { stop("STOP_AXI: write outside the pinned map"); return B4Q_RESP_SLVERR; }
-    return b4q_wr32(B4Q_AXI_BASE + off, v);
+    resp = b4q_wr32(B4Q_AXI_BASE + off, v);
+    if (resp != B4Q_RESP_OKAY && off != B4Q_CTRL) stop("STOP_AXI: a write of the pinned map answered SLVERR (the register is not what this side meant to stage)");
+    return resp;                                   /* a CTRL SLVERR is the register file's refusal: the caller names it */
 }
 
 static uint32_t mem_rd(uint32_t a) { uint32_t resp; return b4q_rd32(a, &resp); }
@@ -257,8 +260,8 @@ static int candidate_in(uint32_t genome, int a5, b4q_tx_result *r, char pre_even
     if (b4q_sign(ghex, nhex, words) != 0) { stop("STOP_SIGN: the notary refused the candidate"); return -1; }
     for (i = 0; i < 8; i++)
         if (words[i] != commit_w[i]) { stop("STOP_SIGN: the notary signed another commit than this side derived"); return -1; }
-    for (i = 0; i < 20; i++) axi_wr(B4Q_PAYLOAD0 + 4u * (uint32_t)i, words[i]);
-    for (i = 0; i < 4; i++) axi_wr(B4Q_TAG0 + 4u * (uint32_t)i, words[20 + i]);
+    for (i = 0; i < 20; i++) if (axi_wr(B4Q_PAYLOAD0 + 4u * (uint32_t)i, words[i]) != B4Q_RESP_OKAY) return -1;
+    for (i = 0; i < 4; i++) if (axi_wr(B4Q_TAG0 + 4u * (uint32_t)i, words[20 + i]) != B4Q_RESP_OKAY) return -1;
     if (axi_wr(B4Q_CTRL, B4Q_CTRL_ARM | (a5 ? B4Q_CTRL_ARM_A5 : 0u)) != B4Q_RESP_OKAY) { stop("STOP_ARM: the CTRL write was SLVERR (busy or malformed)"); return -1; }
     if (wait_status(B4Q_ST_GATE_BUSY, 32u, &st) != 0) { r->fault_code = axi_rd(B4Q_FAULT); stop("STOP_ARM: the gate refused (FAULT latched)"); return -1; }
     /* the armed latch follows tag_ok by a cycle: poll once more for configuration_valid_hw */
@@ -273,6 +276,7 @@ static int candidate_in(uint32_t genome, int a5, b4q_tx_result *r, char pre_even
     phase("P2");
     if (write_envelopes() != 0) return -1;
     if (link3(pre_event_hex) != 0) return -1;
+    if (strcmp(pre_event_hex, commit_hex) != 0) { stop("STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)"); return -1; }
     return 0;
 }
 
@@ -286,12 +290,13 @@ static int engine_op(uint32_t op, unsigned done_bit, uint32_t *st, b4q_tx_result
     return 0;
 }
 
-static void read_slot(int a, b4q_tx_result *r)
+static int read_slot(int a, b4q_tx_result *r)
 {
-    axi_wr(B4Q_SLOT_ADDR, (uint32_t)a);
+    if (axi_wr(B4Q_SLOT_ADDR, (uint32_t)a) != B4Q_RESP_OKAY) return -1;
     r->slot_q[a] = axi_rd(B4Q_SLOT_READ) & 0xFFu;
     r->slot_in[a] = axi_rd(B4Q_SLOT_IN_READ);
     if (a + 1 > r->n_slots) r->n_slots = a + 1;
+    return g_stop ? -1 : 0;
 }
 
 /* ─────────────────────────────── the session opening ─────────────────────────────── */
@@ -339,24 +344,26 @@ int b4q_transaction(uint32_t genome, const uint32_t *steps, int n_steps, b4q_kin
     phase("P3");
     if (engine_op(B4Q_CTRL_PRE_SAMPLE, B4Q_ST_PRE_SAMPLED, &st, r, "STOP_P3: PRE_SAMPLE refused") != 0) goto stopped;
     r->in_live_pre = axi_rd(B4Q_IN_LIVE);
-    read_slot(0, r);
+    if (read_slot(0, r) != 0) goto stopped;
     r->heartbeat_before = axi_rd(B4Q_HEARTBEAT);
     if (engine_op(B4Q_CTRL_INIT_REQ, B4Q_ST_INIT_DONE, &st, r, "STOP_P3: INIT_REQ refused") != 0) goto stopped;
     r->witness_after_init = axi_rd(B4Q_WITNESS);
     r->heartbeat_after = axi_rd(B4Q_HEARTBEAT);
     if (axi_rd(B4Q_IN_LIVE) != 0u) stop("STOP_P3: the inputs are not 0 after the init event");
-    read_slot(1, r);
+    if (read_slot(1, r) != 0) goto stopped;
     if (g_stop) goto stopped;
     /* P4: the post-event readback */
     phase("P4");
     if (link3(r->post_event_hex) != 0) goto stopped;
+    if (strcmp(r->post_event_hex, r->pre_event_hex) != 0) { stop("STOP_LINK3: the post-event readback is not the pre-event one (the event changed a frame): no step is applied"); goto stopped; }
     emitf("EV P4 post_event=%s %s", r->post_event_hex, "");
     /* P5: the set steps, exactly */
     phase("P5");
     for (k = 0; k < n_steps; k++) {
-        axi_wr(B4Q_STEP_IN, steps[k] & 0x1FFFFFFu);
+        if (axi_wr(B4Q_STEP_IN, steps[k] & 0x1FFFFFFu) != B4Q_RESP_OKAY) { stop("STOP_P5: the STEP_IN write answered SLVERR: the staged word is not this step; no STEP is launched"); goto stopped; }
+        if (axi_rd(B4Q_STEP_IN) != (steps[k] & 0x1FFFFFFu)) { stop("STOP_P5: STEP_IN does not read back the staged step; no STEP is launched"); goto stopped; }
         if (engine_op(B4Q_CTRL_STEP, B4Q_ST_STEP_DONE, &st, r, "STOP_P5: STEP refused") != 0) goto stopped;
-        read_slot(2 + k, r);
+        if (read_slot(2 + k, r) != 0) goto stopped;
         r->steps_applied = k + 1;
     }
     r->status_final = axi_rd(B4Q_STATUS);
@@ -385,7 +392,7 @@ int b4q_transaction(uint32_t genome, const uint32_t *steps, int n_steps, b4q_kin
     phase("P7");
     if (engine_op(B4Q_CTRL_CLEANUP, B4Q_ST_CLEANUP_DONE, &st, r, "STOP_P7: CLEANUP refused") != 0) goto faulted;
     if (axi_rd(B4Q_IN_LIVE) != 0u) { stop("STOP_P7: the cleanup left inputs held"); goto faulted; }
-    read_slot(2 + n_steps, r);
+    if (read_slot(2 + n_steps, r) != 0) goto faulted;
     /* P8: the base restored (genome 0 signed and written) and read back — the host's PCAP path, this side's DMAs */
     phase("P8");
     {
@@ -402,6 +409,7 @@ int b4q_transaction(uint32_t genome, const uint32_t *steps, int n_steps, b4q_kin
         strcpy(r->base_staged_hex, staged0);
         if (write_envelopes() != 0) goto faulted;
         if (link3(r->base_readback_hex) != 0) goto faulted;
+        if (strcmp(r->base_readback_hex, commit0) != 0) { stop("STOP_P8: the restored base's readback is not the derived base: no restore event is raised on it"); goto faulted; }
         for (i = 0; i < 8; i++) (void)i;
     }
     emitf("EV P8 base_readback=%s %s", r->base_readback_hex, "");

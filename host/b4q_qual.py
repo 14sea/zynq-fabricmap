@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""B4Q — the QUALIFICATION READINGS of docs/b4_observation_contract.md computed over records, exactly as the contract
+"""B4Q — the QUALIFICATION READINGS of docs/b4_observation_contract.md computed over records (and recomputed by the verifier from
+the retained records against the retained conclusions: a conclusion is never trusted from its file), exactly as the contract
 fixes them, so that the plan's outcome rules are executable on evidence (the session's and the bench's) and never applied
 by hand: the A5 decision table (5.6), the SR-evidence joint reading of 6.5 and the precedence-ordered A8 classification of
 6.7 over a 2 x 2 cross, the A2 per-row verdict (7.1). A reading computed on the host emulation is a reading of the
@@ -15,9 +16,23 @@ def post_init_projection(o: dict, x: dict | None) -> dict:
     return proj
 
 
-def a5_verdict(o_c1: dict, o_cprime: dict, o_c2: dict, x_c1: dict | None = None, x_c2: dict | None = None) -> dict:
+def _complete(o) -> bool:
+    return isinstance(o, dict) and o.get("status") == "complete" and isinstance(o.get("steps"), list) and bool(o["steps"])
+
+
+def a5_verdict(o_c1: dict, o_cprime: dict, o_c2: dict, x_c1: dict | None = None, x_c2: dict | None = None, x_cprime: dict | None = None) -> dict:
     """The decision table of 5.6, per element and for the cross: the injection witness (O_c2.initial.q vs O_c1.initial.q and
-    vs O_c′.steps[-1].q_after) checked apart from the post-init projection (O_c2 vs O_c1)."""
+    vs O_c′.steps[-1].q_after) checked apart from the post-init projection (O_c2 vs O_c1). The projection INCLUDES the cleanup
+    witness of each closed X (5.6), so a pass needs: J1 and J3 complete and CLOSED (their X with the cleanup), J2 complete and its
+    X `injection_open`; anything less is `not_demonstrated` — never a pass (the owner's R3 of 2026-10-27)."""
+    for name, o in (("J1", o_c1), ("J2", o_cprime), ("J3", o_c2)):
+        if not _complete(o):
+            return {"verdict": "not_demonstrated", "why": f"{name}'s observation is not complete", "per_element": None}
+    for name, x in (("J1", x_c1), ("J3", x_c2)):
+        if not (isinstance(x, dict) and x.get("status") == "closed" and isinstance(x.get("cleanup"), dict) and "final_q" in x["cleanup"]):
+            return {"verdict": "not_demonstrated", "why": f"{name}'s transaction close with its cleanup witness is absent: the post-init projection cannot be compared", "per_element": None}
+    if not (isinstance(x_cprime, dict) and x_cprime.get("status") == "injection_open"):
+        return {"verdict": "not_demonstrated", "why": "J2's close is not injection_open: no injection was left open", "per_element": None}
     q1, q2 = o_c1.get("initial", {}).get("q"), o_c2.get("initial", {}).get("q")
     injected = o_cprime["steps"][-1]["q_after"] if o_cprime.get("steps") else None
     if q1 is None or q2 is None or injected is None:
@@ -67,10 +82,19 @@ def sr_reading(o: dict, e: int, parts: dict) -> dict:
 
 
 # ---------------------------------------------------------------- 6.7: the cross
-def a8_classify(corners: dict, e: int, parts: dict, predicted_init_dir: int = 1, predicted_srval_dir: int = 1) -> dict:
+def a8_classify(corners: dict, e: int, parts: dict, predicted_init_dir: int = 1, predicted_srval_dir: int = 1, closes: dict | None = None) -> dict:
     """`corners`: {"00": O, "01": O, "10": O, "11": O} keyed (INIT, SRVAL) by the genome bits as written (bit = 1 reads INIT = 0 /
-    SRVAL = 0 under the project's reading). The quantities and the first matching row of 6.7; a context not observable is
-    `unknown` whatever the row. The predicted direction: with ZINI = 1 meaning INIT = 0, i_c = 1 - bit."""
+    SRVAL = 0 under the project's reading); `closes`: the corners' X (each must be `closed` — a corner without its closed
+    transaction is not a demonstrated context, 6.7's preconditions). The quantities and the first matching row of 6.7; a context
+    not observable is `unknown` whatever the row. The predicted direction: with ZINI = 1 meaning INIT = 0, i_c = 1 - bit."""
+    if set(corners) != {"00", "01", "10", "11"}:
+        return {"row": 0, "verdict": "not demonstrated", "why": "the four corners are not all present", "quantities": {"not_assessable": True}}
+    for c in corners:
+        if not _complete(corners[c]):
+            return {"row": 0, "verdict": "not demonstrated", "why": f"corner {c}'s observation is not complete", "quantities": {"not_assessable": True}}
+        x = (closes or {}).get(c)
+        if not (isinstance(x, dict) and x.get("status") == "closed"):
+            return {"row": 0, "verdict": "not demonstrated", "why": f"corner {c}'s transaction is not closed (the frame / Q-restoration witnesses of 5.4 are its X's)", "quantities": {"not_assessable": True}}
     i = {c: (corners[c]["steps"][0]["q_after"][e] if corners[c].get("steps") else None) for c in corners}
     s = {c: sr_reading(corners[c], e, parts) for c in corners}
     if any(v is None for v in i.values()) or any(s[c]["reading"] == "unknown" for c in s):
@@ -103,12 +127,15 @@ def a8_classify(corners: dict, e: int, parts: dict, predicted_init_dir: int = 1,
 
 
 # ---------------------------------------------------------------- 7.1: A2
-def a2_row(o_g0: dict | None, o_g1: dict | None) -> dict:
+def a2_row(o_g0: dict | None, o_g1: dict | None, x_g0: dict | None = None, x_g1: dict | None = None) -> dict:
     """One A2 row: the two endpoints' observations under the demonstration stimulus — the readout differs at some point or does
-    not; an endpoint without a valid complete observation is 'not assessable' (an emulation of a latch endpoint carries
-    unmodelled cells: the board supplies physical values there)."""
-    if not (o_g0 and o_g1) or o_g0.get("status") != "complete" or o_g1.get("status") != "complete":
+    not; an endpoint without a valid complete, CLOSED observation is 'not assessable' (an emulation of a latch endpoint carries
+    unmodelled cells: the board supplies physical values there). `differs` is the positive control; `does_not_differ` is a
+    recorded negative, never a positive control."""
+    if not (_complete(o_g0) and _complete(o_g1)):
         return {"verdict": "not_assessable", "why": "an endpoint has no complete observation"}
+    if not all(isinstance(x, dict) and x.get("status") == "closed" for x in (x_g0, x_g1)):
+        return {"verdict": "not_assessable", "why": "an endpoint's transaction is not closed"}
     g0 = [s["q_after"] for s in o_g0["steps"]]; g1 = [s["q_after"] for s in o_g1["steps"]]
     diffs = [(k, i) for k, (a, b) in enumerate(zip(g0, g1)) for i in range(8) if a[i] != b[i]]
     return {"verdict": "differs" if diffs else "does_not_differ", "differing_points": diffs[:16], "n_differing": len(diffs)}

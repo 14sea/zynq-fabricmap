@@ -1,0 +1,118 @@
+...............E..E...EEE....../tmp/owner_b4q_7w3a_pwh/host/b4q_verify.py:129: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/b4q_e2e_bzap5hdb/valid_tampered/notary_log.json' mode='r' encoding='UTF-8'>
+  notary = json.load(open(d / "notary_log.json"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+...............................F
+======================================================================
+ERROR: setUpClass (tests.test_b4q_schema.AgainstTheCodeValidators)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_7w3a_pwh/tests/test_b4q_schema.py", line 53, in setUpClass
+    subprocess.run([sys.executable, "-B", str(R / "host/b4q_e2e.py"), str(SMOKE.parent), "valid"], check=True, capture_output=True)
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/bin/python3', '-B', '/tmp/owner_b4q_7w3a_pwh/host/b4q_e2e.py', '/tmp/owner_b4q_7w3a_pwh/build/b4q_e2e', 'valid']' returned non-zero exit status 1.
+
+======================================================================
+ERROR: test_c_o_of_a_session (tests.test_b4q_view.Adapters.test_c_o_of_a_session)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_7w3a_pwh/tests/test_b4q_view.py", line 78, in test_c_o_of_a_session
+    o = json.loads((SMOKE / "tx_002/o.json").read_text())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_b4q_7w3a_pwh/build/b4q_e2e/valid/tx_002/o.json'
+
+======================================================================
+ERROR: test_refusals_by_name (tests.test_b4q_view.Adapters.test_refusals_by_name)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_7w3a_pwh/tests/test_b4q_view.py", line 87, in test_refusals_by_name
+    o = json.loads((SMOKE / "tx_002/o.json").read_text())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_b4q_7w3a_pwh/build/b4q_e2e/valid/tx_002/o.json'
+
+======================================================================
+ERROR: test_a_tampered_access_log_is_found (tests.test_b4q_firmware.A7.test_a_tampered_access_log_is_found)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_7w3a_pwh/tests/test_b4q_firmware.py", line 68, in test_a_tampered_access_log_is_found
+    acc = [json.loads(l) for l in (SMOKE / "accesses.jsonl").read_text().splitlines() if l.strip()]
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_b4q_7w3a_pwh/build/b4q_e2e/valid/accesses.jsonl'
+
+======================================================================
+ERROR: test_actual_accesses_against_the_rtl_decode_and_the_table (tests.test_b4q_firmware.A7.test_actual_accesses_against_the_rtl_decode_and_the_table)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_7w3a_pwh/tests/test_b4q_firmware.py", line 55, in test_actual_accesses_against_the_rtl_decode_and_the_table
+    acc = [json.loads(l) for l in (SMOKE / "accesses.jsonl").read_text().splitlines() if l.strip()]
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_b4q_7w3a_pwh/build/b4q_e2e/valid/accesses.jsonl'
+
+======================================================================
+FAIL: test_all_benches_pass (tests.test_b4carrier_benches.Benches.test_all_benches_pass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_7w3a_pwh/tests/test_b4carrier_benches.py", line 23, in test_all_benches_pass
+    self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+AssertionError: 1 != 0 : tb_p3_siphash (verbatim): TB_PASS
+tb_b4_core regs:                TB_PASS regs
+tb_b4_core flow:                TB_PASS flow
+tb_b4_core fault_not_armed:     TB_PASS fault_not_armed
+tb_b4_core fault_nokey:         TB_PASS fault_nokey
+tb_b4_core fault_unsigned:      TB_PASS fault_unsigned
+tb_b4_core fault_wrong_commit:  TB_PASS fault_wrong_commit
+tb_b4_core fault_wrong_key:     TB_PASS fault_wrong_key
+tb_b4_core fault_sequence:      TB_PASS fault_sequence
+tb_b4_core fault_double_arm:    TB_PASS fault_double_arm
+tb_b4_core fault_realisable:    TB_PASS fault_realisable
+tb_b4_core a5:                  TB_PASS a5
+tb_b4_core a5_persist:          TB_PASS a5_persist
+tb_b4_core a5_wrong_context:    TB_PASS a5_wrong_context
+tb_b4_core a5_flag_without_injection: TB_PASS a5_flag_without_injection
+tb_b4_core open_close_refused:  TB_PASS open_close_refused
+tb_b4_core p9:                  TB_PASS p9
+tb_b4_core p9_ok:               TB_PASS p9_ok
+tb_b4_core busy_refused:        TB_PASS busy_refused
+tb_b4_core step_atomic:         TB_PASS step_atomic
+tb_b4_core backpressure:        TB_PASS backpressure
+tb_b4_core read_during_window:  TB_PASS read_during_window
+tb_b4_core read_at_launch:      TB_PASS read_at_launch
+tb_b4_core session:             TB_PASS session
+tb_b4_core post_fault:          TB_PASS post_fault
+tb_b4_core w_first:             TB_PASS w_first
+tb_b4_core w_first_early:       TB_PASS w_first_early
+tb_b4_core early_cleanup:       TB_PASS early_cleanup
+GSR_PULSE_WIDTHS_NS 40.0 40.0 40.0
+tb_b4_unisim (RTL core):     TB_PASS unisim
+tb_b4_axi3 (shim):           TB_PASS axi3
+tb_b4_unisim (NETLIST core): SKIPPED — builds/b4/b4_core_funcsim.v absent (run vivado/b4/netlist_core.tcl)
+
+
+----------------------------------------------------------------------
+Ran 62 tests in 55.120s
+
+FAILED (failures=1, errors=5)

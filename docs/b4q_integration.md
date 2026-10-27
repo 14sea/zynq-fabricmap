@@ -1,4 +1,4 @@
-# B4Q — the host-only observation integration (DRAFT v0.1, 2026-10-28): the executing side, the PCAP links, the schemas and adapters, the offline end-to-end transaction
+# B4Q — the host-only observation integration (DRAFT v0.2, 2026-10-28; v0.1 held by the owner's review of `3723b91`, R1–R5 repaired — section 5a): the executing side, the PCAP links, the schemas and adapters, the offline end-to-end transaction
 
 > **Authorisation.** The owner's disposition of 2026-10-27 (`build/wip/owner_next_b4q_2026_10_27/README.md`, section 4; archived in
 > `evidence/b4/unit_b4q_integration_2026_10_27/owner_ruling_2026_10_27/`): one complete host-only engineering unit whose purpose is "an
@@ -96,16 +96,31 @@ then a capture attempted with CE low). These are the plan's proposed vectors (`d
   cortex-a9 (`make xcheck`, objects only). The board stage (B1's `bsp/build.sh` precedent) is later work.
 - **The notary is a bench fixture** (a fixture key on a private file); provisioning on a device is a ruling (`provisioning P3-K`).
 
-## 6. Findings for the owner (not repaired here)
+## 5a. The repair after the owner's HOLD on `3723b91` (R1–R5, 2026-10-27)
 
-1. **The carrier manifest of record is stale.** `builds/b4/b4_carrier_manifest.json` records the pre-v0.4 bitstream (`52f2ea56…`) and
+| item | what was wrong | what changed | held by |
+|---|---|---|---|
+| R1 fail-closed sequencing | the executing side reported link mismatches but ran on; a refused STEP_IN write launched the STEP on the stale word; the session signed after a refused opening and after an unclosed transaction | `b4q_tx.c`: the pre-event readback compared to the signed candidate **before** PRE_SAMPLE / INIT_REQ, the post-event to the pre-event **before** any STEP, the restored base to the derived base **before** RESTORE_INIT; every write response propagated (a refused STEP_IN, payload, tag or SLOT_ADDR write stops at the phase reached); `b4q_session.py`: a halt latch — a refused opening, a transaction with no sealed `O`, no closed / `injection_open` `X`, a link / F / binding finding or an interruption refuses every further transaction before anything is signed; the A5 injection exception kept (J2's `injection_open` is a legal predecessor) | the five fault scenarios of the e2e (`startup_corrupt`, `pre_event_corrupt`, `post_event_corrupt`, `base_readback_corrupt`, `step_in_slverr`) assert the ABSENCE of the later CTRL operation / DMA / signature; the mutants R1a–e |
+| R2a completeness | the verifier enumerated `tx_*` directories | the manifest declares every record with its directory and ranges; the verifier refuses a declared record that is missing, an undeclared directory, a malformed manifest (shape, fields, ranges) before consuming anything, and finds an unconsumed trace / PCAP suffix, a gap or a mark count that is not the record count | `test_b4q_session.test_r2_*`; the mutants R2a / R2a2 / R2c |
+| R2b the staging phase | `staging_readback_sha256` was the frame store's hash after the write | the backend retains every submitted stream's words at submission (`stream_submitted` in the PCAP log); the pre-write witness is recomputed from those bytes by the session and, independently, by the verifier (`b4q_session.staging_witness`); the executing side's `staged` / `stream` / `base_staged` digests held to the same bytes; the post-write readbacks are the separate `fabric_readback_*` witnesses | the e2e; a tampered retained stream found |
+| R2c refusals | `manifest.json = []` was a traceback | `b4q_verify.load_archive`: a named `REFUSED`, exit 1 | `test_r2_*` |
+| R3 qualification conclusions | conclusion files were never recomputed; A5 passed without the close witnesses | the session declares the qualification index; the verifier recomputes A2 / A5 / A8 from the retained records and holds the files to it; `a5_verdict` needs J1 / J3 closed with their cleanup and J2 `injection_open`; `a8_classify` needs every corner complete and closed; `a2_row` needs both endpoints closed; the plan's §4.1 states the data-versus-claim distinction | `test_r3_*`; the mutants R3a / R3b |
+| R4 A7's DMA tuple | the memory-side endpoint, the HOLD tag and the alignment were not checked; the logged kind was trusted | every submission classified from its full registers (both endpoints, both lengths, the tag, the alignment, the exact staging slots); the logged kind held to it | `test_dma_tuples_are_classified_from_their_registers`; the mutants R4a / R4b |
+| R5 the raw configuration | `config: {type: object}`; the adapter coerced with `int()` | the raw schema types the dictionary (21 address-keyed type-exact bits; the subset validator learnt `additionalProperties` as a schema and `propertyNames`); the adapters validate every consumed field by type before deriving anything; no coercion; legitimate model nulls stay | `test_raw_values_are_checked_by_type_before_any_conversion`; the mutants R5a / R5b |
+| P3 setup | tests consumed the fixture by existence | `tests/b4q_fixture.py`: the executing side built and the fixture generated unless complete; prerequisites stated | the owner's two test logs kept beside the repair's |
+| disposition 1 | the manifest of record stale | regenerated narrowly from the committed bitstream; the old file and the comparison archived (`manifest_regeneration/`) | `test_the_manifest_correction_is_a_recorded_before_and_after` |
+| disposition 2 | no `O` for a host-side failure | kept as a named host non-success result with the raw prefix, no fabricated `O`, the stop latched (plan §4.2) | the e2e negatives |
+
+## 6. Findings for the owner (the first delivery's; their dispositions in the HOLD review of `3723b91`)
+
+1. **The carrier manifest of record was stale** (repaired: regenerated from the committed bitstream; before / after archived). `builds/b4/b4_carrier_manifest.json` recorded the pre-v0.4 bitstream (`52f2ea56…`) and
    per-frame digests of which **22 of the column's 36 frames differ** from the committed `b4.bit` (`4e406f12…`, the v0.4 rebuild that
    `b4_build.json`, `isolation.txt` and the carrier unit's README name); the four frames holding the 21 addresses and all 21 address
    values are equal. A session-opening readback of a v0.4-loaded device compared against that manifest's column digests would be
    **refused**. This unit binds its base to `b4_build.json`'s digest and records the loaded-image reference it derives
    (`firmware/b4q/b4q_data.json`); regenerating the manifest of record (`host/b4carrier_manifest.py builds/b4/b4.bit --json …`) touches
    a build of record and is the owner's.
-2. **A host-side link failure has no fault code.** Contract 5.7 says a link failure in P1–P5 leaves `O` invalid with a `fault`, but
+2. **A host-side link failure has no fault code** (decided: no `O`, a named host non-success result, the stop latched — plan §4.2). Contract 5.7 says a link failure in P1–P5 leaves `O` invalid with a `fault`, but
    4.2's `fault.code` is the carrier's closed set (plus the host-recorded `premature_operation`); a notary refusal, a DMA that never
    completes, a stream that does not parse have no code. Under the accepted contract no `O` is sealed for them: the raw result and
    trace are retained as non-success records (5.7's interruption row). A host-recorded code (e.g. `link_failure` with the link named)

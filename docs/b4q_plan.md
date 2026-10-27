@@ -1,4 +1,4 @@
-# B4Q — the carrier v2 qualification session: the plan (DRAFT v0.1, documents only, 2026-10-28)
+# B4Q — the carrier v2 qualification session: the plan (DRAFT v0.2, documents only, 2026-10-28; v0.1 held by the owner's review of `3723b91`, R3 — §4.1 / §4.2 added, P1 / P3 closed)
 
 > **Standing.** The reviewable plan the owner's disposition of 2026-10-27 asked for (deliverable 4 of its section 4): "the limited
 > qualification claim; exact fixed demonstration vectors, A5 c′ and witnesses, main / x5FF A8 crosses and reference-validity rules,
@@ -50,7 +50,7 @@ interpretation and nothing more; N, `B*`, a prediction or a session partition fo
 | what | value / source | status |
 |---|---|---|
 | the carrier (the loaded image) | `builds/b4/b4.bit`, sha256 `4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9` (`builds/b4/b4_build.json`; routed v0.4, WNS +7.263 ns, 12 target cells, 279 RAM32X1S, 1 STARTUPE2, 0 ICAPE2); `VARIANT 0x42340001`; the declared mechanism 2 (GSR via STARTUPE2); `NONCE_SEED 0x9E3779B97F4A7C15` | fixed (the build of record) |
-| the loaded-image frame reference | the FAR-ordered digest of the write set's eight frames as the loaded image holds them: `firmware/b4q/b4q_data.json` → `loaded_image_target_frames_sha256`; the per-frame digests of all 36 column frames beside it | fixed by this unit from the committed bitstream; **the manifest of record (`builds/b4/b4_carrier_manifest.json`) is stale (§8 P1)** |
+| the loaded-image frame reference | the FAR-ordered digest of the write set's eight frames as the loaded image holds them: `firmware/b4q/b4q_data.json` → `loaded_image_target_frames_sha256`; the per-frame digests of all 36 column frames beside it; the manifest of record `builds/b4/b4_carrier_manifest.json` **regenerated from the committed bitstream** (the HOLD review's disposition 1; the old file and the comparison archived in the unit directory) now names the same bitstream and the same frames | fixed |
 | the restored study base reference | the signed base genome 0's frames (the loaded image with the two mux bits cleared and the ECC words recomputed), FAR-ordered digest — a different commitment in the same hash domain, never compared to the loaded-image reference | fixed (derived; `host/b4q_frames.py`) |
 | the write set | two envelopes: FAR `0x00400a00` (targets `a00`–`a03`, flush `a04`) and `0x00400a1c` (targets `a1c`–`a1f`, flush `a20`); the 21 whitelisted bits in the mapping's address order | fixed (`firmware/b4q/b4q_data.json`); its authority §5 |
 | the hypothesis / the certificate | `b4/hypothesis/ff_behaviour_v0.3.json` `59948f9b…`; `gate_runs/run_2026_08_05_ff/certificate.json` `c69e419f…`; site `SLICE_X2Y25` | fixed (unchanged) |
@@ -153,6 +153,42 @@ closing controls (3 refused ARMs): **31 signed transactions** plus the controls.
 **One attempt per session label**; a HOLD session's records stay; what follows (a repair unit, another label) is a ruling. A
 `not_demonstrated` context is not a HOLD and not a reduced claim: it stays unknown. Nothing is filled from a model prediction.
 
+### 4.1 Data recorded versus claims established — the machine-checkable distinction (the owner's R3)
+
+A session's conclusions are never read from a conclusion file: the session **declares** which records play which role (the
+qualification index in its manifest — `qualification_plan`: the A5 roles J1 / J2 / J3 by record, the A8 crosses by background,
+bits, corner records, element indices and demonstration-part indices, the A2 rows by endpoint records), and the verifier
+**recomputes** every conclusion from the retained `O` / `X` of those records with the contract's rules (`host/b4q_qual.py`) and
+holds the retained conclusion files to the recomputation — a difference is a finding; an undeclared conclusion file is a finding.
+What each recomputed value means for the claim of §1:
+
+| recorded value | is it the claim? | what it is |
+|---|---|---|
+| A2 `differs` on a row | **yes** — that row's positive control | the readout differed at some point between the two endpoints under the row's vectors |
+| A2 `does_not_differ` | **no** | a recorded negative for that address and vector: the row is **not** a positive control; nothing is tuned to change it |
+| A2 `not_assessable` | **no** | an endpoint without a complete, closed observation (the host's latch endpoint among them): unknown |
+| A5 `pass` | **yes**, for this *c′* | the injection arrived and was cleared — valid only with J1 and J3 complete and `closed` (their cleanup witnesses) and J2 `injection_open`; without any of them the value is `not_demonstrated` |
+| A5 `fail` | **no** — the data of a persisting fabric | retained as the finding it is; never a pass |
+| A5 `not_demonstrated` | **no** | the test did not run (the injection did not reach the boundary, or a witness is missing) |
+| A8 row 2 | **yes** — both demonstrated for that element and context | every corner complete and `closed`, a valid reference, both effects in the predicted direction |
+| A8 rows 3–5 | **only the stated reduced claim** (SRVAL only / INIT only / neither), and whether a reduced claim is wanted is 2c's | — |
+| A8 row 1 | **no** — failed / unresolved | retained; no attribution follows |
+| A8 row 0 | **no** — not demonstrated | unknown; a missing corner, a corner not closed, an invalid reference or a prior not as planted |
+| "every record audited, the chain unbroken, A7 empty" | **necessary, never sufficient** | the session's integrity, which §1's PASS presupposes and does not consist of |
+
+A B4Q **PASS** is therefore: integrity (the row above) **and** A2 `differs` on every row of 7.3 **and** A5 `pass` **and** A8 row 2 on
+both crosses in their run contexts; anything less is a HOLD with the retained data, or a reduced claim only where a row 3–5 names
+one and 2c accepts it. No negative or unknown datum is erased; no vector is changed to obtain a verdict.
+
+### 4.2 A host-side failure that cannot be sealed (the owner's disposition 2)
+
+A failure on the host's side of the transaction — the notary refuses, a DMA never completes, a stream does not parse, the
+transport is interrupted — leaves no carrier fault and no `O` the contract could seal: the session keeps a **named host
+non-success result** (the executing side's phase and reason, the acquired raw prefix of the trace and the PCAP log, the
+links that did complete) with **no fabricated `O`** and no future-phase witness, and **latches the stop**: nothing further is
+signed until a ruling. An already sealed `O` stays immutable; a failure after P6 keeps the partial / faulted closing evidence
+the contract defines. This is the integration's reading of 5.7's rows, not a new carrier fault code.
+
 ## 5. The legal-write / composition authority
 
 What is known from the build of record (`builds/b4/isolation.txt`, v0.4): the target column (`CLBLL_L_X2Y*`, `INT_L_X2Y*` — the
@@ -194,9 +230,9 @@ measurement evidence, architecture §11) precedes the bring-up stage and is its 
 
 | # | prerequisite | who |
 |---|---|---|
-| P1 | **the carrier manifest regenerated** from the committed `b4.bit` (`host/b4carrier_manifest.py builds/b4/b4.bit --json …`): today's manifest of record names the pre-v0.4 file and 22 differing column frames (`docs/b4q_integration.md` §6.1); a session opened against it would refuse | the owner (a build of record) |
+| P1 | ~~the carrier manifest regenerated~~ — **done in the repair** (a narrow metadata correction from the committed `b4.bit`, the old manifest archived with the comparison: `evidence/b4/unit_b4q_integration_2026_10_27/manifest_regeneration/`); it certifies no composition, routing isolation, live rewriting or device | — |
 | P2 | **the board image**: the executing side (`firmware/b4q/b4q_tx.c`) integrated with a BSP, the console notary (B1's rel-v4 wire or a successor), the watchdog, the MMU attributes of the buffers, the sha-gated load; cross-compiled with the pinned toolchain; its build evidence (B1's `bsp/build.sh` / `build_evidence.json` form); A7 on its accesses re-run with the real transport | a later host unit |
-| P3 | **a host-recorded fault code for link failures** (`docs/b4q_integration.md` §6.2) or the owner's decision that such a stop leaves no `O` | the owner (a contract change) |
+| P3 | ~~a host-recorded fault code for link failures~~ — **decided by the HOLD review**: such a stop leaves no `O`; the session keeps a named host non-success result and latches the stop (§4.2) | — |
 | P4 | 2d: `F8B3` provisioned; the supply measured; FCLK0 at 50 MHz; the acceptance regression on the board touched | the 2d rulings |
 | P5 | the bring-up session on `F8B3` (§7) with its own label and ruling pair; the write-set authority of §5 taken there | the owner |
 | P6 | the qualification session on `17A6`: the ruling pair, the date, the label; the pins; nothing pinned changed between P5 and P6 or the pins are re-taken | the owner |

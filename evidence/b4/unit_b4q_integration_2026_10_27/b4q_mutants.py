@@ -25,6 +25,9 @@ SESSION = R / "host/b4q_session.py"
 VERIFY = R / "host/b4q_verify.py"
 RECORDS = R / "host/b4carrier_records.py"
 A7 = R / "host/b4q_a7.py"
+QUAL = R / "host/b4q_qual.py"
+VIEW = R / "host/b4q_view.py"
+SCHEMA_RAW = R / "b4q/schemas/ff_observation_model_raw_v1.schema.json"
 BUILD = ["bash", str(R / "firmware/b4q/build.sh")]
 
 
@@ -131,6 +134,96 @@ def probe_bench_records(root):
     return (p.returncode != 0), (ran[0] + (" FAILED" if p.returncode else " OK"))
 
 
+def probe_fail_closed(root):
+    """R1: a corrupted pre-event readback stops BEFORE the init event (no INIT_REQ, no step), the next transaction is refused and
+    nothing further is signed; a STEP_IN answered SLVERR launches no STEP"""
+    s = e2e(root, "pre_event_corrupt")
+    if "error" in s:
+        return True, s["error"][:200]
+    if s.get("phase") != "P2" or s.get("ctrl_writes_in_tx") != ["0x40"] or s.get("next_refused") is None or s.get("signed_after") != 0 or s.get("o"):
+        return True, f"pre_event_corrupt: phase {s.get('phase')} ctrl {s.get('ctrl_writes_in_tx')} next_refused {bool(s.get('next_refused'))} signed_after {s.get('signed_after')}"
+    s2 = e2e(root, "step_in_slverr")
+    if "error" in s2:
+        return True, s2["error"][:200]
+    if s2.get("step_launches") != 0 or s2.get("status") != 1:
+        return True, f"step_in_slverr: launches {s2.get('step_launches')} status {s2.get('status')}"
+    s3 = e2e(root, "startup_corrupt")
+    if "error" in s3 or s3.get("signatures") != 0 or s3.get("root_refused") is None:
+        return True, f"startup_corrupt: signatures {s3.get('signatures')} root_refused {bool(s3.get('root_refused'))}"
+    return False, "as expected"
+
+
+def probe_archive(root):
+    """R2 / R3: a dropped final transaction, a malformed manifest and an altered qualification conclusion are found by a fresh verifier"""
+    import shutil
+    s = e2e(root, "valid")
+    if "error" in s:
+        return True, s["error"][:200]
+    d = root / "valid"
+    shutil.rmtree(d / "tx_004")
+    p = subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d)], capture_output=True, text=True)
+    if p.returncode == 0 or "REFUSED" not in p.stdout:
+        return True, "a dropped final transaction was NOT refused: " + p.stdout[:160]
+    (d / "manifest.json").write_text("[]")
+    p = subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d)], capture_output=True, text=True)
+    if p.returncode == 0 or "Traceback" in p.stderr or "REFUSED" not in p.stdout:
+        return True, "a malformed manifest was not a named refusal: " + (p.stderr[-160:] or p.stdout[:160])
+    s2 = e2e(root, "a8_cross")
+    if "error" in s2:
+        return True, s2["error"][:200]
+    d2 = root / "a8_cross"
+    v = json.loads((d2 / "a8_cross.json").read_text()); v["AFF"]["row"] = 5; v["AFF"]["verdict"] = "neither demonstrated"
+    (d2 / "a8_cross.json").write_text(json.dumps(v))
+    rep = verify(root, "a8_cross")
+    if not any("A8 AFF" in m for m in rep["qualification"]["findings"]) or rep["agree"]:
+        return True, "an altered A8 conclusion was NOT found"
+    return False, "found"
+
+
+def probe_a7_tuple(root):
+    import importlib
+    import b4q_a7 as a7
+    importlib.reload(a7)
+    import b4q_backend as bk
+    base = {"pcap": "submit", "n": 0, "kind": "env", "src": bk.WR_BUF | 1, "dst": bk.PCAP_ENDPOINT, "src_len": bk.fr.STREAM_WORDS, "dst_len": 0}
+    if a7.check([], [base])["findings"]:
+        return True, "the legal envelope tuple was refused"
+    for change in ({"src": 0xDEAD0001}, {"src": bk.WR_BUF}, {"src": bk.WR_BUF | 3}, {"src": bk.CMD_BUF | 1, "src_len": bk.fr.READBACK_CMD_WORDS}):
+        if not a7.check([], [{**base, **change}])["findings"]:
+            return True, f"accepted {change}"
+    return False, "refused"
+
+
+def probe_raw_float(root):
+    import importlib, copy
+    import b4q_view as vw, b4q_schema as sc, b4_ff_mapping as bm, b4_ff_hypothesis as hy, b4_ff_model as fm
+    importlib.reload(sc); importlib.reload(vw)
+    m = bm.site_mapping(); fab = fm.Fabric(m, hy.load()); trace = fab.observe(fab.config_from_genome(0x18), [fm.init()])
+    src = {k: trace[k] for k in ("hypothesis", "mapping", "fabric")}
+    bad = copy.deepcopy(trace); bad["config"][m.addresses[0]] = 0.25; bad["config_sha256"] = vw.sha256_default(bad["config"])
+    if not sc.validate_named(bad, "ff_observation_model_raw_v1"):
+        return True, "the raw schema accepted a float bit"
+    try:
+        vw.view(bad, {"representation": "M-raw", "source": src, "addresses": m.addresses})
+        return True, "the adapter accepted a float bit"
+    except vw.ViewRefusal:
+        return False, "refused"
+
+
+def probe_a5_witnesses(root):
+    import importlib
+    import b4q_qual as ql
+    importlib.reload(ql)
+    s = e2e(root, "a5")
+    if "error" in s or s.get("a5") != "pass":
+        return True, f"a5 {s.get('a5')}"
+    d = root / "a5"; rd = lambda n: json.loads((d / n).read_text())
+    v = ql.a5_verdict(rd("tx_002/o.json"), rd("tx_003/o.json"), rd("tx_004/o.json"))
+    if v["verdict"] == "pass":
+        return True, "a pass without the close witnesses"
+    return False, v["verdict"]
+
+
 def probe_a5(root):
     s = e2e(root, "a5")
     if "error" in s:
@@ -156,6 +249,30 @@ MUTANTS = [
     ("C11", FW, 'if (!bit(st, B4Q_ST_IDLE)) { stop("STOP_P10: not idle after CLOSE"); goto faulted; }', '', "the idle check after CLOSE removed (with C2 the X would still be faulted; alone it must be silent: an equivalent on the valid path, see the log)", probe_valid_clean),
     ("C12", FW, 'if (!axi_writable(off)) { stop("STOP_AXI: write outside the pinned map"); return B4Q_RESP_SLVERR; }', 'if (!axi_writable(off) && off != B4Q_KEY0) { stop("STOP_AXI: write outside the pinned map"); return B4Q_RESP_SLVERR; }\n    if (off == B4Q_SLOT_ADDR && v == 1u) (void)b4q_wr32(B4Q_AXI_BASE + B4Q_KEY0, 0u);', "a write into the key window", probe_valid_clean),
     ("C13", FW, 'if (wait_status(B4Q_ST_GATE_BUSY, 32u, &st) != 0) { r->fault_code = axi_rd(B4Q_FAULT); stop("STOP_ARM: the gate refused (FAULT latched)"); return -1; }', 'if (wait_status(B4Q_ST_GATE_BUSY, 32u, &st) != 0) { st = 0; }', "an ARM refusal ignored", probe_wrong_key),
+    # the repair of 2026-10-27 (R1-R5): the executing side's fail-closed checks, the session's latch, the verifier's completeness and
+    # qualification recomputation, A7's full tuple, the raw schema / adapter
+    ("R1a", FW, 'if (strcmp(pre_event_hex, commit_hex) != 0) { stop("STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)"); return -1; }', '', "the pre-event comparison before the init event removed", probe_fail_closed),
+    ("R1b", FW, 'if (axi_wr(B4Q_STEP_IN, steps[k] & 0x1FFFFFFu) != B4Q_RESP_OKAY) { stop("STOP_P5: the STEP_IN write answered SLVERR: the staged word is not this step; no STEP is launched"); goto stopped; }', 'axi_wr(B4Q_STEP_IN, steps[k] & 0x1FFFFFFu);', "the STEP_IN write response ignored again", probe_fail_closed),
+    ("R1c", FW, 'if (resp != B4Q_RESP_OKAY && off != B4Q_CTRL) stop("STOP_AXI: a write of the pinned map answered SLVERR (the register is not what this side meant to stage)");', '', "the accessor no longer propagates a refused write", probe_fail_closed),
+    ("R1d", SESSION, 'if self.halted is not None:
+            raise SessionRefusal("the session is halted: " + self.halted + " — nothing further is signed without a ruling")', 'if False:
+            raise SessionRefusal("x")', "the session's halt latch no longer refuses the next transaction", probe_fail_closed),
+    ("R1e", SESSION, 'if self.session_open is None or self.session_open["record"]["status"] != "open":', 'if self.session_open is None:', "a refused opening no longer withholds the root", probe_fail_closed),
+    ("R2a", VERIFY, 'extra = sorted(p.name for p in d.iterdir() if p.is_dir() and p.name.startswith("tx_") and p.name not in {r["dir"] for r in recs})', 'extra = []', "undeclared record directories accepted again (the dropped-tail case is the manifest's declared record missing: see R2a2)", probe_archive),
+    ("R2a2", VERIFY, 'if not td.is_dir():
+            raise ArchiveRefusal(f"{r[\'dir\']}: declared in the manifest, not present")', 'if False:
+            raise ArchiveRefusal("x")', "a declared record directory missing no longer refuses", probe_archive),
+    ("R2c", VERIFY, 'if not isinstance(manifest, dict) or manifest.get("schema") != "b4q_session":
+        raise ArchiveRefusal("manifest.json: not a b4q_session manifest object")', 'pass', "the manifest's shape no longer validated first", probe_archive),
+    ("R3a", VERIFY, 'rep["qualification"] = verify_qualification(d, manifest, rep["transactions"], tx_dirs)', 'rep["qualification"] = {"findings": [], "a5": [], "a8": [], "a2": []}', "the qualification conclusions no longer recomputed", probe_archive),
+    ("R3b", QUAL, 'if not (isinstance(x, dict) and x.get("status") == "closed" and isinstance(x.get("cleanup"), dict) and "final_q" in x["cleanup"]):', 'if False:', "A5 no longer requires the close witnesses", probe_a5_witnesses),
+    ("R4a", A7, 'if (src & 1) != bk.DMA_HOLD_TAG:
+            return None, "a write to the PCAP endpoint without the HOLD tag on its source"', 'if False:
+            return None, "x"', "the HOLD tag no longer required", probe_a7_tuple),
+    ("R4b", A7, 'if base in ENVELOPE_SOURCES and src_len == fr.STREAM_WORDS:', 'if src_len == fr.STREAM_WORDS:', "the envelope source no longer bound to the staging slots", probe_a7_tuple),
+    ("R5a", SCHEMA_RAW, '"additionalProperties": {"type": "integer", "minimum": 0, "maximum": 1}', '"additionalProperties": {}', "the raw config's values untyped again (the file)", probe_raw_float),
+    ("R5b", VIEW, 'if not _is_bit(b):
+            raise ViewRefusal(f"M-raw: config[{a}] is {b!r}, not the int 0 / 1 (no coercion)")', 'pass', "the adapter's type check removed (the file still refuses: see R5a for the file alone)", probe_raw_float),
     # the host: the session runner, the verifier, the record builder
     ("P1", SESSION, 'o = rec.observation(tx_events, links, self.timing, seq=seq, session=self.label, predecessor=pred, declared_stimulus=stimulus)',
      'o = rec.observation(tx_events, links, self.timing, seq=seq, session=self.label, predecessor=pred, declared_stimulus=stimulus); o["seq"] = seq + 100', "the stored O's seq altered after sealing", probe_valid_clean),
@@ -184,7 +301,8 @@ def main(argv=None) -> int:
     # the baseline: the probes pass on the unmutated tree
     tmp = Path(tempfile.mkdtemp(prefix="b4q_mut_"))
     subprocess.run(BUILD, check=True, capture_output=True)
-    for name, probe in (("valid", probe_valid_clean), ("wrong_key", probe_wrong_key), ("tamper", probe_tamper), ("a5", probe_a5)):
+    for name, probe in (("valid", probe_valid_clean), ("wrong_key", probe_wrong_key), ("tamper", probe_tamper), ("a5", probe_a5), ("fail_closed", probe_fail_closed),
+                        ("archive", probe_archive), ("a7_tuple", probe_a7_tuple), ("raw_float", probe_raw_float), ("a5_witnesses", probe_a5_witnesses), ("bench_records", probe_bench_records)):
         broken, why = probe(tmp / "base")
         lines.append(f"BASELINE {name}: {'BROKEN — ' + why if broken else 'green'}")
         if broken:
@@ -197,6 +315,8 @@ def main(argv=None) -> int:
             lines.append(f"{mid} EDIT-MISS ({text.count(old)} occurrences) — {what}"); missed += 1; continue
         try:
             path.write_text(text.replace(old, new))
+            if path == SCHEMA_RAW:
+                json.loads(path.read_text())                            # a schema file mutant must stay JSON
             if path == FW:
                 b = subprocess.run(BUILD, capture_output=True, text=True)
                 if b.returncode != 0:
@@ -239,6 +359,7 @@ def main(argv=None) -> int:
         print(lines[-1], flush=True)
     n = len([m for m in MUTANTS if not only or m[0] in only]) + len([m for m in COMBINED if not only or m[0] in only])
     lines.append(f"TOTAL killed {killed} survived {survived} edit-miss {missed} of {n}")
+    lines.append("REPAIR MUTANTS (R1-R5, 2026-10-27): R1a-e, R2a/R2a2/R2c, R3a/R3b, R4a/R4b, R5a/R5b above — each probed by the fault condition it guards (a corrupted readback, a refused write, a refused opening, a dropped record, a malformed manifest, an altered conclusion, missing close witnesses, a bad DMA tuple, a float bit)")
     lines.append("SURVIVORS acknowledged (each an equivalent or a redundancy on every available probe, named with what masks it): C9 (the link-2 comparison alone: on a correct executing side the re-read always equals the commit — its removal is observable only beside a corruption, C9+C10, killed), P2 (the session's fitness hold alone: the verifier recomputes it independently and the executing side's is correct — observable only beside C6, P2+C6, killed), P5 (the applied-vector realisability rule: the declared-step equality check catches a non-uniform applied vector first, since the declared stimulus is uniform by task-v0.3), P7 (A7's key-window line: the key window is also outside the application's write allowlist, which the next line reports), C11 (the idle check after CLOSE: the valid path's CLOSE always leaves idle, so its removal is equivalent on every available probe — the RTL's idle semantics are the carrier bench's finding, scenario open_close_refused), C13 (an ARM refusal ignored by the executing side: the record layer judges the TRACE, not the executing side's claim, so the O is still invalid at P1 with arm_auth — the mutant is silent by the record layer's authority, which is the design)")
     out.write_text("\n".join(lines) + "\n")
     print(lines[-1])

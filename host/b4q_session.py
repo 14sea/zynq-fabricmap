@@ -35,6 +35,9 @@ BINARY = R / "build/b4q_firmware/b4q_host"
 SCHEMA = ("b4q_session", "1.0.0")
 
 
+STARTUP_MISMATCH = "session_open: the executing side's startup readback digest is not the host's view of the frames it was given"
+
+
 def sha256_file(p: Path) -> str:
     return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
@@ -45,6 +48,35 @@ def step_word(s: dict) -> int:
 
 def config_list(genome: int) -> list:
     return [(genome >> i) & 1 for i in range(fr.GENOME_BITS)]
+
+
+def staging_witness(submissions: list) -> str | None:
+    """The pre-write staging commitment recomputed from the RETAINED stream bytes of two envelope submissions (the DDR content when each
+    DMA was queued): the streams parsed by the pinned grammar, the eight target frames hashed FAR-ordered — the same arithmetic as the
+    executing side's link 2 (`staged_hex`), on the bytes it re-read. None when a stream does not parse or the two are not the two envelopes."""
+    frames = {}
+    for e in submissions:
+        words = [int(e["stream_words_hex"][8 * i:8 * i + 8], 16) for i in range(len(e["stream_words_hex"]) // 8)]
+        parsed = fr.parse_stream(words)
+        if parsed is None:
+            return None
+        far_set, frames5 = parsed
+        env = [v for v in fr.ENVELOPES if v["far_set"] == far_set][0]
+        for k, far in enumerate(env["targets"]):
+            frames[far] = frames5[k]
+    if set(frames) != set(fr.TARGET_FARS):
+        return None
+    return fr.frames_hash(frames)
+
+
+def stream_words_sha256(submissions: list) -> str | None:
+    """The executing side's `stream` digest: one sha256 over the two submitted streams' words, big-endian, in order."""
+    if len(submissions) < 2:
+        return None
+    words = []
+    for e in submissions[:2]:
+        words += [int(e["stream_words_hex"][8 * i:8 * i + 8], 16) for i in range(len(e["stream_words_hex"]) // 8)]
+    return fr.words_sha256(words)
 
 
 class SessionRefusal(ValueError):
@@ -63,12 +95,15 @@ class Session:
         self.backend = bk.Backend(self.base, self.wl, power_on=power_on, gsr_init_effect=gsr_init_effect)
         if devc_faults:
             self.backend.devc.faults.update(devc_faults)
+        self.corrupt_frame_reads = self.backend.devc.corrupt_frame_reads   # one shared set: a scenario adds ordinals before the session opens
         self.notary = nt.Notary(self.base, self.wl)
         self.notary_deny = set(notary_deny or ())
         self.backend.provision_key(provision_key if provision_key is not None else self.notary.key)   # the signer principal provisions the write-once key; the application never touches it
         self.interrupt_after = interrupt_after_accesses
         self.interrupt_tx = interrupt_tx                                    # the transaction number (1 = the root) the interruption is aimed at; None = any
         self.interrupted = None
+        self.halted = None                                                  # the fail-closed latch of this layer: once set, no further SIGN or transaction (R1)
+        self.qual_plan = {"a5": [], "a8": [], "a2": []}                     # the retained declared qualification index (R3): which records play which role
         self.binary = Path(binary)
         if not self.binary.is_file():
             raise SessionRefusal(f"the executing-side program is not built: {self.binary}")
@@ -142,7 +177,13 @@ class Session:
             self.proc.wait(timeout=10)
 
     # ---------------------------------------------------------------- the session opening (contract 5.5)
+    def halt(self, why: str):
+        if self.halted is None:
+            self.halted = why
+
     def open(self) -> dict:
+        if self.session_open is not None:
+            raise SessionRefusal("the session is already opened (or refused): one opening per session")
         self._send("OPEN")
         r = self.serve()
         self.open_result = r
@@ -154,8 +195,10 @@ class Session:
         if r.get("status") != 0:
             findings.append(f"the executing side refused to open: {r.get('reason')}")
         if host_hash is not None and host_hash != r.get("startup_readback"):
-            findings.append("the executing side's startup readback digest is not the host's view of the frames it was given")
+            findings.append(STARTUP_MISMATCH)
         self.session_open = {"record": so, "findings": findings, "executing_side": r, "host_view_target_frames_hash": host_hash}
+        if so["status"] != "open" or findings:
+            self.halt("the session did not open: " + "; ".join(findings))   # nothing is signed after a refused opening (contract 5.5)
         return self.session_open
 
     # ---------------------------------------------------------------- one transaction
@@ -165,6 +208,12 @@ class Session:
         side as well so that its fitness can be held to the host's."""
         if stimulus[0].get("kind") != "init":
             raise SessionRefusal("the declared stimulus begins with the init step")
+        if self.session_open is None or self.session_open["record"]["status"] != "open":
+            raise SessionRefusal("no open session: nothing is signed before the session-opening record is open (contract 5.5)")
+        if self.halted is not None:
+            raise SessionRefusal("the session is halted: " + self.halted + " — nothing further is signed without a ruling")
+        if self.records and not (self.prev_x is not None and self.prev_x["status"] in ("closed", "injection_open")):
+            raise SessionRefusal("the previous transaction did not close: no candidate is signed while the last X is not closed (5.2) or injection_open (5.6)")
         steps = [step_word(s) for s in stimulus[1:]]
         cmd = f"TX {kind} {genome:08x} {len(steps)} " + " ".join(f"{w:07x}" for w in steps)
         if task:
@@ -188,12 +237,12 @@ class Session:
         pcap = self.backend.pcap_log[pcap_begin:]
         # the host's links: the notary's commit, the PCAP log's digests (the host's view of what the DMAs carried / delivered)
         commit = next((e["commit"] for e in reversed(self.notary.log) if e.get("genome") == genome and "commit" in e), None)
-        env_writes = [e for e in pcap if e.get("pcap") == "envelope_written"]
+        subs = [e for e in pcap if e.get("pcap") == "stream_submitted"]
         reads = [e for e in pcap if e.get("pcap") == "read_frame"]
         groups = [reads[i:i + len(fr.TARGET_FARS)] for i in range(0, len(reads), len(fr.TARGET_FARS))]
         group_hash = [g[0]["target_frames_hash"] if len(g) == len(fr.TARGET_FARS) and len({x["target_frames_hash"] for x in g}) == 1 else None for g in groups]
-        cand_staged = env_writes[1]["target_frames_hash"] if len(env_writes) >= 2 else None
-        base_staged = env_writes[3]["target_frames_hash"] if len(env_writes) >= 4 else None
+        cand_staged = staging_witness(subs[0:2]) if len(subs) >= 2 else None        # the pre-write witness: the candidate's two streams as submitted
+        base_staged = staging_witness(subs[2:4]) if len(subs) >= 4 else None
         links = {"instrument": self.instrument, "nonce": f"{nonce_before:016x}", "config": config_list(genome)}
         for k, v in (("commit", commit), ("staging_readback_sha256", cand_staged), ("fabric_readback_sha256_pre_event", group_hash[0] if len(group_hash) > 0 else None),
                      ("fabric_readback_sha256_post_event", group_hash[1] if len(group_hash) > 1 else None), ("base_readback_sha256", group_hash[2] if len(group_hash) > 2 else None)):
@@ -219,8 +268,10 @@ class Session:
             except rec.RecordRefusal as e:
                 findings.append(f"no transaction close: {e}")
         # the executing side's digests held to the host's view
-        for name, mine, theirs in (("commit", commit, r.get("commit")), ("staged", cand_staged, r.get("staged")), ("pre_event", links.get("fabric_readback_sha256_pre_event"), r.get("pre_event")),
-                                   ("post_event", links.get("fabric_readback_sha256_post_event"), r.get("post_event")), ("base_readback", links.get("base_readback_sha256"), r.get("base_readback"))):
+        for name, mine, theirs in (("commit", commit, r.get("commit")), ("staged", cand_staged, r.get("staged")), ("stream", stream_words_sha256(subs[0:2]), r.get("stream")),
+                                   ("pre_event", links.get("fabric_readback_sha256_pre_event"), r.get("pre_event")),
+                                   ("post_event", links.get("fabric_readback_sha256_post_event"), r.get("post_event")), ("base_readback", links.get("base_readback_sha256"), r.get("base_readback")),
+                                   ("base_staged", staging_witness(subs[2:4]) if len(subs) >= 4 else None, r.get("base_staged"))):
             if theirs and mine and theirs != mine:
                 findings.append(f"link: the executing side's {name} digest is not the host's view")
         ctx = {"instrument": self.instrument, "session": self.label, "stimulus": stimulus, "config": config_list(genome), "task": task, "task_digest": (task or {}).get("digest"),
@@ -234,8 +285,16 @@ class Session:
         self.records.append(entry)
         if x is not None and x["status"] in ("closed", "injection_open"):
             self.prev_x = x
-        elif x is not None:
-            self.prev_x = None                                              # a faulted close: nothing follows until a ruling
+        else:
+            self.prev_x = None                                              # a faulted close, or none: nothing follows until a ruling
+        if o is None:
+            self.halt(f"transaction {seq}: no observation sealed ({r.get('reason')})")
+        elif x is None or x["status"] not in ("closed", "injection_open"):
+            self.halt(f"transaction {seq}: not closed ({(x or {}).get('status', 'no X')}; {r.get('reason')})")
+        elif any(m.startswith("link:") or m.startswith("F:") or m.startswith("O:") or m.startswith("bound:") for m in findings):
+            self.halt(f"transaction {seq}: " + findings[0])
+        if r.get("status") == 5:
+            self.halt(f"transaction {seq}: interrupted")
         return entry
 
     # ---------------------------------------------------------------- the evidence
@@ -269,9 +328,14 @@ class Session:
                     "write_set": json.loads((R / "firmware/b4q/b4q_data.json").read_text()), "timing": self.timing,
                     "hypothesis": {"path": self.hyp.path, "sha256": self.hyp.sha256, "version": self.hyp.version}, "mapping": {"site": self.mapping.site, "certificate": self.mapping.certificate_rel, "certificate_sha256": self.mapping.certificate_sha256},
                     "notary": {"key_id": self.notary.key_id, "contract": "zero tables, no attestation (fixture key)"},
-                    "backend": {"power_on": "init" if self.backend.carrier.fab.q and None not in self.backend.carrier.fab.q else "x", "nonce_seed": f"{self.backend.carrier.nonce_seed:016x}", "devc_faults": {f"{k[0]}:{k[1]}": str(v) for k, v in self.backend.devc.faults.items()}},
-                    "records": [{"seq": e["seq"], "kind": e["kind"], "genome_hex": e["genome_hex"], "o": e["o"] is not None, "f": e["f"] is not None, "x": e["x"]["status"] if e["x"] else None,
-                                 "o_status": e["o"]["status"] if e["o"] else None, "executing_side_status": e["firmware"].get("status"), "phase": e["firmware"].get("phase"), "findings": e["findings"]} for e in self.records],
+                    "backend": {"power_on": "init" if self.backend.carrier.fab.q and None not in self.backend.carrier.fab.q else "x", "nonce_seed": f"{self.backend.carrier.nonce_seed:016x}", "devc_faults": {f"{k[0]}:{k[1]}": str(v) for k, v in self.backend.devc.faults.items()},
+                                "fault_injections": {"refuse_writes": sorted(f"{o:#06x}" for o in self.backend.refuse_writes), "corrupt_frame_reads": sorted(self.backend.devc.corrupt_frame_reads),
+                                                     "note": "the bench's declared fault injections — a SIMULATION, never evidence that hardware refused or corrupted anything"}},
+                    "records": [{"seq": e["seq"], "dir": f"tx_{e['seq']:03d}", "kind": e["kind"], "genome_hex": e["genome_hex"], "o": e["o"] is not None, "f": e["f"] is not None, "x": e["x"]["status"] if e["x"] else None,
+                                 "o_status": e["o"]["status"] if e["o"] else None, "executing_side_status": e["firmware"].get("status"), "phase": e["firmware"].get("phase"), "findings": e["findings"],
+                                 "trace_range": e["trace_range"], "pcap_range": e["pcap_range"]} for e in self.records],
+                    "open_trace_range": [0, self.records[0]["trace_range"][0]] if self.records else [0, len(self.backend.trace)],
+                    "halted": self.halted, "qualification_plan": self.qual_plan,
                     "notary_deny": sorted(f"{g:06x}" for g in self.notary_deny), "interrupted": self.interrupted,
                     "chain_findings": chain, "accesses": len(self.backend.accesses), "trace_events": len(self.backend.trace)}
         (out / "manifest.json").write_text(json.dumps(manifest, indent=1) + "\n")

@@ -1,4 +1,4 @@
-# B4 — the host-only B4Q observation integration unit (2026-10-27 / 28): the executing side, the PCAP links, the schemas and adapters, the offline end-to-end transaction and the B4Q plan — delivered for review
+# B4 — the host-only B4Q observation integration unit (2026-10-27 / 28): the executing side, the PCAP links, the schemas and adapters, the offline end-to-end transaction and the B4Q plan — **resubmitted after the owner's HOLD on `3723b91` (section 9: R1–R5 repaired in this unit)**
 
 **What this unit is.** The one complete engineering unit the owner's disposition of 2026-10-27 opened (section 4; archived here in
 `owner_ruling_2026_10_27/`, checksums verified): "an offline end-to-end observation transaction using the executing-side implementation
@@ -87,3 +87,23 @@ no merge. The write set's authority on a live device is the plan's question (§5
 `trace.jsonl`, `pcap_log.jsonl`, `events.jsonl`, `accesses.jsonl.gz`, `tx_NNN/{o,f,x,ctx,links,firmware_result,record}.json`, the
 A5 / A8 / A2 readings) · `e2e_run.log` · `a7_valid.txt` · `b4q_mutants.py`, `mutants.txt` · `tests_b4q.txt`, `tests_b4_suite.txt` ·
 `import_check.txt` · `protected_paths.txt` · `assemble.sh` (how the evidence is regenerated from fresh runs).
+
+## 9. The repair after the owner's HOLD on `3723b91` (2026-10-27; archived in `owner_review_3723b91_HOLD/`, 63 checksums OK)
+
+The HOLD named five blocking contracts, all reproduced by the owner's probes (`owner_review_3723b91_HOLD/probes.py`) and all
+accepted; the repair is in this same unit (`docs/b4q_integration.md` §5a has the per-item table):
+
+| item | the repair | the evidence |
+|---|---|---|
+| R1 fail-closed sequencing | the executing side stops **before** the next operation on a pre-event / post-event / restored-base readback that is not what it must be and on any refused write (a refused STEP_IN launches no STEP); the session latches a halt on a refused opening, a transaction without a sealed `O` or a closed / `injection_open` `X`, a link / F / binding finding or an interruption — nothing further is signed | five new e2e scenarios (`startup_corrupt`, `pre_event_corrupt`, `post_event_corrupt`, `base_readback_corrupt`, `step_in_slverr`) whose tests assert the **absence** of the later CTRL operation, DMA and signature (`test_r1_fail_closed_before_the_next_operation`); the verifier finds a transaction run after a record that required a halt; mutants R1a–e killed |
+| R2 the archive verifier | the manifest declares every record with its ranges; the verifier validates the archive's shape first (a malformed manifest or a missing file is a named `REFUSED`, exit 1, no traceback), refuses a declared record missing or an undeclared directory, finds an unconsumed trace / PCAP suffix; the staging witness is recomputed from the **retained submitted stream bytes** (the DDR content when each envelope DMA was queued — the executing side's link-2 input), apart from the post-write readbacks | `test_r2_archive_completeness_and_refusals`; mutants R2a / R2a2 / R2c |
+| R3 qualification conclusions | the session declares the qualification index (which records play which role); the verifier recomputes A2 / A5 / A8 from the retained `O` / `X` and holds the conclusion files to it; A5 needs J1 / J3 closed with their cleanup and J2 `injection_open`, A8 every corner complete and closed, A2 both endpoints closed — a missing witness is `not_demonstrated` / `not_assessable`, never a positive claim; the plan's §4.1 fixes the data-versus-claim distinction | `test_r3_qualification_conclusions_recomputed_and_conditioned`; mutants R3a / R3b |
+| R4 A7's DMA tuple | every submission classified from its full registers (both endpoints, both lengths, the HOLD tag, the alignment, the exact staging slots); the logged kind held to it | `test_dma_tuples_are_classified_from_their_registers`; mutants R4a / R4b |
+| R5 the raw configuration | the raw schema types the 21-bit dictionary; the adapters validate every consumed field by type before deriving; no coercion | `test_raw_values_are_checked_by_type_before_any_conversion`; mutants R5a / R5b |
+| P3 | the shared fixture builds the executing side and generates the valid scenario unless complete (`tests/b4q_fixture.py`); the owner's two test logs are in the archived review; the first-delivery mutant log kept as `mutants_first_delivery.txt`; the raw mutant log's trailing whitespace is an original output and is not trimmed | — |
+| disposition 1 | the carrier manifest of record regenerated from the committed bitstream by the existing generator; the old manifest, the digests before / after, the generation command and the comparison (22 of 36 column frames differ, the four address frames and all 21 values equal) in `manifest_regeneration/` | `test_the_manifest_correction_is_a_recorded_before_and_after` |
+| disposition 2 | a host-side failure that cannot be sealed stays a named host non-success result with the raw prefix, no fabricated `O`, the stop latched (plan §4.2) | the e2e negatives |
+| disposition 3 | the latch endpoint stays `not_assessable`; the x5FF cells are never filled | `a2_pairs` |
+
+The e2e run of record now has **16 scenarios**; the first delivery's 11 keep their names. The tests: the nine suites rerun at
+closure (`tests_b4q.txt`); the 332-test B4 battery not rerun (`b4/` unchanged, the owner's instruction).

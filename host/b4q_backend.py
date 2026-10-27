@@ -75,6 +75,7 @@ class Devc:
         self.cur = None
         self.read_target = None
         self.faults = {}                                                   # (kind, ordinal) -> mode: "never" | ("error", bit) | "dmadone"
+        self.corrupt_frame_reads = set()                                   # frame-read ordinals whose delivered frame is corrupted (a fault knob)
         self.counts = {k: 0 for k in self.KINDS}
         self.sticky = False
 
@@ -107,6 +108,10 @@ class Devc:
         d["data_done"] = True
         if d["kind"] == "env":
             words = [self.mem.rd((d["src"] & ~3) + 4 * i) for i in range(fr.STREAM_WORDS)]
+            # the staging witness, retained at SUBMISSION: the stream as it lies in DDR when the DMA is queued (what the executing side
+            # staged and re-read), kept whole so the host and a verifier recompute the pre-write commitment from the bytes themselves
+            self.log.append({"pcap": "stream_submitted", "n": d["n"], "src": d["src"], "stream_sha256": fr.words_sha256(words),
+                             "stream_words_hex": "".join(f"{w:08x}" for w in words)})
             parsed = fr.parse_stream(words)
             if parsed is None:
                 d["effect"] = "stream refused by the grammar: nothing configured"
@@ -136,6 +141,9 @@ class Devc:
             far = self.read_target
             d["target"] = far
             words = [0] * fr.FRAME_WORDS + (list(self.frames[far]) if far in self.frames else [0] * fr.FRAME_WORDS)
+            if d["ordinal"] in self.corrupt_frame_reads:                  # a fault knob (the repair's probes): one word of the delivered frame flipped
+                words[fr.FRAME_WORDS + 3] ^= 1
+                self.log.append({"pcap": "frame_corrupted_by_the_bench", "n": d["n"], "ordinal": d["ordinal"]})
             for i, w in enumerate(words):
                 self.mem.wr((d["dst"] & ~3) + 4 * i, w)
             d["effect"] = "pad frame + target frame delivered"
@@ -200,6 +208,7 @@ class Backend:
         self.devc = Devc(self.mem, self.base["frames"], self.carrier.set_genome, self.pcap_log)
         self.devc.wl = self.wl
         self.loaded_genome = loaded_genome
+        self.refuse_writes = set()                                         # window offsets answered SLVERR without a change (a fault knob)
 
     def provision_key(self, key: bytes):
         """The signer principal's act (never the application's): the write-once key through its window, then the commit."""
@@ -230,6 +239,11 @@ class Backend:
     def wr32(self, a: int, v: int) -> int:
         a &= 0xFFFFFFFF
         if AXI_BASE <= a < AXI_BASE + AXI_SIZE:
+            if (a - AXI_BASE) in self.refuse_writes:                        # a fault knob: SLVERR answered and the register NOT changed
+                self.carrier.t += 4
+                self.carrier._log({"t": self.carrier.t * 20, "op": "wr", "addr": a - AXI_BASE, "data": v & 0xFFFFFFFF, "resp": SLVERR})
+                self.accesses.append(("wr", a, SLVERR))
+                return SLVERR
             resp = self.carrier.write(a - AXI_BASE, v)
             self.accesses.append(("wr", a, resp))
             return resp

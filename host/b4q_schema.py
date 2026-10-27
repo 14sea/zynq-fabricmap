@@ -25,7 +25,7 @@ from pathlib import Path
 R = Path(__file__).resolve().parent.parent
 SCHEMAS = R / "b4q/schemas"
 KNOWN = {"$schema", "$id", "title", "description", "type", "enum", "const", "properties", "required", "additionalProperties", "items", "minItems", "maxItems",
-         "pattern", "minimum", "maximum", "oneOf", "allOf", "$ref", "$defs", "x-contract"}
+         "pattern", "minimum", "maximum", "oneOf", "allOf", "$ref", "$defs", "x-contract", "propertyNames", "minProperties", "maxProperties"}
 NAMES = ("ff_observation_carrier_v1", "ff_fitness_v1", "ff_transaction_close_v1", "ff_session_open_v1", "ff_observation_model_raw_v1", "ff_observation_view_v1")
 
 
@@ -48,8 +48,8 @@ def _check_keywords(node, where):
             elif k in ("oneOf", "allOf"):
                 for i, vv in enumerate(v):
                     _check_keywords(vv, f"{where}.{k}[{i}]")
-            elif k == "items":
-                _check_keywords(v, f"{where}.items")
+            elif k == "items" or (k in ("additionalProperties", "propertyNames") and isinstance(v, dict)):
+                _check_keywords(v, f"{where}.{k}")
             elif k not in KNOWN:
                 raise SchemaRefusal(f"{where}: unknown keyword {k!r} — the subset validator does not interpret it")
 
@@ -116,13 +116,22 @@ def validate(doc, schema: dict, root: dict | None = None, where: str = "$") -> l
         for k in schema.get("required", []):
             if k not in doc:
                 f.append(f"{where}: missing {k!r}")
-        if schema.get("additionalProperties") is False:
+        ap = schema.get("additionalProperties")
+        if ap is False:
             extra = sorted(set(doc) - set(props))
             if extra:
                 f.append(f"{where}: extra keys {extra}")
+        if "minProperties" in schema and len(doc) < schema["minProperties"]:
+            f.append(f"{where}: fewer than {schema['minProperties']} properties")
+        if "maxProperties" in schema and len(doc) > schema["maxProperties"]:
+            f.append(f"{where}: more than {schema['maxProperties']} properties")
         for k, v in doc.items():
+            if "propertyNames" in schema:
+                f += validate(k, schema["propertyNames"], root, f"{where}.<{k}>")
             if k in props:
                 f += validate(v, props[k], root, f"{where}.{k}")
+            elif isinstance(ap, dict):
+                f += validate(v, ap, root, f"{where}.{k}")
     return f
 
 

@@ -84,19 +84,48 @@ def _check_source(expected: dict, hdr: dict | None, provenance_sha256: str | Non
         raise ViewRefusal(f"{where}: provenance_sha256 is not the trusted source's")
 
 
+def _is_bit(v) -> bool:
+    return type(v) is int and v in (0, 1)
+
+
+def _is_cell(v) -> bool:
+    return v is None or _is_bit(v)
+
+
+def _raw_shape(trace: dict, addresses: tuple):
+    """The raw model trace's shape, type-exact, BEFORE any field is read for derivation (the owner's R5): the schema file first
+    (closed sets, typed fields, the configuration a dictionary of 21 address-keyed bits), then the dynamic bindings the file cannot
+    express — the key set is exactly the trusted mapping's addresses; every cell of every row is None or the int 0 / 1."""
+    import b4q_schema as sc
+    f = sc.validate_named(trace, "ff_observation_model_raw_v1")
+    if f:
+        raise ViewRefusal("M-raw: not an instance of the raw schema: " + "; ".join(f[:3]))
+    config = trace["config"]
+    if set(config) != set(addresses):
+        raise ViewRefusal("M-raw: config is not the dictionary over the trusted mapping's addresses")
+    for a, b in config.items():
+        if not _is_bit(b):
+            raise ViewRefusal(f"M-raw: config[{a}] is {b!r}, not the int 0 / 1 (no coercion)")
+    for i, s in enumerate(trace["steps"]):
+        for key in ("q_before", "q_after"):
+            if not (isinstance(s[key], list) and len(s[key]) == 8 and all(_is_cell(c) for c in s[key])):
+                raise ViewRefusal(f"M-raw: steps[{i}].{key} is not eight cells of None / 0 / 1")
+    if not all(_is_cell(c) for c in trace["initial"]["q"]):
+        raise ViewRefusal("M-raw: initial.q is not eight cells of None / 0 / 1")
+
+
 def view_model_raw(trace: dict, ctx: dict) -> dict:
     """ctx: {source: the formal source descriptor {hypothesis, mapping, fabric}, addresses: the mapping's address tuple}."""
     if not isinstance(trace, dict) or trace.get("schema") != "b4_ff_observation_trace":
         raise ViewRefusal("M-raw: not a b4_ff_observation_trace")
+    addresses = tuple(ctx["addresses"])
+    _raw_shape(trace, addresses)
     hdr = {k: trace.get(k) for k in ("hypothesis", "mapping", "fabric")}
     _check_source(ctx.get("source"), hdr, None, "M-raw")
-    addresses = tuple(ctx["addresses"])
     config = trace["config"]
-    if not isinstance(config, dict) or set(config) != set(addresses):
-        raise ViewRefusal("M-raw: config is not the dictionary over the mapping's addresses")
     if trace.get("config_sha256") != sha256_default(config):
         raise ViewRefusal("M-raw: config_sha256 does not digest the dictionary under raw-dict-default")
-    genome = sum(int(config[a]) << i for i, a in enumerate(addresses))
+    genome = sum(config[a] << i for i, a in enumerate(addresses))
     grid = [list(s["q_after"]) for s in trace["steps"]]
     steps = [{**{k: s[k] for k in STEP_KEYS}, "derived_keys": []} for s in trace["steps"]]
     return {"schema": "ff_observation_view", "schema_version": "1.0.0", "source": {"kind": "model", "representation": "M-raw"},
@@ -118,6 +147,13 @@ def view_model_projection(entry: dict, ctx: dict, representation: str) -> dict:
     _check_source(ctx.get("source"), hdr, entry["provenance_sha256"], representation)
     addresses = tuple(ctx["addresses"])
     genome = entry["genome"]
+    if type(genome) is not int or not 0 <= genome < (1 << len(addresses)):
+        raise ViewRefusal(f"{representation}: genome is not an int over the mapping's addresses")
+    if not (isinstance(entry["q_grid"], list) and all(isinstance(r, list) and len(r) == 8 and all(_is_cell(c) for c in r) for r in entry["q_grid"])):
+        raise ViewRefusal(f"{representation}: q_grid is not rows of eight cells of None / 0 / 1")
+    for k in ("config_sha256", "provenance_sha256", "stimulus_sha256", "trace_sha256"):
+        if not (isinstance(entry[k], str) and len(entry[k]) == 64 and all(c in "0123456789abcdef" for c in entry[k])):
+            raise ViewRefusal(f"{representation}: {k} is not a 64-hex digest")
     if entry["config_sha256"] != ex.sha256_json(ex.genome_to_config(genome, addresses)):
         raise ViewRefusal(f"{representation}: config_sha256 does not digest the reconstructed dictionary under proj-dict-canonical")
     grid = [list(r) for r in entry["q_grid"]]

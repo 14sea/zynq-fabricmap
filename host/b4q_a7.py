@@ -24,7 +24,36 @@ AXIL = (R / "rtl/b4/b4_axil.v").read_text()
 DEVC_REGS = {bk.DEVCFG_CTRL: "CTRL", bk.DEVCFG_INT_STS: "INT_STS", bk.DEVCFG_DMA_SRC_ADDR: "DMA_SRC_ADDR", bk.DEVCFG_DMA_DEST_ADDR: "DMA_DEST_ADDR",
              bk.DEVCFG_DMA_SRC_LEN: "DMA_SRC_LEN", bk.DEVCFG_DMA_DEST_LEN: "DMA_DEST_LEN"}
 BUFFERS = {"CMD_BUF": (bk.CMD_BUF, 4 * fr.READBACK_CMD_WORDS), "DST_BUF": (bk.DST_BUF, 4 * fr.READBACK_WORDS), "WR_BUF": (bk.WR_BUF, len(fr.ENVELOPES) * 4 * fr.STREAM_WORDS)}
-LEGAL_DMA = {("env", bk.PCAP_ENDPOINT, fr.STREAM_WORDS, 0), ("cmd", bk.PCAP_ENDPOINT, fr.READBACK_CMD_WORDS, 0), ("frame", bk.PCAP_ENDPOINT, 0, fr.READBACK_WORDS), ("clean", bk.PCAP_ENDPOINT, fr.CLEANUP_WORDS, 0)}
+STREAM_BYTES = 4 * fr.STREAM_WORDS
+# the four legal DMA transactions, as FULL tuples (both endpoints, both lengths, the HOLD tag, the alignment): a submission is
+# classified from its actual registers — the log's `kind` label is never authority (the owner's R4 of 2026-10-27)
+ENVELOPE_SOURCES = {bk.WR_BUF + e * STREAM_BYTES for e in range(len(fr.ENVELOPES))}
+
+
+def classify_tuple(src: int, dst: int, src_len: int, dst_len: int) -> tuple[str | None, str]:
+    """(kind or None, why): the kind only when every field of the tuple is the legal one."""
+    if dst == bk.PCAP_ENDPOINT:
+        if (src & 1) != bk.DMA_HOLD_TAG:
+            return None, "a write to the PCAP endpoint without the HOLD tag on its source"
+        base = src & ~1
+        if base & 3:
+            return None, f"the source {src:#010x} is not word-aligned"
+        if dst_len != 0:
+            return None, f"a write to the PCAP endpoint with a non-zero destination length {dst_len}"
+        if base in ENVELOPE_SOURCES and src_len == fr.STREAM_WORDS:
+            return "env", "ok"
+        if base == bk.CMD_BUF and src_len == fr.READBACK_CMD_WORDS:
+            return "cmd", "ok"
+        if base == bk.CMD_BUF and src_len == fr.CLEANUP_WORDS:
+            return "clean", "ok"
+        return None, f"source {src:#010x} / length {src_len} is not an envelope, a readback command or the cleanup"
+    if src == bk.PCAP_ENDPOINT:
+        if dst != (bk.DST_BUF | bk.DMA_HOLD_TAG):
+            return None, f"a read from the PCAP endpoint into {dst:#010x}, not the destination buffer with the HOLD tag"
+        if src_len != 0 or dst_len != fr.READBACK_WORDS:
+            return None, f"a read from the PCAP endpoint with lengths {src_len} / {dst_len}, not 0 / {fr.READBACK_WORDS}"
+        return "frame", "ok"
+    return None, "neither endpoint is the PCAP"
 
 
 def rtl_reads() -> set:
@@ -91,14 +120,16 @@ def check(accesses: list, pcap_log: list | None = None) -> dict:
         findings.append(f"{slverr} access(es) of the carrier window answered SLVERR")
     for op, addr in touched["other"][:10]:
         findings.append(f"{op} of {addr:#010x}: outside every region the program may touch")
-    # (iii): the DevC transactions
+    # (iii): the DevC transactions — every submission's full tuple classified from its registers; the logged kind is held to it
     if pcap_log is not None:
         for e in pcap_log:
             if e.get("pcap") == "submit":
-                kind, src, dst, slen, dlen = e["kind"], e["src"], e["dst"], e["src_len"], e["dst_len"]
-                tup = (kind, dst if src != bk.PCAP_ENDPOINT else src, slen, dlen)
-                if kind == "other" or tup not in LEGAL_DMA:
-                    findings.append(f"DMA submission {e['n']}: not one of the four legal transactions ({kind}, src {src:#010x}, dst {dst:#010x}, {slen}/{dlen})")
+                src, dst, slen, dlen = e["src"], e["dst"], e["src_len"], e["dst_len"]
+                kind, why = classify_tuple(src, dst, slen, dlen)
+                if kind is None:
+                    findings.append(f"DMA submission {e['n']}: not one of the four legal transactions — {why} (src {src:#010x}, dst {dst:#010x}, {slen}/{dlen})")
+                elif e.get("kind") != kind:
+                    findings.append(f"DMA submission {e['n']}: logged as {e.get('kind')!r}, its registers are a {kind!r} transaction")
     return {"findings": findings, "slverr": slverr,
             "carrier_reads": sorted(f"{o:#06x}" for o in touched["carrier_reads"]), "carrier_writes": sorted(f"{o:#06x}" for o in touched["carrier_writes"]),
             "rtl_reads_untouched": sorted(f"{o:#06x}" for o in rd_rtl - touched["carrier_reads"]), "rtl_writes_untouched": sorted(f"{o:#06x}" for o in wr_rtl - touched["carrier_writes"]),

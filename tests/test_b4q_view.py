@@ -14,7 +14,7 @@ import unittest
 from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
-for p in (R / "host", R / "b4/host"):
+for p in (R / "host", R / "b4/host", R / "tests"):
     sys.path.insert(0, str(p))
 import b4q_schema as sc  # noqa: E402
 import b4q_view as vw  # noqa: E402
@@ -34,8 +34,8 @@ class Adapters(unittest.TestCase):
         cls.m = bm.site_mapping(); cls.addr = tuple(cls.m.addresses)
         cls.t5 = json.loads((A5 / "target_search.json").read_text()); cls.task5 = json.loads((A5 / "task.json").read_text())["public_task"]
         cls.src5 = cls.t5["provenance"]
-        if not SMOKE.is_dir():
-            subprocess.run([sys.executable, "-B", str(R / "host/b4q_e2e.py"), str(SMOKE.parent), "valid"], check=True, capture_output=True)
+        import b4q_fixture
+        b4q_fixture.ensure(SMOKE)
 
     def ctx(self, rep, stim=None, src=None):
         return {"representation": rep, "source": src or self.src5, "addresses": self.addr, "stimulus": stim if stim is not None else self.task5["stimulus"]}
@@ -82,6 +82,34 @@ class Adapters(unittest.TestCase):
         self.assertEqual(v["config_sha256_raw"]["value"]["encoding"], "list-canonical")
         with self.assertRaises(vw.ViewRefusal):
             vw.view(o, {"representation": "C-O", "instrument": {**o["instrument"], "image_sha256": "0" * 64}})
+
+    def test_raw_values_are_checked_by_type_before_any_conversion(self):
+        """R5: a float / boolean / out-of-range / string bit in the raw dictionary is refused by the raw schema AND by the adapter — never coerced"""
+        hyp = hy.load(); fab = fm.Fabric(self.m, hyp)
+        trace = fab.observe(fab.config_from_genome(0x18), [fm.init()])
+        src = {"hypothesis": trace["hypothesis"], "mapping": trace["mapping"], "fabric": trace["fabric"]}
+        a = self.addr[0]
+        for bad_value in (0.25, 1.0, True, 2, -1, "1", None):
+            bad = copy.deepcopy(trace); bad["config"][a] = bad_value; bad["config_sha256"] = vw.sha256_default(bad["config"])
+            self.assertTrue(sc.validate_named(bad, "ff_observation_model_raw_v1"), repr(bad_value))
+            with self.assertRaises(vw.ViewRefusal, msg=repr(bad_value)):
+                vw.view(bad, self.ctx("M-raw", src=src))
+        bad = copy.deepcopy(trace); del bad["config"][a]; bad["config_sha256"] = vw.sha256_default(bad["config"])
+        self.assertTrue(sc.validate_named(bad, "ff_observation_model_raw_v1"))
+        bad = copy.deepcopy(trace); bad["config"]["0x00400a00/52/17"] = 0; bad["config_sha256"] = vw.sha256_default(bad["config"])     # 22 keys
+        with self.assertRaises(vw.ViewRefusal):
+            vw.view(bad, self.ctx("M-raw", src=src))
+        bad = copy.deepcopy(trace); bad["steps"][0]["q_after"][2] = 1.0
+        with self.assertRaises(vw.ViewRefusal):
+            vw.view(bad, self.ctx("M-raw", src=src))
+        self.assertEqual(sc.validate_named(trace, "ff_observation_model_raw_v1"), [])
+        v = vw.view(trace, self.ctx("M-raw", src=src)); self.assertEqual(v["steps"]["value"][0]["q_after"], trace["steps"][0]["q_after"])   # legitimate model nulls stay
+        t = copy.deepcopy(self.t5); t["q_grid"][1][3] = 1.0
+        with self.assertRaises(vw.ViewRefusal):
+            vw.view(t, self.ctx("M-target"))
+        t = copy.deepcopy(self.t5); t["genome"] = float(t["genome"])
+        with self.assertRaises(vw.ViewRefusal):
+            vw.view(t, self.ctx("M-target"))
 
     def test_refusals_by_name(self):
         o = json.loads((SMOKE / "tx_002/o.json").read_text())

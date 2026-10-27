@@ -8,10 +8,10 @@
   * GENERATED: b4q_data.h / b4q_data.json and b4q_regmap.h equal a fresh generation; the write set covers the four frames
     that hold the 21 addresses; every base frame is ECC-consistent; the derived frames differ from the base in exactly the
     whitelisted bits and the ECC words.
-  * THE STALE MANIFEST (a finding of this unit, pinned as a fact, not repaired here): builds/b4/b4_carrier_manifest.json names
-    the pre-v0.4 bitstream digest and 22 column frames whose content differs from the committed bitstream; the four frames
-    holding the addresses and all 21 address values are equal. The base used here is the committed bitstream named by
-    builds/b4/b4_build.json.
+  * THE MANIFEST CORRECTION (before / after): the first delivery found builds/b4/b4_carrier_manifest.json naming the pre-v0.4
+    bitstream digest with 22 column frames differing from the committed bitstream (the four frames holding the addresses and all
+    21 values equal); the HOLD review allowed its narrow regeneration from the committed bitstream — both states are pinned, the
+    old file archived in the unit directory. The base used here is the committed bitstream named by builds/b4/b4_build.json.
 No skip: a missing compiler or a failed build is a failure."""
 from __future__ import annotations
 
@@ -158,20 +158,28 @@ class Generated(unittest.TestCase):
             for w, x in diff:
                 self.assertTrue(w == 50 or any(f == far and ww == w for f, ww, _ in wl), (hex(far), w))
 
-    def test_the_stale_manifest_is_a_recorded_fact(self):
+    def test_the_manifest_correction_is_a_recorded_before_and_after(self):
+        """The carrier manifest of record named the pre-v0.4 bitstream (the first delivery's finding 1); the HOLD review allowed a
+        narrow metadata regeneration from the committed bitstream: AFTER, the manifest's file digest is the build record's and every
+        column frame equals; BEFORE (the archived manifest) 22 of 36 column frames differed while the four frames holding the 21
+        addresses and all 21 values were equal — both states pinned here, the old file kept as evidence."""
         base = _STATE["base"]
         rec = json.loads((FW / "b4q_data.json").read_text())
-        self.assertFalse(base["manifest_file_digest_matches"])                       # the manifest names the pre-v0.4 file
-        self.assertEqual(rec["carrier_manifest_column_frames_differing"], base["manifest_column_frames_differing"])
-        self.assertEqual(len(base["manifest_column_frames_differing"]), 22)
-        for far in (0x00400a00, 0x00400a01, 0x00400a1e, 0x00400a1f):                # the frames that hold the addresses are equal
-            self.assertNotIn(f"{far:#010x}", base["manifest_column_frames_differing"])
+        self.assertTrue(base["manifest_file_digest_matches"]); self.assertEqual(base["manifest_column_frames_differing"], [])
+        self.assertTrue(rec["carrier_manifest_file_digest_matches"]); self.assertEqual(rec["carrier_manifest_column_frames_differing"], [])
         m = json.loads((R / fr.MANIFEST_REL).read_text())
-        self.assertEqual(json.loads((R / fr.BUILD_REL).read_text())["bitstream_sha256"], base["bitstream_sha256"])
+        self.assertEqual(m["bitstream_sha256"], json.loads((R / fr.BUILD_REL).read_text())["bitstream_sha256"]); self.assertEqual(m["bitstream_sha256"], base["bitstream_sha256"])
+        self.assertEqual(m["natural_build_mismatches"], [])
+        old = json.loads((R / "evidence/b4/unit_b4q_integration_2026_10_27/manifest_regeneration/b4_carrier_manifest_before_52f2ea56.json").read_text())
+        self.assertEqual(old["bitstream_sha256"], "52f2ea56fddd6268ce6a3b5adcf9aede9d1ab953dc8d1e75b653054524178745")
+        differing = sorted(k for k, v in old["target_column_frames_sha256"].items() if base["column_frames_sha256"].get(k) != v)
+        self.assertEqual(len(differing), 22)
+        for far in (0x00400a00, 0x00400a01, 0x00400a1e, 0x00400a1f):
+            self.assertNotIn(f"{far:#010x}", differing)
+        self.assertEqual({r["address"]: r["value"] for r in old["addresses"]}, {r["address"]: r["value"] for r in m["addresses"]})
         for row in m["addresses"]:
             far, w, b = row["address"].split("/")
             self.assertEqual((base["frames"][int(far, 16)][int(w)] >> int(b)) & 1, row["value"], row["address"])
-
 
 if __name__ == "__main__":
     unittest.main()

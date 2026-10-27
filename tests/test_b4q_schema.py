@@ -14,6 +14,7 @@ from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / "host"))
+sys.path.insert(0, str(R / "tests"))
 import b4carrier_records as rec  # noqa: E402
 import b4q_schema as sc  # noqa: E402
 
@@ -48,9 +49,8 @@ class Files(unittest.TestCase):
 class AgainstTheCodeValidators(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if not SMOKE.is_dir():
-            import subprocess
-            subprocess.run([sys.executable, "-B", str(R / "host/b4q_e2e.py"), str(SMOKE.parent), "valid"], check=True, capture_output=True)
+        import b4q_fixture
+        b4q_fixture.ensure(SMOKE)
         cls.recs = records_of(SMOKE)
         cls.so = json.loads((SMOKE / "session_open.json").read_text())["record"]
 

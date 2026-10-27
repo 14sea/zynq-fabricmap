@@ -14,6 +14,7 @@ from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / "host"))
+sys.path.insert(0, str(R / "tests"))
 import b4q_a7 as a7  # noqa: E402
 import b4carrier_regmap as rm  # noqa: E402
 
@@ -22,11 +23,8 @@ SMOKE = R / "build/b4q_e2e/valid"
 
 
 def setUpModule():
-    p = subprocess.run(["bash", str(FW / "build.sh")], capture_output=True, text=True)
-    if p.returncode != 0:
-        raise AssertionError(f"the executing side did not build:\n{p.stdout}{p.stderr}")
-    if not SMOKE.is_dir():
-        subprocess.run([sys.executable, "-B", str(R / "host/b4q_e2e.py"), str(SMOKE.parent), "valid"], check=True, capture_output=True)
+    import b4q_fixture
+    b4q_fixture.ensure(SMOKE)
 
 
 class Build(unittest.TestCase):
@@ -63,6 +61,22 @@ class A7(unittest.TestCase):
         self.assertEqual(rep["rtl_writes_untouched"], sorted(f"{o:#06x}" for o in rm.KEY_WINDOW))          # the RTL decodes one more write region: the key window, never touched
         self.assertEqual(set(rep["devc_writes"]), {"INT_STS", "DMA_SRC_ADDR", "DMA_DEST_ADDR", "DMA_SRC_LEN", "DMA_DEST_LEN"})
         self.assertEqual(set(rep["buffer_writes"]), {"CMD_BUF", "DST_BUF", "WR_BUF"})
+
+    def test_dma_tuples_are_classified_from_their_registers(self):
+        """R4: both endpoints, both lengths, the HOLD tag and the alignment; the logged kind is never authority"""
+        base = {"pcap": "submit", "n": 0, "kind": "env", "src": a7.bk.WR_BUF | 1, "dst": a7.bk.PCAP_ENDPOINT, "src_len": a7.fr.STREAM_WORDS, "dst_len": 0}
+        self.assertEqual(a7.check([], [base])["findings"], [])
+        self.assertEqual(a7.check([], [{**base, "src": a7.bk.WR_BUF + 4 * a7.fr.STREAM_WORDS + 1}])["findings"], [])        # the second envelope's slot
+        for name, change in (("alien source", {"src": 0xDEAD0001}), ("no HOLD tag", {"src": a7.bk.WR_BUF}), ("unaligned", {"src": a7.bk.WR_BUF | 3}),
+                             ("a third envelope slot", {"src": a7.bk.WR_BUF + 2 * 4 * a7.fr.STREAM_WORDS + 1}), ("wrong length", {"src_len": 533}),
+                             ("a destination length on a write", {"dst_len": 4}), ("mislabelled command", {"src": a7.bk.CMD_BUF | 1, "src_len": a7.fr.READBACK_CMD_WORDS})):
+            self.assertTrue(a7.check([], [{**base, **change}])["findings"], name)
+        frame = {"pcap": "submit", "n": 1, "kind": "frame", "src": a7.bk.PCAP_ENDPOINT, "dst": a7.bk.DST_BUF | 1, "src_len": 0, "dst_len": a7.fr.READBACK_WORDS}
+        self.assertEqual(a7.check([], [frame])["findings"], [])
+        for name, change in (("no HOLD tag on the read", {"dst": a7.bk.DST_BUF}), ("another destination", {"dst": a7.bk.CMD_BUF | 1}), ("short read", {"dst_len": 101}), ("a source length on a read", {"src_len": 1})):
+            self.assertTrue(a7.check([], [{**frame, **change}])["findings"], name)
+        pcap = [json.loads(l) for l in (SMOKE / "pcap_log.jsonl").read_text().splitlines() if l.strip()]
+        self.assertEqual(a7.check([], pcap)["findings"], [])                                                                 # the executing side's actual submissions all legal
 
     def test_a_tampered_access_log_is_found(self):
         acc = [json.loads(l) for l in (SMOKE / "accesses.jsonl").read_text().splitlines() if l.strip()]

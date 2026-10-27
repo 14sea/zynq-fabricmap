@@ -1,0 +1,30 @@
+B4Q mutant battery — 2026-10-27T19:39:52Z HEAD b4e540a
+BASELINE valid: green
+BASELINE wrong_key: green
+BASELINE tamper: green
+BASELINE a5: green
+C1 KILLED — a step's sample read from the wrong slot: O: the schema file and the code validator disagree (0 vs 1 findings); O: O: a complete observation applies every declared step (2 of 8 acquired); no transaction
+C2 KILLED — P9 (the restore event) skipped before CLOSE: no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped); no transaction close: no transaction close: the acquisition nev
+C3 KILLED — the cleanup skipped: no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped); no transaction close: no transaction close: the acquisition nev
+C4 KILLED — the A5 context flag on every ARM: no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped); no transaction close: no transaction close: the acquisition nev
+C5 KILLED — the tag words staged rotated: no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped); no transaction close: no transaction close: the acquisition nev
+C6 KILLED — the executing side's fitness off by one: F: the executing side's fitness 29 is not the host's recomputation 28 over the full physical grid; F: the executing side's fitness 21 is not the host's recomput
+C7 KILLED — the frames derived for another genome than signed: link: the executing side's commit digest is not the host's view; no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it
+C8 KILLED — the pre-event readback skipped, its digest fabricated from the commit: no transaction close: a closed X needs the cleanup sample, the carrier's BASE_STATE read and the base readback; no transaction close: a closed X needs the clean
+C9 SURVIVED — the link-2 comparison removed (with the words staged shifted: see C10): clean
+C10 KILLED — one staged frame word corrupted in DDR: no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet; no transaction close: no transaction close
+C11 SURVIVED — the idle check after CLOSE removed (with C2 the X would still be faulted; alone it must be silent: an equivalent on the valid path, see the log): clean
+C12 KILLED — a write into the key window: A7: write of 0x2160: the KEY window (the signer principal's, never the application's); A7: 4 access(es) of the carrier window answered SLVERR; write of 0x2160: 
+C13 SURVIVED — an ARM refusal ignored: as expected
+P1 KILLED — the stored O's seq altered after sealing: O: the stored record is not the one rebuilt from the trace and the links; X: the stored close is not the one rebuilt from the trace; O: the stored record is not
+P2 SURVIVED — the session no longer holds the executing side's fitness to the host's: clean
+P3 KILLED — the verifier no longer compares the stored O to the rebuilt one: the tamper was NOT found
+P4 KILLED — the verifier skips A7: A7 findings []
+P5 SURVIVED — the realisability rule of the validator removed: refused
+P6 KILLED — the VARIANT binding removed: another VARIANT was accepted as the v2 carrier
+P7 SURVIVED — the key-window finding of A7 removed: found
+P8 KILLED — an invalid O's phase always P5: Ran 18 tests in 0.053s FAILED
+C9+C10 KILLED — the link-2 comparison removed AND a staged word corrupted: the corrupted candidate is written: no transaction close: the transaction is not closed: no completed CLOSE / CLOSE_INJECTION and no fault after the observation; no transaction close: no transacti
+P2+C6 KILLED — the session no longer holds the fitness AND the executing side's is off by one: the verifier must still find it and the two must disagree: F: the executing side's fitness 29 is not the host's recomputation 28 over the full physical grid; F: the executing side's fitness 21 is not the host's recomput
+TOTAL killed 17 survived 6 edit-miss 0 of 23
+SURVIVORS acknowledged (each an equivalent or a redundancy on every available probe, named with what masks it): C9 (the link-2 comparison alone: on a correct executing side the re-read always equals the commit — its removal is observable only beside a corruption, C9+C10, killed), P2 (the session's fitness hold alone: the verifier recomputes it independently and the executing side's is correct — observable only beside C6, P2+C6, killed), P5 (the applied-vector realisability rule: the declared-step equality check catches a non-uniform applied vector first, since the declared stimulus is uniform by task-v0.3), P7 (A7's key-window line: the key window is also outside the application's write allowlist, which the next line reports), C11 (the idle check after CLOSE: the valid path's CLOSE always leaves idle, so its removal is equivalent on every available probe — the RTL's idle semantics are the carrier bench's finding, scenario open_close_refused), C13 (an ARM refusal ignored by the executing side: the record layer judges the TRACE, not the executing side's claim, so the O is still invalid at P1 with arm_auth — the mutant is silent by the record layer's authority, which is the design)

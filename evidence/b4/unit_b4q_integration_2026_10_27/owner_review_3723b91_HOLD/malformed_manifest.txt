@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_7w3a_pwh/host/b4q_verify.py", line 246, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/tmp/owner_b4q_7w3a_pwh/host/b4q_verify.py", line 235, in main
+    reps = [verify(Path(a)) for a in argv]
+            ^^^^^^^^^^^^^^^
+  File "/tmp/owner_b4q_7w3a_pwh/host/b4q_verify.py", line 65, in verify
+    if manifest.get("write_set") != data_rec:
+       ^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'get'

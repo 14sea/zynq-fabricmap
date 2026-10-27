@@ -90,21 +90,22 @@ def scenario_a5(s: ss.Session, cprime=(1, 1, 0, 0x00)) -> dict:
     j2 = s.transaction("inject", G_CESR, stim([cprime]))
     j3 = s.transaction("a5", G_CESR, stim(FIX1))
     after = s.transaction("normal", G_BASE, stim(FIX0), task_for(7, "after-a5"))
-    v = ql.a5_verdict(j1["o"], j2["o"], j3["o"], j1["x"], j3["x"]) if (j1["o"] and j2["o"] and j3["o"]) else {"verdict": "not_demonstrated", "why": "a record is absent"}
+    v = ql.a5_verdict(j1["o"], j2["o"], j3["o"], j1["x"], j3["x"], j2["x"])
+    s.qual_plan["a5"].append({"J1": j1["seq"], "J2": j2["seq"], "J3": j3["seq"], "conclusion_file": "a5_verdict.json"})
     (s.out / "a5_verdict.json").write_text(json.dumps(v, indent=1) + "\n")
     return {"a5": v["verdict"], "a5_why": v.get("why")}
 
 
 def scenario_a8_cross(s: ss.Session) -> dict:
     s.open(); s.transaction("root", 0, stim([]))
-    corners, recs = {}, {}
+    corners, recs, closes = {}, {}, {}
     for c in ("00", "01", "10", "11"):
         g = G_CESR | (int(c[0]) << BIT_INIT_AFF) | (int(c[1]) << BIT_SRVAL_AFF)
         e = s.transaction("normal", g, stim(DEMO))
-        recs[c] = e; corners[c] = e["o"]
-    out = {}
-    if all(corners[c] and corners[c]["status"] == "complete" for c in corners):
-        out = {"AFF": ql.a8_classify(corners, 0, DEMO_PARTS), "BFF": ql.a8_classify(corners, 2, DEMO_PARTS)}   # the main element the cross is on, and a bystander
+        recs[c] = e; corners[c] = e["o"]; closes[c] = e["x"]
+    out = {"AFF": ql.a8_classify(corners, 0, DEMO_PARTS, closes=closes), "BFF": ql.a8_classify(corners, 2, DEMO_PARTS, closes=closes)}   # the main element the cross is on, and a bystander
+    s.qual_plan["a8"].append({"background_hex": f"{G_CESR:06x}", "bits": {"ff_init": BIT_INIT_AFF, "ff_srval": BIT_SRVAL_AFF}, "corners": {c: recs[c]["seq"] for c in corners},
+                              "parts": DEMO_PARTS, "elements": {"AFF": 0, "BFF": 2}, "conclusion_file": "a8_cross.json"})
     (s.out / "a8_cross.json").write_text(json.dumps(out, indent=1) + "\n")
     return {"a8_AFF": out.get("AFF", {}).get("verdict"), "a8_BFF": out.get("BFF", {}).get("verdict")}
 
@@ -113,9 +114,15 @@ def scenario_a2(s: ss.Session) -> dict:
     s.open(); s.transaction("root", 0, stim([]))
     rows = {}
     for sem, g0, g1 in (("ce_mode", 0x000000, 0x000010), ("storage_kind", 0x000000, 0x000400)):
-        a = s.transaction("normal", g0, stim(A2_STIMULI[sem])); b = s.transaction("normal", g1, stim(A2_STIMULI[sem]))
-        rows[sem] = ql.a2_row(a["o"] if not a["findings"] else None, b["o"] if not b["findings"] else None)
+        a = s.transaction("normal", g0, stim(A2_STIMULI[sem]))
+        if s.halted:                                                       # the latch endpoint's refused record halts the session (R1): the row stays not assessable
+            rows[sem] = {"verdict": "not_assessable", "why": "the session halted before the second endpoint: " + s.halted, "g0_findings": a["findings"], "g1_findings": None}
+            s.qual_plan["a2"].append({"semantic": sem, "g0_hex": f"{g0:06x}", "g1_hex": f"{g1:06x}", "g0": a["seq"], "g1": None, "conclusion_file": "a2_rows.json"})
+            break
+        b = s.transaction("normal", g1, stim(A2_STIMULI[sem]))
+        rows[sem] = ql.a2_row(a["o"] if not a["findings"] else None, b["o"] if not b["findings"] else None, a["x"], b["x"])
         rows[sem]["g0_findings"], rows[sem]["g1_findings"] = a["findings"], b["findings"]
+        s.qual_plan["a2"].append({"semantic": sem, "g0_hex": f"{g0:06x}", "g1_hex": f"{g1:06x}", "g0": a["seq"], "g1": b["seq"], "conclusion_file": "a2_rows.json"})
     (s.out / "a2_rows.json").write_text(json.dumps(rows, indent=1) + "\n")
     return {"a2": {k: v["verdict"] for k, v in rows.items()}}
 
@@ -124,8 +131,13 @@ def scenario_not_realisable(s: ss.Session) -> dict:
     s.open(); s.transaction("root", 0, stim([]))
     bad = stim(FIX0[:2]) + [{"kind": "set", "clock": 0, "ce": 0x3C, "sr": 0, "d": 0xA5}] + stim(FIX0[3:])[1:]
     e = s.transaction("normal", G_BASE, bad, task_for(7, "bad"))
-    after = s.transaction("normal", G_BASE, stim(FIX0))            # under recovery: the ARM is refused silently; nothing follows
-    return {"invalid_phase": e["o"]["fault"]["phase_reached"] if e["o"] else None, "invalid_code": e["o"]["fault"]["code"] if e["o"] else None, "after_status": after["firmware"]["status"], "after_reason": after["firmware"]["reason"]}
+    signed_before = len(s.notary.log)
+    try:
+        s.transaction("normal", G_BASE, stim(FIX0)); refused = None       # must not happen: the session halted on the invalid record
+    except ss.SessionRefusal as ex:
+        refused = str(ex)
+    return {"invalid_phase": e["o"]["fault"]["phase_reached"] if e["o"] else None, "invalid_code": e["o"]["fault"]["code"] if e["o"] else None,
+            "next_refused": refused, "signed_after": len(s.notary.log) - signed_before, "halted": s.halted}
 
 
 def scenario_wrong_key(s: ss.Session) -> dict:
@@ -148,7 +160,11 @@ def scenario_dma_never(s: ss.Session) -> dict:
 def scenario_latch(s: ss.Session) -> dict:
     s.open(); s.transaction("root", 0, stim([]))
     e = s.transaction("normal", G_LATCH, stim(FIX0), task_for(7, "latch"))
-    return {"status": e["firmware"]["status"], "o_status": e["o"]["status"] if e["o"] else None, "findings": e["findings"][:3], "unmodelled_reads": e["emulation"]["unmodelled_cells"]}
+    try:
+        s.transaction("normal", G_BASE, stim(FIX0)); refused = None
+    except ss.SessionRefusal as ex:
+        refused = str(ex)
+    return {"status": e["firmware"]["status"], "o_status": e["o"]["status"] if e["o"] else None, "findings": e["findings"][:3], "unmodelled_reads": e["emulation"]["unmodelled_cells"], "next_refused": refused}
 
 
 def scenario_interrupt(s: ss.Session) -> dict:
@@ -157,7 +173,47 @@ def scenario_interrupt(s: ss.Session) -> dict:
     return {"status": e["firmware"]["status"], "interrupted": e["interrupted"], "o": e["o"] is not None, "findings": e["findings"]}
 
 
+def _step_in_slverr(s: ss.Session) -> dict:
+    """STEP_IN answered SLVERR without a change: no STEP is launched on the stale word"""
+    s.open(); s.transaction("root", 0, stim([]))
+    s.backend.refuse_writes.add(0x2038)
+    e = s.transaction("normal", G_BASE, stim(FIX0[:2]))
+    steps = [ev for ev in s.backend.trace[e["trace_range"][0]:] if ev.get("op") == "wr" and ev.get("addr") == 0x2000 and ev.get("data") == 0x800]
+    return {"status": e["firmware"]["status"], "phase": e["firmware"]["phase"], "reason": e["firmware"]["reason"], "step_launches": len(steps), "o": e["o"] is not None, "o_status": e["o"]["status"] if e["o"] else None, "halted": s.halted}
+
+
+def scenario_startup_corrupt(s: ss.Session) -> dict:
+    """the startup readback corrupted: session_open refused; no root is signed (nothing further at all)"""
+    s.corrupt_frame_reads.add(1)
+    so = s.open()
+    try:
+        s.transaction("root", 0, stim([])); refused = None
+    except ss.SessionRefusal as ex:
+        refused = str(ex)
+    return {"open_status": so["record"]["status"], "open_findings": so["findings"], "root_refused": refused, "signatures": len(s.notary.log), "halted": s.halted}
+
+
+def _corruption(s: ss.Session, ordinal: int, want_phase: str) -> dict:
+    s.corrupt_frame_reads.add(ordinal)
+    s.open(); s.transaction("root", 0, stim([]))
+    e = s.transaction("normal", G_CESR, stim(FIX1))
+    signed_before = len(s.notary.log)
+    try:
+        s.transaction("normal", G_BASE, stim(FIX0)); refused = None
+    except ss.SessionRefusal as ex:
+        refused = str(ex)
+    ctrl_after = [ev for ev in s.backend.trace[e["trace_range"][0]:] if ev.get("op") == "wr" and ev.get("addr") == 0x2000]
+    return {"status": e["firmware"]["status"], "phase": e["firmware"]["phase"], "reason": e["firmware"]["reason"], "o": e["o"] is not None,
+            "o_status": e["o"]["status"] if e["o"] else None, "x": e["x"]["status"] if e["x"] else None, "ctrl_writes_in_tx": [hex(c["data"]) for c in ctrl_after],
+            "next_refused": refused, "signed_after": len(s.notary.log) - signed_before, "want_phase": want_phase}
+
+
 SCENARIOS = {
+    "startup_corrupt": (scenario_startup_corrupt, {}),
+    "pre_event_corrupt": (lambda s: _corruption(s, 33, "P2"), {}),       # frame reads: 8 at the open, 24 in the root; 33 = the candidate's pre-event readback
+    "post_event_corrupt": (lambda s: _corruption(s, 41, "P4"), {}),      # 41 = the candidate's post-event readback
+    "base_readback_corrupt": (lambda s: _corruption(s, 49, "P8"), {}),   # 49 = the candidate's restored-base readback
+    "step_in_slverr": (lambda s: _step_in_slverr(s), {}),
     "valid": (scenario_valid, {}),
     "a5": (scenario_a5, {}),
     "a5_persist": (scenario_a5, {"gsr_init_effect": False}),
