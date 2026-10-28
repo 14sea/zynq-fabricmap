@@ -1,8 +1,9 @@
 {
  "label": "B4Q-runner-valid",
- "wall_s": 6.007,
+ "wall_s": 6.085,
  "stop": null,
  "opened": true,
+ "phase": "ended",
  "records": [
   {
    "seq": 1,
@@ -94,13 +95,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 213,
-  "hb": 10,
+  "lines": 212,
+  "hb": 9,
   "nacks": 0,
   "sign_requests": 4,
   "sign_replies": 4,
   "transactions": 4,
-  "kicks": 213,
+  "kicks": 212,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -110,10 +111,10 @@
   "log": 123344,
   "log_overflow": 0,
   "log_records": 7709,
-  "log_sha256": "80d884511d0374184fc6420dc90b9b09f0c132d8a6aa1ec1efc787d4d6694b54"
+  "log_sha256": "519b3f46dae81985b3ba035f4dd5d44429ee45c46766b0a220890e47ff08d882"
  },
  "stats": {
-  "hb": 10,
+  "hb": 9,
   "nack": 0,
   "signreq": 4,
   "signreply": 4,
@@ -126,17 +127,60 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 395,
+ "console_lines": 394,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true
+  },
+  "board": {
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": true
+  },
+  "carrier": {
+   "variant_addr": "0x43c02034",
+   "variant": "42340001",
+   "expected": "42340001",
+   "equal": true
+  },
+  "fclk0": {
+   "addr": "0xf8000170",
+   "ctrl": "00200a00",
+   "expected": null,
+   "held": false,
+   "equal": null
+  },
+  "ok": true
+ },
  "load_witness": {
   "host_crc32": "f5d2dd33",
   "uboot_crc32": "f5d2dd33",
   "equal": true,
   "bytes": 98324,
+  "range": [
+   "02000000",
+   "02018013"
+  ],
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
   "ymodem": {
    "blocks": 97,
    "retries": 0,
    "naks": 0,
-   "seconds": 0.191
+   "junk": 33,
+   "seconds": 0.237
   }
  },
  "page_witness": {
@@ -151,7 +195,7 @@
  "transport_stops": [],
  "ident": {
   "protocol": "b4q-v2",
-  "token": "b7e50ee4b8d8910f80c4460cc9409600",
+  "token": "db8a268da909593f3f30d55b2531c2f1",
   "uboot_epoch": 1700000000,
   "app_image_sha_lo32": 1301847784,
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -170,7 +214,7 @@
    "timing": 1141116936,
    "witness": 131584,
    "status_word": 6400,
-   "heartbeat": 52,
+   "heartbeat": 56,
    "nonce": "9e3779b97f4a7c15",
    "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
   }
@@ -192,6 +236,9 @@
   "bad_chunks": 0
  },
  "tail_unobtainable": null,
+ "phase_at_stop": null,
+ "go_in_tx": true,
+ "loady_in_tx": true,
  "name": "valid",
  "surrogate_args": [],
  "verify_rc": 0,

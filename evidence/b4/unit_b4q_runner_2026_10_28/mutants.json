@@ -7,14 +7,14 @@
    "verdict": "KILLED",
    "note": "source: the PS log's window events (482) are not the emulation's trace (562) after its provisioning prefix",
    "probe": "the emulated valid scenario retains the PS log beside the fake's trace: the verifier holds the two witnesses equal",
-   "seconds": 4.9
+   "seconds": 4.7
   },
   {
    "id": "R2",
    "file": "firmware/b4q/target/b4q_ring.c",
    "what": "the digest over all but the last record (the board's digest is not of the bytes it exports)",
    "verdict": "KILLED",
-   "note": "the scenario aborted on the guard: \u2026sion is halted: the pulled evidence log does not hash to the board's digest (0d9fd4709a16 vs c581bc3ac33b) \u2014 nothing further is signed without a ruling | ",
+   "note": "the scenario aborted on the guard: \u2026sion is halted: the pulled evidence log does not hash to the board's digest (e26cd03771dc vs 11e5c8c47329) \u2014 nothing further is signed without a ruling | ",
    "probe": "the PS-source valid scenario halts on 'does not hash to the board's digest'",
    "seconds": 0.9
   },
@@ -25,16 +25,16 @@
    "verdict": "KILLED",
    "note": "the TX after the overflow answered with status 0 (closed)",
    "probe": "after the log overflows the application NACKs the next TX 'the evidence log is full' (the emulated-source host does not pull, so it sends one)",
-   "seconds": 2.8
+   "seconds": 2.7
   },
   {
    "id": "A1",
    "file": "firmware/b4q/target/b4q_app.c",
    "what": "RING under-reports the log by one record (its digest still covers the whole: the host's digest check fires first)",
    "verdict": "KILLED",
-   "note": "halted: the pulled evidence log does not hash to the board's digest (ae7fe49ef134 vs b102d07da171)",
+   "note": "halted: the pulled evidence log does not hash to the board's digest (c35e0c7ba698 vs 79c95a847453)",
    "probe": "the PS-source opening halts on 'does not hash to the board's digest'",
-   "seconds": 0.7
+   "seconds": 0.5
   },
   {
    "id": "A2",
@@ -43,7 +43,7 @@
    "verdict": "KILLED",
    "note": "verify: console: the words of request 13 were never staged into PAYLOAD / TAG after the reply",
    "probe": "the PS-source valid archive's verification finds 'never staged'",
-   "seconds": 5.2
+   "seconds": 5.0
   },
   {
    "id": "A3",
@@ -52,14 +52,14 @@
    "verdict": "KILLED",
    "note": "halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks",
    "probe": "the PS-source opening halts on 'too many bad chunks'",
-   "seconds": 0.5
+   "seconds": 0.7
   },
   {
    "id": "A3b",
    "file": "firmware/b4q/target/b4q_app.c",
    "what": "PULL returns the first bytes whatever the offset (the chunk lines keep their offsets: the digest is the guard)",
    "verdict": "KILLED",
-   "note": "halted: the pulled evidence log does not hash to the board's digest (d9183e057b51 vs 1da51a1140dc)",
+   "note": "halted: the pulled evidence log does not hash to the board's digest (6c0762a7b616 vs d980cc65002e)",
    "probe": "the PS-source opening halts on 'does not hash to the board's digest'",
    "seconds": 0.5
   },
@@ -88,7 +88,7 @@
    "verdict": "KILLED",
    "note": "the TX after the overflow answered with status 0 (closed)",
    "probe": "after the log overflows the application NACKs the next TX 'the evidence log is full' (the emulated-source host does not pull, so it sends one)",
-   "seconds": 2.3
+   "seconds": 2.2
   },
   {
    "id": "E1",
@@ -140,18 +140,18 @@
    "file": "host/b4q_verify.py",
    "what": "a raw log that is not the declared bytes accepted",
    "verdict": "KILLED",
-   "note": "not refused by name: refused=None findings=[\"source: the raw log (123344 bytes, 9ec6696eaf14) is not the log the board's last RING reported (123344 bytes, 3f77a0692c43)\", \"source: the raw log is not the log the END reports (its digest differs at the END's position)\"]",
+   "note": "not refused by name: refused=None findings=[\"source: the raw log (123344 bytes, 9ba6dacccb8b) is not the log the board's last RING reported (123344 bytes, d8e9acd7eaea)\", \"source: the raw log is not the log the END reports (its digest differs at the END's position)\"]",
    "probe": "the mutated valid archive is refused: 'not the bytes the manifest's source declares'",
    "seconds": 0.5
   },
   {
    "id": "V3",
-   "file": "host/b4q_verify.py",
-   "what": "a board archive verified as a host-only one",
+   "file": "host/b4q_verify_runner.py",
+   "what": "a device-format archive whose stream carries the surrogate's banner no longer found (a PTY fixture passes as the device format)",
    "verdict": "KILLED",
-   "note": "not refused by name: refused=None findings=[]",
-   "probe": "the mutated valid archive is refused: 'uart-board'",
-   "seconds": 0.5
+   "note": "not found: agree=True findings=[]",
+   "probe": "a PTY archive rewritten into the device format but keeping the surrogate's banner is found by the provenance check",
+   "seconds": 6.8
   },
   {
    "id": "V4",
@@ -185,7 +185,7 @@
    "file": "host/b4q_verify.py",
    "what": "a command after the END no longer owed its NACK (the epilogue's rule dropped)",
    "verdict": "KILLED",
-   "note": "not found: refused=None agree=False findings=[\"source: 1 console line(s) whose trace / PCAP position is not the board's log offset mapped onto the derivation\", 'console: host line 393: sequence 179 after 4000: not fresh']",
+   "note": "not found: refused=None agree=False findings=[\"source: 1 console line(s) whose trace / PCAP position is not the board's log offset mapped onto the derivation\", 'console: host line 392: sequence 179 after 4000: not fresh']",
    "probe": "the mutated valid archive is found: 'never answered by a NACK'",
    "seconds": 0.5
   },
@@ -205,7 +205,7 @@
    "verdict": "KILLED",
    "note": "stop '' (expected 'load witness:'); opened=True",
    "probe": "the runner scenario wrong_crc: stop 'load witness:' / opened False",
-   "seconds": 7.5
+   "seconds": 4.3
   },
   {
    "id": "N2",
@@ -214,16 +214,16 @@
    "verdict": "KILLED",
    "note": "stop 'no open session: nothing is signed before the session-opening record is open (co' (expected 'page witness:'); opened=False",
    "probe": "the runner scenario page_witness_fails: stop 'page witness:' / opened False",
-   "seconds": 4.8
+   "seconds": 1.9
   },
   {
    "id": "N3",
    "file": "host/b4q_runner.py",
    "what": "a boot banner mid-session no longer named as the cut",
    "verdict": "KILLED",
-   "note": "expectations: ['verify rc 1 (expected 0): [\"source: the raw log (20640 bytes, 2ba18a117799) is not the log the board\\'s last RING reported (35104 bytes, e8e33237e970)\", \"source: the manifest\\'s source declares 1290 records / digest_equal=False; the raw log holds 1290 records\", \\'console: no END line and the session was not interrupted\\']', \"transport stop 'a boot banner on the console mid-session' not among ['the session is halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks \u2014 nothing further is signed without a ruling']\"]",
+   "note": "expectations: ['verify rc 1 (expected 0): [\"source: the raw log (21408 bytes, 04948914064b) is not the log the board\\'s last RING reported (35104 bytes, d0db5d11f116)\", \"source: the manifest\\'s source declares 1338 records / digest_equal=False; the raw log holds 1338 records\", \\'console: no END line and the session was not interrupted\\']', \"transport stop 'a boot banner on the console mid-session' not among ['the session is halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks \u2014 nothing further is signed without a ruling']\"]",
    "probe": "the runner scenario reset_mid_session: stop None / opened None",
-   "seconds": 6.5
+   "seconds": 3.4
   },
   {
    "id": "N4",
@@ -235,13 +235,139 @@
    "seconds": 90.1
   },
   {
+   "id": "V9",
+   "file": "host/b4q_verify_runner.py",
+   "what": "the transferred bytes no longer held to the executing-side image",
+   "verdict": "KILLED",
+   "note": "not found: agree=False refused=None findings=[\"runner: load: the transferred bytes are not the context's pinned image\", \"runner: admission.image: the recorded pin / verdict are not the context's\"]",
+   "probe": "the mutated runner valid archive is found: 'transferred bytes are not the archive's executing-side image'",
+   "seconds": 0.5
+  },
+  {
+   "id": "V10",
+   "file": "host/b4q_verify_runner.py",
+   "what": "an invented pre-go stop no longer refuted by the `go` in the streams",
+   "verdict": "KILLED",
+   "note": "not found: agree=False refused=None findings=[\"runner: phase: uboot.json says 'pre-go' but the sent stream holds `go`\", 'runner: no session: 215 board console line(s) retained']",
+   "probe": "the mutated runner valid archive is found: 'streams show `go`'",
+   "seconds": 0.1
+  },
+  {
+   "id": "V11",
+   "file": "host/b4q_verify_runner.py",
+   "what": "the device's crc32 no longer held to exactly the loaded range",
+   "verdict": "KILLED",
+   "note": "not found: agree=True refused=None findings=[]",
+   "probe": "the mutated runner valid archive is found: 'not the loaded range'",
+   "seconds": 0.4
+  },
+  {
+   "id": "V12",
+   "file": "host/b4q_verify_runner.py",
+   "what": "a retained console line no longer held to the received stream",
+   "verdict": "KILLED",
+   "note": "not found: agree=False refused=None findings=['console: board line at line 109: bad crc', 'console: END.hb is 10, the lines say 9']",
+   "probe": "the mutated runner valid archive is found: 'console linkage'",
+   "seconds": 0.4
+  },
+  {
+   "id": "P1",
+   "file": "host/b4q_runner.py",
+   "what": "a reader consumes the whole buffer past its boundary (the next phase's first bytes lost)",
+   "verdict": "KILLED",
+   "note": "the application's first line lost: buf=b''",
+   "probe": "the runner against a scripted U-Boot: go_tail",
+   "seconds": 0.1
+  },
+  {
+   "id": "P2",
+   "file": "host/b4q_ymodem.py",
+   "what": "the ymodem keeps bytes beyond the transfer in a private queue (U-Boot's tail lost to the prompt reader)",
+   "verdict": "KILLED",
+   "note": "the tail was lost: loady: no prompt after the transfer",
+   "probe": "the ymodem's last ACK coalesced with U-Boot's tail and the prompt: the prompt reader still sees `## Total Size`",
+   "seconds": 10.1
+  },
+  {
+   "id": "Y1",
+   "file": "host/b4q_ymodem.py",
+   "what": "the inner ACK loop's own deadline check removed \u2014 EXPECTED TO SURVIVE alone: the per-read clock bound (_read_byte) and the junk limit are sibling guards that still end the loop; Y1+Y2 is the kill",
+   "verdict": "SURVIVED",
+   "note": "ended at 3.34 s (the deadline)",
+   "probe": "a receiver flooding junk (slowly): the transfer ends at its deadline (2 s), not after the retries' worth of junk (a hang observed in a subprocess)",
+   "seconds": 3.5
+  },
+  {
+   "id": "Y2",
+   "file": "host/b4q_ymodem.py",
+   "what": "the junk limit per block removed \u2014 EXPECTED TO SURVIVE alone: the deadline (the clock on every read) still ends the transfer; Y1+Y2 is the kill",
+   "verdict": "SURVIVED",
+   "note": "ended at 2.0 s (the deadline)",
+   "probe": "a receiver flooding junk (slowly): the transfer ends at its deadline (2 s), not after the retries' worth of junk (a hang observed in a subprocess)",
+   "seconds": 2.2
+  },
+  {
+   "id": "N5",
+   "file": "host/b4q_runner.py",
+   "what": "md.l no longer held to the asked address",
+   "verdict": "KILLED",
+   "note": "a line for another address accepted",
+   "probe": "the runner against a scripted U-Boot: md_addr",
+   "seconds": 0.1
+  },
+  {
+   "id": "N6",
+   "file": "host/b4q_runner.py",
+   "what": "crc32 no longer held to the asked range",
+   "verdict": "KILLED",
+   "note": "a crc for another range accepted",
+   "probe": "the runner against a scripted U-Boot: crc_range",
+   "seconds": 0.0
+  },
+  {
+   "id": "N7",
+   "file": "host/b4q_runner.py",
+   "what": "a file that is not the pinned image loaded anyway",
+   "verdict": "KILLED",
+   "note": "proceeded: stop={'kind': 'TransportStop', 'why': 'loady: U-Boot did not announce the ymodem download'} loady_sent=True",
+   "probe": "the runner against a scripted U-Boot: pin",
+   "seconds": 5.3
+  },
+  {
+   "id": "N8",
+   "file": "host/b4q_runner.py",
+   "what": "a board whose DRAM cannot hold the map admitted",
+   "verdict": "KILLED",
+   "note": "proceeded: stop={'kind': 'TransportStop', 'why': 'loady: U-Boot did not announce the ymodem download'} loady_sent=True",
+   "probe": "the runner against a scripted U-Boot: dram",
+   "seconds": 5.3
+  },
+  {
+   "id": "N9",
+   "file": "host/b4q_runner.py",
+   "what": "another carrier's variant word admitted",
+   "verdict": "KILLED",
+   "note": "proceeded: stop={'kind': 'TransportStop', 'why': 'loady: U-Boot did not announce the ymodem download'} loady_sent=True",
+   "probe": "the runner against a scripted U-Boot: variant",
+   "seconds": 5.3
+  },
+  {
+   "id": "N10",
+   "file": "host/b4q_runner.py",
+   "what": "the execution phase persisted only after `go` returns (a failed command leaves a pre-go record with `go` in the stream)",
+   "verdict": "KILLED",
+   "note": "the phase on disk says 'admitted' although `go` is in the sent stream",
+   "probe": "the runner against a scripted U-Boot: phase_before_go",
+   "seconds": 5.3
+  },
+  {
    "id": "S2",
    "file": "host/b4q_console_session.py",
    "what": "the host no longer halts on the board's overflow flag",
    "verdict": "KILLED",
    "note": "expectations: [\"verify rc 1 (expected 0): ['source: the board reports its log overflowed and the session did not halt on it']\"]",
    "probe": "the runner scenario log_overflow: stop None / opened None",
-   "seconds": 3.4
+   "seconds": 3.3
   },
   {
    "id": "A3+S1",
@@ -252,13 +378,24 @@
     "A3",
     "S1"
    ]
+  },
+  {
+   "id": "Y1+Y2+Y3",
+   "verdict": "KILLED",
+   "what": "the inner deadline check, the junk limit AND the per-read clock bound removed: a junk-flooding receiver holds the transfer forever (observed as a hang in a subprocess)",
+   "note": "TIMEOUT after 12 s: the transfer did not end at its 2 s deadline (the bound removed)",
+   "combined": [
+    "Y1",
+    "Y2",
+    "Y3"
+   ]
   }
  ],
  "counts": {
-  "KILLED": 28,
-  "SURVIVED": 0,
+  "KILLED": 41,
+  "SURVIVED": 2,
   "EDIT-MISS": 0,
   "PROBE-ERROR": 0
  },
- "at": "2026-10-28T11:41:36Z"
+ "at": "2026-10-28T16:07:41Z"
 }

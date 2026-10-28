@@ -129,6 +129,119 @@
  },
  "agree": true,
  "refused": null,
+ "runner": {
+  "findings": [],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "ended",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "prompt_seen": true
+   },
+   "variant": "42340001",
+   "fclk0_ctrl": "00200a00",
+   "image": {
+    "transferred_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "bytes": 98324,
+    "host_crc32": "f5d2dd33",
+    "ymodem": {
+     "name": "b4q_app_v2.bin",
+     "size": 98324,
+     "blocks": 97,
+     "end": 99995
+    },
+    "total": 98324,
+    "device_crc": {
+     "range": [
+      "02000000",
+      "02018013"
+     ],
+     "value": "f5d2dd33"
+    },
+    "equal": true
+   },
+   "page": {
+    "written": [
+     "42345149",
+     "00000001",
+     "51bdaec6",
+     "c65d4205",
+     "19d5d9b8",
+     "9e07d21f",
+     "6553f100",
+     "4d989ee8",
+     "4e406f12",
+     "80d3cf5c",
+     "abf43d00",
+     "1278ef3b",
+     "807a9ce4",
+     "a7d03644",
+     "5122f563",
+     "6e3d18a9",
+     "7f4a7c15",
+     "9e3779b9",
+     "00000000",
+     "00000002",
+     "00000000",
+     "00000000",
+     "00000000",
+     "f41ae975"
+    ],
+    "read_back": [
+     "42345149",
+     "00000001",
+     "51bdaec6",
+     "c65d4205",
+     "19d5d9b8",
+     "9e07d21f",
+     "6553f100",
+     "4d989ee8",
+     "4e406f12",
+     "80d3cf5c",
+     "abf43d00",
+     "1278ef3b",
+     "807a9ce4",
+     "a7d03644",
+     "5122f563",
+     "6e3d18a9",
+     "7f4a7c15",
+     "9e3779b9",
+     "00000000",
+     "00000002",
+     "00000000",
+     "00000000",
+     "00000000",
+     "f41ae975"
+    ],
+    "equal": true
+   }
+  },
+  "stop": null
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
  "source": {
   "findings": [],
   "limitations": [],

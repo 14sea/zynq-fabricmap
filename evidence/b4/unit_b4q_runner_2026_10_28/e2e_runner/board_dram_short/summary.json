@@ -1,0 +1,85 @@
+{
+ "label": "B4Q-runner-board_dram_short",
+ "wall_s": 1.07,
+ "stop": {
+  "kind": "AdmissionStop",
+  "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)"
+ },
+ "opened": false,
+ "phase": "stopped",
+ "records": [],
+ "chain_findings": null,
+ "halted": null,
+ "end": null,
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 0,
+  "signreply": 0,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 0,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true
+  },
+  "board": {
+   "model": "Ebang EBAZ4205 (surrogate)",
+   "dram_mib": 256,
+   "permitted_models": [
+    "Ebang EBAZ4205"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": false
+  },
+  "carrier": null,
+  "fclk0": null,
+  "ok": false
+ },
+ "load_witness": null,
+ "page_witness": {},
+ "source": null,
+ "transport_stops": [
+  {
+   "t": 1793204411.466,
+   "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",
+   "kind": "AdmissionStop"
+  }
+ ],
+ "stats_pull": null,
+ "tail_unobtainable": null,
+ "phase_at_stop": "prompt",
+ "go_in_tx": false,
+ "loady_in_tx": false,
+ "name": "board_dram_short",
+ "surrogate_args": [
+  "--board=4205"
+ ],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": null,
+ "expect": {
+  "stop_prefix": "board: DRAM 256 MiB",
+  "opened": false,
+  "phase_at_stop": "prompt",
+  "no_loady": true
+ },
+ "expect_failures": []
+}

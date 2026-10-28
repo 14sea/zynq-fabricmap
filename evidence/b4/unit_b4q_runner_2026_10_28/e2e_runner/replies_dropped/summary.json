@@ -1,8 +1,9 @@
 {
  "label": "B4Q-runner-replies_dropped",
- "wall_s": 6.099,
+ "wall_s": 3.184,
  "stop": null,
  "opened": true,
+ "phase": "ended",
  "records": [
   {
    "seq": 1,
@@ -70,7 +71,7 @@
   "log": 35168,
   "log_overflow": 0,
   "log_records": 2198,
-  "log_sha256": "4f73bb955a4d92c6e00066dd92913e8ffb833c07964dbdd463bf7cb29a99c501"
+  "log_sha256": "296dc6e9d71bd2fd2be875836ddba4f72be5410ede12b225813da3c2313533b3"
  },
  "stats": {
   "hb": 14,
@@ -87,16 +88,59 @@
   "replayed": 0
  },
  "console_lines": 142,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true
+  },
+  "board": {
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": true
+  },
+  "carrier": {
+   "variant_addr": "0x43c02034",
+   "variant": "42340001",
+   "expected": "42340001",
+   "equal": true
+  },
+  "fclk0": {
+   "addr": "0xf8000170",
+   "ctrl": "00200a00",
+   "expected": null,
+   "held": false,
+   "equal": null
+  },
+  "ok": true
+ },
  "load_witness": {
   "host_crc32": "f5d2dd33",
   "uboot_crc32": "f5d2dd33",
   "equal": true,
   "bytes": 98324,
+  "range": [
+   "02000000",
+   "02018013"
+  ],
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
   "ymodem": {
    "blocks": 97,
    "retries": 0,
    "naks": 0,
-   "seconds": 3.207
+   "junk": 33,
+   "seconds": 0.235
   }
  },
  "page_witness": {
@@ -129,6 +173,9 @@
   "bad_chunks": 0
  },
  "tail_unobtainable": null,
+ "phase_at_stop": null,
+ "go_in_tx": true,
+ "loady_in_tx": true,
  "name": "replies_dropped",
  "surrogate_args": [],
  "verify_rc": 0,

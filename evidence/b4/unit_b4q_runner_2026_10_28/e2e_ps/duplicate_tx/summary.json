@@ -1,6 +1,6 @@
 {
  "name": "duplicate_tx",
- "wall_s": 2.376,
+ "wall_s": 2.456,
  "records": [
   {
    "seq": 1,
@@ -50,13 +50,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 113,
-  "hb": 5,
+  "lines": 112,
+  "hb": 4,
   "nacks": 1,
   "sign_requests": 2,
   "sign_replies": 2,
   "transactions": 2,
-  "kicks": 113,
+  "kicks": 112,
   "flushed": 0,
   "stale_frames": 1,
   "refused_tx": 0,
@@ -66,10 +66,10 @@
   "log": 64400,
   "log_overflow": 0,
   "log_records": 4025,
-  "log_sha256": "515d16ad4f16e67b36b304b1c79b4b42de6be43d8b11caa2d573892ea407f6ca"
+  "log_sha256": "3f98a37185def6154b36a90d3350e84b0027c2c63f7ea584fa423c4671420f78"
  },
  "stats": {
-  "hb": 5,
+  "hb": 4,
   "nack": 1,
   "signreq": 2,
   "signreply": 2,
@@ -82,10 +82,10 @@
   "refused_halted": 0,
   "replayed": 1
  },
- "console_lines": 212,
+ "console_lines": 211,
  "halted": "transaction 3: no observation sealed (the application refused the command: stale sequence)",
  "open_findings": [],
- "platform_kicks": 115,
+ "platform_kicks": 114,
  "first": {
   "status": 0,
   "reason": "closed",

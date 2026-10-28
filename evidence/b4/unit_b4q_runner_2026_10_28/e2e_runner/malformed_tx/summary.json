@@ -1,8 +1,9 @@
 {
  "label": "B4Q-runner-malformed_tx",
- "wall_s": 6.92,
+ "wall_s": 4.057,
  "stop": null,
  "opened": true,
+ "phase": "ended",
  "records": [
   {
    "seq": 1,
@@ -52,13 +53,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 117,
-  "hb": 5,
+  "lines": 116,
+  "hb": 4,
   "nacks": 6,
   "sign_requests": 2,
   "sign_replies": 2,
   "transactions": 2,
-  "kicks": 117,
+  "kicks": 116,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -68,10 +69,10 @@
   "log": 64400,
   "log_overflow": 0,
   "log_records": 4025,
-  "log_sha256": "014d804b3b7ac0fc586d97ccda12283ad602abd1020c0ab3ea19152c771def8f"
+  "log_sha256": "5fa5876ea700281b7d600326be02052ca9e1398a62f7878d18b07150d0cdbdd1"
  },
  "stats": {
-  "hb": 5,
+  "hb": 4,
   "nack": 6,
   "signreq": 2,
   "signreply": 2,
@@ -84,17 +85,60 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 220,
+ "console_lines": 219,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true
+  },
+  "board": {
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": true
+  },
+  "carrier": {
+   "variant_addr": "0x43c02034",
+   "variant": "42340001",
+   "expected": "42340001",
+   "equal": true
+  },
+  "fclk0": {
+   "addr": "0xf8000170",
+   "ctrl": "00200a00",
+   "expected": null,
+   "held": false,
+   "equal": null
+  },
+  "ok": true
+ },
  "load_witness": {
   "host_crc32": "f5d2dd33",
   "uboot_crc32": "f5d2dd33",
   "equal": true,
   "bytes": 98324,
+  "range": [
+   "02000000",
+   "02018013"
+  ],
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
   "ymodem": {
    "blocks": 97,
    "retries": 0,
    "naks": 0,
-   "seconds": 3.206
+   "junk": 33,
+   "seconds": 0.213
   }
  },
  "page_witness": {
@@ -171,6 +215,9 @@
   "bad_chunks": 0
  },
  "tail_unobtainable": null,
+ "phase_at_stop": null,
+ "go_in_tx": true,
+ "loady_in_tx": true,
  "name": "malformed_tx",
  "surrogate_args": [],
  "verify_rc": 0,

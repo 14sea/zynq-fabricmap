@@ -1,0 +1,70 @@
+{
+ "label": "B4Q-runner-image_not_pinned",
+ "wall_s": 1.079,
+ "stop": {
+  "kind": "AdmissionStop",
+  "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded"
+ },
+ "opened": false,
+ "phase": "stopped",
+ "records": [],
+ "chain_findings": null,
+ "halted": null,
+ "end": null,
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 0,
+  "signreply": 0,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 0,
+ "admission": {
+  "image": {
+   "file": "build/b4q_runner_e2e_wrong_image.bin",
+   "file_sha256": "62676b5f6c0debe856b18f110bb20e122496bc2be38be8beae77ba3d4ebdbedd",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": false
+  },
+  "board": null,
+  "carrier": null,
+  "fclk0": null,
+  "ok": false
+ },
+ "load_witness": null,
+ "page_witness": {},
+ "source": null,
+ "transport_stops": [
+  {
+   "t": 1793204408.72,
+   "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",
+   "kind": "AdmissionStop"
+  }
+ ],
+ "stats_pull": null,
+ "tail_unobtainable": null,
+ "phase_at_stop": "prompt",
+ "go_in_tx": false,
+ "loady_in_tx": false,
+ "name": "image_not_pinned",
+ "surrogate_args": [],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": null,
+ "expect": {
+  "stop_prefix": "image: the selected file",
+  "opened": false,
+  "phase_at_stop": "prompt",
+  "no_loady": true
+ },
+ "expect_failures": []
+}

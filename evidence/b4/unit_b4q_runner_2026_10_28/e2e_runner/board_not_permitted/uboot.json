@@ -1,0 +1,88 @@
+{
+ "schema": "b4q_runner_uboot",
+ "schema_version": 2,
+ "port": "/tmp/b4q-runner-e2e-916123-board_not_permitted",
+ "port_real": "/dev/pts/12",
+ "kind": "console-pty-surrogate",
+ "phase": "stopped",
+ "context": {
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+  "image_path": "/home/test/zynq_fabricmap/build/b4q_image/b4q_app_v2.bin",
+  "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+  "board_models": [
+   "Ebang EBAZ4203"
+  ],
+  "dram_min_mib": 512,
+  "variant_word": 1110704129,
+  "fclk0_ctrl_expected": null,
+  "load_addr": 33554432,
+  "role": "bringup-rehearsal",
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  }
+ },
+ "image": "build/b4q_image/b4q_app_v2.bin",
+ "image_sha256_file": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+ "load_addr": 33554432,
+ "stops": [
+  {
+   "t": 1793204410.098,
+   "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)",
+   "kind": "AdmissionStop"
+  }
+ ],
+ "silence_s": 20.0,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true
+  },
+  "board": {
+   "model": "Ebang EBAZ4205 (surrogate)",
+   "dram_mib": 256,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": false,
+   "dram_ok": false
+  },
+  "carrier": null,
+  "fclk0": null,
+  "ok": false
+ },
+ "load_witness": null,
+ "page_witness": null,
+ "go": null,
+ "uboot_steps": [
+  {
+   "what": "prompt",
+   "t": 1793204409.591,
+   "rx_at": 0,
+   "tx_at": 0,
+   "reply": "\r\n\r\nU-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\nNAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nzynq-uboot> ",
+   "banner_seen": true,
+   "ok": true,
+   "model": "Ebang EBAZ4205 (surrogate)",
+   "dram_mib": 256,
+   "rx_end": 300,
+   "tx_end": 2
+  }
+ ],
+ "raw": {
+  "console_bin_sha256": "ff403bf13c1f7c2de148d1496364d180e0ec5146fa9ff03cbc3fa0c2cbd16a23",
+  "console_bin_bytes": 300,
+  "console_tx_bin_sha256": "a92601b739f2d178c159cec4385ee6b840356e7dea19f70dfb43ba62cb68da94",
+  "console_tx_bin_bytes": 2
+ },
+ "break_s": 20.0,
+ "phase_at_stop": "prompt"
+}

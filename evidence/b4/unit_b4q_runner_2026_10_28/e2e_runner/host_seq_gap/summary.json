@@ -1,8 +1,9 @@
 {
  "label": "B4Q-runner-host_seq_gap",
- "wall_s": 6.888,
+ "wall_s": 3.96,
  "stop": null,
  "opened": true,
+ "phase": "ended",
  "records": [
   {
    "seq": 1,
@@ -52,13 +53,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 111,
-  "hb": 5,
+  "lines": 110,
+  "hb": 4,
   "nacks": 0,
   "sign_requests": 2,
   "sign_replies": 2,
   "transactions": 2,
-  "kicks": 111,
+  "kicks": 110,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -68,10 +69,10 @@
   "log": 64416,
   "log_overflow": 0,
   "log_records": 4026,
-  "log_sha256": "579ff89c71a58b45b7f957d3494db8242be850c85411d93460496ba024f0827d"
+  "log_sha256": "caf6a4a0fa402f2075daf5a2f429c8e96739c51412129e1551f7d433c55eacf0"
  },
  "stats": {
-  "hb": 5,
+  "hb": 4,
   "nack": 0,
   "signreq": 2,
   "signreply": 2,
@@ -84,17 +85,60 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 208,
+ "console_lines": 207,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true
+  },
+  "board": {
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": true
+  },
+  "carrier": {
+   "variant_addr": "0x43c02034",
+   "variant": "42340001",
+   "expected": "42340001",
+   "equal": true
+  },
+  "fclk0": {
+   "addr": "0xf8000170",
+   "ctrl": "00200a00",
+   "expected": null,
+   "held": false,
+   "equal": null
+  },
+  "ok": true
+ },
  "load_witness": {
   "host_crc32": "f5d2dd33",
   "uboot_crc32": "f5d2dd33",
   "equal": true,
   "bytes": 98324,
+  "range": [
+   "02000000",
+   "02018013"
+  ],
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
   "ymodem": {
    "blocks": 97,
    "retries": 0,
    "naks": 0,
-   "seconds": 3.197
+   "junk": 33,
+   "seconds": 0.233
   }
  },
  "page_witness": {
@@ -122,6 +166,9 @@
   "bad_chunks": 0
  },
  "tail_unobtainable": null,
+ "phase_at_stop": null,
+ "go_in_tx": true,
+ "loady_in_tx": true,
  "name": "host_seq_gap",
  "surrogate_args": [],
  "verify_rc": 0,

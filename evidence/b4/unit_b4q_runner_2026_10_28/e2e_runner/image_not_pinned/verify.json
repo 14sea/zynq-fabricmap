@@ -1,0 +1,61 @@
+{
+ "dir": "/home/test/zynq_fabricmap/build/b4q_runner_evidence/image_not_pinned",
+ "session": [],
+ "transactions": [],
+ "a7": {
+  "findings": []
+ },
+ "agree": true,
+ "refused": null,
+ "runner": {
+  "findings": [],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "stopped",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "prompt_seen": true
+   }
+  },
+  "stop": {
+   "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",
+   "demonstrated": true
+  }
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
+ "chain": [],
+ "qualification": {
+  "findings": []
+ },
+ "control_plane": {
+  "phase": "stopped",
+  "stop": {
+   "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",
+   "demonstrated": true
+  }
+ },
+ "clean": false
+}

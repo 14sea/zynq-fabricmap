@@ -1,9 +1,726 @@
 [
  {
-  "label": "B4Q-runner-valid",
-  "wall_s": 6.007,
+  "label": "B4Q-runner-control_plane_only",
+  "wall_s": 1.423,
+  "stop": null,
+  "opened": false,
+  "phase": "pre-go",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
+  "load_witness": {
+   "host_crc32": "f5d2dd33",
+   "uboot_crc32": "f5d2dd33",
+   "equal": true,
+   "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "ymodem": {
+    "blocks": 97,
+    "retries": 0,
+    "naks": 0,
+    "junk": 33,
+    "seconds": 0.217
+   }
+  },
+  "page_witness": {
+   "nonce_md": "9e3779b97f4a7c15",
+   "equal": true
+  },
+  "source": null,
+  "transport_stops": [],
+  "stage": "control-plane",
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": false,
+  "loady_in_tx": true,
+  "name": "control_plane_only",
+  "surrogate_args": [],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "opened": false,
+   "phase": "pre-go",
+   "verify": 0,
+   "no_go": true,
+   "load_witness": true,
+   "page_witness": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-image_not_pinned",
+  "wall_s": 1.079,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_runner_e2e_wrong_image.bin",
+    "file_sha256": "62676b5f6c0debe856b18f110bb20e122496bc2be38be8beae77ba3d4ebdbedd",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": false
+   },
+   "board": null,
+   "carrier": null,
+   "fclk0": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793204408.72,
+    "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "name": "image_not_pinned",
+  "surrogate_args": [],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "image: the selected file",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-board_not_permitted",
+  "wall_s": 1.064,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4205 (surrogate)",
+    "dram_mib": 256,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": false,
+    "dram_ok": false
+   },
+   "carrier": null,
+   "fclk0": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793204410.098,
+    "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "name": "board_not_permitted",
+  "surrogate_args": [
+   "--board=4205"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "board: the model",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-board_dram_short",
+  "wall_s": 1.07,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4205 (surrogate)",
+    "dram_mib": 256,
+    "permitted_models": [
+     "Ebang EBAZ4205"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": false
+   },
+   "carrier": null,
+   "fclk0": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793204411.466,
+    "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "name": "board_dram_short",
+  "surrogate_args": [
+   "--board=4205"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "board: DRAM 256 MiB",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-wrong_variant",
+  "wall_s": 1.079,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340002",
+    "expected": "42340001",
+    "equal": false
+   },
+   "fclk0": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793204412.84,
+    "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "name": "wrong_variant",
+  "surrogate_args": [
+   "--fault=wrong-variant"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "carrier: the VARIANT word",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-fclk0_mismatch",
+  "wall_s": 1.075,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": "00100a00",
+    "held": true,
+    "equal": false
+   },
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793204414.227,
+    "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "name": "fclk0_mismatch",
+  "surrogate_args": [],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "clock: FPGA0_CLK_CTRL",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-miner_uboot_break",
+  "wall_s": 4.031,
   "stop": null,
   "opened": true,
+  "phase": "ended",
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "halted": null,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 111,
+   "hb": 5,
+   "nacks": 0,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 111,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64416,
+   "log_overflow": 0,
+   "log_records": 4026,
+   "log_sha256": "e86b77fafd4996b9b0f9c643f003f1ca3646636ce08fd45cf19f5acb200d6174"
+  },
+  "stats": {
+   "hb": 5,
+   "nack": 0,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 208,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4205 (surrogate)",
+    "dram_mib": 256,
+    "permitted_models": [
+     "Ebang EBAZ4205"
+    ],
+    "dram_min_mib": 256,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
+  "load_witness": {
+   "host_crc32": "f5d2dd33",
+   "uboot_crc32": "f5d2dd33",
+   "equal": true,
+   "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "ymodem": {
+    "blocks": 97,
+    "retries": 0,
+    "naks": 0,
+    "junk": 33,
+    "seconds": 0.23
+   }
+  },
+  "page_witness": {
+   "nonce_md": "9e3779b97f4a7c15",
+   "equal": true
+  },
+  "source": {
+   "bytes": 64416,
+   "records": 4026,
+   "digest_equal": true
+  },
+  "transport_stops": [],
+  "tx": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  },
+  "stats_pull": {
+   "pulls": 4,
+   "chunks": 85,
+   "bad_chunks": 0
+  },
+  "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
+  "name": "miner_uboot_break",
+  "surrogate_args": [
+   "--board=4205"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": [],
+  "expect": {
+   "opened": true,
+   "verify": 0
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-valid",
+  "wall_s": 6.085,
+  "stop": null,
+  "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -95,13 +812,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 213,
-   "hb": 10,
+   "lines": 212,
+   "hb": 9,
    "nacks": 0,
    "sign_requests": 4,
    "sign_replies": 4,
    "transactions": 4,
-   "kicks": 213,
+   "kicks": 212,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -111,10 +828,10 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "80d884511d0374184fc6420dc90b9b09f0c132d8a6aa1ec1efc787d4d6694b54"
+   "log_sha256": "519b3f46dae81985b3ba035f4dd5d44429ee45c46766b0a220890e47ff08d882"
   },
   "stats": {
-   "hb": 10,
+   "hb": 9,
    "nack": 0,
    "signreq": 4,
    "signreply": 4,
@@ -127,17 +844,60 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 395,
+  "console_lines": 394,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 0.191
+    "junk": 33,
+    "seconds": 0.237
    }
   },
   "page_witness": {
@@ -152,7 +912,7 @@
   "transport_stops": [],
   "ident": {
    "protocol": "b4q-v2",
-   "token": "b7e50ee4b8d8910f80c4460cc9409600",
+   "token": "db8a268da909593f3f30d55b2531c2f1",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 1301847784,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -171,7 +931,7 @@
     "timing": 1141116936,
     "witness": 131584,
     "status_word": 6400,
-    "heartbeat": 52,
+    "heartbeat": 56,
     "nonce": "9e3779b97f4a7c15",
     "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
    }
@@ -193,6 +953,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "valid",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -210,9 +973,10 @@
  },
  {
   "label": "B4Q-runner-a5",
-  "wall_s": 9.449,
+  "wall_s": 6.769,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -341,7 +1105,7 @@
    "log": 140864,
    "log_overflow": 0,
    "log_records": 8804,
-   "log_sha256": "58191f40aa36f4840f658bda8c9783ce655641a4955afa5871e3fe2e1a91e1cf"
+   "log_sha256": "40425fd3621c6a74bfc5ea69d8da2f3eb289cbedff936eacb07d44ec16731c6c"
   },
   "stats": {
    "hb": 9,
@@ -358,16 +1122,59 @@
    "replayed": 0
   },
   "console_lines": 451,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.205
+    "junk": 33,
+    "seconds": 0.228
    }
   },
   "page_witness": {
@@ -387,6 +1194,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "a5",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -401,9 +1211,10 @@
  },
  {
   "label": "B4Q-runner-notary_refuses",
-  "wall_s": 5.965,
+  "wall_s": 2.982,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -471,7 +1282,7 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "1f536e0d758d0031f9e78af57b379baf8822e5e551ce73390e9b81ba0f12fc42"
+   "log_sha256": "fc686ef9977e913ae13b4c83121cab375291a78186b3aa9838e664c6d54e8d59"
   },
   "stats": {
    "hb": 2,
@@ -488,16 +1299,59 @@
    "replayed": 0
   },
   "console_lines": 126,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.201
+    "junk": 33,
+    "seconds": 0.211
    }
   },
   "page_witness": {
@@ -530,6 +1384,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "notary_refuses",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -544,9 +1401,10 @@
  },
  {
   "label": "B4Q-runner-reply_corrupt",
-  "wall_s": 7.05,
+  "wall_s": 4.025,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -596,13 +1454,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 116,
-   "hb": 8,
+   "lines": 115,
+   "hb": 7,
    "nacks": 1,
    "sign_requests": 3,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 116,
+   "kicks": 115,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -612,10 +1470,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "445d1653850b3eb5278c24a6ddf9f9746366dbc40ed372a86e5fc8aaf6220b8c"
+   "log_sha256": "502c2e471cf80e727d55b1e1ec147f249ac5e11b4ead2b34cd8f28e48fbe9aa6"
   },
   "stats": {
-   "hb": 8,
+   "hb": 7,
    "nack": 1,
    "signreq": 3,
    "signreply": 2,
@@ -628,17 +1486,60 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 214,
+  "console_lines": 213,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.189
+    "junk": 33,
+    "seconds": 0.217
    }
   },
   "page_witness": {
@@ -665,6 +1566,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "reply_corrupt",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -679,9 +1583,10 @@
  },
  {
   "label": "B4Q-runner-reply_dropped_once",
-  "wall_s": 7.5,
+  "wall_s": 4.112,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -731,13 +1636,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 116,
-   "hb": 9,
+   "lines": 115,
+   "hb": 8,
    "nacks": 0,
    "sign_requests": 3,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 116,
+   "kicks": 115,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -747,10 +1652,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "34f40cb27181ac603ea17077c2024e40f48dc3c543c2dddeed3f7b52d4c8bb7f"
+   "log_sha256": "5f757d56cf114458b952f3f6057b1d271d2d6f4544124def857e4ea8abb0d8ca"
   },
   "stats": {
-   "hb": 9,
+   "hb": 8,
    "nack": 0,
    "signreq": 3,
    "signreply": 2,
@@ -763,17 +1668,60 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 214,
+  "console_lines": 213,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.202
+    "junk": 33,
+    "seconds": 0.227
    }
   },
   "page_witness": {
@@ -800,6 +1748,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "reply_dropped_once",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -814,9 +1765,10 @@
  },
  {
   "label": "B4Q-runner-replies_dropped",
-  "wall_s": 6.099,
+  "wall_s": 3.184,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -884,7 +1836,7 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "4f73bb955a4d92c6e00066dd92913e8ffb833c07964dbdd463bf7cb29a99c501"
+   "log_sha256": "296dc6e9d71bd2fd2be875836ddba4f72be5410ede12b225813da3c2313533b3"
   },
   "stats": {
    "hb": 14,
@@ -901,16 +1853,59 @@
    "replayed": 0
   },
   "console_lines": 142,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.207
+    "junk": 33,
+    "seconds": 0.235
    }
   },
   "page_witness": {
@@ -943,6 +1938,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "replies_dropped",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -957,9 +1955,10 @@
  },
  {
   "label": "B4Q-runner-silent_host",
-  "wall_s": 6.001,
+  "wall_s": 3.103,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -1004,7 +2003,7 @@
    "log": 35104,
    "log_overflow": 0,
    "log_records": 2194,
-   "log_sha256": "f4f7731abd5e86c3e87c9e6dacc3fffb564f7de591537e181fbf93e6f66a9c59"
+   "log_sha256": "a39b172707418d38aea641a23d87a10e725afc28310d47bad6a319041a70fdb5"
   },
   "stats": {
    "hb": 9,
@@ -1021,16 +2020,59 @@
    "replayed": 0
   },
   "console_lines": 119,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.204
+    "junk": 33,
+    "seconds": 0.231
    }
   },
   "page_witness": {
@@ -1050,6 +2092,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "silent_host",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1064,9 +2109,10 @@
  },
  {
   "label": "B4Q-runner-garbage_command",
-  "wall_s": 6.946,
+  "wall_s": 4.285,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -1132,7 +2178,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "6b18494610d9703300bb2e4ed8f480f2608f73a7f6ee4d2e464e51158e210f19"
+   "log_sha256": "ae85aba9e19cd4462470916bd717c10980585fc6e51fc17a9067760519080c35"
   },
   "stats": {
    "hb": 4,
@@ -1149,16 +2195,59 @@
    "replayed": 0
   },
   "console_lines": 209,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.214
+    "junk": 33,
+    "seconds": 0.23
    }
   },
   "page_witness": {
@@ -1185,6 +2274,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "garbage_command",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1199,9 +2291,10 @@
  },
  {
   "label": "B4Q-runner-wrong_token",
-  "wall_s": 6.708,
+  "wall_s": 3.784,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -1267,7 +2360,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "d7597cc1f6353b6b599d4a19c7adbd44fb3d1f4a6c90d9851b115214b4b03747"
+   "log_sha256": "601837dd127e1d53a1a32bb5cac2c97efb04d32939c86eb4442f6009b03e685c"
   },
   "stats": {
    "hb": 4,
@@ -1284,16 +2377,59 @@
    "replayed": 0
   },
   "console_lines": 209,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.212
+    "junk": 33,
+    "seconds": 0.226
    }
   },
   "page_witness": {
@@ -1323,6 +2459,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "wrong_token",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1337,9 +2476,10 @@
  },
  {
   "label": "B4Q-runner-stale_reply",
-  "wall_s": 6.816,
+  "wall_s": 3.855,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -1405,7 +2545,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "b7d48e9eba99d796934a73c7aab893cf229da0f19327919ba82928abe72aa0de"
+   "log_sha256": "9c8097da8b716c830df477fd3a662ec98ec5b43f3657709882bd81c728f8c649"
   },
   "stats": {
    "hb": 4,
@@ -1422,16 +2562,59 @@
    "replayed": 0
   },
   "console_lines": 208,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.203
+    "junk": 33,
+    "seconds": 0.226
    }
   },
   "page_witness": {
@@ -1458,6 +2641,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "stale_reply",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1472,9 +2658,10 @@
  },
  {
   "label": "B4Q-runner-duplicate_tx",
-  "wall_s": 3.777,
+  "wall_s": 3.928,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -1540,7 +2727,7 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "ab78774ec74ac807b9a802b98caa85f8bf775e2acc965346d670cf558668534e"
+   "log_sha256": "758efaa7e3a4ccdc04aaec0ed515c13f1c77a6aa3a57b3a4b0c48b2532df5e00"
   },
   "stats": {
    "hb": 4,
@@ -1557,16 +2744,59 @@
    "replayed": 1
   },
   "console_lines": 211,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 0.193
+    "junk": 33,
+    "seconds": 0.23
    }
   },
   "page_witness": {
@@ -1605,6 +2835,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "duplicate_tx",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1619,9 +2852,10 @@
  },
  {
   "label": "B4Q-runner-after_stop_tx",
-  "wall_s": 5.805,
+  "wall_s": 3.452,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -1689,7 +2923,7 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "2bb7a165f6851b8f083fd08af50df9c9397fc546bc31109a598634acf8bdbee6"
+   "log_sha256": "b6eb9076870877b50455ddc8ff98cac7595ce48b817caef010a581b10b065818"
   },
   "stats": {
    "hb": 2,
@@ -1706,16 +2940,59 @@
    "replayed": 0
   },
   "console_lines": 128,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.203
+    "junk": 33,
+    "seconds": 0.227
    }
   },
   "page_witness": {
@@ -1751,6 +3028,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "after_stop_tx",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1765,9 +3045,10 @@
  },
  {
   "label": "B4Q-runner-malformed_tx",
-  "wall_s": 6.92,
+  "wall_s": 4.057,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -1817,13 +3098,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 117,
-   "hb": 5,
+   "lines": 116,
+   "hb": 4,
    "nacks": 6,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 117,
+   "kicks": 116,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -1833,10 +3114,10 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "014d804b3b7ac0fc586d97ccda12283ad602abd1020c0ab3ea19152c771def8f"
+   "log_sha256": "5fa5876ea700281b7d600326be02052ca9e1398a62f7878d18b07150d0cdbdd1"
   },
   "stats": {
-   "hb": 5,
+   "hb": 4,
    "nack": 6,
    "signreq": 2,
    "signreply": 2,
@@ -1849,17 +3130,60 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 220,
+  "console_lines": 219,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.206
+    "junk": 33,
+    "seconds": 0.213
    }
   },
   "page_witness": {
@@ -1936,6 +3260,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "malformed_tx",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1950,9 +3277,10 @@
  },
  {
   "label": "B4Q-runner-host_seq_gap",
-  "wall_s": 6.888,
+  "wall_s": 3.96,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -2002,13 +3330,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 111,
-   "hb": 5,
+   "lines": 110,
+   "hb": 4,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 111,
+   "kicks": 110,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -2018,10 +3346,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "579ff89c71a58b45b7f957d3494db8242be850c85411d93460496ba024f0827d"
+   "log_sha256": "caf6a4a0fa402f2075daf5a2f429c8e96739c51412129e1551f7d433c55eacf0"
   },
   "stats": {
-   "hb": 5,
+   "hb": 4,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -2034,17 +3362,60 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 208,
+  "console_lines": 207,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.197
+    "junk": 33,
+    "seconds": 0.233
    }
   },
   "page_witness": {
@@ -2072,6 +3443,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "host_seq_gap",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -2086,9 +3460,10 @@
  },
  {
   "label": "B4Q-runner-bad_page",
-  "wall_s": 4.329,
+  "wall_s": 1.417,
   "stop": null,
   "opened": false,
+  "phase": "ended",
   "records": [],
   "chain_findings": [
    "session_open.startup_readback_sha256: bad value ''",
@@ -2114,7 +3489,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "59d2a0315eebcd1739569e64f7509fda2757ad57a3f1bc6e5267dd4b7eec0a59"
+   "log_sha256": "f5de06df4a94d046468b646ab982443269c94ca87bc6a35cdc66b76113d1e703"
   },
   "stats": {
    "hb": 0,
@@ -2131,16 +3506,59 @@
    "replayed": 0
   },
   "console_lines": 6,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.198
+    "junk": 33,
+    "seconds": 0.216
    }
   },
   "page_witness": {
@@ -2163,6 +3581,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "bad_page",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -2183,9 +3604,10 @@
  },
  {
   "label": "B4Q-runner-sequence_cut",
-  "wall_s": 5.53,
+  "wall_s": 2.454,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -2232,7 +3654,7 @@
    "log": 24464,
    "log_overflow": 0,
    "log_records": 1529,
-   "log_sha256": "5cf2317bd3b38b4ed68a48f3e14c07b759a0cdafea78e21b43cdaa5472dc1a5d"
+   "log_sha256": "3c2023719533336459aec971e56faf22bd18248602a87ce5bd022c6dff9cfe8c"
   },
   "stats": {
    "hb": 0,
@@ -2249,16 +3671,59 @@
    "replayed": 0
   },
   "console_lines": 30,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.211
+    "junk": 33,
+    "seconds": 0.225
    }
   },
   "page_witness": {
@@ -2292,6 +3757,9 @@
    "end_log": 24464,
    "pulled": 6816
   },
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "sequence_cut",
   "surrogate_args": [
    "--image-table=4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b=/home/test/zynq_fabricmap/build/b4q_firmware/b4q_seqcut_twin"
@@ -2312,9 +3780,10 @@
  },
  {
   "label": "B4Q-runner-watchdog_fail",
-  "wall_s": 4.333,
+  "wall_s": 1.424,
   "stop": null,
   "opened": false,
+  "phase": "ended",
   "records": [],
   "chain_findings": [
    "session_open.startup_readback_sha256: bad value ''",
@@ -2340,7 +3809,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "3d6be24c7ae4e90e20190e82228ae0e17089ac1ec4d4d38301e096c64934513a"
+   "log_sha256": "d3d62c5552a6234a995e87bd35ebd9eba56470e47f89474bc59677eb1fc33a04"
   },
   "stats": {
    "hb": 0,
@@ -2357,16 +3826,59 @@
    "replayed": 0
   },
   "console_lines": 6,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.203
+    "junk": 33,
+    "seconds": 0.232
    }
   },
   "page_witness": {
@@ -2389,6 +3901,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "watchdog_fail",
   "surrogate_args": [
    "--fault=wdt-fail"
@@ -2411,9 +3926,10 @@
  },
  {
   "label": "B4Q-runner-pre_event_corrupt",
-  "wall_s": 6.317,
+  "wall_s": 3.633,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -2481,7 +3997,7 @@
    "log": 46208,
    "log_overflow": 0,
    "log_records": 2888,
-   "log_sha256": "01f995b93cf4ff940aa485e6a828a2ed2683e5b060ce206fc1d021b4d063d91e"
+   "log_sha256": "60ed32a3b788dfed254699a683e34c9a4f9833093f5a0ef7b374e36fc7bc6acd"
   },
   "stats": {
    "hb": 3,
@@ -2498,16 +4014,59 @@
    "replayed": 0
   },
   "console_lines": 154,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.206
+    "junk": 33,
+    "seconds": 0.228
    }
   },
   "page_witness": {
@@ -2537,6 +4096,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "pre_event_corrupt",
   "surrogate_args": [
    "--corrupt-frame-read=33"
@@ -2554,16 +4116,15 @@
  },
  {
   "label": "B4Q-runner-interrupted_load",
-  "wall_s": 4.147,
+  "wall_s": 1.147,
   "stop": {
    "kind": "TransportStop",
    "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20"
   },
   "opened": false,
+  "phase": "stopped",
   "records": [],
-  "chain_findings": [
-   "no session_open record"
-  ],
+  "chain_findings": null,
   "halted": null,
   "end": null,
   "stats": {
@@ -2580,23 +4141,59 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 3,
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": null,
   "page_witness": {},
-  "source": {
-   "bytes": 0,
-   "records": 0,
-   "digest_equal": false
-  },
+  "source": null,
   "transport_stops": [
    {
-    "t": 1793191032.576,
+    "t": 1793204491.931,
     "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20",
     "kind": "TransportStop"
    }
   ],
   "stats_pull": null,
   "tail_unobtainable": null,
+  "phase_at_stop": "admitted",
+  "go_in_tx": false,
+  "loady_in_tx": true,
   "name": "interrupted_load",
   "surrogate_args": [
    "--fault=interrupted-load=20"
@@ -2613,16 +4210,15 @@
  },
  {
   "label": "B4Q-runner-wrong_crc",
-  "wall_s": 4.308,
+  "wall_s": 1.404,
   "stop": {
    "kind": "TransportStop",
    "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)"
   },
   "opened": false,
+  "phase": "stopped",
   "records": [],
-  "chain_findings": [
-   "no session_open record"
-  ],
+  "chain_findings": null,
   "halted": null,
   "end": null,
   "stats": {
@@ -2639,34 +4235,76 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 3,
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd32",
    "equal": false,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.202
+    "junk": 33,
+    "seconds": 0.23
    }
   },
   "page_witness": {},
-  "source": {
-   "bytes": 0,
-   "records": 0,
-   "digest_equal": false
-  },
+  "source": null,
   "transport_stops": [
    {
-    "t": 1793191037.198,
+    "t": 1793204493.598,
     "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)",
     "kind": "TransportStop"
    }
   ],
   "stats_pull": null,
   "tail_unobtainable": null,
+  "phase_at_stop": "admitted",
+  "go_in_tx": false,
+  "loady_in_tx": true,
   "name": "wrong_crc",
   "surrogate_args": [
    "--fault=wrong-crc"
@@ -2683,16 +4321,15 @@
  },
  {
   "label": "B4Q-runner-md_garbage",
-  "wall_s": 4.293,
+  "wall_s": 1.071,
   "stop": {
    "kind": "TransportStop",
-   "why": "md.l 0x43c0202c 1: 0 words parsed, not 1"
+   "why": "md.l 0x43c02034 1: 0 words parsed, not 1"
   },
   "opened": false,
+  "phase": "stopped",
   "records": [],
-  "chain_findings": [
-   "no session_open record"
-  ],
+  "chain_findings": null,
   "halted": null,
   "end": null,
   "stats": {
@@ -2709,34 +4346,48 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 3,
-  "load_witness": {
-   "host_crc32": "f5d2dd33",
-   "uboot_crc32": "f5d2dd33",
-   "equal": true,
-   "bytes": 98324,
-   "ymodem": {
-    "blocks": 97,
-    "retries": 0,
-    "naks": 0,
-    "seconds": 3.198
-   }
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": null,
+   "fclk0": null,
+   "ok": false
   },
+  "load_witness": null,
   "page_witness": {},
-  "source": {
-   "bytes": 0,
-   "records": 0,
-   "digest_equal": false
-  },
+  "source": null,
   "transport_stops": [
    {
-    "t": 1793191041.804,
-    "why": "md.l 0x43c0202c 1: 0 words parsed, not 1",
+    "t": 1793204495.031,
+    "why": "md.l 0x43c02034 1: 0 words parsed, not 1",
     "kind": "TransportStop"
    }
   ],
   "stats_pull": null,
   "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
   "name": "md_garbage",
   "surrogate_args": [
    "--fault=md-garbage"
@@ -2753,12 +4404,13 @@
  },
  {
   "label": "B4Q-runner-corrupt_page",
-  "wall_s": 4.307,
+  "wall_s": 1.436,
   "stop": {
    "kind": "SessionRefusal",
    "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)"
   },
   "opened": false,
+  "phase": "ended",
   "records": [],
   "chain_findings": [
    "session_open.startup_readback_sha256: bad value ''",
@@ -2784,7 +4436,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "6f4b25f8d5067e41f01832e63966fd773a6a93813cadb60c3d88949a093c3b27"
+   "log_sha256": "6b87bde854d3c994786ebeefb628285df63b340c5ccf58e2771b31cb3760b633"
   },
   "stats": {
    "hb": 0,
@@ -2801,16 +4453,59 @@
    "replayed": 0
   },
   "console_lines": 6,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.189
+    "junk": 33,
+    "seconds": 0.233
    }
   },
   "page_witness": {
@@ -2824,7 +4519,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793191046.399,
+    "t": 1793204496.697,
     "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
     "kind": "SessionRefusal"
    }
@@ -2835,6 +4530,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "corrupt_page",
   "surrogate_args": [
    "--fault=corrupt-page"
@@ -2858,16 +4556,15 @@
  },
  {
   "label": "B4Q-runner-page_witness_fails",
-  "wall_s": 4.301,
+  "wall_s": 1.395,
   "stop": {
    "kind": "TransportStop",
    "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)"
   },
   "opened": false,
+  "phase": "stopped",
   "records": [],
-  "chain_findings": [
-   "no session_open record"
-  ],
+  "chain_findings": null,
   "halted": null,
   "end": null,
   "stats": {
@@ -2884,37 +4581,79 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 3,
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.21
+    "junk": 33,
+    "seconds": 0.218
    }
   },
   "page_witness": {
    "nonce_md": "9e3779b97f4a7c15",
    "equal": false
   },
-  "source": {
-   "bytes": 0,
-   "records": 0,
-   "digest_equal": false
-  },
+  "source": null,
   "transport_stops": [
    {
-    "t": 1793191051.031,
+    "t": 1793204498.405,
     "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)",
     "kind": "TransportStop"
    }
   ],
   "stats_pull": null,
   "tail_unobtainable": null,
+  "phase_at_stop": "loaded",
+  "go_in_tx": false,
+  "loady_in_tx": true,
   "name": "page_witness_fails",
   "surrogate_args": [
    "--fault=corrupt-mw"
@@ -2931,22 +4670,55 @@
  },
  {
   "label": "B4Q-runner-missed_autoboot",
-  "wall_s": 4.716,
+  "wall_s": 5.096,
   "stop": {
    "kind": "TransportStop",
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
   },
   "opened": false,
+  "phase": "stopped",
   "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": null,
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793204503.853,
+    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
+    "kind": "TransportStop"
+   }
+  ],
   "stats_pull": null,
   "tail_unobtainable": null,
+  "phase_at_stop": "init",
+  "go_in_tx": false,
+  "loady_in_tx": false,
   "name": "missed_autoboot",
   "surrogate_args": [
    "--fault=missed-autoboot"
   ],
-  "verify_rc": null,
-  "verify_agree": null,
-  "verify_session": null,
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
   "verify_limitations": null,
   "expect": {
    "stop_prefix": "no U-Boot prompt: a boot banner was seen",
@@ -2956,22 +4728,55 @@
  },
  {
   "label": "B4Q-runner-no_prompt",
-  "wall_s": 4.726,
+  "wall_s": 5.097,
   "stop": {
    "kind": "TransportStop",
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
   },
   "opened": false,
+  "phase": "stopped",
   "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": null,
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793204509.251,
+    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
+    "kind": "TransportStop"
+   }
+  ],
   "stats_pull": null,
   "tail_unobtainable": null,
+  "phase_at_stop": "init",
+  "go_in_tx": false,
+  "loady_in_tx": false,
   "name": "no_prompt",
   "surrogate_args": [
    "--fault=no-prompt"
   ],
-  "verify_rc": null,
-  "verify_agree": null,
-  "verify_session": null,
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
   "verify_limitations": null,
   "expect": {
    "stop_prefix": "no U-Boot prompt",
@@ -2981,16 +4786,15 @@
  },
  {
   "label": "B4Q-runner-unknown_image",
-  "wall_s": 4.312,
+  "wall_s": 4.413,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the console was silent for 3.0 s while awaiting IDENT"
   },
   "opened": false,
+  "phase": "stopped",
   "records": [],
-  "chain_findings": [
-   "no session_open record"
-  ],
+  "chain_findings": null,
   "halted": "transport: the console was silent for 3.0 s while awaiting IDENT",
   "end": null,
   "stats": {
@@ -3008,36 +4812,79 @@
    "replayed": 0
   },
   "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 0.183
+    "junk": 33,
+    "seconds": 0.228
    }
   },
   "page_witness": {
    "nonce_md": "9e3779b97f4a7c15",
    "equal": true
   },
-  "source": {
-   "bytes": 0,
-   "records": 0,
-   "digest_equal": false
-  },
+  "source": null,
   "transport_stops": [
    {
-    "t": 1793191065.715,
+    "t": 1793204513.925,
     "why": "the console was silent for 3.0 s while awaiting IDENT",
-    "awaiting": "IDENT"
+    "awaiting": "IDENT",
+    "kind": "TransportStop"
    }
   ],
   "stats_pull": null,
   "tail_unobtainable": null,
+  "phase_at_stop": "application",
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "unknown_image",
   "surrogate_args": [
    "--fault=unknown-image"
@@ -3048,18 +4895,20 @@
   "verify_limitations": null,
   "expect": {
    "opened": false,
-   "transport_stop": "the console was silent"
+   "transport_stop": "the console was silent",
+   "verify": 0
   },
   "expect_failures": []
  },
  {
   "label": "B4Q-runner-silence_mid_session",
-  "wall_s": 8.989,
+  "wall_s": 5.825,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling"
   },
   "opened": true,
+  "phase": "stopped",
   "records": [
    {
     "seq": 1,
@@ -3105,16 +4954,59 @@
    "replayed": 0
   },
   "console_lines": 72,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.204
+    "junk": 33,
+    "seconds": 0.233
    }
   },
   "page_witness": {
@@ -3128,12 +5020,13 @@
   },
   "transport_stops": [
    {
-    "t": 1793191074.902,
+    "t": 1793204519.952,
     "why": "the console was silent for 3.0 s while awaiting CHUNK",
-    "awaiting": "CHUNK"
+    "awaiting": "CHUNK",
+    "kind": "TransportStop"
    },
    {
-    "t": 1793191074.918,
+    "t": 1793204519.968,
     "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -3144,6 +5037,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": "application",
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "silence_mid_session",
   "surrogate_args": [
    "--fault=silence-after=40"
@@ -3163,12 +5059,13 @@
  },
  {
   "label": "B4Q-runner-reset_mid_session",
-  "wall_s": 6.021,
+  "wall_s": 3.466,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling"
   },
   "opened": true,
+  "phase": "stopped",
   "records": [
    {
     "seq": 1,
@@ -3214,16 +5111,59 @@
    "replayed": 0
   },
   "console_lines": 74,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.206
+    "junk": 33,
+    "seconds": 0.226
    }
   },
   "page_witness": {
@@ -3237,12 +5177,13 @@
   },
   "transport_stops": [
    {
-    "t": 1793191081.243,
+    "t": 1793204523.708,
     "why": "a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
-    "awaiting": "CHUNK"
+    "awaiting": "CHUNK",
+    "kind": "TransportStop"
    },
    {
-    "t": 1793191081.264,
+    "t": 1793204523.726,
     "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -3253,6 +5194,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": "application",
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "reset_mid_session",
   "surrogate_args": [
    "--fault=reset-after-lines=40"
@@ -3272,9 +5216,10 @@
  },
  {
   "label": "B4Q-runner-corrupt_chunk",
-  "wall_s": 8.691,
+  "wall_s": 6.064,
   "stop": null,
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -3366,13 +5311,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 212,
-   "hb": 8,
+   "lines": 214,
+   "hb": 10,
    "nacks": 0,
    "sign_requests": 4,
    "sign_replies": 4,
    "transactions": 4,
-   "kicks": 212,
+   "kicks": 214,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -3382,10 +5327,10 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "9ebed2f59546816e0f9e6ceaabadb773e854d4480c2f933967ad144f69a41581"
+   "log_sha256": "4adb3af0aa1baf959ac385c3515a48a15e07f4e1ffbf60e212539a37660fb19f"
   },
   "stats": {
-   "hb": 8,
+   "hb": 10,
    "nack": 0,
    "signreq": 4,
    "signreply": 4,
@@ -3398,17 +5343,60 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 395,
+  "console_lines": 397,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.204
+    "junk": 33,
+    "seconds": 0.228
    }
   },
   "page_witness": {
@@ -3423,7 +5411,7 @@
   "transport_stops": [],
   "ident": {
    "protocol": "b4q-v2",
-   "token": "7734ce0caa34d387b99d6d2b18cfc71a",
+   "token": "4a37adad51a5eedb52d5fca626ab3989",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 1301847784,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -3442,7 +5430,7 @@
     "timing": 1141116936,
     "witness": 131584,
     "status_word": 6400,
-    "heartbeat": 52,
+    "heartbeat": 56,
     "nonce": "9e3779b97f4a7c15",
     "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
    }
@@ -3464,6 +5452,9 @@
    "bad_chunks": 1
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "corrupt_chunk",
   "surrogate_args": [
    "--fault=corrupt-chunk=2"
@@ -3484,12 +5475,13 @@
  },
  {
   "label": "B4Q-runner-log_overflow",
-  "wall_s": 6.073,
+  "wall_s": 2.902,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling"
   },
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -3538,7 +5530,7 @@
    "log": 16384,
    "log_overflow": 1,
    "log_records": 1024,
-   "log_sha256": "0b008bbb3d0e3df9e049c32f613974fa9ce67656ce8863c9f17c18c803dd5e2a"
+   "log_sha256": "0559d5fd87f55be50bee94da5601d2f5190bc43093ee85c48388de9f3d2f5b0e"
   },
   "stats": {
    "hb": 0,
@@ -3555,16 +5547,59 @@
    "replayed": 0
   },
   "console_lines": 65,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.211
+    "junk": 33,
+    "seconds": 0.223
    }
   },
   "page_witness": {
@@ -3578,7 +5613,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793191096.673,
+    "t": 1793204533.333,
     "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -3589,6 +5624,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "log_overflow",
   "surrogate_args": [
    "--fault=ring-bytes=16384"
@@ -3608,12 +5646,13 @@
  },
  {
   "label": "B4Q-runner-devc_never",
-  "wall_s": 10.124,
+  "wall_s": 7.454,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling"
   },
   "opened": true,
+  "phase": "ended",
   "records": [
    {
     "seq": 1,
@@ -3660,7 +5699,7 @@
    "log": 11536,
    "log_overflow": 0,
    "log_records": 721,
-   "log_sha256": "9be0f73baeb92b6041c2fd2a274c9187b78b486482f5538bbc6f1716a5bde3ab"
+   "log_sha256": "fd694c90be8ce8ff7eba3db3c0a379aa9cacab601463dec859503151daadffb3"
   },
   "stats": {
    "hb": 5,
@@ -3677,16 +5716,59 @@
    "replayed": 0
   },
   "console_lines": 54,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "fclk0": {
+    "addr": "0xf8000170",
+    "ctrl": "00200a00",
+    "expected": null,
+    "held": false,
+    "equal": null
+   },
+   "ok": true
+  },
   "load_witness": {
    "host_crc32": "f5d2dd33",
    "uboot_crc32": "f5d2dd33",
    "equal": true,
    "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "ymodem": {
     "blocks": 97,
     "retries": 0,
     "naks": 0,
-    "seconds": 3.213
+    "junk": 33,
+    "seconds": 0.226
    }
   },
   "page_witness": {
@@ -3700,7 +5782,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793191106.672,
+    "t": 1793204540.652,
     "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -3711,6 +5793,9 @@
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
+  "phase_at_stop": null,
+  "go_in_tx": true,
+  "loady_in_tx": true,
   "name": "devc_never",
   "surrogate_args": [
    "--devc-fault=env:1:never"

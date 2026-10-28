@@ -1,0 +1,108 @@
+{
+ "label": "B4Q-runner-control_plane_only",
+ "wall_s": 1.423,
+ "stop": null,
+ "opened": false,
+ "phase": "pre-go",
+ "records": [],
+ "chain_findings": null,
+ "halted": null,
+ "end": null,
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 0,
+  "signreply": 0,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 0,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true
+  },
+  "board": {
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": true
+  },
+  "carrier": {
+   "variant_addr": "0x43c02034",
+   "variant": "42340001",
+   "expected": "42340001",
+   "equal": true
+  },
+  "fclk0": {
+   "addr": "0xf8000170",
+   "ctrl": "00200a00",
+   "expected": null,
+   "held": false,
+   "equal": null
+  },
+  "ok": true
+ },
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd33",
+  "equal": true,
+  "bytes": 98324,
+  "range": [
+   "02000000",
+   "02018013"
+  ],
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "junk": 33,
+   "seconds": 0.217
+  }
+ },
+ "page_witness": {
+  "nonce_md": "9e3779b97f4a7c15",
+  "equal": true
+ },
+ "source": null,
+ "transport_stops": [],
+ "stage": "control-plane",
+ "stats_pull": null,
+ "tail_unobtainable": null,
+ "phase_at_stop": null,
+ "go_in_tx": false,
+ "loady_in_tx": true,
+ "name": "control_plane_only",
+ "surrogate_args": [],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": null,
+ "expect": {
+  "opened": false,
+  "phase": "pre-go",
+  "verify": 0,
+  "no_go": true,
+  "load_witness": true,
+  "page_witness": true
+ },
+ "expect_failures": []
+}

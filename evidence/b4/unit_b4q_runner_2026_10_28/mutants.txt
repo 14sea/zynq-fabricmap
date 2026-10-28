@@ -1,10 +1,10 @@
 R1 KILLED — a compressed poll counted but the record not amended in place (the pulled log says 1 where the program polled many times): source: the PS log's window events (482) are not the emulation's trace (562) after its provisioning prefix
-R2 KILLED — the digest over all but the last record (the board's digest is not of the bytes it exports): the scenario aborted on the guard: …sion is halted: the pulled evidence log does not hash to the board's digest (0d9fd4709a16 vs c581bc3ac33b) — nothing further
+R2 KILLED — the digest over all but the last record (the board's digest is not of the bytes it exports): the scenario aborted on the guard: …sion is halted: the pulled evidence log does not hash to the board's digest (e26cd03771dc vs 11e5c8c47329) — nothing further
 R3 KILLED — a full log wraps to the start instead of stopping (silent loss): the TX after the overflow answered with status 0 (closed)
-A1 KILLED — RING under-reports the log by one record (its digest still covers the whole: the host's digest check fires first): halted: the pulled evidence log does not hash to the board's digest (ae7fe49ef134 vs b102d07da171)
+A1 KILLED — RING under-reports the log by one record (its digest still covers the whole: the host's digest check fires first): halted: the pulled evidence log does not hash to the board's digest (c35e0c7ba698 vs 79c95a847453)
 A2 KILLED — the RESULT's log position always 0 (the line no longer binds to the log): verify: console: the words of request 13 were never staged into PAYLOAD / TAG after the reply
 A3 KILLED — every CHUNK claims offset 0 (the host's offset check refuses it, bounded): halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks
-A3b KILLED — PULL returns the first bytes whatever the offset (the chunk lines keep their offsets: the digest is the guard): halted: the pulled evidence log does not hash to the board's digest (d9183e057b51 vs 1da51a1140dc)
+A3b KILLED — PULL returns the first bytes whatever the offset (the chunk lines keep their offsets: the digest is the guard): halted: the pulled evidence log does not hash to the board's digest (6c0762a7b616 vs d980cc65002e)
 A4 KILLED — no export epilogue after the END (the log of a stopped session cannot be pulled): pulled 0 of the END's 368 bytes; halted='the session did not open: session_open: session_open.startup_readback_sha256: ba'
 A5 KILLED — a command after the END silently ignored instead of NACKed by name: no NACK: the console closed
 A6 KILLED — a TX admitted after the log overflowed (the transaction runs unobserved): the TX after the overflow answered with status 0 (closed)
@@ -13,8 +13,8 @@ E2 KILLED — a run record outside the buffers accepted: a run record outside th
 E3 KILLED — a staging followed by a later write into its envelope still reported as the submitted stream: a stale staging reported as the submitted stream
 E4 KILLED — eight frames in any order hashed as a link-3 group: an out-of-order octet hashed as a group
 V1 KILLED — trace.jsonl no longer held to the derivation: not found: refused=None agree=True findings=[]
-V2 KILLED — a raw log that is not the declared bytes accepted: not refused by name: refused=None findings=["source: the raw log (123344 bytes, 9ec6696eaf14) is not the log the board's last RING reported (123344 bytes, 3f77a
-V3 KILLED — a board archive verified as a host-only one: not refused by name: refused=None findings=[]
+V2 KILLED — a raw log that is not the declared bytes accepted: not refused by name: refused=None findings=["source: the raw log (123344 bytes, 9ba6dacccb8b) is not the log the board's last RING reported (123344 bytes, d8e9a
+V3 KILLED — a device-format archive whose stream carries the surrogate's banner no longer found (a PTY fixture passes as the device format): not found: agree=True findings=[]
 V4 KILLED — the raw log no longer held to the board's last RING: not found: refused=None agree=False findings=["source: the raw log is not the log the END reports (its digest differs at the END's position)", "the raw log is n
 V5 KILLED — the console positions no longer held to the board's log offsets: not found: refused=None agree=True findings=[]
 V6 KILLED — a line noted as a banner trusted without its bytes (R1): not found: refused=None agree=False findings=['console: board HB at line 110: after the boot banner', 'console: board HB at line 111: after the boot banner']
@@ -22,9 +22,24 @@ V7 KILLED — a command after the END no longer owed its NACK (the epilogue's ru
 V8 KILLED — the manifest's source declaration no longer held to the raw log: not found: refused=None agree=True findings=[]
 N1 KILLED — a load witness mismatch no longer stops before go: stop '' (expected 'load witness:'); opened=True
 N2 KILLED — a page witness mismatch no longer stops before go: stop 'no open session: nothing is signed before the session-opening record is open (co' (expected 'page witness:'); opened=False
-N3 KILLED — a boot banner mid-session no longer named as the cut: expectations: ['verify rc 1 (expected 0): ["source: the raw log (20640 bytes, 2ba18a117799) is not the log the board\'s last RING reported (35104 bytes, e8e3323
+N3 KILLED — a boot banner mid-session no longer named as the cut: expectations: ['verify rc 1 (expected 0): ["source: the raw log (21408 bytes, 04948914064b) is not the log the board\'s last RING reported (35104 bytes, d0db5d1
 N4 KILLED — the silence bound removed (the host waits forever): TIMEOUT after 90 s (a hang: the bound removed IS the guard)
+V9 KILLED — the transferred bytes no longer held to the executing-side image: not found: agree=False refused=None findings=["runner: load: the transferred bytes are not the context's pinned image", "runner: admission.image: the recorded p
+V10 KILLED — an invented pre-go stop no longer refuted by the `go` in the streams: not found: agree=False refused=None findings=["runner: phase: uboot.json says 'pre-go' but the sent stream holds `go`", 'runner: no session: 215 board console l
+V11 KILLED — the device's crc32 no longer held to exactly the loaded range: not found: agree=True refused=None findings=[]
+V12 KILLED — a retained console line no longer held to the received stream: not found: agree=False refused=None findings=['console: board line at line 109: bad crc', 'console: END.hb is 10, the lines say 9']
+P1 KILLED — a reader consumes the whole buffer past its boundary (the next phase's first bytes lost): the application's first line lost: buf=b''
+P2 KILLED — the ymodem keeps bytes beyond the transfer in a private queue (U-Boot's tail lost to the prompt reader): the tail was lost: loady: no prompt after the transfer
+Y1 SURVIVED — the inner ACK loop's own deadline check removed — EXPECTED TO SURVIVE alone: the per-read clock bound (_read_byte) and the junk limit are sibling guards that still end the loop; Y1+Y2 is the kill: ended at 3.34 s (the deadline)
+Y2 SURVIVED — the junk limit per block removed — EXPECTED TO SURVIVE alone: the deadline (the clock on every read) still ends the transfer; Y1+Y2 is the kill: ended at 2.0 s (the deadline)
+N5 KILLED — md.l no longer held to the asked address: a line for another address accepted
+N6 KILLED — crc32 no longer held to the asked range: a crc for another range accepted
+N7 KILLED — a file that is not the pinned image loaded anyway: proceeded: stop={'kind': 'TransportStop', 'why': 'loady: U-Boot did not announce the ymodem download'} loady_sent=True
+N8 KILLED — a board whose DRAM cannot hold the map admitted: proceeded: stop={'kind': 'TransportStop', 'why': 'loady: U-Boot did not announce the ymodem download'} loady_sent=True
+N9 KILLED — another carrier's variant word admitted: proceeded: stop={'kind': 'TransportStop', 'why': 'loady: U-Boot did not announce the ymodem download'} loady_sent=True
+N10 KILLED — the execution phase persisted only after `go` returns (a failed command leaves a pre-go record with `go` in the stream): the phase on disk says 'admitted' although `go` is in the sent stream
 S2 KILLED — the host no longer halts on the board's overflow flag: expectations: ["verify rc 1 (expected 0): ['source: the board reports its log overflowed and the session did not halt on it']"]
 A3+S1 KILLED — every CHUNK claims offset 0 AND the host's bad-chunk bound is removed: the pull re-asks forever (the bound IS the guard; observed as a hang): TIMEOUT after 60 s: the pull never ends (the bound removed IS the guard)
-TOTAL killed 28 survived 0 edit-miss 0 probe-error 0 of 28
+Y1+Y2+Y3 KILLED — the inner deadline check, the junk limit AND the per-read clock bound removed: a junk-flooding receiver holds the transfer forever (observed as a hang in a subprocess): TIMEOUT after 12 s: the transfer did not end at its 2 s deadline (the bound removed)
+TOTAL killed 41 survived 2 edit-miss 0 probe-error 0 of 43
 rc=0

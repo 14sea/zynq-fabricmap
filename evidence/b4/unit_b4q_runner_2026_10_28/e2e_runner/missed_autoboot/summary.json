@@ -1,21 +1,54 @@
 {
  "label": "B4Q-runner-missed_autoboot",
- "wall_s": 4.716,
+ "wall_s": 5.096,
  "stop": {
   "kind": "TransportStop",
   "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
  },
  "opened": false,
+ "phase": "stopped",
  "records": [],
+ "chain_findings": null,
+ "halted": null,
+ "end": null,
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 0,
+  "signreply": 0,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 0,
+ "admission": null,
+ "load_witness": null,
+ "page_witness": {},
+ "source": null,
+ "transport_stops": [
+  {
+   "t": 1793204503.853,
+   "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
+   "kind": "TransportStop"
+  }
+ ],
  "stats_pull": null,
  "tail_unobtainable": null,
+ "phase_at_stop": "init",
+ "go_in_tx": false,
+ "loady_in_tx": false,
  "name": "missed_autoboot",
  "surrogate_args": [
   "--fault=missed-autoboot"
  ],
- "verify_rc": null,
- "verify_agree": null,
- "verify_session": null,
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
  "verify_limitations": null,
  "expect": {
   "stop_prefix": "no U-Boot prompt: a boot banner was seen",

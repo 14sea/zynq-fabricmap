@@ -2,24 +2,24 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-a5",
- "generated_utc": "2026-10-28T12:34:36Z",
+ "generated_utc": "2026-10-28T16:19:31Z",
  "emulated": true,
  "standing": "the records built from the PS's OWN evidence log (b4q_ring, pulled through the console, held to the board's digest): the carrier-window events, the DMA tuples, the staged words and the frames the PS read back are what the executing side did and received; a device effect (a frame store, a bus response beyond the PS's own abort flag) is not witnessed; the MMIO was answered by an emulation on this host \u2014 not silicon, not a physical link",
  "source": {
   "kind": "ps-evidence-log-v1",
   "raw": "raw/evidence_log.bin",
   "bytes": 140864,
-  "sha256": "de5f412faa6a548142ab40416d9f5b869e8a372d4d4354ab770752b8c53c96e5",
+  "sha256": "d135f4f98e8f0c83d75592c18f400be2410380736dbe1ccd20b4689a4fce6618",
   "records": 8804,
   "board": {
    "used": 140864,
    "capacity": 16777216,
    "overflow": 0,
-   "sha256": "de5f412faa6a548142ab40416d9f5b869e8a372d4d4354ab770752b8c53c96e5"
+   "sha256": "d135f4f98e8f0c83d75592c18f400be2410380736dbe1ccd20b4689a4fce6618"
   },
   "digest_equal": true,
   "end_log": 140864,
-  "end_log_sha256": "de5f412faa6a548142ab40416d9f5b869e8a372d4d4354ab770752b8c53c96e5",
+  "end_log_sha256": "d135f4f98e8f0c83d75592c18f400be2410380736dbe1ccd20b4689a4fce6618",
   "tail_unobtainable": null,
   "adapter": "host/b4q_evidence_log.py",
   "adapter_sha256": "03dbc58ed924f48b7cff6cf314d2c24479e31c6ee18ff99b09f9c028efaa3255",
@@ -479,14 +479,14 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v2",
-  "token": "cb125638ac1662285f6a1eafa049e90e",
+  "token": "ab35e653ca4096adde134c151fa415bb",
   "page_words": [
    "42345149",
    "00000001",
-   "cb125638",
-   "ac166228",
-   "5f6a1eaf",
-   "a049e90e",
+   "ab35e653",
+   "ca4096ad",
+   "de134c15",
+   "1fa415bb",
    "6553f100",
    "07d5555f",
    "4e406f12",
@@ -504,7 +504,7 @@
    "00000000",
    "00000000",
    "00000000",
-   "36420617"
+   "0ea7ecf6"
   ],
   "page_flags": 2,
   "knobs": {
@@ -551,11 +551,11 @@
    "log": 140864,
    "log_overflow": 0,
    "log_records": 8804,
-   "log_sha256": "de5f412faa6a548142ab40416d9f5b869e8a372d4d4354ab770752b8c53c96e5"
+   "log_sha256": "d135f4f98e8f0c83d75592c18f400be2410380736dbe1ccd20b4689a4fce6618"
   },
   "ident": {
    "protocol": "b4q-v2",
-   "token": "cb125638ac1662285f6a1eafa049e90e",
+   "token": "ab35e653ca4096adde134c151fa415bb",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 131421535,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -591,8 +591,8 @@
      "used": 6816,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "6d115d7d41b3c4048f8f9357292d4f5d322875e94d9d286a6eb54b08f1f10724",
-     "pulled_sha256": "6d115d7d41b3c4048f8f9357292d4f5d322875e94d9d286a6eb54b08f1f10724",
+     "sha256": "e47d545e05d5354f793bb9124831060dc8c80737816e24801cc74fe257947dea",
+     "pulled_sha256": "e47d545e05d5354f793bb9124831060dc8c80737816e24801cc74fe257947dea",
      "digest_equal": true,
      "upto": 6816
     },
@@ -600,8 +600,8 @@
      "used": 35104,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "cf66fadd59390d2babfe12fefd1eca15732f1a8bf2819b6fcb485b6618ea2e68",
-     "pulled_sha256": "cf66fadd59390d2babfe12fefd1eca15732f1a8bf2819b6fcb485b6618ea2e68",
+     "sha256": "74f0878e3a21eca674a00076758a9f7f1ff8d75f9e395428f9e03510dfb30964",
+     "pulled_sha256": "74f0878e3a21eca674a00076758a9f7f1ff8d75f9e395428f9e03510dfb30964",
      "digest_equal": true,
      "upto": 35104
     },
@@ -609,8 +609,8 @@
      "used": 64416,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "10ef5da5eb8933ededec5cef76346c05673ffa306deb4ca9cde030356508d0b0",
-     "pulled_sha256": "10ef5da5eb8933ededec5cef76346c05673ffa306deb4ca9cde030356508d0b0",
+     "sha256": "0c11d325ae63b4a1e71c6694bd65bb62dee0c9ffaf0ba9160e1a853c5d245b95",
+     "pulled_sha256": "0c11d325ae63b4a1e71c6694bd65bb62dee0c9ffaf0ba9160e1a853c5d245b95",
      "digest_equal": true,
      "upto": 64416
     },
@@ -618,8 +618,8 @@
      "used": 82256,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "6e43f97baf01297c42ef729382552b4f41751895d479956d5b11806d9afc81b0",
-     "pulled_sha256": "6e43f97baf01297c42ef729382552b4f41751895d479956d5b11806d9afc81b0",
+     "sha256": "bbd6d6b68e0aa1f65be2370ad4692fa0ddfee4400d9a2c15a41cebd01f77c694",
+     "pulled_sha256": "bbd6d6b68e0aa1f65be2370ad4692fa0ddfee4400d9a2c15a41cebd01f77c694",
      "digest_equal": true,
      "upto": 82256
     },
@@ -627,8 +627,8 @@
      "used": 111568,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "a4815fade3c91498522bc6bca392053153a4cabfa4fb692803cd52681a7ee36c",
-     "pulled_sha256": "a4815fade3c91498522bc6bca392053153a4cabfa4fb692803cd52681a7ee36c",
+     "sha256": "ef78ea3bd1475ef2460d03c58229a6f787c45b7883e8fba960adde7d546ee03c",
+     "pulled_sha256": "ef78ea3bd1475ef2460d03c58229a6f787c45b7883e8fba960adde7d546ee03c",
      "digest_equal": true,
      "upto": 111568
     },
@@ -636,8 +636,8 @@
      "used": 140864,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "de5f412faa6a548142ab40416d9f5b869e8a372d4d4354ab770752b8c53c96e5",
-     "pulled_sha256": "de5f412faa6a548142ab40416d9f5b869e8a372d4d4354ab770752b8c53c96e5",
+     "sha256": "d135f4f98e8f0c83d75592c18f400be2410380736dbe1ccd20b4689a4fce6618",
+     "pulled_sha256": "d135f4f98e8f0c83d75592c18f400be2410380736dbe1ccd20b4689a4fce6618",
      "digest_equal": true,
      "upto": 140864
     },
@@ -645,8 +645,8 @@
      "used": 140864,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "de5f412faa6a548142ab40416d9f5b869e8a372d4d4354ab770752b8c53c96e5",
-     "pulled_sha256": "de5f412faa6a548142ab40416d9f5b869e8a372d4d4354ab770752b8c53c96e5",
+     "sha256": "d135f4f98e8f0c83d75592c18f400be2410380736dbe1ccd20b4689a4fce6618",
+     "pulled_sha256": "d135f4f98e8f0c83d75592c18f400be2410380736dbe1ccd20b4689a4fce6618",
      "digest_equal": true,
      "upto": 140864
     }

@@ -1,0 +1,182 @@
+{
+ "schema": "b4q_session",
+ "label": "B4Q-runner-fclk0_mismatch",
+ "records": [],
+ "transport": {
+  "kind": "console-pty-surrogate",
+  "runner": {
+   "schema": "b4q_runner_uboot",
+   "schema_version": 2,
+   "port": "/tmp/b4q-runner-e2e-916123-fclk0_mismatch",
+   "port_real": "/dev/pts/12",
+   "kind": "console-pty-surrogate",
+   "phase": "stopped",
+   "context": {
+    "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "image_path": "/home/test/zynq_fabricmap/build/b4q_image/b4q_app_v2.bin",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "board_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "variant_word": 1110704129,
+    "fclk0_ctrl_expected": 1051136,
+    "load_addr": 33554432,
+    "role": "bringup-rehearsal",
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    }
+   },
+   "image": "build/b4q_image/b4q_app_v2.bin",
+   "image_sha256_file": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "load_addr": 33554432,
+   "stops": [
+    {
+     "t": 1793204414.227,
+     "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00",
+     "kind": "AdmissionStop"
+    }
+   ],
+   "silence_s": 20.0,
+   "admission": {
+    "image": {
+     "file": "build/b4q_image/b4q_app_v2.bin",
+     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+     "equal": true
+    },
+    "board": {
+     "model": "Ebang EBAZ4203 (surrogate)",
+     "dram_mib": 512,
+     "permitted_models": [
+      "Ebang EBAZ4203"
+     ],
+     "dram_min_mib": 512,
+     "fixture": {
+      "profile": "pty-surrogate",
+      "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+     },
+     "model_ok": true,
+     "dram_ok": true
+    },
+    "carrier": {
+     "variant_addr": "0x43c02034",
+     "variant": "42340001",
+     "expected": "42340001",
+     "equal": true
+    },
+    "fclk0": {
+     "addr": "0xf8000170",
+     "ctrl": "00200a00",
+     "expected": "00100a00",
+     "held": true,
+     "equal": false
+    },
+    "ok": false
+   },
+   "load_witness": null,
+   "page_witness": null,
+   "go": null,
+   "uboot_steps": [
+    {
+     "what": "prompt",
+     "t": 1793204413.715,
+     "rx_at": 0,
+     "tx_at": 0,
+     "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
+     "banner_seen": true,
+     "ok": true,
+     "model": "Ebang EBAZ4203 (surrogate)",
+     "dram_mib": 512,
+     "rx_end": 345,
+     "tx_end": 2
+    },
+    {
+     "what": "md.l",
+     "t": 1793204414.222,
+     "rx_at": 345,
+     "tx_at": 2,
+     "sent": "md.l 43c02034 1",
+     "reply": "43c02034: 42340001    ..4B\r\n",
+     "ok": true,
+     "rx_end": 396,
+     "tx_end": 18,
+     "words": [
+      "42340001"
+     ]
+    },
+    {
+     "what": "md.l",
+     "t": 1793204414.225,
+     "rx_at": 396,
+     "tx_at": 18,
+     "sent": "md.l f8000170 1",
+     "reply": "f8000170: 00200a00    .. .\r\n",
+     "ok": true,
+     "rx_end": 447,
+     "tx_end": 34,
+     "words": [
+      "00200a00"
+     ]
+    }
+   ],
+   "raw": {
+    "console_bin_sha256": "0bfa912411c6656c3daed06d3a47172ebfaedeece134a4131ad93898731b96df",
+    "console_bin_bytes": 447,
+    "console_tx_bin_sha256": "e43131c32af55866ea3f26c3259959833be0c04feaae8190b2ef02b24d41b99f",
+    "console_tx_bin_bytes": 34
+   },
+   "break_s": 20.0,
+   "phase_at_stop": "prompt"
+  },
+  "protocol": "b4q-v2",
+  "token": "8f4664aeff19432097a0f56de636c621",
+  "page_words": [],
+  "page_flags": 2,
+  "knobs": {
+   "corrupt_replies": 0,
+   "drop_replies": 0,
+   "bad_page": null,
+   "garbage_before_tx": 0,
+   "watchdog_fail": false,
+   "wrong_token_lines": 0,
+   "stale_reply_first": 0,
+   "seq_gap": 0,
+   "replay_tx": 0
+  },
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "findings": [],
+  "ident": null,
+  "end": null
+ },
+ "emulated": true,
+ "standing": "a runner archive WITHOUT a session: the control plane stopped before the opening (uboot.json names the step)",
+ "instrument": {
+  "variant": "42340001",
+  "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b"
+ },
+ "executing_side": {
+  "binary": "build/b4q_image/b4q_app_v2.bin",
+  "sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b"
+ },
+ "halted": null,
+ "interrupted": null,
+ "no_session": true
+}

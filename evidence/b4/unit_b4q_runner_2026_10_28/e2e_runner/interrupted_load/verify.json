@@ -7,10 +7,64 @@
  },
  "agree": true,
  "refused": null,
- "clean": false,
+ "runner": {
+  "findings": [],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "stopped",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "prompt_seen": true
+   },
+   "variant": "42340001",
+   "fclk0_ctrl": "00200a00",
+   "image": {
+    "complete": false,
+    "blocks": 20,
+    "size": 98324,
+    "bytes": 20480,
+    "cancelled": true
+   }
+  },
+  "stop": {
+   "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20",
+   "demonstrated": true
+  }
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
  "chain": [],
- "control_plane_stop": "loady: the ymodem transfer failed: cancelled by the receiver at block 20",
  "qualification": {
   "findings": []
- }
+ },
+ "control_plane": {
+  "phase": "stopped",
+  "stop": {
+   "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20",
+   "demonstrated": true
+  }
+ },
+ "clean": false
 }

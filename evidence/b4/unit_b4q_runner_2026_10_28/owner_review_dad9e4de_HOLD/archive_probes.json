@@ -1,0 +1,52 @@
+{
+  "baseline": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "control_plane_stop": null,
+    "verifier_error": null
+  },
+  "missing_boot_evidence": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "control_plane_stop": null,
+    "verifier_error": null
+  },
+  "wrong_load_witness": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "control_plane_stop": null,
+    "verifier_error": null
+  },
+  "wrong_page_witness": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "control_plane_stop": null,
+    "verifier_error": null
+  },
+  "fake_control_plane_stop": {
+    "exit": 0,
+    "clean": false,
+    "agree": true,
+    "refused": null,
+    "control_plane_stop": "claimed before go, contradicted by retained raw bytes",
+    "verifier_error": null,
+    "retained_tx_dirs": 4,
+    "raw_has_go": true
+  },
+  "board_kind": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "manifest.transport.kind: a board transport (uart-board) \u2014 outside the claims this verifier version is granted: it verifies host-only archives (a pipe or a PTY to the surrogate); a board archive is not verified as one",
+    "control_plane_stop": null,
+    "verifier_error": null
+  }
+}

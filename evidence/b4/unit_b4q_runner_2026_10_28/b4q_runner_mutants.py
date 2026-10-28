@@ -23,6 +23,7 @@ R = Path(__file__).resolve().parents[3]
 FW = R / "firmware/b4q"
 RING, APP = FW / "target/b4q_ring.c", FW / "target/b4q_app.c"
 ADAPTER, VERIFY, SESSION, RUNNER = R / "host/b4q_evidence_log.py", R / "host/b4q_verify.py", R / "host/b4q_console_session.py", R / "host/b4q_runner.py"
+VRUNNER, YMODEM = R / "host/b4q_verify_runner.py", R / "host/b4q_ymodem.py"
 BUILD = ["make", "-C", str(FW), f"BUILD={R / 'build/b4q_firmware'}", "apphost", "wiretwin", "waittwin", "seqcut"]
 for p in (R / "host", R / "b4/host"):
     if str(p) not in sys.path:
@@ -374,6 +375,237 @@ def probe_runner(name: str, expect_stop: str | None = None, expect_opened: bool 
     return probe
 
 
+# ---------------------------------------------------------------- the repair's guards (the owner's R1–R3 on dad9e4de): the runner, its archive contract, the transport
+def _tests():
+    """The tests' fakes (FakePort, the scripted U-Boot) without the module's heavy setup."""
+    import importlib
+    sys.path.insert(0, str(R / "tests"))
+    T = importlib.import_module("test_b4q_runner")
+    T.setUpModule = lambda: None
+    for mod in ("b4q_runner", "b4q_verify_runner", "b4q_verify", "b4q_ymodem", "b4q_console_session", "b4q_device_fixture"):
+        if mod in sys.modules:
+            importlib.reload(sys.modules[mod])
+    importlib.reload(T)
+    T.setUpModule = lambda: None
+    return T
+
+
+_RUNNER_VALID: dict = {}
+
+
+def valid_runner_archive() -> Path:
+    """One runner `valid` archive produced over the surrogate with the UNMUTATED tree, copied per use."""
+    if "d" not in _RUNNER_VALID:
+        root = fresh("b4q_rbase_")
+        s = runner_e2e(root, "valid")
+        if "valid" not in s or s["valid"].get("expect_failures"):
+            raise RuntimeError(f"no base runner archive: {str(s)[:200]}")
+        _RUNNER_VALID["d"] = root / "valid"
+    d = fresh() / "valid"
+    shutil.copytree(_RUNNER_VALID["d"], d)
+    return d
+
+
+def _runner_edit(d: Path, fn):
+    u = json.loads((d / "uboot.json").read_text()); m = json.loads((d / "manifest.json").read_text())
+    fn(u, m)
+    m["transport"]["runner"] = u
+    (d / "uboot.json").write_text(json.dumps(u, indent=1) + "\n"); (d / "manifest.json").write_text(json.dumps(m, indent=1) + "\n")
+
+
+def probe_runner_archive(mutate, expect: str):
+    def probe(root):
+        import importlib
+        import b4q_verify as vf
+        importlib.reload(sys.modules["b4q_verify_runner"]) if "b4q_verify_runner" in sys.modules else None
+        importlib.reload(vf)
+        d = valid_runner_archive()
+        mutate(d)
+        rep = vf.verify(d)
+        pool = rep.get("session", []) + ([rep["refused"]] if rep.get("refused") else [])
+        if any(expect in x for x in pool):
+            return False, "found by name"
+        return True, f"not found: agree={rep.get('agree')} refused={rep.get('refused')!r} findings={pool[:2]}"
+    probe.__doc__ = f"the mutated runner valid archive is found: '{expect}'"
+    return probe
+
+
+def _m_transfer_flip(d: Path):
+    """One payload byte of the transferred image flipped in the SENT stream (its block CRC-16 and the device's crc line made consistent with
+    the flipped bytes, the witnesses too): only the identity check (the transferred bytes vs the executing-side image) can find it."""
+    import zlib
+    import b4q_verify_runner as vr
+    tx = bytearray((d / "raw/console_tx.bin").read_bytes()); rx = bytearray((d / "raw/console.bin").read_bytes())
+    k = tx.find(bytes([1, 0, 0xFF])); pos = k + 3 + 130
+    assert tx[pos] == 2
+    tx[pos + 3 + 5] ^= 1
+    payload = bytes(tx[pos + 3:pos + 3 + 1024]); tx[pos + 3 + 1024:pos + 3 + 1026] = vr._crc16(payload).to_bytes(2, "big")
+    full, info = vr.ymodem_payload(bytes(tx), k - 20)
+    crc = zlib.crc32(full) & 0xFFFFFFFF
+    m = vr.CRC_RE.search(bytes(rx)); rx[m.start(3):m.end(3)] = f"{crc:08x}".encode()
+    (d / "raw/console_tx.bin").write_bytes(bytes(tx)); (d / "raw/console.bin").write_bytes(bytes(rx))
+    def fix(u, mf):
+        u["raw"].update({"console_bin_sha256": hashlib.sha256(bytes(rx)).hexdigest(), "console_tx_bin_sha256": hashlib.sha256(bytes(tx)).hexdigest()})
+        u["load_witness"].update({"host_crc32": f"{crc:08x}", "uboot_crc32": f"{crc:08x}", "equal": True, "image_sha256": hashlib.sha256(full).hexdigest()})
+        for s in u["uboot_steps"]:
+            if s["what"] == "crc32":
+                s["crc32"] = f"{crc:08x}"
+        u["admission"]["image"]["file_sha256"] = hashlib.sha256(full).hexdigest()
+    _runner_edit(d, fix)
+
+
+def _m_invented_stop(d: Path):
+    (d / "session_open.json").write_text("null\n")
+    import shutil as sh
+    for p in d.glob("tx_*"):
+        sh.rmtree(p)
+    _runner_edit(d, lambda u, m: (m.update({"records": [], "no_session": True}), u.update({"phase": "stopped", "phase_at_stop": "pre-go", "stops": [{"why": "load witness: invented", "kind": "TransportStop"}]})))
+
+
+def _m_crc_range(d: Path):
+    import b4q_verify_runner as vr
+    rx = bytearray((d / "raw/console.bin").read_bytes())
+    m = vr.CRC_RE.search(bytes(rx)); end = int(m.group(2), 16) - 4
+    rx[m.start(2):m.end(2)] = f"{end:08x}".encode()
+    (d / "raw/console.bin").write_bytes(bytes(rx))
+    def fix(u, mf):
+        u["raw"]["console_bin_sha256"] = hashlib.sha256(bytes(rx)).hexdigest()
+        for s in u["uboot_steps"]:
+            if s["what"] == "crc32":
+                s["range"][1] = f"{end:08x}"
+    _runner_edit(d, fix)
+
+
+def _m_console_line(d: Path):
+    lines = (d / "console.jsonl").read_text().splitlines()
+    k = next(i for i, l in enumerate(lines) if json.loads(l).get("type") == "HB")
+    e = json.loads(lines[k]); e["line"] = e["line"][:-8] + "00000000"; lines[k] = json.dumps(e); (d / "console.jsonl").write_text("\n".join(lines) + "\n")
+
+
+def probe_device_downgrade(root):
+    """a PTY archive rewritten into the device format but keeping the surrogate's banner is found by the provenance check"""
+    import importlib
+    import b4q_device_fixture as df
+    import b4q_verify as vf
+    importlib.reload(sys.modules["b4q_verify_runner"]) if "b4q_verify_runner" in sys.modules else None
+    importlib.reload(vf)
+    out = fresh() / "dg"
+    df.make(valid_runner_archive(), out, downgrade="keep-banner")
+    rep = vf.verify(out)
+    if any("surrogate's banner" in x for x in rep.get("session", [])):
+        return False, "found by name"
+    return True, f"not found: agree={rep.get('agree')} findings={rep.get('session', [])[:2]}"
+
+
+def probe_fake(kind: str):
+    """the runner against the tests' scripted U-Boot (no device): the named guard observed directly"""
+    def probe(root):
+        T = _tests()
+        rn = T.rn
+        pin = hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest()
+        if kind == "md_addr":
+            port = T.FakePort(T.scripted_uboot(md_addr_shift=4)); ub = rn.UBoot(port, []); port.write(b"\r"); ub.read_until(rn.PROMPT_RE, 1.0)
+            try:
+                ub.md_l(T.w.PAGE_ADDR, 1); return True, "a line for another address accepted"
+            except rn.TransportStop:
+                return False, "refused by name"
+        if kind == "crc_range":
+            port = T.FakePort(T.scripted_uboot(crc_range=(0x02000000, 0x02000000))); ub = rn.UBoot(port, []); port.write(b"\r"); ub.read_until(rn.PROMPT_RE, 1.0)
+            try:
+                ub.crc32(0x02000000, 100); return True, "a crc for another range accepted"
+            except rn.TransportStop:
+                return False, "refused by name"
+        if kind == "go_tail":
+            port = T.FakePort(T.scripted_uboot()); ub = rn.UBoot(port, []); port.write(b"\r"); ub.read_until(rn.PROMPT_RE, 1.0); ub.go(0x02000000)
+            return (False, "the first application line kept") if bytes(port.buf).startswith(b"B4Q1 IDENT") else (True, f"the application's first line lost: buf={bytes(port.buf)[:40]!r}")
+        if kind in ("pin", "dram", "variant"):
+            if kind == "pin":
+                f = fresh() / "x.bin"; f.write_bytes(b"\x00" * 56)
+                ctx, script = rn.ExecutionContext(image_sha256=pin, image_path=str(f)), T.scripted_uboot()
+            elif kind == "dram":
+                ctx, script = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), board_models=("Ebang EBAZ4205",)), T.scripted_uboot(model=b"Ebang EBAZ4205 (fixture)", dram=256)
+            else:
+                ctx, script = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE)), T.scripted_uboot(variant=0x42340002)
+            port = T.FakePort(script)
+            s = rn.run("fake", fresh() / "run", rn.body_control_plane, context=ctx, port=port)
+            if (s.get("stop") or {}).get("kind") == "AdmissionStop" and b"loady" not in port.tx_log:
+                return False, "refused before any load"
+            return True, f"proceeded: stop={s.get('stop')} loady_sent={b'loady' in port.tx_log}"
+        if kind == "phase_before_go":
+            class P(T.FakePort):
+                def write(self, data):
+                    if data.startswith(b"go "):
+                        self.tx_log += data
+                        raise OSError(5, "Input/output error")
+                    return super().write(data)
+            port = P(T.scripted_uboot())
+            out = fresh() / "run"
+            try:
+                rn.run("fake", out, rn.body_open, context=rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE)), port=port)
+            except OSError:
+                pass
+            u = json.loads((out / "uboot.json").read_text())
+            if u.get("phase_at_stop") == "go-issued":
+                return False, "the phase on disk says go-issued before the command left"
+            return True, f"the phase on disk says {u.get('phase_at_stop')!r} although `go` is in the sent stream"
+        raise RuntimeError(kind)
+    probe.__doc__ = f"the runner against a scripted U-Boot: {kind}"
+    return probe
+
+
+def probe_loady_tail(root):
+    """the ymodem's last ACK coalesced with U-Boot's tail and the prompt: the prompt reader still sees `## Total Size`"""
+    T = _tests()
+    rn, ym = T.rn, T.ym
+    data = os.urandom(3000); state = {"n": 0, "eot": 0}
+
+    def script(chunk):
+        if chunk.startswith(b"loady"):
+            return chunk + b"\r\n## Ready for binary (ymodem) download to 0x02000000 at 115200 bps...\r\nC"
+        if chunk == bytes([ym.EOT]):
+            state["eot"] += 1
+            return bytes([ym.NAK]) if state["eot"] == 1 else bytes([ym.ACK]) + b"C"
+        if chunk[:1] in (bytes([ym.STX]), bytes([ym.SOH])):
+            state["n"] += 1
+            if chunk[1] == 0 and state["n"] > 1:
+                return bytes([ym.ACK]) + b"\r\n## Total Size = 0x00000bb8 = 3000 Bytes\r\nZynq> "
+            return bytes([ym.ACK]) + (b"C" if chunk[1] == 0 else b"")
+        return b""
+    port = T.FakePort(script); ub = rn.UBoot(port, [])
+    try:
+        st = ub.loady(0x02000000, data, "x.bin", timeout=10)
+    except rn.TransportStop as e:
+        return True, f"the tail was lost: {e}"
+    return (False, "the tail reached the prompt reader") if st.get("total") == 3000 else (True, f"total={st.get('total')}")
+
+
+def probe_junk_deadline(root):
+    """a receiver flooding junk (slowly): the transfer ends at its deadline (2 s), not after the retries' worth of junk (a hang observed in a subprocess)"""
+    snippet = f"""import sys, os, time; sys.path[:0] = [{str(R / 'host')!r}, {str(R / 'tests')!r}]
+import test_b4q_runner as T; T.setUpModule = lambda: None
+import b4q_ymodem as ym
+class Slow(T.FakePort):
+    def fill(self, timeout):
+        self.queue.append(b'q' * 50); time.sleep(0.02); return super().fill(timeout)   # junk keeps coming whether or not the sender writes
+port = Slow(lambda chunk: b'')
+port.queue.append(b'C')                        # the receiver asked for the header once: the transfer starts, then only junk comes
+t0 = time.monotonic()
+try:
+    ym.send(port, os.urandom(2048), 'x.bin', timeout=2.0, retries=50)
+except ym.YModemError as e:
+    print('ERR', round(time.monotonic() - t0, 2), e)
+"""
+    try:
+        p = subprocess.run([sys.executable, "-B", "-c", snippet], capture_output=True, text=True, timeout=12)
+    except subprocess.TimeoutExpired:
+        return True, "TIMEOUT after 12 s: the transfer did not end at its 2 s deadline (the bound removed)"
+    out = p.stdout.strip()
+    if out.startswith("ERR"):
+        secs = float(out.split()[1])
+        return (False, f"ended at {secs} s (the deadline)") if secs < 5 else (True, f"ended only after {secs} s")
+    return True, f"no error raised: {out[-120:] or p.stderr[-120:]}"
+
+
 MUTANTS = [
     # the evidence log (firmware)
     ("R1", RING, '''            r->last_count++;
@@ -413,10 +645,8 @@ MUTANTS = [
         F.append("trace.jsonl is not the adapter's derivation of the raw log")''', '''    pass''', "trace.jsonl no longer held to the derivation", probe_archive(_m_trace, "derivation")),
     ("V2", VERIFY, '''        if hashlib.sha256(raw).hexdigest() != source["sha256"] or len(raw) != source["bytes"]:
             raise ArchiveRefusal("raw/evidence_log.bin: not the bytes the manifest's source declares (digest / length)")''', '''        pass''', "a raw log that is not the declared bytes accepted", probe_archive(_m_raw_flip, "not the bytes the manifest's source declares", refused=True)),
-    ("V3", VERIFY, '''        if tr["kind"] == "uart-board":
-            raise ArchiveRefusal("manifest.transport.kind: a board transport (uart-board) — outside the claims this verifier version is granted: it verifies host-only archives (a pipe or a PTY to the surrogate); a board archive is not verified as one")
-        _need(tr["kind"] in ("console-emulated", "console-pty-surrogate"), f"manifest.transport.kind: {tr['kind']!r} is not a transport this verifier knows")''',
-     '''        _need(tr["kind"] in ("console-emulated", "console-pty-surrogate", "uart-board"), f"manifest.transport.kind: {tr['kind']!r} is not a transport this verifier knows")''', "a board archive verified as a host-only one", probe_archive(_m_manifest(lambda mf: mf["transport"].update({"kind": "uart-board"})), "uart-board", refused=True)),
+    ("V3", VRUNNER, '''        if SURROGATE_MARK in rx:
+            F.append("provenance: a device-format archive whose received stream carries the surrogate's banner (an emulator-only witness: a downgraded fixture, not a device)")''', '''        pass''', "a device-format archive whose stream carries the surrogate's banner no longer found (a PTY fixture passes as the device format)", probe_device_downgrade),
     ("V4", VERIFY, '''        if last["used"] != len(raw) or last["sha256"] != digest:''', '''        if False:''', "the raw log no longer held to the board's last RING", probe_archive(_m_raw_flip_declared, "last RING reported")),
     ("V5", VERIFY, '''        if e.get("i") != i or (e.get("pcap_n") is not None and e["pcap_n"] != p):
             bad += 1''', '''        pass''', "the console positions no longer held to the board's log offsets", probe_archive(_m_console_i, "position is not the board's log offset")),
@@ -434,11 +664,11 @@ MUTANTS = [
     ("N2", RUNNER, '''        if back != words:
             raise TransportStop("page witness: the page read back with md.l is not the one written with mw.l (not run)")''', '''        pass''', "a page witness mismatch no longer stops before go", probe_runner("page_witness_fails", expect_stop="page witness:", expect_opened=False)),
     ("N3", RUNNER, '''        if BANNER_LINE_RE.match(head):''', '''        if False:''', "a boot banner mid-session no longer named as the cut", probe_runner("reset_mid_session")),
-    ("N4", RUNNER, '''            chunk = self.port.read(self.silence_s)
-            if not chunk:
-                self._stop_transport(f"the console was silent for {self.silence_s} s while awaiting {getattr(self, '_awaiting', '?')}")''', '''            chunk = b""
-            while not chunk:
-                chunk = self.port.read(self.silence_s)''', "the silence bound removed (the host waits forever)", probe_runner("silence_mid_session", timeout=90)),
+    ("N4", RUNNER, '''            left = deadline - time.monotonic()
+            if left <= 0:
+                self._stop_transport(f"the console was silent for {self.silence_s} s while awaiting {getattr(self, '_awaiting', '?')}")''', '''            left = deadline - time.monotonic()
+            if False:
+                self._stop_transport(f"the console was silent for {self.silence_s} s while awaiting {getattr(self, '_awaiting', '?')}")''', "the silence bound removed (the host waits forever)", probe_runner("silence_mid_session", timeout=90)),
     # the session's pull (host)
     ("S1", SESSION, '''                self.pull_stats["bad_chunks"] += 1
                 if self.pull_stats["bad_chunks"] > 8:
@@ -447,6 +677,52 @@ MUTANTS = [
             data = base64.urlsafe_b64decode(parts[2])''', '''                self.pull_stats["bad_chunks"] += 1
                 continue
             data = base64.urlsafe_b64decode(parts[2])''', "the bad-chunk bound on a wrong-offset CHUNK removed (re-asked forever)", None),   # COMBINED with A3 below; the bound on an unparsable CHUNK line is a sibling guard exercised once by the runner's corrupt_chunk scenario, not mutated here
+    # the runner archive contract (R1)
+    ("V9", VRUNNER, '''            if image_sha != manifest["instrument"]["image_sha256"]:
+                F.append("load: the transferred bytes are not the archive's executing-side image (instrument.image_sha256)")''', '''            pass''', "the transferred bytes no longer held to the executing-side image", probe_runner_archive(_m_transfer_flip, "transferred bytes are not the archive's executing-side image")),
+    ("V10", VRUNNER, '''            if go_cmds or starting is not None:
+                F.append("no session: the streams show `go` / the application's start — not a control-plane-only archive")''', '''            pass''', "an invented pre-go stop no longer refuted by the `go` in the streams", probe_runner_archive(_m_invented_stop, "streams show `go`")),
+    ("V11", VRUNNER, '''                if (start, end) != (addr, addr + len(payload) - 1):
+                    F.append(f"load: the device's crc32 is over {start:08x}..{end:08x}, not the loaded range {addr:08x}..{addr + len(payload) - 1:08x}")''', '''                pass''', "the device's crc32 no longer held to exactly the loaded range", probe_runner_archive(_m_crc_range, "not the loaded range")),
+    ("V12", VRUNNER, '''            if k < 0:
+                F.append(f"console linkage: board line {e.get('i')} ({e['line'][:30]}…) is not in the received stream after `go` in order"); break''', '''            if k < 0:
+                break''', "a retained console line no longer held to the received stream", probe_runner_archive(_m_console_line, "console linkage")),
+    # the transport (R2)
+    ("P1", RUNNER, '''                out = bytes(self.port.buf[:end])
+                del self.port.buf[:end]''', '''                out = bytes(self.port.buf[:end])
+                del self.port.buf[:]''', "a reader consumes the whole buffer past its boundary (the next phase's first bytes lost)", probe_fake("go_tail")),
+    ("P2", YMODEM, '''        if not port.buf:
+            port.fill(timeout)
+        if not port.buf:
+            return None
+        b = port.buf[0]
+        del port.buf[:1]
+        return b''', '''        q = getattr(port, "_ym_buf", b"")
+        if not q:
+            if not port.buf:
+                port.fill(timeout)
+            q = bytes(port.buf); del port.buf[:]
+        if not q:
+            return None
+        port._ym_buf = q[1:]
+        return q[0]''', "the ymodem keeps bytes beyond the transfer in a private queue (U-Boot's tail lost to the prompt reader)", probe_loady_tail),
+    ("Y1", YMODEM, '''                clock.check(f"awaiting the ACK of {what}")''', '''                pass''', "the inner ACK loop's own deadline check removed — EXPECTED TO SURVIVE alone: the per-read clock bound (_read_byte) and the junk limit are sibling guards that still end the loop; Y1+Y2 is the kill", probe_junk_deadline),
+    ("Y3", YMODEM, '''    if clock is not None:
+        timeout = min(timeout, max(0.0, clock.left()))''', '''    pass''', "the per-read clock bound removed (a member of Y1+Y2+Y3 only)", None),
+    ("Y2", YMODEM, '''                if junk >= junk_limit:
+                    stats["retries"] += 1
+                    break''', '''                pass''', "the junk limit per block removed — EXPECTED TO SURVIVE alone: the deadline (the clock on every read) still ends the transfer; Y1+Y2 is the kill", probe_junk_deadline),
+    ("N5", RUNNER, '''                if a != addr + 4 * len(words):''', '''                if False:''', "md.l no longer held to the asked address", probe_fake("md_addr")),
+    ("N6", RUNNER, '''        if (start, end) != (addr, addr + length - 1):''', '''        if False:''', "crc32 no longer held to the asked range", probe_fake("crc_range")),
+    # the admission (R3)
+    ("N7", RUNNER, '''        if not adm["image"]["equal"]:''', '''        if False:''', "a file that is not the pinned image loaded anyway", probe_fake("pin")),
+    ("N8", RUNNER, '''        if not adm["board"]["dram_ok"]:''', '''        if False:''', "a board whose DRAM cannot hold the map admitted", probe_fake("dram")),
+    ("N9", RUNNER, '''        if v != c.variant_word:''', '''        if False:''', "another carrier's variant word admitted", probe_fake("variant")),
+    ("N10", RUNNER, '''        self._set_phase("go-issued")                                          # written before the command leaves this host
+        self.runner["go"]["issued"] = True
+        self.uboot.go(self.context.load_addr)''', '''        self.runner["go"]["issued"] = True
+        self.uboot.go(self.context.load_addr)
+        self._set_phase("go-issued")''', "the execution phase persisted only after `go` returns (a failed command leaves a pre-go record with `go` in the stream)", probe_fake("phase_before_go")),
     ("S2", SESSION, '''        elif info["overflow"]:
             self.halt("the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed")   # named; the application NACKs the next TX too''', '''        pass''', "the host no longer halts on the board's overflow flag", probe_runner("log_overflow")),
 ]
@@ -462,6 +738,7 @@ def probe_open_hangs(root):
 
 COMBINED = [
     ("A3+S1", [("A3", APP), ("S1", SESSION)], "every CHUNK claims offset 0 AND the host's bad-chunk bound is removed: the pull re-asks forever (the bound IS the guard; observed as a hang)", probe_open_hangs),
+    ("Y1+Y2+Y3", [("Y1", YMODEM), ("Y2", YMODEM), ("Y3", YMODEM)], "the inner deadline check, the junk limit AND the per-read clock bound removed: a junk-flooding receiver holds the transfer forever (observed as a hang in a subprocess)", probe_junk_deadline),
 ]
 
 

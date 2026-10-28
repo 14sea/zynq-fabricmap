@@ -1,11 +1,12 @@
 {
  "label": "B4Q-runner-log_overflow",
- "wall_s": 6.073,
+ "wall_s": 2.902,
  "stop": {
   "kind": "SessionRefusal",
   "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling"
  },
  "opened": true,
+ "phase": "ended",
  "records": [
   {
    "seq": 1,
@@ -54,7 +55,7 @@
   "log": 16384,
   "log_overflow": 1,
   "log_records": 1024,
-  "log_sha256": "0b008bbb3d0e3df9e049c32f613974fa9ce67656ce8863c9f17c18c803dd5e2a"
+  "log_sha256": "0559d5fd87f55be50bee94da5601d2f5190bc43093ee85c48388de9f3d2f5b0e"
  },
  "stats": {
   "hb": 0,
@@ -71,16 +72,59 @@
   "replayed": 0
  },
  "console_lines": 65,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true
+  },
+  "board": {
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": true
+  },
+  "carrier": {
+   "variant_addr": "0x43c02034",
+   "variant": "42340001",
+   "expected": "42340001",
+   "equal": true
+  },
+  "fclk0": {
+   "addr": "0xf8000170",
+   "ctrl": "00200a00",
+   "expected": null,
+   "held": false,
+   "equal": null
+  },
+  "ok": true
+ },
  "load_witness": {
   "host_crc32": "f5d2dd33",
   "uboot_crc32": "f5d2dd33",
   "equal": true,
   "bytes": 98324,
+  "range": [
+   "02000000",
+   "02018013"
+  ],
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
   "ymodem": {
    "blocks": 97,
    "retries": 0,
    "naks": 0,
-   "seconds": 3.211
+   "junk": 33,
+   "seconds": 0.223
   }
  },
  "page_witness": {
@@ -94,7 +138,7 @@
  },
  "transport_stops": [
   {
-   "t": 1793191096.673,
+   "t": 1793204533.333,
    "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling",
    "kind": "SessionRefusal"
   }
@@ -105,6 +149,9 @@
   "bad_chunks": 0
  },
  "tail_unobtainable": null,
+ "phase_at_stop": null,
+ "go_in_tx": true,
+ "loady_in_tx": true,
  "name": "log_overflow",
  "surrogate_args": [
   "--fault=ring-bytes=16384"

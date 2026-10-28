@@ -1,0 +1,26 @@
+{
+  "coalesced_go": {
+    "following_read": "",
+    "ident_in_go_reply": true
+  },
+  "coalesced_ymodem_tail": {
+    "ordinary_next_read": "",
+    "stranded_private_buffer": "## Total Size = 0x1\r\nZynq> "
+  },
+  "wrong_md_address": {
+    "requested": "10440000",
+    "returned": "deadbeef",
+    "accepted_words": [
+      305419896
+    ]
+  },
+  "wrong_crc_range": {
+    "accepted_crc": "0x12345678"
+  },
+  "junk_vs_overall_timeout": {
+    "declared_timeout": 5,
+    "clock_elapsed": 305,
+    "reads": 101,
+    "outcome": "ProbeCap: local probe cap after 100 reads"
+  }
+}

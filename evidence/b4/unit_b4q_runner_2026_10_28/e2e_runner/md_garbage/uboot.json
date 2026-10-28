@@ -1,68 +1,100 @@
 {
- "port": "/tmp/b4q-runner-e2e-887024-md_garbage",
- "port_real": "/dev/pts/8",
+ "schema": "b4q_runner_uboot",
+ "schema_version": 2,
+ "port": "/tmp/b4q-runner-e2e-916123-md_garbage",
+ "port_real": "/dev/pts/12",
  "kind": "console-pty-surrogate",
+ "phase": "stopped",
+ "context": {
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+  "image_path": "/home/test/zynq_fabricmap/build/b4q_image/b4q_app_v2.bin",
+  "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+  "board_models": [
+   "Ebang EBAZ4203"
+  ],
+  "dram_min_mib": 512,
+  "variant_word": 1110704129,
+  "fclk0_ctrl_expected": null,
+  "load_addr": 33554432,
+  "role": "bringup-rehearsal",
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  }
+ },
  "image": "build/b4q_image/b4q_app_v2.bin",
- "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+ "image_sha256_file": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
  "load_addr": 33554432,
  "stops": [
   {
-   "t": 1793191041.804,
-   "why": "md.l 0x43c0202c 1: 0 words parsed, not 1",
+   "t": 1793204495.031,
+   "why": "md.l 0x43c02034 1: 0 words parsed, not 1",
    "kind": "TransportStop"
   }
  ],
  "silence_s": 20.0,
- "load_witness": {
-  "host_crc32": "f5d2dd33",
-  "uboot_crc32": "f5d2dd33",
-  "equal": true,
-  "bytes": 98324,
-  "ymodem": {
-   "blocks": 97,
-   "retries": 0,
-   "naks": 0,
-   "seconds": 3.198
-  }
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true
+  },
+  "board": {
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": true
+  },
+  "carrier": null,
+  "fclk0": null,
+  "ok": false
  },
+ "load_witness": null,
+ "page_witness": null,
+ "go": null,
  "uboot_steps": [
   {
    "what": "prompt",
-   "t": 1793191037.84,
-   "reply": "\r\n\r\nU-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\nNAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nzynq-uboot> ",
+   "t": 1793204494.523,
+   "rx_at": 0,
+   "tx_at": 0,
+   "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
    "banner_seen": true,
-   "ok": true
-  },
-  {
-   "what": "loady",
-   "t": 1793191038.587,
-   "sent": "loady 02000000",
-   "bytes": 98324,
-   "ymodem": {
-    "blocks": 97,
-    "retries": 0,
-    "naks": 0,
-    "seconds": 3.198
-   },
-   "reply": "xyzModem - CRC mode, 0(SOH)/97(STX)/0(CAN) packets, 0 retries\r\n## Total Size = 0x00018014 = 98324 Bytes\r\nzynq-uboot> ",
-   "total": 98324,
-   "ok": true
-  },
-  {
-   "what": "crc32",
-   "t": 1793191041.787,
-   "sent": "crc32 02000000 18014",
-   "reply": "crc32 for 02000000 ... 02018013 ==> f5d2dd33\r\n",
    "ok": true,
-   "crc32": "f5d2dd33"
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "rx_end": 345,
+   "tx_end": 2
   },
   {
    "what": "md.l",
-   "t": 1793191041.802,
-   "sent": "md.l 43c0202c 1",
+   "t": 1793204495.029,
+   "rx_at": 345,
+   "tx_at": 2,
+   "sent": "md.l 43c02034 1",
    "reply": "md.l: garbage\r\n",
    "ok": true,
+   "rx_end": 383,
+   "tx_end": 18,
    "words": []
   }
- ]
+ ],
+ "raw": {
+  "console_bin_sha256": "1277bb2627186a9f20218dba8bdfab98079cb4de1dc3821749e7081d365601b8",
+  "console_bin_bytes": 383,
+  "console_tx_bin_sha256": "81aace0bd71d42a3416d939e51337f55696aeca03903aef9eb829f1780cc3e00",
+  "console_tx_bin_bytes": 18
+ },
+ "break_s": 20.0,
+ "phase_at_stop": "prompt"
 }
