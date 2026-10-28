@@ -60,6 +60,9 @@ IMAGE = R / "build/b4q_image/b4q_app_v2.bin"
 PIN_FILE = R / "evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json"          # the pin of record: the build evidence's image sha256, independent of the file selected
 LOAD_ADDR = 0x02000000
 SLCR_FPGA0_CLK_CTRL = 0xF8000170
+SLCR_ARM_PLL_CTRL, SLCR_DDR_PLL_CTRL, SLCR_IO_PLL_CTRL = 0xF8000100, 0xF8000104, 0xF8000108
+PS_CLK_MHZ = 33.333333                                                                   # the EBAZ boards' PS_CLK crystal
+ROLES_CONTENT = ("verify", "sacrificial")                                               # docs/board_roles.md: content-class work needs one of these; no role = reference = refused
 VARIANT_ADDR = bk.AXI_BASE + rm.VARIANT                                                # 0x43C02034 (the owner's R5: not the window base)
 PROMPT_RE = re.compile(rb"(?:zynq-uboot|Zynq)> \Z")                                     # the prompt WITH its trailing space, at the very end (board_transport_soak)
 BOOT_BANNER_RE = re.compile(rb"^(?:U-Boot SPL|U-Boot \d|Trying to boot from|Model: Ebang)", re.M)
@@ -86,6 +89,24 @@ class AdmissionStop(TransportStop):
     carrier is not the pinned one."""
 
 
+class PersistStop(TransportStop):
+    """The evidence could not be persisted: a fail-closed barrier — nothing guarded (a load, a page write, `go`) proceeds after it."""
+
+
+def fclk0_from_words(fpga0_ctrl: int, pll_ctrl: dict, ps_clk_mhz: float = PS_CLK_MHZ) -> dict:
+    """The FCLK0 rate derived from PS-accessible SLCR words (Zynq-7000 TRM 25.10): SRCSEL (bits 5:4) picks IO PLL (0b0x), ARM PLL
+    (0b10) or DDR PLL (0b11); FCLK0 = PS_CLK × PLL_FDIV (bits 18:12 of that PLL's CTRL) / (DIVISOR0 (13:8) × DIVISOR1 (25:20)); a PLL
+    in reset (bit 0) or forced bypass (bit 4) gives no usable clock. `pll_ctrl`: {"io": word, "arm": word, "ddr": word}."""
+    srcsel = (fpga0_ctrl >> 4) & 3
+    name = {0: "io", 1: "io", 2: "arm", 3: "ddr"}[srcsel]
+    ctrl = pll_ctrl[name]
+    fdiv = (ctrl >> 12) & 0x7F
+    div0, div1 = (fpga0_ctrl >> 8) & 0x3F, (fpga0_ctrl >> 20) & 0x3F
+    reset, bypass = bool(ctrl & 1), bool(ctrl & 0x10)
+    mhz = (ps_clk_mhz * fdiv / (div0 * div1)) if (div0 and div1 and not reset and not bypass) else None
+    return {"srcsel": srcsel, "pll": name, "pll_ctrl": f"{ctrl:08x}", "fdiv": fdiv, "div0": div0, "div1": div1, "pll_reset": reset, "pll_bypass": bypass, "mhz": (round(mhz, 3) if mhz else None)}
+
+
 # ---------------------------------------------------------------- the execution context (R3)
 @dataclass
 class ExecutionContext:
@@ -101,7 +122,11 @@ class ExecutionContext:
     variant_word: int = rm.VARIANT_WORD
     fclk0_ctrl_expected: int | None = None         # None: recorded, not held (the bring-up's M3 pins it); an int: held equal
     load_addr: int = LOAD_ADDR
-    role: str = "bringup-rehearsal"
+    purpose: str = "bringup-rehearsal"             # what this run is for (a label, never an interlock)
+    expected_boardid: str | None = None            # the board's own `boardid` (its saved U-Boot environment, docs/board_roles.md); None = not pinned → refused
+    allowed_roles: tuple = ROLES_CONTENT           # the board's own `role` must be one of these (content-class work); no role = reference = refused
+    fclk0_mhz: float | None = 50.0                 # the FCLK0 rate the P4 prerequisites pin, derived from PS-accessible words BEFORE any PL read; None: recorded, not held
+    ps_clk_mhz: float = PS_CLK_MHZ
     fixture: dict | None = None                    # {"profile": ..., "note": ...} when the endpoint is a PTY (set by the runner from the port kind)
 
     @staticmethod
@@ -128,6 +153,7 @@ class Port:
         self.real = os.path.realpath(path)
         self.kind = "console-pty-surrogate" if self.real.startswith("/dev/pts/") else "uart-board"
         self.rx_log, self.tx_log = bytearray(), bytearray()
+        self.incomplete_writes = []                 # {"attempted", "accepted", "head"}: a write the OS did not take whole — the intent, apart from the bytes committed to tx_log
         self.buf = bytearray()
         self.closed = False
         self.fd = os.open(self.real, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
@@ -179,19 +205,27 @@ class Port:
         self.buf[0:0] = data
 
     def write(self, data: bytes):
+        """The bytes committed to `tx_log` are exactly those the OS accepted (per os.write return); a write that ends short is recorded
+        in `incomplete_writes` as intent, then raised. Acceptance by the local OS still does not prove the device received them."""
         if self.closed:
             raise TransportStop("the port is closed")
-        self.tx_log += data
         off = 0
         deadline = time.monotonic() + 5.0
-        while off < len(data):
-            _, w, _ = select.select([], [self.fd], [], max(0.0, deadline - time.monotonic()))
-            if not w:
-                raise TransportStop(f"the port did not accept bytes for 5 s ({off} of {len(data)} sent)")
-            try:
-                off += os.write(self.fd, data[off:])
-            except BlockingIOError:
-                continue
+        try:
+            while off < len(data):
+                _, w, _ = select.select([], [self.fd], [], max(0.0, deadline - time.monotonic()))
+                if not w:
+                    raise TransportStop(f"the port did not accept bytes for 5 s ({off} of {len(data)} sent)")
+                try:
+                    n = os.write(self.fd, data[off:])
+                except BlockingIOError:
+                    continue
+                self.tx_log += data[off:off + n]
+                off += n
+        except BaseException:
+            if off < len(data):
+                self.incomplete_writes.append({"attempted": len(data), "accepted": off, "head": data[:40].decode("utf-8", "replace"), "at": len(self.tx_log) - off})   # `at`: where the accepted prefix starts in tx_log
+            raise
 
     def close(self):
         if self.closed:
@@ -310,6 +344,14 @@ class UBoot:
             raise TransportStop(f"crc32: the reply is for {start:#010x}..{end:#010x}, not the asked {addr:#010x}..{addr + length - 1:#010x}")
         return v
 
+    def printenv(self, name: str) -> str | None:
+        """`printenv <name>`: the value (`name=value`), or None when U-Boot says it is not defined."""
+        body = self.cmd(f"printenv {name}", what="printenv")
+        m = re.search(rb"^" + name.encode("ascii") + rb"=([^\r\n]*)", body, re.M)
+        v = m.group(1).decode("utf-8", "replace").strip() if m else None
+        self.steps[-1]["value"] = v
+        return v
+
     def bdinfo(self) -> dict:
         body = self.cmd("bdinfo", timeout=5, what="bdinfo")
         sizes = [int(x, 16) for x in BDINFO_SIZE_RE.findall(body)]
@@ -378,7 +420,9 @@ class RunnerSession(cs.ConsoleSession):
         uboot.on_step = self.persist
         self._cut = False
         self.page_nonce = None
-        self.persist()
+        self.persist_failed = None
+        self.image_bytes = None                                               # the admitted image's bytes, held from the admission's hash to the transfer (never re-read from the file)
+        self.persist(required=True)
 
     @staticmethod
     def _rel(p: Path) -> str:
@@ -387,19 +431,35 @@ class RunnerSession(cs.ConsoleSession):
     def _set_phase(self, phase: str):
         assert phase in PHASES
         self.phase = phase; self.runner["phase"] = phase
-        self.persist()
+        self.persist(required=True)
 
-    def persist(self):
-        """uboot.json and the raw streams, written now — after every step, before `go`, on every stop: the prefix is never lost."""
+    def persist(self, required: bool = False) -> bool:
+        """uboot.json and the raw streams, written now — after every step, before `go`, on every stop: the prefix is never lost. A
+        failure latches `persist_failed`; with `required` it is a PersistStop: nothing guarded (a load, a page write, `go`) proceeds after
+        it (a fail-closed publication barrier). What can still be written is written (best effort), nothing is promised beyond it."""
+        self.runner["raw"] = {"console_bin_sha256": hashlib.sha256(bytes(self.port.rx_log)).hexdigest(), "console_bin_bytes": len(self.port.rx_log),
+                              "console_tx_bin_sha256": hashlib.sha256(bytes(self.port.tx_log)).hexdigest(), "console_tx_bin_bytes": len(self.port.tx_log),
+                              "incomplete_writes": list(self.port.incomplete_writes)}
         try:
             (self.out / "raw").mkdir(parents=True, exist_ok=True)
             (self.out / "raw/console.bin").write_bytes(bytes(self.port.rx_log))
             (self.out / "raw/console_tx.bin").write_bytes(bytes(self.port.tx_log))
-            self.runner["raw"] = {"console_bin_sha256": hashlib.sha256(bytes(self.port.rx_log)).hexdigest(), "console_bin_bytes": len(self.port.rx_log),
-                                  "console_tx_bin_sha256": hashlib.sha256(bytes(self.port.tx_log)).hexdigest(), "console_tx_bin_bytes": len(self.port.tx_log)}
             (self.out / "uboot.json").write_text(json.dumps(self.runner, indent=1, default=str) + "\n")
+            return True
         except OSError as e:
-            self.runner["stops"].append({"t": round(time.time(), 3), "why": f"persist: {e}", "kind": "OSError"})
+            why = f"persistence failed: {type(e).__name__}: {e}"
+            if self.persist_failed is None:
+                self.persist_failed = why
+                self.runner["stops"].append({"t": round(time.time(), 3), "why": why, "kind": "PersistStop"})
+            if required:
+                raise PersistStop(why)
+            return False
+
+    def _guard(self, what: str):
+        """Before anything guarded: the evidence so far must be on disk, or nothing proceeds."""
+        if self.persist_failed is not None:
+            raise PersistStop(f"{what} refused: {self.persist_failed}")
+        self.persist(required=True)
 
     def _transport_alive(self) -> bool:
         return not self._cut and not self.port.closed
@@ -409,48 +469,76 @@ class RunnerSession(cs.ConsoleSession):
         """R3: the file is the pinned image; the board is a permitted target with enough DRAM; the carrier is the pinned one (VARIANT at
         0x43C02034, read BEFORE any other PL access); FPGA0_CLK_CTRL recorded (held when the context expects a value). Refused by name."""
         c = self.context
-        adm = {"image": None, "board": None, "carrier": None, "fclk0": None, "ok": False}
+        adm = {"image": None, "board": None, "identity": None, "clock": None, "carrier": None, "ok": False}
         self.runner["admission"] = adm
-        file_sha = self.instrument["image_sha256"]
-        adm["image"] = {"file": self._rel(Path(c.image_path)), "file_sha256": file_sha, "pin": c.image_sha256, "pin_source": c.pin_source, "equal": file_sha == c.image_sha256}
-        self.persist()
+        # 1. the image: the bytes read ONCE, hashed, held for the transfer (a later change of the file changes nothing here)
+        data = Path(c.image_path).read_bytes()
+        file_sha = hashlib.sha256(data).hexdigest()
+        adm["image"] = {"file": self._rel(Path(c.image_path)), "file_sha256": file_sha, "pin": c.image_sha256, "pin_source": c.pin_source, "equal": file_sha == c.image_sha256, "bytes": len(data)}
+        self._guard("the admission")
         if not adm["image"]["equal"]:
             raise AdmissionStop(f"image: the selected file's sha256 {file_sha[:12]}… is not the pinned image's {c.image_sha256[:12]}… ({c.pin_source}): not loaded")
+        self.image_bytes = data
+        # 2. the board class: the banner's model and DRAM
         prompt = next((s for s in self.uboot.steps if s["what"] == "prompt"), {})
         model, dram = prompt.get("model"), prompt.get("dram_mib")
         if dram is None:
             dram = self.uboot.bdinfo().get("dram_mib")
         adm["board"] = {"model": model, "dram_mib": dram, "permitted_models": list(c.board_models), "dram_min_mib": c.dram_min_mib, "fixture": c.fixture,
                         "model_ok": model is not None and any(m in model for m in c.board_models), "dram_ok": dram is not None and dram >= c.dram_min_mib}
-        self.persist()
+        self._guard("the admission")
         if not adm["board"]["model_ok"]:
             raise AdmissionStop(f"board: the model {model!r} is not a permitted target {list(c.board_models)} (the banner is the identity; none seen → not admitted)")
         if not adm["board"]["dram_ok"]:
             raise AdmissionStop(f"board: DRAM {dram} MiB is below the {c.dram_min_mib} MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)")
-        v = self.uboot.md_l(VARIANT_ADDR, 1)[0]
-        adm["carrier"] = {"variant_addr": f"{VARIANT_ADDR:#010x}", "variant": f"{v:08x}", "expected": f"{c.variant_word:08x}", "equal": v == c.variant_word}
-        self.persist()
-        if v != c.variant_word:
-            raise AdmissionStop(f"carrier: the VARIANT word {v:#010x} at {VARIANT_ADDR:#010x} is not the pinned carrier's {c.variant_word:#010x}: no further PL access")
+        # 3. the board's own identity and role (its saved U-Boot environment, docs/board_roles.md): the interlock, before anything content-sensitive
+        boardid, role = self.uboot.printenv("boardid"), self.uboot.printenv("role")
+        adm["identity"] = {"boardid": boardid, "role": role, "expected_boardid": c.expected_boardid, "allowed_roles": list(c.allowed_roles),
+                           "boardid_ok": c.expected_boardid is not None and boardid == c.expected_boardid, "role_ok": role in c.allowed_roles, "purpose": c.purpose}
+        self._guard("the admission")
+        if c.expected_boardid is None:
+            raise AdmissionStop("identity: the context pins no boardid: no board is a permitted target without one")
+        if not adm["identity"]["boardid_ok"]:
+            raise AdmissionStop(f"identity: the board's boardid {boardid!r} is not the context's {c.expected_boardid!r}: not this board")
+        if not adm["identity"]["role_ok"]:
+            raise AdmissionStop(f"identity: the board's role {role!r} is not one of {list(c.allowed_roles)} (no role = reference = refused; docs/board_roles.md)")
+        # 4. the clock, from PS-accessible words BEFORE any PL read (a gated / stopped FCLK0 hangs a PL access): FPGA0_CLK_CTRL and the PLLs
         f = self.uboot.md_l(SLCR_FPGA0_CLK_CTRL, 1)[0]
-        adm["fclk0"] = {"addr": f"{SLCR_FPGA0_CLK_CTRL:#010x}", "ctrl": f"{f:08x}", "expected": (f"{c.fclk0_ctrl_expected:08x}" if c.fclk0_ctrl_expected is not None else None),
-                        "held": c.fclk0_ctrl_expected is not None, "equal": (f == c.fclk0_ctrl_expected) if c.fclk0_ctrl_expected is not None else None}
-        self.persist()
+        pll = {"arm": self.uboot.md_l(SLCR_ARM_PLL_CTRL, 1)[0], "ddr": self.uboot.md_l(SLCR_DDR_PLL_CTRL, 1)[0], "io": self.uboot.md_l(SLCR_IO_PLL_CTRL, 1)[0]}
+        d = fclk0_from_words(f, pll, c.ps_clk_mhz)
+        adm["clock"] = {"fpga0_ctrl_addr": f"{SLCR_FPGA0_CLK_CTRL:#010x}", "fpga0_ctrl": f"{f:08x}", "pll_ctrl": {k: f"{v:08x}" for k, v in pll.items()}, "derived": d,
+                        "expected_mhz": c.fclk0_mhz, "expected_ctrl": (f"{c.fclk0_ctrl_expected:08x}" if c.fclk0_ctrl_expected is not None else None),
+                        "ok": (d["mhz"] is not None and (c.fclk0_mhz is None or abs(d["mhz"] - c.fclk0_mhz) < 0.5) and (c.fclk0_ctrl_expected is None or f == c.fclk0_ctrl_expected))}
+        self._guard("the admission")
+        if d["mhz"] is None:
+            raise AdmissionStop(f"clock: FPGA0_CLK_CTRL {f:#010x} with {d['pll']} PLL {d['pll_ctrl']} gives no running clock (reset={d['pll_reset']}, bypass={d['pll_bypass']}, divisors {d['div0']}/{d['div1']}): no PL access")
+        if c.fclk0_mhz is not None and abs(d["mhz"] - c.fclk0_mhz) >= 0.5:
+            raise AdmissionStop(f"clock: FCLK0 derives to {d['mhz']} MHz, not the pinned {c.fclk0_mhz} MHz: no PL access")
         if c.fclk0_ctrl_expected is not None and f != c.fclk0_ctrl_expected:
             raise AdmissionStop(f"clock: FPGA0_CLK_CTRL {f:#010x} is not the expected {c.fclk0_ctrl_expected:#010x}")
+        # 5. the carrier: the FIRST PL access
+        v = self.uboot.md_l(VARIANT_ADDR, 1)[0]
+        adm["carrier"] = {"variant_addr": f"{VARIANT_ADDR:#010x}", "variant": f"{v:08x}", "expected": f"{c.variant_word:08x}", "equal": v == c.variant_word}
+        self._guard("the admission")
+        if v != c.variant_word:
+            raise AdmissionStop(f"carrier: the VARIANT word {v:#010x} at {VARIANT_ADDR:#010x} is not the pinned carrier's {c.variant_word:#010x}: no further PL access")
         adm["ok"] = True
         self._set_phase("admitted")
         return adm
 
     def load_image(self) -> dict:
-        data = self.binary.read_bytes()
+        """The ADMITTED bytes are transferred (held since the admission's hash; the file is not read again)."""
+        if self.image_bytes is None or hashlib.sha256(self.image_bytes).hexdigest() != self.context.image_sha256:
+            raise AdmissionStop("load refused: no admitted image bytes equal to the pin are held")
+        data = self.image_bytes
+        self._guard("the load")
         st = self.uboot.loady(self.context.load_addr, data, self.binary.name)
         host_crc = zlib.crc32(data) & 0xFFFFFFFF
         dev_crc = self.uboot.crc32(self.context.load_addr, len(data))
         w = {"host_crc32": f"{host_crc:08x}", "uboot_crc32": f"{dev_crc:08x}", "equal": host_crc == dev_crc, "bytes": len(data), "range": [f"{self.context.load_addr:08x}", f"{self.context.load_addr + len(data) - 1:08x}"],
              "image_sha256": self.instrument["image_sha256"], "ymodem": st.get("ymodem")}
         self.runner["load_witness"] = w
-        self.persist()
+        self._guard("the load witness")
         if not w["equal"]:
             raise TransportStop(f"load witness: U-Boot's crc32 {dev_crc:08x} over the loaded range is not the file's {host_crc:08x}: the image in DDR is not the file (not run)")
         self._set_phase("loaded")
@@ -470,11 +558,12 @@ class RunnerSession(cs.ConsoleSession):
             words[20] = 7
         elif bad == "absent":
             words = [0] * wire.PAGE_WORDS
+        self._guard("the page write")
         for i, w in enumerate(words):
             self.uboot.mw_l(wire.PAGE_ADDR + 4 * i, w)
         back = self.uboot.md_l(wire.PAGE_ADDR, wire.PAGE_WORDS)
         self.runner["page_witness"] = {"nonce_md": f"{self.page_nonce:016x}", "page_addr": f"{wire.PAGE_ADDR:#010x}", "written": [f"{w:08x}" for w in words], "read_back": [f"{w:08x}" for w in back], "equal": back == words}
-        self.persist()
+        self._guard("the page witness")
         if back != words:
             raise TransportStop("page witness: the page read back with md.l is not the one written with mw.l (not run)")
         self.page_words = words
@@ -501,7 +590,8 @@ class RunnerSession(cs.ConsoleSession):
         if self.phase != "pre-go":
             raise TransportStop(f"go refused: the control plane is at phase {self.phase!r}, not pre-go")
         self.runner["go"] = {"t": round(time.time(), 3), "addr": f"{self.context.load_addr:08x}", "issued": False}
-        self._set_phase("go-issued")                                          # written before the command leaves this host
+        self._guard("go")
+        self._set_phase("go-issued")                                          # written before the command leaves this host; a failed write here is a PersistStop and no `go` is issued
         self.runner["go"]["issued"] = True
         self.uboot.go(self.context.load_addr)
         self._set_phase("application")
@@ -510,7 +600,7 @@ class RunnerSession(cs.ConsoleSession):
     # ---------------------------------------------------------------- the transport: the port's one buffer
     def _console_write(self, line: str, note: str = ""):
         self.port.write(line.encode("utf-8"))
-        self.console.append({"i": len(self.evidence.trace), "pcap_n": len(self.evidence.pcap_log), "dir": "host", "line": line.rstrip("\n"), "note": note})
+        self.console.append({"t": round(time.time(), 6), "i": len(self.evidence.trace), "pcap_n": len(self.evidence.pcap_log), "dir": "host", "line": line.rstrip("\n"), "note": note})
 
     def _readline(self, which: str) -> str | None:
         if which == "mmio":
@@ -538,7 +628,7 @@ class RunnerSession(cs.ConsoleSession):
         line = self._readline("console")
         head = line.strip("\r")
         if BANNER_LINE_RE.match(head):                                       # a boot banner line on the application's console: the PS reset — the session is cut, by name
-            self.console.append({"i": len(self.evidence.trace), "dir": "board", "line": head, "note": "a boot banner: the PS reset mid-session"})
+            self.console.append({"t": round(time.time(), 6), "i": len(self.evidence.trace), "dir": "board", "line": head, "note": "a boot banner: the PS reset mid-session"})
             self._stop_transport("a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)")
         if head.strip() == "":
             return None                                                       # an empty line (U-Boot's CR LF after `go`): not a console line
@@ -674,12 +764,16 @@ def main(argv=None) -> int:
     ap.add_argument("--image-pin", help="the pinned image sha256 (default: the build evidence of record)")
     ap.add_argument("--board-model", action="append", help="a permitted Model: line (default: Ebang EBAZ4203)")
     ap.add_argument("--dram-min", type=int, default=512)
-    ap.add_argument("--fclk0-ctrl", help="the expected SLCR FPGA0_CLK_CTRL word (hex); omitted: recorded, not held")
+    ap.add_argument("--fclk0-ctrl", help="the expected SLCR FPGA0_CLK_CTRL word (hex); omitted: the derived rate alone is held")
+    ap.add_argument("--boardid", required=True, help="the board's own boardid the context pins (its saved U-Boot environment)")
+    ap.add_argument("--role", action="append", help="a permitted role (default: verify, sacrificial)")
     ap.add_argument("--silence", type=float, default=30.0)
     ap.add_argument("--break-s", type=float, default=20.0)
     ap.add_argument("--label", default="B4Q-runner")
     a = ap.parse_args(argv)
-    kw = {"image_path": str(a.image), "dram_min_mib": a.dram_min}
+    kw = {"image_path": str(a.image), "dram_min_mib": a.dram_min, "expected_boardid": a.boardid}
+    if a.role:
+        kw["allowed_roles"] = tuple(a.role)
     if a.board_model:
         kw["board_models"] = tuple(a.board_model)
     if a.fclk0_ctrl:

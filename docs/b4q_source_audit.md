@@ -111,7 +111,21 @@ session) only when the streams show no `go`, no board frame, no transaction dire
 Provenance is reported apart (`verify.json: provenance`): a PTY archive is a fixture; a `uart-board` archive's consistency is held
 with `observed_on_device: false` (a later ruling's claim, never this verifier's); a synthetic device-format fixture
 (`host/b4q_device_fixture.py`, `manifest.synthetic`) is reported as such; a device-format archive carrying an emulator-only witness
-(the surrogate's banner, a backend record, a private directory, `emulated: true`, a declared fixture) is found. The nonce of a transaction's links is the one the PS read (`NONCE_LO` / `NONCE_HI` in the log); the timing
+(the surrogate's banner, a backend record, a private directory, `emulated: true`, a declared fixture) is found.
+
+The state machine (the owner's C1 on `30c5ccba`): a `go` in the sent stream requires every prerequisite RECOMPUTED true from the
+streams — the admission present with `ok`, the admitted image the context's pin, the board class, the board's own `boardid` / `role`
+(`printenv`, `docs/board_roles.md`), the clock derived from the SLCR words (`fclk0_from_words`, the same function in the runner and
+the verifier) with no PL read before the clock words and the role answer, the carrier's variant word, a complete and equal transfer
+of the pinned image, an equal page — else `state: go was issued although …`; the load / crc / go / start addresses are one address
+bound to the context; the application's exchange is ACCOUNTED line by line: the received stream after `go` must BE the retained
+board console (a noted unparsable line, a noted banner included; the reset's boot output after a noted banner accounted as after
+the cut), the sent frames the retained host lines, nothing else sent; a named stop of a class the verifier cannot demonstrate is
+`unverified` (a finding). The source (C4): a runner archive is the PS-log source by construction — `manifest.source` absent on one
+is refused, never defaulted to the pipe session's emulated contract. The runner's own barriers (C2 / C3): the evidence is persisted
+before every guarded step and `go` (a failed persistence is a `PersistStop`: nothing guarded follows); the sent-byte log commits
+only what the OS accepted, an incomplete write kept apart as intent; the admitted image's bytes are held from the hash to the wire
+(the file is never re-read); the identity, the clock and the carrier are refused by name before anything content-sensitive. The nonce of a transaction's links is the one the PS read (`NONCE_LO` / `NONCE_HI` in the log); the timing
 word is the one the IDENT reports; a transaction cut by the transport has an empty range and no record of its own (the verifier's
 completeness rule names the gap).
 

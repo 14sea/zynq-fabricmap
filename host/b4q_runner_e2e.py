@@ -81,6 +81,11 @@ SCENARIOS = {
     "board_dram_short": (scenario_two, ["--board=4205"], {}, {**expect_stop("board: DRAM 256 MiB", "prompt"), "no_loady": True}, {"board_models": ("Ebang EBAZ4205",)}),
     "wrong_variant": (scenario_two, ["--fault=wrong-variant"], {}, {**expect_stop("carrier: the VARIANT word", "prompt"), "no_loady": True}),
     "fclk0_mismatch": (scenario_two, [], {}, {**expect_stop("clock: FPGA0_CLK_CTRL", "prompt"), "no_loady": True}, {"fclk0_ctrl_expected": 0x00100A00}),
+    "clock_gated": (scenario_two, ["--fault=clock-gated"], {}, {**expect_stop("clock: FPGA0_CLK_CTRL", "prompt"), "no_loady": True, "no_pl_read": True}),
+    "clock_slow": (scenario_two, ["--fault=clock-slow"], {}, {**expect_stop("clock: FCLK0 derives to", "prompt"), "no_loady": True, "no_pl_read": True}),
+    "no_role": (scenario_two, ["--fault=no-role"], {}, {**expect_stop("identity: the board's role", "prompt"), "no_loady": True, "no_pl_read": True}),
+    "wrong_boardid": (scenario_two, ["--fault=wrong-boardid"], {}, {**expect_stop("identity: the board's boardid", "prompt"), "no_loady": True, "no_pl_read": True}),
+    "role_reference": (scenario_two, ["--role=reference"], {}, {**expect_stop("identity: the board's role", "prompt"), "no_loady": True, "no_pl_read": True}),
     "miner_uboot_break": (scenario_two, ["--board=4205"], {}, {"opened": True, "verify": 0}, {"board_models": ("Ebang EBAZ4205",), "dram_min_mib": 256}),
     # the console e2e's scenarios over the PTY (the host-side knobs are the runner session's; the device-side ones the surrogate's)
     "valid": (ce.scenario_valid, [], {}, {"opened": True, "records": 4, "closed": 4, "verify": 0, "digest_equal": True}),
@@ -167,6 +172,8 @@ def check(expect: dict, summary: dict, verify_rc: int, verify: dict) -> list[str
         bad.append("a `go` was issued")
     if expect.get("no_loady") and summary.get("loady_in_tx"):
         bad.append("a `loady` was issued")
+    if expect.get("no_pl_read") and summary.get("pl_read_in_tx"):
+        bad.append("a PL read was issued before the admission refused")
     return bad
 
 
@@ -186,6 +193,7 @@ def run_scenario(root: Path, name: str) -> dict:
         image = body_kw.pop("image", None)
         if image == "wrong":
             ctx_kw["image_path"] = str(wrong_image())
+        ctx_kw.setdefault("expected_boardid", "F8B3")                     # the fixture's saved boardid (the surrogate's default); the context pins it
         ctx = rn.ExecutionContext.pinned(**ctx_kw)                       # the pin from the build evidence of record, never from the file
         summary = rn.run(str(link), out, body, context=ctx, silence_s=silence_s, label=f"B4Q-runner-{name}", break_s=break_s, **body_kw)
     finally:
@@ -213,6 +221,7 @@ def run_scenario(root: Path, name: str) -> dict:
     summary["phase_at_stop"] = u.get("phase_at_stop")
     tx = (out / "raw/console_tx.bin").read_bytes() if (out / "raw/console_tx.bin").is_file() else b""
     summary["go_in_tx"], summary["loady_in_tx"] = b"go 02000000\r" in tx, b"loady 02000000\r" in tx
+    summary["pl_read_in_tx"] = b"md.l 43c0" in tx
     summary.update({"name": name, "wall_s": round(time.time() - t0, 3), "surrogate_args": sargs, "verify_rc": verify_rc, "verify_agree": verify.get("agree"),
                     "verify_session": verify.get("session"), "verify_limitations": (verify.get("source") or {}).get("limitations"), "expect": expect})
     summary["expect_failures"] = check(expect, summary, verify_rc, verify)

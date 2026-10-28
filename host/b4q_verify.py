@@ -283,6 +283,10 @@ def load_archive(d: Path) -> dict:
         _need(tr is not None and (d / "console.jsonl").is_file(), "manifest.source: a PS-log source without a console transport (the log is pulled through the console)")
     elif (d / "raw/evidence_log.bin").is_file():
         raw = (d / "raw/evidence_log.bin").read_bytes()                     # retained beside an emulated source: held to the emulation (verify)
+    if source is None and isinstance(tr, dict) and tr.get("kind") in vr.RUNNER_KINDS:
+        # C4: a RUNNER archive (a PTY fixture or the device format) is the PS-log source by construction — its records can come from nothing else in
+        # its process; an absent declaration is a downgrade into the emulated contract, refused by name (the legacy default stays the pipe's)
+        raise ArchiveRefusal("manifest.source: absent on a runner archive — the PS evidence-log source (ps-evidence-log-v1) is required there; the emulated contract is the pipe session's alone")
     return {"manifest": manifest, "so_doc": so_doc, "notary": notary, "trace": trace, "pcap": pcap, "acc": acc, "files": files, "console": console, "raw": raw}
 
 

@@ -20,6 +20,7 @@ import threading
 import time
 import tty
 import unittest
+import zlib
 from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
@@ -264,8 +265,13 @@ class Runner(unittest.TestCase):
         self.assertTrue(m["emulated"])
         u = json.loads((_S["runner"] / "valid/uboot.json").read_text())
         whats = [st["what"] for st in u["uboot_steps"]]
-        self.assertEqual(whats[0], "prompt"); self.assertEqual(whats[1:3], ["md.l", "md.l"])                 # the admission's VARIANT and FPGA0_CLK_CTRL reads come before any load
-        self.assertEqual(u["uboot_steps"][1]["sent"], f"md.l {rn.VARIANT_ADDR:08x} 1"); self.assertEqual(u["uboot_steps"][1]["words"], [f"{rm.VARIANT_WORD:08x}"])
+        self.assertEqual(whats[0], "prompt"); self.assertEqual(whats[1:3], ["printenv", "printenv"])       # the identity (boardid, role) first, then the clock words, then the first PL read
+        sent = [st.get("sent") for st in u["uboot_steps"]]
+        first_pl = next(i for i, s_ in enumerate(sent) if s_ and s_.startswith("md.l 43c"))
+        self.assertEqual(sent[first_pl], f"md.l {rn.VARIANT_ADDR:08x} 1"); self.assertEqual(u["uboot_steps"][first_pl]["words"], [f"{rm.VARIANT_WORD:08x}"])
+        self.assertLess(sent.index(f"md.l {rn.SLCR_FPGA0_CLK_CTRL:08x} 1"), first_pl); self.assertLess(sent.index("printenv role"), first_pl)
+        self.assertEqual(u["admission"]["identity"], {**u["admission"]["identity"], "boardid": "F8B3", "role": "verify", "boardid_ok": True, "role_ok": True})
+        self.assertEqual(u["admission"]["clock"]["derived"]["mhz"], 50.0)
         self.assertIn("loady", whats); self.assertIn("crc32", whats); self.assertIn("go", whats)
         self.assertEqual(u["load_witness"]["host_crc32"], u["load_witness"]["uboot_crc32"])
         self.assertEqual(whats.count("mw.l"), w.PAGE_WORDS)
@@ -391,6 +397,7 @@ class FakePort:
     def __init__(self, script, kind="console-pty-surrogate", fail_write_at=None, chunk=None):
         self.script, self.kind, self.path, self.real = script, kind, "fake", "/dev/pts/fake"
         self.buf, self.rx_log, self.tx_log = bytearray(), bytearray(), bytearray()
+        self.incomplete_writes = []
         self.queue = []
         self.closed = False
         self.writes = 0
@@ -429,22 +436,56 @@ class FakePort:
         self.closed = True
 
 
-def scripted_uboot(model=b"Ebang EBAZ4203 (fixture)", dram=512, variant=rm.VARIANT_WORD, fclk0=0x00200A00, page=None, crc_range=None, md_addr_shift=0):
-    """A minimal scripted U-Boot: the banner on the first CR, md.l of the words it knows, mw.l accepted, crc32 answered for the asked range
-    (or `crc_range` when the fixture lies), go announced. `page`: the words md.l shows for the page (None: what mw.l wrote)."""
+PLL_WORDS = {0xF8000100: 0x0001A000, 0xF8000104: 0x00020000, 0xF8000108: 0x0001E000}      # ARM / DDR / IO PLL CTRL: FDIV 26 / 32 / 30 (the 4203 fixture)
+
+
+def scripted_uboot(model=b"Ebang EBAZ4203 (fixture)", dram=512, variant=rm.VARIANT_WORD, fclk0=0x00200A00, page=None, crc_range=None, md_addr_shift=0,
+                   boardid="F8B3", role="verify", io_pll=0x0001E000):
+    """A minimal scripted U-Boot: the banner on the first CR, md.l of the words it knows (the SLCR clock words among them), printenv of
+    boardid / role, mw.l accepted, crc32 answered for the asked range (or `crc_range` when the fixture lies), go announced. `page`: the
+    words md.l shows for the page (None: what mw.l wrote). `role=None`: no role saved (reference)."""
     mem = {}
-    state = {"booted": False}
+    env = {"boardid": boardid}
+    if role is not None:
+        env["role"] = role
+    words_fixed = dict(PLL_WORDS); words_fixed[0xF8000108] = io_pll
+    state = {"booted": False, "ym": None, "received": b"", "eot": 0}
     PROMPT = b"Zynq> "
+
+    def ymodem(chunk: bytes):
+        """A scripted YMODEM-1K receiver: the header, the blocks, the EOT exchange, the empty header; the payload kept for crc32."""
+        st = state["ym"]
+        if chunk == bytes([ym.EOT]):
+            state["eot"] += 1
+            return bytes([ym.NAK]) if state["eot"] == 1 else bytes([ym.ACK]) + b"C"
+        if chunk[:1] in (bytes([ym.STX]), bytes([ym.SOH])):
+            n = chunk[1]
+            if n == 0 and st["blocks"] == 0 and not st["header"]:
+                hdr = chunk[3:3 + 128]; size_s = hdr.split(b"\x00", 2)[1].split(b" ")[0]
+                st["header"] = True; st["size"] = int(size_s) if size_s.isdigit() else None
+                return bytes([ym.ACK]) + b"C"
+            if n == 0 and st["header"]:
+                state["received"] = state["received"][:st["size"]] if st["size"] is not None else state["received"]
+                state["ym"] = None
+                return bytes([ym.ACK]) + f"\r\nxyzModem - CRC mode, 2(SOH)/{st['blocks']}(STX)/0(CAN) packets, 0 retries\r\n## Total Size = 0x{len(state['received']):08x} = {len(state['received'])} Bytes\r\n".encode() + PROMPT
+            state["received"] += chunk[3:3 + 1024]; st["blocks"] += 1
+            return bytes([ym.ACK])
+        return b""
 
     def script(data: bytes):
         if not state["booted"]:
             state["booted"] = True
             return b"\r\n\r\nU-Boot 2026.04-rc5 (fixture)\r\nModel: " + model + b"\r\nDRAM:  ECC disabled " + str(dram).encode() + b" MiB\r\n" + PROMPT
+        if state["ym"] is not None:
+            return ymodem(data)
         line = data.rstrip(b"\r").decode("ascii", "replace")
         parts = line.split()
         if not parts:
             return PROMPT
         out = line.encode() + b"\r\n"
+        if parts[0] == "loady":
+            state["ym"] = {"header": False, "blocks": 0, "size": None}; state["received"] = b""; state["eot"] = 0
+            return out + b"## Ready for binary (ymodem) download to 0x02000000 at 115200 bps...\r\nC"
         if parts[0] == "md.l":
             addr, n = int(parts[1], 16), int(parts[2], 16) if len(parts) > 2 else 16
             words = []
@@ -454,6 +495,8 @@ def scripted_uboot(model=b"Ebang EBAZ4203 (fixture)", dram=512, variant=rm.VARIA
                     words.append(variant)
                 elif a == rn.SLCR_FPGA0_CLK_CTRL:
                     words.append(fclk0)
+                elif a in words_fixed:
+                    words.append(words_fixed[a])
                 elif page is not None and w.PAGE_ADDR <= a < w.PAGE_ADDR + 4 * w.PAGE_WORDS:
                     words.append(page[(a - w.PAGE_ADDR) // 4])
                 else:
@@ -461,12 +504,15 @@ def scripted_uboot(model=b"Ebang EBAZ4203 (fixture)", dram=512, variant=rm.VARIA
             for k in range(0, n, 4):
                 ws = words[k:k + 4]
                 out += f"{addr + 4 * k + md_addr_shift:08x}:".encode() + b"".join(f" {x:08x}".encode() for x in ws) + b"    ....\r\n"
+        elif parts[0] == "printenv":
+            out += (f"{parts[1]}={env[parts[1]]}\r\n".encode() if parts[1] in env else f'## Error: "{parts[1]}" not defined\r\n'.encode())
         elif parts[0] == "mw.l":
             mem[int(parts[1], 16)] = int(parts[2], 16)
         elif parts[0] == "crc32":
             a, n = int(parts[1], 16), int(parts[2], 16)
             s, e = crc_range or (a, a + n - 1)
-            out += f"crc32 for {s:08x} ... {e:08x} ==> deadbeef\r\n".encode()
+            v = (zlib.crc32(state["received"][:n]) & 0xFFFFFFFF) if state["received"] else 0xDEADBEEF
+            out += f"crc32 for {s:08x} ... {e:08x} ==> {v:08x}\r\n".encode()
         elif parts[0] == "go":
             return out + b"## Starting application at 0x02000000 ...\r\n" + b"B4Q1 IDENT 1 " + b"0" * 32 + b" e30 00000000\n"
         return out + PROMPT
@@ -537,12 +583,12 @@ class Transport(unittest.TestCase):
         with self.assertRaisesRegex(rn.TransportStop, "not the asked"):
             ub.crc32(0x02000000, 100)
         port = FakePort(scripted_uboot()); ub = rn.UBoot(port, []); port.write(b"\r"); ub.read_until(rn.PROMPT_RE, 1.0)
-        self.assertEqual(ub.md_l(rn.VARIANT_ADDR, 1), [rm.VARIANT_WORD]); self.assertEqual(ub.crc32(0x02000000, 100), 0xDEADBEEF)
+        self.assertEqual(ub.md_l(rn.VARIANT_ADDR, 1), [rm.VARIANT_WORD]); self.assertEqual(ub.crc32(0x02000000, 100), 0xDEADBEEF)   # nothing received: the fixture's placeholder
 
     def test_a_write_error_persists_the_acquired_prefix_closes_the_port_and_is_a_programming_error(self):
         port = FakePort(scripted_uboot(), fail_write_at=3)                                                    # the third write (the first admission md.l) fails at the OS
         out = Path(tempfile.mkdtemp(prefix="b4q_wr_")) / "run"
-        ctx = rn.ExecutionContext(image_sha256=hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest(), image_path=str(rn.IMAGE))
+        ctx = rn.ExecutionContext(image_sha256=hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest(), image_path=str(rn.IMAGE), expected_boardid="F8B3")
         with self.assertRaises(OSError):
             rn.run("fake", out, rn.body_control_plane, context=ctx, port=port)
         self.assertTrue(port.closed)
@@ -564,7 +610,7 @@ class Admission(unittest.TestCase):
 
     def test_an_arbitrary_local_file_is_refused_before_any_load_whatever_its_crc(self):
         f = Path(tempfile.mkdtemp(prefix="b4q_img_")) / "not-an-image.bin"; f.write_bytes(b"\x00" * 56)
-        ctx = rn.ExecutionContext(image_sha256=hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest(), image_path=str(f))
+        ctx = rn.ExecutionContext(image_sha256=hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest(), image_path=str(f), expected_boardid="F8B3")
         s, port, out = self._run(scripted_uboot(), ctx, body=rn.body_open)
         self.assertEqual(s["stop"]["kind"], "AdmissionStop"); self.assertTrue(s["stop"]["why"].startswith("image: the selected file"))
         self.assertNotIn(b"loady", port.tx_log); self.assertNotIn(b"go ", port.tx_log); self.assertFalse(s["opened"])
@@ -573,7 +619,7 @@ class Admission(unittest.TestCase):
 
     def test_the_pin_comes_from_the_build_evidence_not_the_file(self):
         f = Path(tempfile.mkdtemp(prefix="b4q_img_")) / "b4q_app_v2.bin"; f.write_bytes(rn.IMAGE.read_bytes() + b"\x00")
-        ctx = rn.ExecutionContext.pinned(image=f)
+        ctx = rn.ExecutionContext.pinned(image=f, expected_boardid="F8B3")
         self.assertEqual(ctx.image_sha256, json.loads(rn.PIN_FILE.read_text())["image"]["sha256"]); self.assertTrue(ctx.pin_source.startswith("build evidence"))
         s, port, out = self._run(scripted_uboot(), ctx)
         self.assertEqual(s["stop"]["kind"], "AdmissionStop"); self.assertNotIn(b"loady", port.tx_log)
@@ -582,12 +628,20 @@ class Admission(unittest.TestCase):
         pin = hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest()
         cases = [(scripted_uboot(model=b"Ebang EBAZ4205 (fixture)", dram=256), {}, "board: the model"),
                  (scripted_uboot(model=b"Ebang EBAZ4205 (fixture)", dram=256), {"board_models": ("Ebang EBAZ4205",)}, "board: DRAM 256 MiB"),
-                 (scripted_uboot(variant=0x42340002), {}, "carrier: the VARIANT word"),
-                 (scripted_uboot(fclk0=0x00100A00), {"fclk0_ctrl_expected": 0x00200A00}, "clock: FPGA0_CLK_CTRL")]
+                 (scripted_uboot(boardid="17A6"), {}, "identity: the board's boardid"),
+                 (scripted_uboot(role=None), {}, "identity: the board's role"),
+                 (scripted_uboot(role="reference"), {}, "identity: the board's role"),
+                 (scripted_uboot(), {"expected_boardid": None}, "identity: the context pins no boardid"),
+                 (scripted_uboot(io_pll=0x0001E001), {}, "clock: FPGA0_CLK_CTRL"),                      # the IO PLL in reset: no running FCLK0
+                 (scripted_uboot(fclk0=0x00100A00), {}, "clock: FCLK0 derives to"),                     # 100 MHz, not the pinned 50
+                 (scripted_uboot(variant=0x42340002), {}, "carrier: the VARIANT word")]
         for script, kw, prefix in cases:
+            kw = {"expected_boardid": "F8B3", **kw}
             s, port, out = self._run(script, rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), **kw))
             self.assertEqual(s["stop"]["kind"], "AdmissionStop", prefix); self.assertTrue(s["stop"]["why"].startswith(prefix), s["stop"])
             self.assertNotIn(b"loady", port.tx_log); self.assertNotIn(f"md.l {rn.VARIANT_ADDR + 0:08x}".encode().replace(b"2034", b"202c"), port.tx_log)   # no NONCE read
+            if not prefix.startswith("carrier"):
+                self.assertNotIn(b"md.l 43c", port.tx_log, prefix)                                       # refused before ANY PL read
             rep = vf.verify(out)
             self.assertTrue(rep["agree"], (prefix, rep["session"])); self.assertTrue(rep["control_plane"]["stop"]["demonstrated"], (prefix, rep["control_plane"]))
         u = json.loads((out / "uboot.json").read_text())
@@ -642,7 +696,7 @@ class ArchiveContract(unittest.TestCase):
         k = next(i for i, l in enumerate(lines) if json.loads(l).get("type") == "HB")
         e = json.loads(lines[k]); e["line"] = e["line"][:-8] + "00000000"; lines[k] = json.dumps(e); (d / "console.jsonl").write_text("\n".join(lines) + "\n")
         rep = vf.verify(d)
-        self.assertTrue(any("console linkage" in x for x in rep["session"]), rep["session"])
+        self.assertTrue(any("console accounting" in x for x in rep["session"]), rep["session"])
 
     def test_the_control_plane_only_archive_is_complete_at_pre_go(self):
         rep = json.loads((_S["runner"] / "control_plane_only/verify.json").read_text())
@@ -682,3 +736,209 @@ class DeviceFormat(unittest.TestCase):
         (d / "manifest.json").write_text(json.dumps(m, indent=1) + "\n")
         rep = vf.verify(d)
         self.assertFalse(rep["agree"]); self.assertTrue(any("surrogate's banner" in x for x in rep["session"]) and any("labelled emulated" in x for x in rep["session"]), rep["session"])
+
+
+# ---------------------------------------------------------------- the second review's counterexamples (the owner's HOLD on 30c5ccba): C1–C4
+import errno  # noqa: E402
+import b4q_verify_runner as vr  # noqa: E402
+from unittest import mock  # noqa: E402
+
+
+def _runner_edit(d: Path, fn):
+    u = json.loads((d / "uboot.json").read_text()); m = json.loads((d / "manifest.json").read_text())
+    fn(u, m)
+    u["raw"] = {**u["raw"], "console_bin_sha256": hashlib.sha256((d / "raw/console.bin").read_bytes()).hexdigest(), "console_bin_bytes": (d / "raw/console.bin").stat().st_size,
+                "console_tx_bin_sha256": hashlib.sha256((d / "raw/console_tx.bin").read_bytes()).hexdigest(), "console_tx_bin_bytes": (d / "raw/console_tx.bin").stat().st_size}
+    m["transport"]["runner"] = u
+    (d / "uboot.json").write_text(json.dumps(u, indent=1) + "\n"); (d / "manifest.json").write_text(json.dumps(m, indent=1) + "\n")
+
+
+class StateMachine(unittest.TestCase):
+    """C1: an executed session needs every prerequisite recomputed true; the addresses bound; every observed frame accounted; an unknown
+    stop unverified. Coordinated raw + summary mutations, each verified in a fresh process."""
+
+    def _copy(self, name="valid") -> Path:
+        d = Path(tempfile.mkdtemp(prefix="b4q_c1_")) / name
+        shutil.copytree(_S["runner"] / name, d)
+        return d
+
+    def _verify(self, d: Path) -> dict:
+        q = subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d), "--json", str(d / "verify.json")], capture_output=True, text=True, timeout=600)
+        return json.loads((d / "verify.json").read_text())
+
+    def test_the_untouched_control_is_clean(self):
+        rep = self._verify(self._copy())
+        self.assertTrue(rep["clean"], rep["session"])
+
+    def test_a_failed_crc_with_executed_transactions_is_found(self):
+        d = self._copy()
+        rx = bytearray((d / "raw/console.bin").read_bytes()); m = vr.CRC_RE.search(bytes(rx)); v = int(m.group(3), 16) ^ 1
+        rx[m.start(3):m.end(3)] = f"{v:08x}".encode(); (d / "raw/console.bin").write_bytes(bytes(rx))
+        _runner_edit(d, lambda u, mf: (u["load_witness"].update({"uboot_crc32": f"{v:08x}", "equal": False}), [s.update({"crc32": f"{v:08x}"}) for s in u["uboot_steps"] if s["what"] == "crc32"]))
+        rep = self._verify(d)
+        self.assertFalse(rep["agree"]); self.assertTrue(any("state: `go` was issued although" in x and "load witness" in x for x in rep["session"]), rep["session"])
+
+    def test_a_256mib_board_with_executed_transactions_is_found(self):
+        d = self._copy()
+        rx = (d / "raw/console.bin").read_bytes().replace(b"DRAM:  ECC disabled 512 MiB", b"DRAM:  ECC disabled 256 MiB", 1); (d / "raw/console.bin").write_bytes(rx)
+        def fix(u, mf):
+            u["admission"]["board"].update({"dram_mib": 256, "dram_ok": False}); u["admission"]["ok"] = False
+            for s in u["uboot_steps"]:
+                if s["what"] == "prompt":
+                    s["dram_mib"] = 256; s["reply"] = s["reply"].replace("512 MiB", "256 MiB")
+        _runner_edit(d, fix)
+        rep = self._verify(d)
+        self.assertFalse(rep["agree"]); self.assertTrue(any("state: `go` was issued although" in x and "DRAM" in x for x in rep["session"]), rep["session"])
+
+    def test_a_missing_admission_on_an_executed_session_is_found(self):
+        d = self._copy(); _runner_edit(d, lambda u, mf: u.update({"admission": None}))
+        rep = self._verify(d)
+        self.assertFalse(rep["agree"]); self.assertTrue(any("no admission recorded" in x for x in rep["session"]), rep["session"])
+
+    def test_a_load_at_another_address_than_go_is_found(self):
+        d = self._copy()
+        tx = (d / "raw/console_tx.bin").read_bytes().replace(b"loady 02000000\r", b"loady 04000000\r", 1).replace(b"crc32 02000000 ", b"crc32 04000000 ", 1)
+        rx = bytearray((d / "raw/console.bin").read_bytes()); m = vr.CRC_RE.search(bytes(rx))
+        length = int(m.group(2), 16) - int(m.group(1), 16)
+        rx[m.start(1):m.end(2)] = f"04000000 ... {0x04000000 + length:08x}".encode()
+        (d / "raw/console_tx.bin").write_bytes(tx); (d / "raw/console.bin").write_bytes(bytes(rx))
+        def fix(u, mf):
+            u["load_witness"]["range"] = ["04000000", f"{0x04000000 + length:08x}"]
+            for s in u["uboot_steps"]:
+                if s["what"] == "crc32":
+                    s["sent"] = s["sent"].replace("02000000", "04000000"); s["range"] = ["04000000", f"{0x04000000 + length:08x}"]
+                if s["what"] == "loady":
+                    s["sent"] = "loady 04000000"
+        _runner_edit(d, fix)
+        rep = self._verify(d)
+        self.assertFalse(rep["agree"]); self.assertTrue(any("not one address" in x for x in rep["session"]), rep["session"])
+
+    def test_an_extra_end_frame_in_the_stream_before_the_ident_is_found(self):
+        d = self._copy()
+        rx = (d / "raw/console.bin").read_bytes()
+        k = rx.find(b"B4Q1 IDENT ")
+        end_line = next(json.loads(l)["line"] for l in (d / "console.jsonl").read_text().splitlines() if json.loads(l).get("type") == "END")
+        (d / "raw/console.bin").write_bytes(rx[:k] + end_line.encode() + b"\n" + rx[k:])
+        _runner_edit(d, lambda u, mf: None)
+        rep = self._verify(d)
+        self.assertFalse(rep["agree"]); self.assertTrue(any("console accounting" in x for x in rep["session"]), rep["session"])
+
+    def test_an_unknown_stop_is_unverified_not_accepted(self):
+        d = Path(tempfile.mkdtemp(prefix="b4q_c1_")) / "cp"
+        shutil.copytree(_S["runner"] / "control_plane_only", d)
+        _runner_edit(d, lambda u, mf: u.update({"phase": "stopped", "phase_at_stop": "prompt", "stops": [{"why": "a stop of a class nobody declared", "kind": "TransportStop"}]}))
+        rep = self._verify(d)
+        self.assertFalse(rep["agree"]); self.assertTrue(any("unverified" in x for x in rep["session"]), rep["session"])
+        self.assertIsNone(rep["control_plane"]["stop"]["demonstrated"])
+
+
+class Persistence(unittest.TestCase):
+    """C2: failed persistence is a barrier before go; the raw TX log commits only accepted bytes."""
+
+    def test_a_full_disk_at_the_pre_go_boundary_issues_no_go(self):
+        port = FakePort(scripted_uboot())
+        out = Path(tempfile.mkdtemp(prefix="b4q_c2_")) / "run"
+        ctx = rn.ExecutionContext(image_sha256=hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest(), image_path=str(rn.IMAGE), expected_boardid="F8B3")
+        real = Path.write_text
+        state = {"fail": False}
+
+        def failing(self_, data, *a, **k):
+            if state["fail"] and self_.name == "uboot.json":
+                raise OSError(errno.ENOSPC, "injected full filesystem")
+            return real(self_, data, *a, **k)
+        s = None
+
+        def body(sess):
+            nonlocal s
+            s = sess
+            sess.control_plane()                                             # the control plane completes and is on disk (pre-go)
+            state["fail"] = True                                             # from here every uboot.json write fails
+            sess.start()                                                     # must NOT issue go
+        with mock.patch.object(Path, "write_text", failing):
+            summ = rn.run("fake", out, body, context=ctx, port=port)
+        self.assertEqual(summ["stop"]["kind"], "PersistStop", summ["stop"])
+        self.assertNotIn(b"go ", port.tx_log)                                 # the barrier: no go after a failed publication
+        u = json.loads((out / "uboot.json").read_text())                     # the last SUCCESSFUL publication: the pre-go state
+        self.assertEqual(u["phase"], "pre-go"); self.assertTrue(s.persist_failed)
+        port2 = FakePort(scripted_uboot())                                   # the positive control: persistence fine, go issued
+        summ2 = rn.run("fake", Path(tempfile.mkdtemp(prefix="b4q_c2_")) / "ok", rn.body_open, context=ctx, port=port2)
+        self.assertIn(b"go 02000000\r", port2.tx_log)
+
+    def test_the_tx_log_commits_only_the_bytes_the_os_accepted(self):
+        class Short(FakePort):
+            def write(self, data):
+                self.writes += 1
+                if data.startswith(b"go "):
+                    self.tx_log += data[:2]
+                    self.incomplete_writes.append({"attempted": len(data), "accepted": 2, "head": data[:40].decode(), "at": len(self.tx_log) - 2})
+                    raise OSError(errno.EIO, "injected short write")
+                return super().write(data)
+        # the real Port's accounting, exercised on a PTY pair with a patched os.write
+        import pty
+        m_, s_ = pty.openpty()
+        port = rn.Port(os.ttyname(s_))
+        real_write = os.write
+        calls = []
+
+        def short(fd, data):
+            if fd == port.fd and data.startswith(b"go "):
+                calls.append(bytes(data)); real_write(fd, data[:2]); return 2        # the OS takes two bytes
+            if fd == port.fd and calls and data == b" 02000000\r":
+                raise OSError(errno.EIO, "injected short write")                  # and refuses the rest
+            return real_write(fd, data)
+        with mock.patch("os.write", short):
+            with self.assertRaises(OSError):
+                port.write(b"go 02000000\r")
+        self.assertEqual(bytes(port.tx_log), b"go")                            # only the accepted prefix is committed
+        self.assertEqual(port.incomplete_writes, [{"attempted": 12, "accepted": 2, "head": "go 02000000\r", "at": 0}])
+        port.write(b"version\r")                                              # the positive control: a whole write commits whole
+        self.assertEqual(bytes(port.tx_log), b"goversion\r")
+        port.close(); os.close(m_)
+
+
+class Binding(unittest.TestCase):
+    """C3: the identity / role interlock and the clock before any PL read; the admitted bytes are the transferred bytes."""
+
+    def test_the_file_replaced_after_the_admission_does_not_reach_the_wire(self):
+        f = Path(tempfile.mkdtemp(prefix="b4q_c3_")) / "b4q_app_v2.bin"; f.write_bytes(rn.IMAGE.read_bytes())
+        pin = hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest()
+        ctx = rn.ExecutionContext(image_sha256=pin, image_path=str(f), expected_boardid="F8B3")
+        port = FakePort(scripted_uboot())
+        out = Path(tempfile.mkdtemp(prefix="b4q_c3_")) / "run"
+
+        def body(s):
+            s.control_plane() if False else None
+            s.uboot.get_prompt(break_s=1.0) if not any(x["what"] == "prompt" for x in s.uboot.steps) else None
+            s._set_phase("prompt"); s.admit()
+            f.write_bytes(b"\x00" * 70)                                     # the disposable file replaced AFTER its hash check
+            s.load_image()
+        summ = rn.run("fake", out, body, context=ctx, port=port)
+        self.assertIsNone(summ["stop"], summ["stop"])
+        payload, info = vr.ymodem_payload(bytes(port.tx_log), port.tx_log.find(b"loady"))
+        self.assertEqual(hashlib.sha256(payload).hexdigest(), pin)           # the ADMITTED bytes went out, not the replaced file's
+        self.assertNotEqual(hashlib.sha256(f.read_bytes()).hexdigest(), pin)
+
+    def test_the_runner_and_the_verifier_derive_the_same_clock(self):
+        for f0, pll in ((0x00200A00, {"io": 0x0001E000, "arm": 0x0001A000, "ddr": 0x00020000}), (0x00100A00, {"io": 0x0001E000, "arm": 0, "ddr": 0}),
+                        (0x00200A20, {"io": 0, "arm": 0x0001A000, "ddr": 0}), (0x00200A00, {"io": 0x0001E001, "arm": 0, "ddr": 0}), (0x00200A00, {"io": 0x0001E010, "arm": 0, "ddr": 0})):
+            self.assertEqual(rn.fclk0_from_words(f0, pll), vr.fclk0_from_words(f0, pll))
+        self.assertEqual(rn.fclk0_from_words(0x00200A00, {"io": 0x0001E000, "arm": 0, "ddr": 0})["mhz"], 50.0)
+        self.assertEqual(rn.fclk0_from_words(0x00200A20, {"io": 0, "arm": 0x0001A000, "ddr": 0})["mhz"], 43.333)   # ARM PLL (FDIV 26) / 20
+        self.assertIsNone(rn.fclk0_from_words(0x00200A00, {"io": 0x0001E001, "arm": 0, "ddr": 0})["mhz"])          # the PLL in reset: no clock
+
+
+class SourceSelection(unittest.TestCase):
+    """C4: a runner archive without its source declaration is refused, never downgraded to the emulated contract."""
+
+    def test_a_device_format_archive_without_its_source_is_refused(self):
+        out = Path(tempfile.mkdtemp(prefix="b4q_c4_")) / "valid"
+        df.make(_S["runner"] / "valid", out)
+        m = json.loads((out / "manifest.json").read_text()); m.pop("source"); (out / "manifest.json").write_text(json.dumps(m, indent=1) + "\n")
+        rep = vf.verify(out)
+        self.assertIn("manifest.source: absent on a runner archive", rep["refused"] or "")
+        d = Path(tempfile.mkdtemp(prefix="b4q_c4_")) / "pty"
+        shutil.copytree(_S["runner"] / "valid", d)
+        m = json.loads((d / "manifest.json").read_text()); m["source"] = None; (d / "manifest.json").write_text(json.dumps(m, indent=1) + "\n")
+        self.assertIn("manifest.source: absent on a runner archive", vf.verify(d)["refused"] or "")
+        rep = vf.verify(_S["runner"] / "valid")                             # the positive control: the declared source selected
+        self.assertEqual(rep["source"]["kind"], el.SOURCE_KIND); self.assertTrue(rep["agree"])

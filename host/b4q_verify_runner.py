@@ -44,6 +44,22 @@ PRE_GO_PHASES = ("init", "prompt", "admitted", "loaded", "page-written", "pre-go
 POST_GO_PHASES = ("go-issued", "application", "ended")
 VARIANT_ADDR = bk.AXI_BASE + rm.VARIANT
 SLCR_FPGA0_CLK_CTRL = 0xF8000170
+SLCR_ARM_PLL_CTRL, SLCR_DDR_PLL_CTRL, SLCR_IO_PLL_CTRL = 0xF8000100, 0xF8000104, 0xF8000108
+PS_CLK_MHZ = 33.333333
+ENV_RE = re.compile(rb"^(boardid|role)=([^\r\n]*)", re.M)
+PL_READ_RE = re.compile(rb"md\.l 43c[0-9a-f]{5} [0-9a-f]+\r")
+
+
+def fclk0_from_words(fpga0_ctrl: int, pll_ctrl: dict, ps_clk_mhz: float = PS_CLK_MHZ) -> dict:
+    """The verifier's own copy of the runner's derivation (host/b4q_runner.fclk0_from_words; held equal by a test): FCLK0 from the SLCR words."""
+    srcsel = (fpga0_ctrl >> 4) & 3
+    name = {0: "io", 1: "io", 2: "arm", 3: "ddr"}[srcsel]
+    ctrl = pll_ctrl[name]
+    fdiv = (ctrl >> 12) & 0x7F
+    div0, div1 = (fpga0_ctrl >> 8) & 0x3F, (fpga0_ctrl >> 20) & 0x3F
+    reset, bypass = bool(ctrl & 1), bool(ctrl & 0x10)
+    mhz = (ps_clk_mhz * fdiv / (div0 * div1)) if (div0 and div1 and not reset and not bypass) else None
+    return {"srcsel": srcsel, "pll": name, "pll_ctrl": f"{ctrl:08x}", "fdiv": fdiv, "div0": div0, "div1": div1, "pll_reset": reset, "pll_bypass": bypass, "mhz": (round(mhz, 3) if mhz else None)}
 PROMPT_RE = re.compile(rb"(?:zynq-uboot|Zynq)> ")
 MODEL_RE = re.compile(rb"^Model: (.+?)\r?$", re.M)
 DRAM_RE = re.compile(rb"^DRAM: +(?:ECC [a-z]+ )?(\d+) MiB", re.M)
@@ -51,7 +67,7 @@ BDINFO_SIZE_RE = re.compile(rb"-> size += 0x([0-9a-fA-F]+)")
 MD_LINE_RE = re.compile(rb"^([0-9a-fA-F]{8}):((?: [0-9a-fA-F]{8}){1,4}) +[^\n]*$", re.M)
 CRC_RE = re.compile(rb"crc32 for ([0-9a-fA-F]{8}) \.\.\. ([0-9a-fA-F]{8}) ==> ([0-9a-fA-F]{8})")
 TOTAL_RE = re.compile(rb"## Total Size = 0x([0-9a-fA-F]+)")
-STARTING_RE = re.compile(rb"## Starting application")
+STARTING_RE = re.compile(rb"## Starting application[^\n]*\n")      # the whole start line: what follows it is the application's
 READY_RE = re.compile(rb"## Ready for binary \(ymodem\) download")
 CMD_RE = re.compile(rb"(loady [0-9a-f]{8}|crc32 [0-9a-f]{8} [0-9a-f]+|mw\.l [0-9a-f]{8} [0-9a-f]{8} 1|md\.l [0-9a-f]{8} [0-9a-f]+|go [0-9a-f]{8}|bdinfo|version)\r")
 FRAME_RE = re.compile(rb"B4Q1 [A-Z]+ \d+ [0-9a-f]{32} [^\n]*\n")
@@ -92,7 +108,10 @@ def load_runner(d: Path, manifest: dict) -> dict:
     _need(u["schema"] == "b4q_runner_uboot" and u["schema_version"] == 2, f"uboot.json: schema {u['schema']} v{u['schema_version']} is not b4q_runner_uboot v2")
     _need(u["kind"] == tr["kind"], "uboot.json.kind is not the transport's kind")
     _need(u["phase"] in PRE_GO_PHASES + POST_GO_PHASES + ("stopped",), f"uboot.json.phase {u['phase']!r} unknown")
-    _fields(u["context"], "uboot.json.context", {"image_sha256": str, "image_path": str, "pin_source": str, "board_models": list, "dram_min_mib": int, "variant_word": int, "load_addr": int})
+    _fields(u["context"], "uboot.json.context", {"image_sha256": str, "image_path": str, "pin_source": str, "board_models": list, "dram_min_mib": int, "variant_word": int, "load_addr": int,
+                                                 "allowed_roles": list, "purpose": str})
+    _need(u["context"].get("expected_boardid") is None or isinstance(u["context"]["expected_boardid"], str), "uboot.json.context.expected_boardid: not a string or null")
+    _need(isinstance(u["raw"].get("incomplete_writes", []), list), "uboot.json.raw.incomplete_writes: not a list")
     rx, tx = (d / "raw/console.bin").read_bytes(), (d / "raw/console_tx.bin").read_bytes()
     _fields(u["raw"], "uboot.json.raw", {"console_bin_sha256": str, "console_bin_bytes": int, "console_tx_bin_sha256": str, "console_tx_bin_bytes": int})
     _need(hashlib.sha256(rx).hexdigest() == u["raw"]["console_bin_sha256"] and len(rx) == u["raw"]["console_bin_bytes"], "raw/console.bin: not the bytes uboot.json declares")
@@ -230,31 +249,59 @@ def verify_runner(d: Path, manifest: dict, console: list | None, no_session: boo
         sizes = [int(x, 16) for x in BDINFO_SIZE_RE.findall(rx)]
         dram_mib = sum(sizes) // (1024 * 1024) if sizes else None
     prompt_seen = PROMPT_RE.search(rx) is not None
-    adm = u.get("admission") or {}
+    adm = u.get("admission")
+    if adm is not None and not isinstance(adm, dict):
+        F.append("admission: not an object"); adm = {}
+    adm = adm or {}
     board = adm.get("board") or {}
-    rep["witnesses"]["board"] = {"model": model_s, "dram_mib": dram_mib, "prompt_seen": prompt_seen}
+    model_ok = model_s is not None and any(m in model_s for m in ctx["board_models"])
+    dram_ok = dram_mib is not None and dram_mib >= ctx["dram_min_mib"]
+    rep["witnesses"]["board"] = {"model": model_s, "dram_mib": dram_mib, "prompt_seen": prompt_seen, "model_ok": model_ok, "dram_ok": dram_ok}
     if board:
         if board.get("model") != model_s or board.get("dram_mib") != dram_mib:
             F.append(f"admission.board: uboot.json says model {board.get('model')!r} / {board.get('dram_mib')} MiB, the received stream shows {model_s!r} / {dram_mib}")
-        model_ok = model_s is not None and any(m in model_s for m in ctx["board_models"])
-        dram_ok = dram_mib is not None and dram_mib >= ctx["dram_min_mib"]
         if bool(board.get("model_ok")) != model_ok or bool(board.get("dram_ok")) != dram_ok:
             F.append("admission.board: the recorded verdicts are not what the stream and the context give")
-    # ---- the carrier (VARIANT) and the clock word
+    # ---- the board's own identity and role (printenv in the streams), held to the context
+    env = {}
+    for m in ENV_RE.finditer(rx[:go_rx_off] if go_rx_off is not None else rx):
+        env[m.group(1).decode()] = m.group(2).decode("utf-8", "replace").strip()
+    boardid, role = env.get("boardid"), env.get("role")
+    boardid_ok = ctx.get("expected_boardid") is not None and boardid == ctx["expected_boardid"]
+    role_ok = role in ctx["allowed_roles"]
+    rep["witnesses"]["identity"] = {"boardid": boardid, "role": role, "boardid_ok": boardid_ok, "role_ok": role_ok}
+    ident = adm.get("identity")
+    if ident:
+        if ident.get("boardid") != boardid or ident.get("role") != role or bool(ident.get("boardid_ok")) != boardid_ok or bool(ident.get("role_ok")) != role_ok:
+            F.append(f"admission.identity: uboot.json says boardid {ident.get('boardid')!r} / role {ident.get('role')!r}, the received stream shows {boardid!r} / {role!r} against the context")
+    # ---- the clock, derived from the PS words in the stream (BEFORE any PL read), held to the context
+    f0 = md_value(rx, SLCR_FPGA0_CLK_CTRL, before=go_rx_off)
+    pll = {k: md_value(rx, a, before=go_rx_off) for k, a in (("arm", SLCR_ARM_PLL_CTRL), ("ddr", SLCR_DDR_PLL_CTRL), ("io", SLCR_IO_PLL_CTRL))}
+    clock = adm.get("clock")
+    derived = fclk0_from_words(f0, pll, ctx.get("ps_clk_mhz", PS_CLK_MHZ)) if f0 is not None and None not in pll.values() else None
+    clock_ok = (derived is not None and derived["mhz"] is not None and (ctx.get("fclk0_mhz") is None or abs(derived["mhz"] - ctx["fclk0_mhz"]) < 0.5)
+                and (ctx.get("fclk0_ctrl_expected") is None or f0 == ctx["fclk0_ctrl_expected"]))
+    rep["witnesses"]["clock"] = {"fpga0_ctrl": (f"{f0:08x}" if f0 is not None else None), "derived": derived, "ok": clock_ok}
+    if clock:
+        if clock.get("fpga0_ctrl") != (f"{f0:08x}" if f0 is not None else None) or (clock.get("derived") or {}).get("mhz") != (derived or {}).get("mhz") or bool(clock.get("ok")) != clock_ok:
+            F.append("admission.clock: the recorded words / derivation / verdict are not what the stream and the context give")
+    # the order: no PL read (the carrier window) before the clock words were read and the identity answered
+    first_pl = PL_READ_RE.search(tx)
+    if first_pl is not None:
+        clk_cmd = tx.find(f"md.l {SLCR_FPGA0_CLK_CTRL:08x} 1\r".encode())
+        env_cmd = tx.find(b"printenv role\r")
+        if clk_cmd < 0 or clk_cmd > first_pl.start() or env_cmd < 0 or env_cmd > first_pl.start():
+            F.append("admission: a PL read was issued before the clock words were read and the role answered (the order a gated clock forbids)")
+    # ---- the carrier (VARIANT)
     carrier = adm.get("carrier")
+    v = md_value(rx, VARIANT_ADDR, before=go_rx_off)
+    rep["witnesses"]["variant"] = f"{v:08x}" if v is not None else None
+    variant_ok = v is not None and v == ctx["variant_word"]
     if carrier:
-        v = md_value(rx, VARIANT_ADDR, before=go_rx_off)
-        rep["witnesses"]["variant"] = f"{v:08x}" if v is not None else None
         if v is None:
             F.append("admission.carrier: no md.l of the VARIANT word (0x43C02034) in the received stream")
         elif f"{v:08x}" != carrier.get("variant") or (v == ctx["variant_word"]) != bool(carrier.get("equal")):
             F.append(f"admission.carrier: uboot.json says {carrier.get('variant')} equal={carrier.get('equal')}, the stream shows {v:08x} against the context's {ctx['variant_word']:08x}")
-    fclk = adm.get("fclk0")
-    if fclk:
-        f0 = md_value(rx, SLCR_FPGA0_CLK_CTRL, before=go_rx_off)
-        rep["witnesses"]["fclk0_ctrl"] = f"{f0:08x}" if f0 is not None else None
-        if f0 is None or f"{f0:08x}" != fclk.get("ctrl"):
-            F.append("admission.fclk0: the recorded FPGA0_CLK_CTRL word is not what the stream shows")
     # ---- the image: the transferred bytes, the device's crc over the range, U-Boot's total
     lw = u.get("load_witness")
     image_sha = None
@@ -337,6 +384,45 @@ def verify_runner(d: Path, manifest: dict, console: list | None, no_session: boo
     go_declared = effective in POST_GO_PHASES
     if bool(go_cmds) != go_declared:
         F.append(f"phase: uboot.json says {effective!r} but the sent stream {'holds' if go_cmds else 'holds no'} `go`")
+    # ---- the state machine (C1): a `go` requires every prerequisite RECOMPUTED true, not merely recorded — the admission complete and ok
+    # (the image equal to the pin, the board class, the identity, the clock, the carrier), the load witness equal, the page witness equal;
+    # and the addresses bound: the context's load address = `loady`'s = the crc range's start = `go`'s = U-Boot's start line
+    if go_cmds:
+        img_w = rep["witnesses"].get("image") or {}
+        pg_w = rep["witnesses"].get("page") or {}
+        missing = []
+        if not adm:
+            missing.append("no admission recorded")
+        else:
+            if not adm.get("ok"):
+                missing.append("admission.ok is not true")
+            if not (adm.get("image") or {}).get("equal") or (adm.get("image") or {}).get("pin") != ctx["image_sha256"]:
+                missing.append("the admitted image is not the pinned one")
+        if not model_ok or not dram_ok:
+            missing.append("the board class (model / DRAM) does not admit this image")
+        if not boardid_ok or not role_ok:
+            missing.append("the board's identity / role does not admit this run")
+        if not clock_ok:
+            missing.append("the clock derivation does not admit a PL access")
+        if not variant_ok:
+            missing.append("the carrier's variant word is not the pinned one")
+        if img_w.get("complete") is False or img_w.get("equal") is not True or img_w.get("transferred_sha256") != ctx["image_sha256"]:
+            missing.append("the load witness is not a complete, equal transfer of the pinned image")
+        if pg_w.get("equal") is not True:
+            missing.append("the page witness is not equal")
+        if missing:
+            F.append("state: `go` was issued although " + "; ".join(missing) + " (execution after a failed or missing prerequisite)")
+        addrs = {"context": ctx["load_addr"], "go": int(go_cmds[0][1].split()[1], 16)}
+        if loady_cmds:
+            addrs["loady"] = int(loady_cmds[-1][1].split()[1], 16)
+        if img_w.get("device_crc"):
+            addrs["crc_start"] = int(img_w["device_crc"]["range"][0], 16)
+        sm = re.search(rb"## Starting application at 0x([0-9a-fA-F]{8})", rx)
+        if sm:
+            addrs["started_at"] = int(sm.group(1), 16)
+        if len(set(addrs.values())) != 1:
+            F.append("state: the load / crc / go / start addresses are not one address bound to the context: " + ", ".join(f"{k}={v:#010x}" for k, v in addrs.items()))
+        rep["witnesses"]["addresses"] = {k: f"{v:#010x}" for k, v in addrs.items()}
     if (starting is not None) and not go_cmds:
         F.append("phase: `## Starting application` in the received stream without a `go` command sent")
     if go_cmds and effective == "go-issued" and starting is None:
@@ -362,6 +448,8 @@ def verify_runner(d: Path, manifest: dict, console: list | None, no_session: boo
                 rep["stop"] = {"why": why, "demonstrated": _demonstrated(why, rx, tx, ctx, rep["witnesses"], prompt_seen, loady_cmds, model_s, dram_mib)}
                 if rep["stop"]["demonstrated"] is False:
                     F.append(f"no session: the named stop ({why[:60]}…) is not demonstrated by the raw streams")
+                elif rep["stop"]["demonstrated"] is None:
+                    F.append(f"no session: the named stop ({why[:60]}…) is of a class this verifier cannot demonstrate from the streams: unverified")
             elif effective != "pre-go":
                 F.append(f"no session, no stop, and the phase is {effective!r}: an incomplete control plane without a named stop")
         else:
@@ -386,22 +474,35 @@ def verify_runner(d: Path, manifest: dict, console: list | None, no_session: boo
                 rep["stop"] = {"why": why, "demonstrated": dem}
                 if dem is False:
                     F.append(f"no session: the named stop after `go` ({why[:60]}…) is not demonstrated by the raw streams")
+                elif dem is None:
+                    F.append(f"no session: the named stop after `go` ({why[:60]}…) is of a class this verifier cannot demonstrate: unverified")
     else:
         if not go_cmds:
             F.append("a session archive whose sent stream holds no `go`")
-        # ---- the console linkage: the retained lines are in the streams, in order, after go
-        pos = go_rx_off or 0
-        for e in board_frames:
-            k = rx.find(e["line"].encode("utf-8"), pos)
-            if k < 0:
-                F.append(f"console linkage: board line {e.get('i')} ({e['line'][:30]}…) is not in the received stream after `go` in order"); break
-            pos = k + len(e["line"])
-        pos = (go_tx_off or 0)
-        for e in [x for x in (console or []) if x.get("dir") == "host" and x.get("line")]:
-            k = tx.find(e["line"].encode("utf-8"), pos)
-            if k < 0:
-                F.append(f"console linkage: host line ({e['line'][:30]}…) is not in the sent stream after `go` in order"); break
-            pos = k + len(e["line"])
+        # ---- the console ACCOUNTING: the application's exchange as the raw streams hold it, line by line after `go`, must BE the retained
+        # console — every received line is a retained board entry (a frame, a noted unparsable line, a noted banner), in order, and every
+        # sent frame a retained host entry; nothing observed disappears from the interpreted exchange (an END before the IDENT included)
+        rx_lines = [ln for ln in rx[go_rx_off or 0:].split(b"\n")[:-1]]
+        rx_lines = [ln.rstrip(b"\r") for ln in rx_lines]
+        rx_lines = [ln for ln in rx_lines if ln.strip()]                           # the empty lines (U-Boot's CR LF after `go`) are not console lines
+        retained = [e["line"].encode("utf-8") for e in (console or []) if e.get("dir") == "board" and e.get("line")]
+        cut_at = next((i for i, e in enumerate([x for x in (console or []) if x.get("dir") == "board" and x.get("line")]) if (e.get("note") or "").startswith("a boot banner")), None)
+        if cut_at is not None and len(rx_lines) > cut_at + 1 and rx_lines[:cut_at + 1] == retained[:cut_at + 1]:
+            rep["witnesses"]["after_cut"] = {"lines": len(rx_lines) - cut_at - 1, "note": "the received lines after the noted boot banner: the PS's reset boot output, accounted as after the cut, not the session's"}
+            rx_lines = rx_lines[:cut_at + 1]                                     # the cut: what follows the banner is the device booting again, retained raw, not console
+        if rx_lines != retained:
+            k = next((i for i, (a_, b_) in enumerate(zip(rx_lines, retained)) if a_ != b_), min(len(rx_lines), len(retained)))
+            what = rx_lines[k][:50] if k < len(rx_lines) else b"(end)"
+            F.append(f"console accounting: the received stream after `go` holds {len(rx_lines)} line(s), the retained console {len(retained)} board line(s); they differ at line {k}: stream {what!r}")
+        tx_frames = [m.group(0).rstrip(b"\n") for m in FRAME_RE.finditer(tx[go_tx_off or 0:])]
+        sent = [e["line"].encode("utf-8") for e in (console or []) if e.get("dir") == "host" and e.get("line")]
+        if tx_frames != sent:
+            F.append(f"console accounting: the sent stream after `go` holds {len(tx_frames)} framed line(s), the retained console {len(sent)} host line(s), or their order differs")
+        tx_tail = tx[go_tx_off or 0:]
+        tx_tail = tx_tail[tx_tail.find(b"\r") + 1:] if b"\r" in tx_tail else b""      # after the go command itself
+        other = FRAME_RE.sub(b"", tx_tail)
+        if other.strip():
+            F.append(f"console accounting: {len(other.strip())} sent byte(s) after `go` that are not framed host lines")
     # ---- the admission's image pin held to what was transferred (or, before any load, to the context)
     img = adm.get("image")
     if img:
@@ -425,9 +526,13 @@ def _demonstrated(why: str, rx: bytes, tx: bytes, ctx: dict, W: dict, prompt_see
     if why.startswith("carrier: the VARIANT"):
         v = W.get("variant")
         return v is not None and int(v, 16) != ctx["variant_word"]
-    if why.startswith("clock: FPGA0_CLK_CTRL"):
-        f = W.get("fclk0_ctrl")
-        return f is not None and ctx.get("fclk0_ctrl_expected") is not None and int(f, 16) != ctx["fclk0_ctrl_expected"]
+    if why.startswith("clock:"):
+        return W.get("clock", {}).get("ok") is False
+    if why.startswith("identity: the board's boardid") or why.startswith("identity: the board's role") or why.startswith("identity: the context pins no boardid"):
+        ide = W.get("identity", {})
+        return not (ide.get("boardid_ok") and ide.get("role_ok"))
+    if why.startswith("persistence failed") or why.startswith("load refused") or " refused: persistence failed" in why:
+        return True                                                           # the host's own barrier: the streams show nothing guarded after it (held elsewhere)
     if why.startswith("load witness:"):
         return W.get("image", {}).get("equal") is False
     if why.startswith("loady:"):

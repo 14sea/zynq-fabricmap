@@ -12,6 +12,7 @@ is a pipe, the UART, the DMA and the fabric are emulated."""
 from __future__ import annotations
 
 import json
+import time
 import os
 import select
 import subprocess
@@ -137,7 +138,7 @@ class ConsoleSession(ss.Session):
 
     def _console_write(self, line: str, note: str = ""):
         os.write(self._fds["h2c_w"], line.encode("utf-8"))
-        self.console.append({"i": len(self.evidence.trace), "pcap_n": len(self.evidence.pcap_log), "dir": "host", "line": line.rstrip("\n"), "note": note})
+        self.console.append({"t": round(time.time(), 6), "i": len(self.evidence.trace), "pcap_n": len(self.evidence.pcap_log), "dir": "host", "line": line.rstrip("\n"), "note": note})
 
     def _frame_out(self, kind: str, payload: str = "") -> str:
         if self.host_seq >= SEQ_LIMIT:
@@ -195,7 +196,7 @@ class ConsoleSession(ss.Session):
             return
         if self.stats["dropped"] < self.knobs["drop_replies"]:
             self.stats["dropped"] += 1
-            self.console.append({"i": len(self.evidence.trace), "dir": "host", "line": None, "note": f"SIGNREQ req={req} left unanswered: the bench's fault knob"})
+            self.console.append({"t": round(time.time(), 6), "i": len(self.evidence.trace), "dir": "host", "line": None, "note": f"SIGNREQ req={req} left unanswered: the bench's fault knob"})
             return
         try:
             if int(g, 16) in self.notary_deny:
@@ -291,7 +292,7 @@ class ConsoleSession(ss.Session):
                 if self.page_words and self.knobs["bad_page"] is None and f["token"] != self.token and not (self.ident is None and f["token"] == wire.ZERO_TOKEN):
                     raise wire.WireError("wrong token")
             except wire.WireError as e:
-                self.console.append({"i": len(self.evidence.trace), "dir": "board", "line": line, "note": f"unparsable: {e}"})
+                self.console.append({"t": round(time.time(), 6), "i": len(self.evidence.trace), "dir": "board", "line": line, "note": f"unparsable: {e}"})
                 m = f"board line at line {len(self.console) - 1}: {e}"
                 if m not in self.findings:
                     self.findings.append(m)                                   # worded as the verifier's console decoder words it (the agreement rule compares strings)
@@ -299,13 +300,13 @@ class ConsoleSession(ss.Session):
             if self.board_seq is not None and f["seq"] <= self.board_seq:        # R2: a duplicate or decreasing board sequence has no effect
                 self.stats["stale_board"] += 1
                 m = f"console: board frame {f['type']} with sequence {f['seq']} after {self.board_seq}: not fresh, refused"
-                self.console.append({"i": len(self.evidence.trace), "dir": "board", "line": line, "note": "stale sequence: refused"})
+                self.console.append({"t": round(time.time(), 6), "i": len(self.evidence.trace), "dir": "board", "line": line, "note": "stale sequence: refused"})
                 if m not in self.findings:
                     self.findings.append(m)
                 self.halt(m)
                 return None
             self.board_seq = f["seq"]; self.board_token = f["token"]
-            self.console.append({"i": len(self.evidence.trace), "pcap_n": len(self.evidence.pcap_log), "dir": "board", "line": line, "type": f["type"], "seq": f["seq"]})
+            self.console.append({"t": round(time.time(), 6), "i": len(self.evidence.trace), "pcap_n": len(self.evidence.pcap_log), "dir": "board", "line": line, "type": f["type"], "seq": f["seq"]})
             kind, payload = f["type"], f["payload"].decode("utf-8", "replace")
             if kind == "HB":
                 self.stats["hb"] += 1
@@ -578,6 +579,7 @@ class ConsoleSession(ss.Session):
             (self.out / "raw/pulls.json").write_text(json.dumps({"infos": self.pull_infos, "stats": self.pull_stats}, indent=1) + "\n")
         m["transport"] = {"kind": "console-emulated", "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
                           "protocol": PROTOCOL, "token": self.token, "page_words": [f"{w:08x}" for w in (self.page_words or [])], "page_flags": self.page_flags,
+                          "time_origin": "console entries' `t`: this host's wall clock (time.time()) at the line's receipt / send — a host timestamp, never a device time",
                           "knobs": self.knobs, "stats": self.stats, "end": self.ended, "ident": self.ident, "console_lines": len(self.console),
                           "findings": list(self.findings), "host_seq_last": self.host_seq, "board_seq_last": self.board_seq, "refused_commands": self.refused_commands,
                           "evidence_log": {"pulled_bytes": len(self.log_bytes), "pulls": self.pull_infos, "stats": self.pull_stats} if (self.log_bytes or self.pull_infos) else None}

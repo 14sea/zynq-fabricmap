@@ -106,6 +106,17 @@ class Surrogate:
             self.backend.refuse_writes.add(int(off, 0))
         self.board = BOARDS[a.board]
         self.backend.mem.wr(SLCR_FPGA0_CLK_CTRL, int(a.fclk0_ctrl, 16))          # the SLCR word U-Boot's md.l shows (a fixture value: the real one is the bring-up's M3)
+        io_pll = 0x0001E000 | (1 if self.faults.get("clock-gated") else 0)       # IO PLL CTRL: FDIV 30 (1000 MHz from 33.333 MHz); the fault: PLL_RESET set — no running FCLK0
+        self.backend.mem.wr(0xF8000100, 0x0001A000); self.backend.mem.wr(0xF8000104, 0x00020000); self.backend.mem.wr(0xF8000108, io_pll)   # ARM / DDR / IO PLL CTRL fixture words
+        if self.faults.get("clock-slow"):
+            self.backend.mem.wr(SLCR_FPGA0_CLK_CTRL, 0x00201400)                 # DIVISOR0 = 20: 25 MHz, not the pinned 50
+        self.env = {"boardid": a.boardid, "ethaddr": "02:eb:a2:03:00:01"}
+        if a.role is not None:
+            self.env["role"] = a.role
+        if self.faults.get("no-role"):
+            self.env.pop("role", None)
+        if self.faults.get("wrong-boardid"):
+            self.env["boardid"] = "17A6" if a.boardid != "17A6" else "F8B3"
         self.table = {hashlib.sha256(IMAGE.read_bytes()).hexdigest(): APPHOST} if IMAGE.is_file() else {}
         for spec in a.image_table or []:
             sha, _, path = spec.partition("=")
@@ -283,6 +294,14 @@ class Surrogate:
             elif cmd == "reset":
                 self.out(b"resetting ...\r\n")
                 return "reboot"
+            elif cmd == "printenv":
+                name = parts[1] if len(parts) > 1 else None
+                if name is None:
+                    self.out("".join(f"{k}={v}\r\n" for k, v in self.env.items()).encode())
+                elif name in self.env:
+                    self.out(f"{name}={self.env[name]}\r\n".encode())
+                else:
+                    self.out(f"## Error: \"{name}\" not defined\r\n".encode())
             elif cmd == "bdinfo":
                 size = self.board["dram_mib"] * 1024 * 1024
                 self.out(f"arch_number = 0x00000000\r\nboot_params = 0x00000100\r\nDRAM bank   = 0x00000000\r\n-> start    = 0x00000000\r\n-> size     = 0x{size:08x}\r\nbaudrate    = 115200 bps\r\n".encode())
@@ -416,9 +435,11 @@ class Surrogate:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--link", help="a symlink to the PTY slave for the runner")
-    ap.add_argument("--fault", action="append", help="interrupted-load=K | wrong-crc | md-garbage | corrupt-page | corrupt-mw | missed-autoboot | no-prompt | silence-after=N | corrupt-chunk=N | reset-after-lines=N | ring-bytes=N | wdt-fail | unknown-image | no-wdt-reset | wrong-variant")
+    ap.add_argument("--fault", action="append", help="interrupted-load=K | wrong-crc | md-garbage | corrupt-page | corrupt-mw | missed-autoboot | no-prompt | silence-after=N | corrupt-chunk=N | reset-after-lines=N | ring-bytes=N | wdt-fail | unknown-image | no-wdt-reset | wrong-variant | clock-gated | clock-slow | no-role | wrong-boardid")
     ap.add_argument("--board", choices=sorted(BOARDS), default="4203", help="the host fixture profile: the EBAZ4203 (512 MiB, mainline U-Boot) or the EBAZ4205 (256 MiB, the miner U-Boot)")
     ap.add_argument("--fclk0-ctrl", default="0x00200A00", help="the SLCR FPGA0_CLK_CTRL word the fixture shows (hex)")
+    ap.add_argument("--boardid", default="F8B3", help="the fixture's saved boardid")
+    ap.add_argument("--role", default="verify", help="the fixture's saved role (docs/board_roles.md); --fault=no-role removes it")
     ap.add_argument("--image-table", action="append", help="sha256=path: the binary that stands for an image (default: the pinned v2 image -> the host harness)")
     ap.add_argument("--devc-fault", action="append", help="kind:ordinal:mode on the backend's DevC fake")
     ap.add_argument("--corrupt-frame-read", action="append", help="the ordinal of a frame read the bench corrupts")
