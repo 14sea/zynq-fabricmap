@@ -1,7 +1,7 @@
 [
  {
   "name": "valid",
-  "wall_s": 4.156,
+  "wall_s": 4.183,
   "records": [
    {
     "seq": 1,
@@ -127,9 +127,9 @@
   "platform_kicks": 35,
   "ident": {
    "protocol": "b4q-v1",
-   "token": "9684c097972de460efb98cf1399f94ce",
+   "token": "3ad5d59e7e3e1d37932123386c75948b",
    "uboot_epoch": 1700000000,
-   "app_image_sha_lo32": 1096540665,
+   "app_image_sha_lo32": 960139237,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
    "flags": 2,
    "page_nonce_seen": "9e3779b97f4a7c15",
@@ -152,7 +152,7 @@
  },
  {
   "name": "a5",
-  "wall_s": 4.579,
+  "wall_s": 4.532,
   "records": [
    {
     "seq": 1,
@@ -301,7 +301,7 @@
  },
  {
   "name": "notary_refuses",
-  "wall_s": 1.478,
+  "wall_s": 1.314,
   "records": [
    {
     "seq": 1,
@@ -402,7 +402,7 @@
  },
  {
   "name": "reply_corrupt",
-  "wall_s": 2.287,
+  "wall_s": 2.389,
   "records": [
    {
     "seq": 1,
@@ -470,7 +470,7 @@
    "hb": 3,
    "nack": 1,
    "signreq": 3,
-   "signreply": 3,
+   "signreply": 2,
    "corrupted": 1,
    "dropped": 0,
    "garbage": 0,
@@ -495,7 +495,7 @@
  },
  {
   "name": "reply_dropped_once",
-  "wall_s": 2.291,
+  "wall_s": 2.231,
   "records": [
    {
     "seq": 1,
@@ -588,7 +588,7 @@
  },
  {
   "name": "replies_dropped",
-  "wall_s": 1.354,
+  "wall_s": 1.361,
   "records": [
    {
     "seq": 1,
@@ -689,7 +689,7 @@
  },
  {
   "name": "silent_host",
-  "wall_s": 1.373,
+  "wall_s": 1.329,
   "records": [
    {
     "seq": 1,
@@ -754,7 +754,7 @@
  },
  {
   "name": "garbage_command",
-  "wall_s": 2.143,
+  "wall_s": 2.321,
   "records": [
    {
     "seq": 1,
@@ -847,7 +847,7 @@
  },
  {
   "name": "wrong_token",
-  "wall_s": 2.168,
+  "wall_s": 2.151,
   "records": [
    {
     "seq": 1,
@@ -943,7 +943,7 @@
  },
  {
   "name": "stale_reply",
-  "wall_s": 2.24,
+  "wall_s": 2.176,
   "records": [
    {
     "seq": 1,
@@ -1036,7 +1036,7 @@
  },
  {
   "name": "duplicate_tx",
-  "wall_s": 2.299,
+  "wall_s": 2.164,
   "records": [
    {
     "seq": 1,
@@ -1141,7 +1141,7 @@
  },
  {
   "name": "after_stop_tx",
-  "wall_s": 1.501,
+  "wall_s": 1.458,
   "records": [
    {
     "seq": 1,
@@ -1245,7 +1245,7 @@
  },
  {
   "name": "malformed_tx",
-  "wall_s": 2.224,
+  "wall_s": 2.241,
   "records": [
    {
     "seq": 1,
@@ -1388,7 +1388,7 @@
  },
  {
   "name": "host_seq_gap",
-  "wall_s": 2.269,
+  "wall_s": 2.3,
   "records": [
    {
     "seq": 1,
@@ -1481,8 +1481,87 @@
   "host_seq_last": 14
  },
  {
+  "name": "sequence_cut",
+  "wall_s": 1.185,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": null,
+    "o_status": "complete",
+    "executing_side_status": 6,
+    "phase": "?",
+    "findings": [
+     "no transaction close: no transaction close: the acquisition never reached the P6 seal (open)"
+    ],
+    "trace_range": [
+     12,
+     80
+    ],
+    "pcap_range": [
+     48,
+     150
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[0]: no transaction close; the chain ends here"
+  ],
+  "accesses": 16099,
+  "end": {
+   "kind": "PROTOCOL",
+   "reason": "this side's line sequence is exhausted",
+   "lines": 6,
+   "hb": 0,
+   "nacks": 0,
+   "sign_requests": 1,
+   "sign_replies": 1,
+   "transactions": 1,
+   "kicks": 6,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": ""
+  },
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 1,
+   "signreply": 1,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 9,
+  "halted": "transaction 1: not closed (no X; the session ended: PROTOCOL: this side's line sequence is exhausted)",
+  "open_findings": [],
+  "platform_kicks": 7,
+  "tx": {
+   "status": 6,
+   "reason": "the session ended: PROTOCOL: this side's line sequence is exhausted",
+   "o": true
+  },
+  "end_trace_index": 80,
+  "writes_after_end": 0,
+  "reads_after_end": 0,
+  "submits_after_end": 0,
+  "trace_events_in_tx": 68,
+  "mmio_after_end": 1
+ },
+ {
   "name": "bad_page",
-  "wall_s": 0.004,
+  "wall_s": 0.006,
   "records": [],
   "chain_findings": [
    "session_open.startup_readback_sha256: bad value ''",
@@ -1590,7 +1669,7 @@
  },
  {
   "name": "pre_event_corrupt",
-  "wall_s": 1.602,
+  "wall_s": 1.648,
   "records": [
    {
     "seq": 1,
@@ -1690,7 +1769,7 @@
  },
  {
   "name": "interrupt",
-  "wall_s": 1.515,
+  "wall_s": 1.461,
   "records": [
    {
     "seq": 1,

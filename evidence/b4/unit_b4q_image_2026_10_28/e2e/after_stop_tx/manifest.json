@@ -2,17 +2,17 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-after_stop_tx",
- "generated_utc": "2026-10-28T07:48:33Z",
+ "generated_utc": "2026-10-28T09:24:10Z",
  "emulated": true,
  "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
  "instrument": {
   "variant": "42340001",
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
-  "image_sha256": "415be1f9fda057ff7c12f61edb3bf8497702facdf7162b5ad1b75629f02c3bef"
+  "image_sha256": "393a8fe5a8f806e582b9b7ea22ad66091e43a2b8ea11241949855f2205f7cffb"
  },
  "executing_side": {
   "binary": "build/b4q_firmware/b4q_apphost",
-  "sha256": "415be1f9fda057ff7c12f61edb3bf8497702facdf7162b5ad1b75629f02c3bef",
+  "sha256": "393a8fe5a8f806e582b9b7ea22ad66091e43a2b8ea11241949855f2205f7cffb",
   "build": {
    "compiler": "/usr/bin/cc",
    "version": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
@@ -321,16 +321,16 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v1",
-  "token": "18dd629853930dfb6f0ffbb0bac6cc92",
+  "token": "97f3ed969d02dc7568a00d63efb06909",
   "page_words": [
    "42345149",
    "00000001",
-   "18dd6298",
-   "53930dfb",
-   "6f0ffbb0",
-   "bac6cc92",
+   "97f3ed96",
+   "9d02dc75",
+   "68a00d63",
+   "efb06909",
    "6553f100",
-   "415be1f9",
+   "393a8fe5",
    "4e406f12",
    "80d3cf5c",
    "abf43d00",
@@ -346,7 +346,7 @@
    "00000000",
    "00000000",
    "00000000",
-   "766c2941"
+   "1d6b4a95"
   ],
   "page_flags": 2,
   "knobs": {
@@ -393,9 +393,9 @@
   },
   "ident": {
    "protocol": "b4q-v1",
-   "token": "18dd629853930dfb6f0ffbb0bac6cc92",
+   "token": "97f3ed969d02dc7568a00d63efb06909",
    "uboot_epoch": 1700000000,
-   "app_image_sha_lo32": 1096540665,
+   "app_image_sha_lo32": 960139237,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
    "flags": 2,
    "page_nonce_seen": "9e3779b97f4a7c15",
