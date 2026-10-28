@@ -180,6 +180,24 @@ def scenario_host_seq_gap(s):
     return {"tx": _tx(s, "normal", G_CESR, FIX1), "host_seq_last": s.host_seq}
 
 
+def scenario_sequence_cut(s):
+    """the line sequence cut to its limit inside the root transaction, right before its EV P4 (the seqcut twin, the owner's fixture): the
+    terminal END goes out, the executing side's next write is refused by the HAL and it stops — no register write, no DMA submission,
+    no RESULT after the END (R2); the session halts on the unsealed outcome"""
+    s.open()
+    trace0 = len(s.backend.trace)
+    r = s.transaction("root", 0, stim([]))
+    drained = s.drain_after_end() if r["firmware"].get("status") == cs.END_STATUS else {}   # the owner's method: keep answering MMIO after the END and look
+    end_entry = next((e for e in s.console if e["dir"] == "board" and e.get("type") == "END"), None)
+    i_end = end_entry["i"] if end_entry else None
+    after = s.backend.trace[i_end:] if i_end is not None else []
+    n_pcap_at_end = end_entry.get("pcap_n") if end_entry else None
+    return {"tx": {"status": r["firmware"]["status"], "reason": r["firmware"]["reason"], "o": r["o"] is not None}, "end": s.ended, "end_trace_index": i_end,
+            "writes_after_end": sum(1 for e in after if e.get("op") == "wr"), "reads_after_end": sum(1 for e in after if e.get("op") == "rd"),
+            "submits_after_end": (sum(1 for e in s.backend.pcap_log[n_pcap_at_end:] if e.get("pcap") == "submit") if n_pcap_at_end is not None else None),
+            "trace_events_in_tx": len(s.backend.trace) - trace0, "halted": s.halted, **drained}
+
+
 def scenario_bad_page(s):
     so = s.open()
     try:
@@ -229,6 +247,7 @@ SCENARIOS = {
     "after_stop_tx": (scenario_after_stop_tx, {"notary_deny": {G_CESR}}),
     "malformed_tx": (scenario_malformed_tx, {}),
     "host_seq_gap": (scenario_host_seq_gap, {}),
+    "sequence_cut": (scenario_sequence_cut, {"binary": R / "build/b4q_firmware/b4q_seqcut_twin"}),
     "bad_page": (scenario_bad_page, {"bad_page": "checksum"}),
     "watchdog_fail": (scenario_watchdog_fail, {"watchdog_fail": True}),
     "pre_event_corrupt": (scenario_pre_event_corrupt, {}),

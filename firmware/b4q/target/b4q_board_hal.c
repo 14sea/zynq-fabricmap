@@ -5,6 +5,7 @@
  * the abort), so no other response is ever invented. The notary and event halves of the HAL are b4q_app.c's (the console). */
 #include "b4q_hal.h"
 #include "b4q_psmap.h"
+#include "b4q_app.h"
 #include "xil_io.h"
 
 uint32_t b4q_rd32(uint32_t addr, uint32_t *resp)
@@ -16,6 +17,7 @@ uint32_t b4q_rd32(uint32_t addr, uint32_t *resp)
 
 uint32_t b4q_wr32(uint32_t addr, uint32_t value)
 {
+    if (b4q_app_terminal()) return B4Q_RESP_SLVERR;     /* the terminal END went out: no write is issued after it (R2) */
     if (!b4q_psmap_writable(addr)) return B4Q_RESP_SLVERR;
     Xil_Out32(addr, value);
     return B4Q_RESP_OKAY;

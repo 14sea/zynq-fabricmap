@@ -58,5 +58,9 @@ void b4q_app_run(void);
 /* from an exception handler (the board): emit END ABORT with the fault's name, address and status, then return (the caller spins) */
 void b4q_app_abort(const char *kind, uint32_t addr, uint32_t status);
 const b4q_app_summary *b4q_app_summary_get(void);
+/* R2 (the owner's HOLD on d4ff43e): the terminal state is an EFFECT boundary, not only an output one — once the terminal END went
+ * out, the HAL's write half refuses every write (SLVERR, never issued), so the executing side's own admission invariant stops the
+ * transaction in flight at its first refused write: no further register write, no staging, no DMA. Reads stay admitted. */
+int b4q_app_terminal(void);
 
 #endif /* B4Q_APP_H */

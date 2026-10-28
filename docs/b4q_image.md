@@ -1,4 +1,4 @@
-# B4Q — the PS image (host-only preparation, v0.3, 2026-10-28; v0.1 held by the owner's review of `ba18e3c`, R1–R5 repaired — §7; v0.2 held by the review of `0606758`, C1–C4 repaired — §8): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
+# B4Q — the PS image (host-only preparation, v0.3, 2026-10-28; v0.1 held by the owner's review of `ba18e3c`, R1–R5 repaired — §7; v0.2 held by the review of `0606758`, C1–C4 repaired — §8; v0.3 held by the review of `d4ff43e`, R1–R2 repaired — §9): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
 
 > **Authorisation.** The owner's PASS on `a41f573` (archived in `evidence/b4/unit_b4q_integration_2026_10_27/owner_review_a41f573_PASS/`,
 > its section 4): one complete B4Q PS-image preparation unit, host-only — "the actual PS board-image preparation", to satisfy the
@@ -55,7 +55,9 @@ sequence is not greater than the last accepted one is refused by name (NACK `sta
 dropped frame); the host refuses a duplicate / decreasing board frame the same way (noted in the console log, a console finding, the
 session halted); the request id binds a SIGNREPLY to its SIGNREQ in addition. Neither side wraps: the line that would carry
 0xFFFFFFF0 is the application's terminal END PROTOCOL instead, wherever it is emitted — a wait's heartbeat, a NACK, a request, an event, a
-result — and nothing is emitted, requested or run after it; the host refuses to frame before that sequence.
+result — and nothing is emitted, requested or run after it; the host refuses to frame before that sequence. The terminal state is an EFFECT boundary too: both HAL write halves refuse
+every write once it is set, so the executing side's own admission invariant stops the transaction in flight at its first refused
+write (no register write, no staging, no DMA after the END).
 
 **The session latch:** after a transaction that did not close (any status but 0 — the A5 `injection_open` close is status 0 and no
 stop), the application NACKs every further TX by name (`halted: <the first failure>`) and `b4q_sign` refuses without a request;
@@ -83,13 +85,13 @@ harness counts the platform's restarts and the tests hold them to the lines emit
 | the load | the raw `.bin` at 0x02000000 (lscript.ld), `go 0x2000000` (the instrument's L5 recipe); the page at 0x10440000 written by `mw.l` before `go`; the image's digest echoed by the IDENT (`app_image_sha_lo32`) against the build evidence's pin | the bring-up's control plane under its ruling |
 | the OKAY of an access | "completed without an abort" (the AXI response is not observable from the A9; an SLVERR is the abort) | — (a design fact, stated, not a measurement) |
 
-## 5. The scenarios of record (`host/b4q_console_e2e.py`, 18; every archive fresh-verified under the console contract, every one agreeing)
+## 5. The scenarios of record (`host/b4q_console_e2e.py`, 19; every archive fresh-verified under the console contract, every one agreeing)
 
 `valid` (open / root / three candidates with tasks / QUIT → END COMPLETED, clean), `a5` (J1 / J2 / J3 through the console: pass),
 `duplicate_tx` (the previous TX line replayed byte for byte: NACK stale sequence, nothing signed or run, no record, halted), `after_stop_tx`
 (a valid TX at the console boundary after a failed transaction: NACK halted, nothing signed or run), `malformed_tx` (six commands outside the
 grammar: NACK malformed TX, no signature, no trace, no DMA; a legitimate one then closes), `host_seq_gap` (a gap in the host's sequence:
-closed, clean),
+closed, clean), `sequence_cut` (the sequence cut to its limit inside the root: the terminal END, then no write and no DMA),
 `notary_refuses` (REFUSED → STOP_SIGN at P1, no O, the next candidate refused), `reply_corrupt` (NACK bad crc, re-request, closed),
 `reply_dropped_once` (re-request, closed), `replies_dropped` (three attempts, the bound, STOP_SIGN, halted), `wrong_token` (NACK wrong
 token, then the command), `stale_reply` (another request's garbage words ignored, the right reply used, closed), `silent_host` (the
@@ -128,3 +130,10 @@ transport summary carry it, the session halts on it (`docs/b4q_plan.md` §4.2). 
 | C2 the exchange | counted and classified, not replayed | the ordered exchange replayed from the lines and bound to the records (the TX text rebuilt from each record), the trace (the nonce read before each request, the words staged after each reply), the notary log, the page and the opening; refused commands owed their NACK; the END recomputed | `test_c2_*`; mutants C2a–e |
 | C3 payload shape | typed messages checked only when they happened to be objects; counters untyped | every message decoded once and shaped (exact types) before use; a malformed one a named finding, never a bypass or a verifier error | `test_c3_*`; mutants C3a / C3b |
 | C4 sequence wrap | the limit checked only between waits | the emitter's gate: the terminal END carries the limit, nothing after (§2) | the budget twin's mode 7; `test_c4_*`; mutant C4a |
+
+## 9. The repair after the owner's HOLD on `d4ff43e` (2026-10-28)
+
+| item | what was wrong | what changed | held by |
+|---|---|---|---|
+| R1 the accepted reply | a closed result needed a request, not an accepted answer; a note skipped a line | the signing call's state explicit; a closed result needs it answered OK (causally, once, with the notary's and the staged words); STOP_SIGN needs it unanswered or refused; one signing call per transaction (the restore does not sign); notes validated from the bytes | `test_r1_*`; mutants R1x / R1y |
+| R2 the effect boundary | the executing side ran on after the terminal END | `b4q_app_terminal()`; both HAL write halves refuse after it; the executing side stops at its first refused write (§2) | the sequence-cut twin; `test_r2_*`; mutant R2x |

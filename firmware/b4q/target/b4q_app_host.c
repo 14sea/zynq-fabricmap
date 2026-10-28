@@ -45,6 +45,7 @@ uint32_t b4q_rd32(uint32_t addr, uint32_t *resp)
 uint32_t b4q_wr32(uint32_t addr, uint32_t value)
 {
     unsigned long long r = 0;
+    if (b4q_app_terminal()) return B4Q_RESP_SLVERR;     /* the terminal END went out: no write is issued after it (R2) */
     if (!b4q_psmap_writable(addr)) return B4Q_RESP_SLVERR;
     printf("W %08x %08x\n", (unsigned)addr, (unsigned)value); fflush(stdout);
     if (sscanf(reply(), "%llu", &r) != 1) { fprintf(stderr, "bad write reply: %s\n", g_line); exit(3); }

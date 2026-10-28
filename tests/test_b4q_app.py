@@ -339,10 +339,19 @@ class ConsoleScenarios(unittest.TestCase):
         end_i = next(i for i, x in enumerate(lines) if x["dir"] == "board" and " END " in (x.get("line") or ""))
         fr_ = w.parse(last_res["line"] + "\n"); fe = w.parse(lines[end_i]["line"] + "\n")
         extra = dict(last_res); extra["line"] = w.frame("RESULT", fe["seq"] + 999, fr_["token"], fr_["payload"]).rstrip("\n")
-        endp = json.loads(fe["payload"].decode()); endp["transactions"] += 1; endp["lines"] += 1; endp["kicks"] += 1
+        endp = json.loads(fe["payload"].decode()); endp["lines"] += 1; endp["kicks"] += 1          # transactions counts the admitted ones
         lines[end_i]["line"] = w.frame("END", fe["seq"] + 1000, fe["token"], json.dumps(endp)).rstrip("\n"); lines.insert(end_i, extra)
         (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in lines))
         m = json.loads((d / "manifest.json").read_text()); m["transport"]["end"] = endp; m["transport"]["console_lines"] = len(lines); (d / "manifest.json").write_text(json.dumps(m)); cases["extra_result"] = (d, "without an admitted TX")
+        d = self._console_copy("extra_reply")                                # an extra reply with a bogus id beside the real one: only the open-request rule catches it
+        lines = [json.loads(l) for l in (d / "console.jsonl").read_text().splitlines() if l.strip()]
+        e = next(x for x in lines if is_reply(x)); i = lines.index(e); fx = w.parse(e["line"] + "\n")
+        bogus = dict(e); bogus["line"] = w.frame("SIGNREPLY", fx["seq"] + 1, fx["token"], re.sub(r"^OK \d+", "OK 999999", fx["payload"].decode())).rstrip("\n"); lines.insert(i + 1, bogus)
+        for x in lines[i + 2:]:                                               # the later host lines shifted by one: the sequence stays fresh
+            if x["dir"] == "host" and x.get("line") and not x.get("note"):
+                g = w.parse(x["line"] + "\n"); x["line"] = w.frame(g["type"], g["seq"] + 1, g["token"], g["payload"]).rstrip("\n")
+        (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in lines))
+        m = json.loads((d / "manifest.json").read_text()); m["transport"]["console_lines"] = len(lines); (d / "manifest.json").write_text(json.dumps(m)); cases["extra_reply_bogus_id"] = (d, "not an open request")
         for name, (d, needle) in cases.items():
             rep = vf.verify(d)
             self.assertIsNone(rep["refused"], name); self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name)
@@ -384,6 +393,65 @@ class ConsoleScenarios(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
         out = dict(kv.split("=") for kv in p.stdout.split())
         self.assertEqual((out["first"], out["last"], out["lines"], out["wraps"], out["ends"], out["terminal"], out["end"], out["ret"]), ("ffffffef", "fffffff0", "2", "0", "1", "1", "3", "-1"))
+
+    def test_r1_a_closed_transaction_needs_its_signing_call_answered_ok(self):
+        """the owner's R1 (d4ff43e): every SIGNREPLY removed (with or without the counters refreshed), one removed, the real reply noted
+        stale, every reply noted stale — a closed RESULT without its accepted signing exchange is never clean; a note is validated from
+        the bytes, never trusted"""
+        import re
+        is_reply = lambda e: e["dir"] == "host" and e.get("line") and " SIGNREPLY " in e["line"] and not e.get("note")
+        def lines_of(d):
+            return [json.loads(l) for l in (d / "console.jsonl").read_text().splitlines() if l.strip()]
+        def write(d, L, refresh_counts=False, stale=0):
+            (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in L))
+            m = json.loads((d / "manifest.json").read_text()); m["transport"]["console_lines"] = len(L)
+            if refresh_counts:
+                m["transport"]["stats"]["signreply"] = 0; m["transport"]["end"]["sign_replies"] = 0
+                for e in L:
+                    if e["dir"] == "board" and " END " in (e.get("line") or ""):
+                        f = w.parse(e["line"] + "\n"); p = json.loads(f["payload"].decode()); p["sign_replies"] = 0
+                        e["line"] = w.frame("END", f["seq"], f["token"], json.dumps(p)).rstrip("\n")
+                (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in L))
+            if stale:
+                m["transport"]["stats"]["stale"] = m["transport"]["stats"].get("stale", 0) + stale
+            (d / "manifest.json").write_text(json.dumps(m))
+        cases = {}
+        d = self._console_copy("r1_all_removed"); L = [x for x in lines_of(d) if not is_reply(x)]; write(d, L); cases["all_replies_removed"] = d
+        d = self._console_copy("r1_all_removed_counters"); L = [x for x in lines_of(d) if not is_reply(x)]; write(d, L, refresh_counts=True); cases["all_replies_removed_counters"] = d
+        d = self._console_copy("r1_first_removed"); L = lines_of(d); L.remove(next(x for x in L if is_reply(x))); write(d, L); cases["first_reply_removed"] = d
+        d = self._console_copy("r1_last_removed"); L = lines_of(d); L.remove([x for x in L if is_reply(x)][-1]); write(d, L); cases["last_reply_removed"] = d
+        d = self._console_copy("r1_noted_stale"); L = lines_of(d); next(x for x in L if is_reply(x))["note"] = "a stale SIGNREPLY (another request's, garbage words): the bench's fault knob"; write(d, L, stale=1); cases["reply_noted_stale"] = d
+        d = self._console_copy("r1_all_noted_stale"); L = lines_of(d); n = 0
+        for x in L:
+            if is_reply(x):
+                x["note"] = "a stale SIGNREPLY (another request's, garbage words): the bench's fault knob"; n += 1
+        write(d, L, stale=n); cases["signreq_only_unanswered"] = d
+        d = self._console_copy("r1_stale_note_dup"); L = lines_of(d)              # the real reply duplicated (seq + 1, later host lines shifted) and the first copy noted stale: the request is still answered; only the note's validation catches it
+        e = next(x for x in L if is_reply(x)); i = L.index(e); f = w.parse(e["line"] + "\n")
+        dup = dict(e); dup["line"] = w.frame("SIGNREPLY", f["seq"] + 1, f["token"], f["payload"]).rstrip("\n"); L.insert(i + 1, dup)
+        for x in L[i + 2:]:
+            if x["dir"] == "host" and x.get("line") and not x.get("note"):
+                g = w.parse(x["line"] + "\n"); x["line"] = w.frame(g["type"], g["seq"] + 1, g["token"], g["payload"]).rstrip("\n")
+        e["note"] = "a stale SIGNREPLY (another request's, garbage words): the bench's fault knob"; write(d, L, stale=1); cases["stale_note_with_duplicate"] = d
+        for name, d in cases.items():
+            rep = vf.verify(d)
+            self.assertIsNone(rep["refused"], name); self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name)
+            self.assertTrue(any("not answered by an accepted OK reply" in x or "noted as stale but it answers the open request" in x for x in rep["session"]), (name, rep["session"]))
+        for name in ("valid", "a5", "reply_corrupt", "reply_dropped_once", "stale_reply", "replies_dropped", "notary_refuses"):
+            rep = _S["verify"][name][1]; self.assertTrue(rep["agree"], (name, rep["session"])); self.assertEqual(rep["console"]["findings"], [], name)
+
+    def test_r2_the_terminal_end_bounds_the_effects(self):
+        """the owner's R2: the sequence cut to its limit inside the root transaction (the seqcut twin, the owner's fixture): the terminal
+        END goes out and from then on the HAL refuses every write — zero register writes, zero DMA submissions, no RESULT; the session
+        halts on the unsealed outcome; the archive agrees"""
+        s = self.summary("sequence_cut")
+        self.assertEqual((s["tx"]["status"], s["writes_after_end"], s["submits_after_end"], s["end"]["kind"]), (6, 0, 0, "PROTOCOL"))
+        self.assertIsNotNone(s.get("mmio_after_end"))                        # the host kept answering MMIO after the END (the owner's observation method): nothing but reads came
+        self.assertIn("sequence is exhausted", s["end"]["reason"]); self.assertIsNotNone(s["halted"])
+        rep = _S["verify"]["sequence_cut"][1]; self.assertTrue(rep["agree"], rep["session"]); self.assertEqual(rep["console"]["findings"], [])
+        lines = console_lines("sequence_cut")
+        end = next(e for e in lines if e.get("type") == "END"); self.assertEqual(end["seq"], 0xFFFFFFF0)
+        self.assertFalse(any(e.get("type") == "RESULT" for e in lines)); self.assertEqual([e for e in lines if e["dir"] == "board"][-1]["type"], "END")
 
     def test_the_executing_sides_own_stop_reaches_the_host_through_the_console(self):
         s = self.summary("pre_event_corrupt")

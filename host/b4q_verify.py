@@ -563,7 +563,33 @@ def _decode_console(console: list, token: str | None, F: list) -> list:
     out = []
     for idx, e in enumerate(console):
         m = {"idx": idx, "dir": e["dir"], "note": e.get("note") or "", "i": e["i"], "line": e["line"], "type": None, "seq": None, "text": None, "obj": None, "bad": None}
-        if e["line"] is None or (m["note"] and e["dir"] == "host") or m["note"].startswith("stale sequence"):
+        if e["line"] is None or m["note"].startswith("stale sequence"):
+            out.append(m); continue
+        if m["note"] and e["dir"] == "host":                  # a declared bench fault: its bytes must show the fault the note claims (R1: a note is never authority)
+            note = m["note"]
+            try:
+                f = wire.parse(e["line"] + "\n", token)
+                parsed, why = f, None
+            except wire.WireError as ex:
+                parsed, why = None, str(ex)
+            if "corrupted" in note or "malformed" in note:
+                if why != "bad crc" and why != "not a B4Q1 frame":
+                    m["bad"] = f"noted as a corrupted / malformed line but its bytes {'parse' if parsed else 'fail with ' + why}"
+            elif "another session's token" in note:
+                if why != "wrong token":
+                    m["bad"] = f"noted as another token's line but its bytes {'parse under this token' if parsed else 'fail with ' + why}"
+            elif "stale SIGNREPLY" in note:
+                if parsed is None:
+                    m["bad"] = f"noted as a stale SIGNREPLY but its bytes fail with {why}"
+                else:
+                    m["type"], m["seq"] = parsed["type"], parsed["seq"]
+                    m["text"] = parsed["payload"].decode("utf-8", "replace")
+                    m["stale_reply"] = True                       # validated against the open request in the exchange (a reply to the open request is NOT stale)
+            elif "replayed" in note:
+                if parsed is None:
+                    m["bad"] = f"noted as a replayed line but its bytes fail with {why}"
+            if m["bad"]:
+                F.append(f"host line at line {idx}: {m['bad']}")
             out.append(m); continue
         try:
             f = wire.parse(e["line"] + "\n", token)
@@ -733,6 +759,7 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
     expect_nack = []                      # reasons the board must NACK next, in order (declared bench faults, refused commands)
     hb = nacks = 0
     refused_cmds = 0
+    accepted_replies = 0                  # replies the application accepted: a causally valid OK or REFUSED for an open request
     host_last_type = None
     nonce_first = None
     def bind_tx(m):
@@ -762,6 +789,11 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
                     expect_nack.append("wrong token")
                 elif "replayed" in m["note"]:
                     expect_nack.append("stale sequence"); refused_cmds += 1      # a replayed TX is a command the exchange refuses
+                elif m.get("stale_reply"):                # noted stale: its bytes must NOT answer the open request (R1: a note is never authority)
+                    parts = m["text"].split(" ")
+                    rq = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else None
+                    if cur is not None and any(q["req"] == rq and q["state"] == "unanswered" for q in cur["reqs"]):
+                        F.append(f"host SIGNREPLY at line {m['idx']}: noted as stale but it answers the open request {rq}")
                 continue                                  # a stale SIGNREPLY: ignored by the application, owed nothing
             if m["bad"]:
                 continue
@@ -787,7 +819,7 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
                 if req["answered"]:
                     F.append(f"host SIGNREPLY at line {m['idx']}: a second reply to request {o['req']}")
                     continue
-                req["answered"] = o
+                req["answered"] = o; req["state"] = "ok" if o["ok"] else "refused"; accepted_replies += 1
                 if o["ok"]:
                     key = (req["genome"], req["nonce"])
                     if key not in signed:
@@ -850,6 +882,9 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
                 F.append(f"board SIGNREQ at line {m['idx']}: outside an admitted transaction"); continue
             o = m["obj"]
             prev = next((q for q in cur["reqs"] if q["req"] == o["req"]), None)
+            if cur["reqs"] and prev is None:
+                F.append(f"board SIGNREQ at line {m['idx']}: a second distinct request in one transaction (the executing side signs once, in candidate_in; the restore does not sign)")
+                continue
             if prev is not None:                          # a re-request: the same candidate, at most three lines, none after an answer
                 prev["n"] += 1
                 if (o["genome"], o["nonce"]) != (prev["genome"], prev["nonce"]):
@@ -864,18 +899,12 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
             nonce_trace = _nonce_from_trace(trace, m["i"])
             if nonce_trace is not None and nonce_trace != o["nonce"]:
                 F.append(f"board SIGNREQ at line {m['idx']}: its nonce {o['nonce']} is not the one the executing side read from the PL just before ({nonce_trace})")
-            if len(cur["reqs"]) == 0:                     # the candidate
-                r = cur["rec"]
-                if o["genome"] != f"{r['record']['genome']:08x}":
-                    F.append(f"board SIGNREQ at line {m['idx']}: candidate genome {o['genome']} is not record {tx_dirs[cur['k']].name}'s")
-                if o["nonce"] != r["ctx"]["nonce"]:
-                    F.append(f"board SIGNREQ at line {m['idx']}: candidate nonce {o['nonce']} is not the record's ctx.nonce")
-            elif len(cur["reqs"]) == 1:                   # the restore (genome 0)
-                if o["genome"] != "00000000":
-                    F.append(f"board SIGNREQ at line {m['idx']}: the second request of a transaction is the restore's (genome 0), not {o['genome']}")
-            else:
-                F.append(f"board SIGNREQ at line {m['idx']}: a third distinct request in one transaction")
-            cur["reqs"].append({"req": o["req"], "genome": o["genome"], "nonce": o["nonce"], "n": 1, "answered": None, "ok_i": None, "idx": m["idx"]})
+            r = cur["rec"]                                # the one signing call of a transaction: the candidate's
+            if o["genome"] != f"{r['record']['genome']:08x}":
+                F.append(f"board SIGNREQ at line {m['idx']}: candidate genome {o['genome']} is not record {tx_dirs[cur['k']].name}'s")
+            if o["nonce"] != r["ctx"]["nonce"]:
+                F.append(f"board SIGNREQ at line {m['idx']}: candidate nonce {o['nonce']} is not the record's ctx.nonce")
+            cur["reqs"].append({"req": o["req"], "genome": o["genome"], "nonce": o["nonce"], "n": 1, "answered": None, "ok_i": None, "idx": m["idx"], "state": "unanswered"})
             continue
         if m["type"] == "RESULT":
             results.append(m)
@@ -894,19 +923,33 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
                         F.append(f"the words of request {q['req']} were never staged into PAYLOAD / TAG after the reply")
                     elif staged != q["answered"]["words"]:
                         F.append(f"the words staged into PAYLOAD / TAG after request {q['req']}'s reply are not the reply's")
-            if m["obj"]["status"] == 0 and not cur["reqs"]:
-                F.append(f"board RESULT at line {m['idx']}: a closed transaction without any SIGNREQ")
+            # R1 (the owner's HOLD on d4ff43e): a closed transaction needs its ONE signing call answered by a causally valid OK (the
+            # candidate's request, answered after it, before this result, with the notary's words that were then staged); a STOP_SIGN
+            # result needs that call unanswered or refused; any other outcome of the call contradicts the result
+            states = [q["state"] for q in cur["reqs"]]
+            if m["obj"]["status"] == 0:
+                if states != ["ok"]:
+                    F.append(f"board RESULT at line {m['idx']}: a closed transaction whose signing call was not answered by an accepted OK reply (requests: {states or 'none'})")
+            elif m["obj"]["reason"].startswith("STOP_SIGN"):
+                if "ok" in states:
+                    F.append(f"board RESULT at line {m['idx']}: a STOP_SIGN result although the signing call was answered OK")
+            elif states and states != ["ok"]:
+                F.append(f"board RESULT at line {m['idx']}: a result past the signing phase ({m['obj']['phase']}) although the signing call was not answered OK")
             if m["obj"]["status"] != 0 and halted is None:
                 halted = m["obj"]["reason"]
             cur["result"] = m; phase = "idle"; cur = None
             continue
         if m["type"] == "END":
             ends.append(m)
-            if phase == "admitted" and manifest.get("interrupted") is None:
-                F.append(f"board END at line {m['idx']}: inside transaction {cur['k'] + 1} (no RESULT) and the session was not interrupted")
-            phase = "ended"
             o = m["obj"]
-            counts = {"lines": sum(1 for b in board if b["idx"] < m["idx"]) + noted["stale_board"], "hb": hb, "nacks": nacks, "sign_requests": len(signreqs), "transactions": len(results),
+            terminal = o["kind"] == "PROTOCOL" and "sequence is exhausted" in o["reason"]   # the emitter's terminal END (C4): it may fall inside a transaction
+            if phase == "admitted" and manifest.get("interrupted") is None and not terminal:
+                F.append(f"board END at line {m['idx']}: inside transaction {cur['k'] + 1} (no RESULT) and the session was not interrupted")
+            if phase == "admitted":
+                cur["cut_by_end"] = True
+            phase = "ended"
+            counts = {"lines": sum(1 for b in board if b["idx"] < m["idx"]) + noted["stale_board"], "hb": hb, "nacks": nacks, "sign_requests": len(signreqs), "transactions": k,
+                      "sign_replies": accepted_replies,
                       "refused_tx": sum(1 for b in board if b["type"] == "NACK" and b["text"].startswith("halted:") and b["idx"] < m["idx"]),
                       "stale_frames": sum(1 for b in board if b["type"] == "NACK" and b["text"] == "stale sequence" and b["idx"] < m["idx"])}
             for kk, v in counts.items():
@@ -933,6 +976,8 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
         F.append("the transport caches an IDENT the console never carried")
     if phase == "admitted" and manifest.get("interrupted") is None:
         F.append(f"transaction {cur['k'] + 1} admitted and never answered by a RESULT, and the session was not interrupted")
+    if ends and cur is not None and cur.get("cut_by_end") and not (ends[-1]["obj"]["kind"] == "PROTOCOL"):
+        F.append("a transaction cut by an END that is not the terminal one")
     if k != len(recs) - (1 if manifest.get("interrupted") is not None and phase == "admitted" else 0) and not (k == len(recs)):
         F.append(f"{k} TX admitted for {len(recs)} retained records")
     if k < len(recs):
@@ -950,7 +995,7 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
         F.append(f"the transport's refused commands ({len(tr_ref)}) are not the commands the exchange refused ({refused_cmds})")
     if tr["console_lines"] != len(console):
         F.append(f"the transport declares {tr['console_lines']} console lines, the log holds {len(console)}")
-    for kk, want in (("hb", hb), ("nack", nacks), ("signreq", len(signreqs))):
+    for kk, want in (("hb", hb), ("nack", nacks), ("signreq", len(signreqs)), ("signreply", accepted_replies + (noted["stale"] if False else 0))):
         if tr["stats"].get(kk) != want:
             F.append(f"the transport's stats.{kk} is {tr['stats'].get(kk)}, the lines say {want}")
     return {"findings": F, "board_lines": len(board), "host_lines": len(host), "noted": noted, "ident": ident is not None, "results": len(results), "signreqs": len(signreqs), "ends": len(ends), "admitted": k}

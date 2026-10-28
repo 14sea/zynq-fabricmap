@@ -8,7 +8,7 @@
    "kind": "new",
    "note": "host builds only (twin, host, xcheck) into the top-level ignored build/; no image.",
    "role": "build",
-   "sha256": "f3501a5012547ba2399b3db6f9e7aecf5a345f36ff01b1153da4274a70afa2f6"
+   "sha256": "87b4ae7c595ec3c9db40a9a22f67361b2ef9716ce7def67d7e4dcda5f75de17a"
   },
   "firmware/b4q/b4q_cmd.c": {
    "kind": "new",
@@ -133,17 +133,17 @@
   "firmware/b4q/target/b4q_app.c": {
    "kind": "new",
    "role": "the board application's session over the console / platform / HAL interfaces (pure: runs on the host harness and on the board)",
-   "sha256": "af79ac25420e95e2d21411e6de2e65df9eba6a760378e0ce01082cd607a23d2a"
+   "sha256": "57591a4ccee6b961b9b4d35cefb7c51111cef204cf373921777ccb2a5042affc"
   },
   "firmware/b4q/target/b4q_app.h": {
    "kind": "new",
    "role": "b4q_app.c's interface and bounds",
-   "sha256": "1d24d3cde970adc36d7bb7eb7d32b2e3907f011f9c4f63bea9c4f6fd1b4260ff"
+   "sha256": "2427c6de8f7ac0ab700d1c4383b7477a64a37b63fc39f8c8368f8139629f1983"
   },
   "firmware/b4q/target/b4q_app_host.c": {
    "kind": "new",
    "role": "the host harness of the board application (MMIO on stdio, the console on inherited descriptors)",
-   "sha256": "3420cd4c5d3263caab4fbb4fb186827028d0acf3b4471a0c369a1b7da6a486fa"
+   "sha256": "6e373e6b9687e5bc0c0fa6c585ab30ab6edce5c7a2585d4e42ee4011b9232320"
   },
   "firmware/b4q/target/b4q_board_console.c": {
    "kind": "new",
@@ -153,7 +153,7 @@
   "firmware/b4q/target/b4q_board_hal.c": {
    "kind": "new",
    "role": "the MMIO half of the HAL on the board behind the allowlist",
-   "sha256": "52a41f9de09dbc890a25a76a2fd656a088b3977ded413d30c7a462e272ce20d6"
+   "sha256": "450af9b9485a37f8d3837c03d1e526c6df06b8cb1494a4cbecf6766640a469dc"
   },
   "firmware/b4q/target/b4q_board_main.c": {
    "kind": "new",
@@ -179,6 +179,11 @@
    "kind": "new",
    "role": "b4q_psmap.c's interface and the PS addresses",
    "sha256": "842676811f7c41a7874f5e3ec4cc8a5804aa15bd989b8eea97f7186a552abc29"
+  },
+  "firmware/b4q/target/b4q_seqcut_twin.c": {
+   "kind": "new",
+   "role": "the sequence-cut twin: the harness with the line sequence cut to its limit inside a transaction (R2 of the fourth review; tests/test_b4q_app.py::test_r2)",
+   "sha256": "6c8b01adf878638ffb404dc2728a05a83854af9a54717078c7fbf88aac623583"
   },
   "firmware/b4q/target/b4q_wait_twin.c": {
    "kind": "new",

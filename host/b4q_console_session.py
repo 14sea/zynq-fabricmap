@@ -90,7 +90,7 @@ class ConsoleSession(ss.Session):
 
     def _console_write(self, line: str, note: str = ""):
         os.write(self._fds["h2c_w"], line.encode("utf-8"))
-        self.console.append({"i": len(self.backend.trace), "dir": "host", "line": line.rstrip("\n"), "note": note})
+        self.console.append({"i": len(self.backend.trace), "pcap_n": len(self.backend.pcap_log), "dir": "host", "line": line.rstrip("\n"), "note": note})
 
     def _frame_out(self, kind: str, payload: str = "") -> str:
         if self.host_seq >= SEQ_LIMIT:
@@ -158,13 +158,13 @@ class ConsoleSession(ss.Session):
         if self.stats["stale"] < self.knobs["stale_reply_first"]:
             self.stats["stale"] += 1                                   # a reply to ANOTHER request with other words, before the right one: must be ignored
             self._console_write(self._frame_out("SIGNREPLY", f"OK {req - 1} " + " ".join("deadbeef" for _ in range(24))), "a stale SIGNREPLY (another request's, garbage words): the bench's fault knob")   # a fresh host sequence, another request id
-        self.stats["signreply"] += 1
         line = self._frame_out("SIGNREPLY", reply)
         if self.stats["corrupted"] < self.knobs["corrupt_replies"]:
             self.stats["corrupted"] += 1; self._expected_nacks += 1
             line = line[:-3] + ("1" if line[-3] != "1" else "2") + "\n"      # one CRC character changed: the line must be refused and re-requested
             self._console_write(line, "the SIGNREPLY corrupted in transit: the bench's fault knob")
             return
+        self.stats["signreply"] += 1                                           # a reply the application can accept (the corrupted one above is not)
         self._console_write(line)
 
     def serve(self, awaiting: str = "RESULT") -> dict:
@@ -243,7 +243,7 @@ class ConsoleSession(ss.Session):
                 self.halt(m)
                 return None
             self.board_seq = f["seq"]
-            self.console.append({"i": len(self.backend.trace), "dir": "board", "line": line, "type": f["type"], "seq": f["seq"]})
+            self.console.append({"i": len(self.backend.trace), "pcap_n": len(self.backend.pcap_log), "dir": "board", "line": line, "type": f["type"], "seq": f["seq"]})
             kind, payload = f["type"], f["payload"].decode("utf-8", "replace")
             if kind == "HB":
                 self.stats["hb"] += 1
@@ -272,6 +272,23 @@ class ConsoleSession(ss.Session):
             else:
                 self.events.append({"i": len(self.backend.trace), "line": f"?? {kind} {payload}"})
         return None
+
+    def drain_after_end(self, cap: int = 200000) -> dict:
+        """After an END: keep answering the program's MMIO requests (nothing on the console) until it exits or `cap` requests passed — the
+        owner's observation method for the effect boundary: whatever the program still does after its END lands in the trace / PCAP log."""
+        n = 0
+        while n < cap:
+            line = self._readline("mmio")
+            if line is None:
+                break
+            n += 1
+            if line.startswith("R "):
+                data, resp, x = self.backend.rd32(int(line[2:], 16)); self._send(f"{data:08x} {resp}")
+            elif line.startswith("W "):
+                a, d = line[2:].split(); self._send(str(self.backend.wr32(int(a, 16), int(d, 16))))
+            elif line.startswith("HALT "):
+                self.events.append({"i": len(self.backend.trace), "line": line})
+        return {"mmio_after_end": n}
 
     def stop(self):
         if self.proc and self.proc.poll() is None:

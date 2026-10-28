@@ -19,7 +19,7 @@ R = Path(__file__).resolve().parents[3]
 FW = R / "firmware/b4q"
 APP, WIRE, PSMAP, CMD = FW / "target/b4q_app.c", FW / "target/b4q_wire.c", FW / "target/b4q_psmap.c", FW / "b4q_cmd.c"
 SESSION, VERIFY = R / "host/b4q_console_session.py", R / "host/b4q_verify.py"
-BUILD = ["make", "-C", str(FW), f"BUILD={R / 'build/b4q_firmware'}", "apphost", "wiretwin", "waittwin"]
+BUILD = ["make", "-C", str(FW), f"BUILD={R / 'build/b4q_firmware'}", "apphost", "wiretwin", "waittwin", "seqcut"]
 WAIT = R / "build/b4q_firmware/b4q_wait_twin"
 TWIN = R / "build/b4q_firmware/b4q_wire_twin"
 
@@ -332,15 +332,78 @@ def probe_c2(root):
     end_i = next(i for i, x in enumerate(L) if x["dir"] == "board" and " END " in (x.get("line") or ""))
     fr_ = w.parse(last_res["line"] + "\n"); fe = w.parse(L[end_i]["line"] + "\n")
     extra = dict(last_res); extra["line"] = w.frame("RESULT", fe["seq"] - 1 + 1000, fr_["token"], fr_["payload"]).rstrip("\n"); extra["seq"] = fe["seq"] + 999
-    endp = json.loads(fe["payload"].decode()); endp["transactions"] += 1; endp["lines"] += 1; endp["kicks"] += 1
+    endp = json.loads(fe["payload"].decode()); endp["lines"] += 1; endp["kicks"] += 1          # transactions counts the ADMITTED ones: unchanged by a spurious RESULT
     L[end_i]["line"] = w.frame("END", fe["seq"] + 1000, fe["token"], json.dumps(endp)).rstrip("\n"); L[end_i]["seq"] = fe["seq"] + 1000
     L.insert(end_i, extra); write(d, L)
     m = json.loads((d / "manifest.json").read_text()); m["transport"]["end"] = endp; m["transport"]["console_lines"] = len(L); (d / "manifest.json").write_text(json.dumps(m)); cases["extra_result"] = d
+    # an EXTRA reply with a bogus request id beside the real one (the real request still answered): only the open-request rule catches it
+    d = copy("extra_reply"); L = lines_of(d); e = [x for x in L if is_reply(x)][0]; i = L.index(e)
+    fx = w.parse(e["line"] + "\n"); bogus = dict(e); bogus["line"] = w.frame("SIGNREPLY", fx["seq"] + 1, fx["token"], re.sub(r"^OK \d+", "OK 999999", fx["payload"].decode())).rstrip("\n")
+    L.insert(i + 1, bogus)
+    for x in L[i + 2:]:                                                       # the later host lines shifted by one: the host sequence stays fresh, only the open-request rule is left
+        if x["dir"] == "host" and x.get("line") and not x.get("note"):
+            g = w.parse(x["line"] + "\n"); x["line"] = w.frame(g["type"], g["seq"] + 1, g["token"], g["payload"]).rstrip("\n")
+    write(d, L)
+    m = json.loads((d / "manifest.json").read_text()); m["transport"]["console_lines"] = len(L); (d / "manifest.json").write_text(json.dumps(m)); cases["extra_reply"] = d
     for name, d in cases.items():
         rep = vf.verify(d)
         if rep.get("refused") or rep.get("clean") or rep.get("agree"):
             return True, f"{name}: refused {rep.get('refused')!r} clean {rep.get('clean')} agree {rep.get('agree')}"
     return False, "never clean"
+
+
+def probe_r1_round4(root):
+    """R1 (d4ff43e): every reply removed, the real reply noted stale — never clean"""
+    import shutil
+    s = e2e(root, "valid")
+    if "error" in s:
+        return True, s["error"][:200]
+    sys.path[:0] = [str(R / "host"), str(R / "b4/host")]
+    import importlib
+    import b4q_verify as vf
+    importlib.reload(vf)
+    src = root / "valid"
+    is_reply = lambda e: e["dir"] == "host" and e.get("line") and " SIGNREPLY " in e["line"] and not e.get("note")
+    import b4q_wire as w
+    import re  # noqa: F401
+    for name in ("all_removed", "all_removed_counters", "noted_stale", "stale_note_with_duplicate"):
+        d = root / f"r1_{name}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d)
+        L = [json.loads(l) for l in (d / "console.jsonl").read_text().splitlines() if l.strip()]
+        m = json.loads((d / "manifest.json").read_text())
+        if name.startswith("all_removed"):
+            L = [x for x in L if not is_reply(x)]
+            if name == "all_removed_counters":                                  # the counters refreshed too: only the closed result's rule is left to catch it
+                m["transport"]["stats"]["signreply"] = 0; m["transport"]["end"]["sign_replies"] = 0
+                for e in L:
+                    if e["dir"] == "board" and " END " in (e.get("line") or ""):
+                        f = w.parse(e["line"] + "\n"); p = json.loads(f["payload"].decode()); p["sign_replies"] = 0
+                        e["line"] = w.frame("END", f["seq"], f["token"], json.dumps(p)).rstrip("\n")
+        elif name == "noted_stale":
+            next(x for x in L if is_reply(x))["note"] = "a stale SIGNREPLY (another request's, garbage words): the bench's fault knob"; m["transport"]["stats"]["stale"] = m["transport"]["stats"].get("stale", 0) + 1
+        else:                                                                     # the real reply duplicated (a fresh sequence) and the first copy noted stale: the request is still answered, only the note's validation catches it
+            e = next(x for x in L if is_reply(x)); i = L.index(e); f = w.parse(e["line"] + "\n")
+            dup = dict(e); dup["line"] = w.frame("SIGNREPLY", f["seq"] + 1, f["token"], f["payload"]).rstrip("\n"); L.insert(i + 1, dup)
+            for x in L[i + 2:]:                                                   # every later host line shifted by one so that the host sequence stays strictly increasing
+                if x["dir"] == "host" and x.get("line") and not x.get("note"):
+                    g = w.parse(x["line"] + "\n"); x["line"] = w.frame(g["type"], g["seq"] + 1, g["token"], g["payload"]).rstrip("\n")
+            e["note"] = "a stale SIGNREPLY (another request's, garbage words): the bench's fault knob"; m["transport"]["stats"]["stale"] = m["transport"]["stats"].get("stale", 0) + 1
+            m["transport"]["host_seq_last"] = m["transport"].get("host_seq_last", 0) + 1
+        (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in L)); m["transport"]["console_lines"] = len(L); (d / "manifest.json").write_text(json.dumps(m))
+        rep = vf.verify(d)
+        if rep.get("refused") or rep.get("clean") or rep.get("agree"):
+            return True, f"{name}: refused {rep.get('refused')!r} clean {rep.get('clean')} agree {rep.get('agree')}"
+    return False, "never clean"
+
+
+def probe_r2_round4(root):
+    """R2 (d4ff43e): the sequence cut inside the root transaction — zero writes and zero DMA submissions after the terminal END"""
+    s = e2e(root, "sequence_cut")
+    if "error" in s:
+        return True, s["error"][:200]
+    v = s["sequence_cut"]
+    if v["writes_after_end"] != 0 or v["submits_after_end"] != 0 or (v.get("end") or {}).get("kind") != "PROTOCOL" or v.get("mmio_after_end") is None:
+        return True, f"writes after END {v['writes_after_end']}, submits after END {v['submits_after_end']}, end {(v.get('end') or {}).get('kind')}"
+    return False, "as expected"
 
 
 def probe_c4(root):
@@ -393,6 +456,10 @@ MUTANTS = [
     ("C3a", VERIFY, "    if not isinstance(obj, dict):\n        return \"not an object\"\n", "    if not isinstance(obj, dict):\n        return None\n", "a non-object payload passes the shape check (its contracts skipped)", probe_c1_c3),
     ("C3b", VERIFY, "            if type(v) is not int:\n                return f\"{k}: not an int\"\n", "            if not isinstance(v, (int, float)):\n                return f\"{k}: not an int\"\n", "a float counter accepted as an int again", probe_c1_c3),
     ("C4a", APP, "    if (S.seq >= B4Q_APP_SEQ_LIMIT) {                /* C4: the last usable sequence carries the terminal END, whatever this line was going to be */", "    if (0) {", "the emitter's exhaustion gate removed (the sequence wraps inside a wait)", probe_c4),
+    # the round-4 guards (the owner's HOLD on d4ff43e)
+    ("R1x", VERIFY, "                if states != [\"ok\"]:\n                    F.append(f\"board RESULT at line {m['idx']}: a closed transaction whose signing call was not answered by an accepted OK reply (requests: {states or 'none'})\")\n", "                if False:\n                    pass\n", "a closed RESULT no longer requires its signing call answered OK", probe_r1_round4),
+    ("R1y", VERIFY, "                    if cur is not None and any(q[\"req\"] == rq and q[\"state\"] == \"unanswered\" for q in cur[\"reqs\"]):\n                        F.append(f\"host SIGNREPLY at line {m['idx']}: noted as stale but it answers the open request {rq}\")\n", "                    if False:\n                        pass\n", "a reply noted stale no longer validated against the open request (the note trusted)", probe_r1_round4),
+    ("R2x", FW / "target/b4q_app_host.c", "    if (b4q_app_terminal()) return B4Q_RESP_SLVERR;     /* the terminal END went out: no write is issued after it (R2) */\n", "", "the host HAL's write half no longer refuses after the terminal END (the transaction in flight keeps its effects)", probe_r2_round4),
 ]
 
 
@@ -412,12 +479,12 @@ def main(argv=None) -> int:
         i = argv.index("--out"); out = R / argv[i + 1]; argv = argv[:i] + argv[i + 2:]
     only = set(argv)
     lines = [f"B4Q PS-image mutant battery — {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} HEAD {subprocess.run(['git', '-C', str(R), 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()}"]
-    killed = survived = missed = 0
+    killed = survived = missed = errors = 0
     tmp = Path(tempfile.mkdtemp(prefix="b4q_img_mut_"))
     subprocess.run(BUILD, check=True, capture_output=True)
     for name, probe in (("kicks", probe_kicks), ("page_and_watchdog", probe_page_and_watchdog), ("framing", probe_framing), ("bounds", probe_bounds), ("allowlist", probe_allowlist),
                         ("budget", probe_budget), ("freshness", probe_freshness), ("latch", probe_latch), ("console_archive", probe_console_archive), ("grammar", probe_grammar),
-                        ("c1_c3", probe_c1_c3), ("c2", probe_c2), ("c4", probe_c4)):
+                        ("c1_c3", probe_c1_c3), ("c2", probe_c2), ("c4", probe_c4), ("r1_round4", probe_r1_round4), ("r2_round4", probe_r2_round4)):
         broken, why = probe(tmp / "base")
         lines.append(f"BASELINE {name}: {'BROKEN — ' + why if broken else 'green'}")
         if broken:
@@ -436,11 +503,16 @@ def main(argv=None) -> int:
             if b.returncode != 0:
                 lines.append(f"{mid} KILLED (the build refused the mutant) — {what}"); killed += 1; continue
             root = tmp / mid; root.mkdir(parents=True, exist_ok=True)
-            broken, why = probe(root)
+            try:
+                broken, why = probe(root)
+            except Exception as ex:                      # noqa: BLE001 — the probe's own defect: named, counted apart, never a kill
+                broken, why = None, f"PROBE-ERROR {type(ex).__name__}: {str(ex)[:120]}"
         finally:
             path.write_text(text); assert sha(path) == before, f"{path} not restored"
             subprocess.run(BUILD, check=True, capture_output=True)
-        if broken:
+        if broken is None:
+            errors += 1; lines.append(f"{mid} PROBE-ERROR — {what}: {why[:160]}")
+        elif broken:
             killed += 1; lines.append(f"{mid} KILLED — {what}: {why[:160]}")
         else:
             survived += 1; lines.append(f"{mid} SURVIVED — {what}: {why[:160]}")
@@ -460,17 +532,22 @@ def main(argv=None) -> int:
             if b.returncode != 0:
                 lines.append(f"{mid} KILLED (the build refused the mutant) — {what}"); killed += 1; continue
             root = tmp / mid.replace("+", "_"); root.mkdir(parents=True, exist_ok=True)
-            broken, why = probe(root)
+            try:
+                broken, why = probe(root)
+            except Exception as ex:                      # noqa: BLE001
+                broken, why = None, f"PROBE-ERROR {type(ex).__name__}: {str(ex)[:120]}"
         finally:
             for path, (text, before) in saved.items():
                 path.write_text(text); assert sha(path) == before
             subprocess.run(BUILD, check=True, capture_output=True)
-        if broken:
+        if broken is None:
+            errors += 1; lines.append(f"{mid} PROBE-ERROR — {what}: {why[:160]}")
+        elif broken:
             killed += 1; lines.append(f"{mid} KILLED — {what}: {why[:160]}")
         else:
             survived += 1; lines.append(f"{mid} SURVIVED — {what}: {why[:160]}")
         print(lines[-1], flush=True)
-    lines.append(f"TOTAL killed {killed} survived {survived} edit-miss {missed} of {n}")
+    lines.append(f"TOTAL killed {killed} survived {survived} edit-miss {missed} probe-error {errors} of {n}")
     out.write_text("\n".join(lines) + "\n")
     print("\n".join(lines[-1:]))
     return 0

@@ -312,3 +312,4 @@ void b4q_app_abort(const char *kind, uint32_t addr, uint32_t status)
 }
 
 const b4q_app_summary *b4q_app_summary_get(void) { return &S.sum; }
+int b4q_app_terminal(void) { return S.terminal; }
