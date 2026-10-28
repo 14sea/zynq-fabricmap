@@ -83,6 +83,16 @@ def stream_words_sha256(submissions: list) -> str | None:
     return fr.words_sha256(words)
 
 
+def tx_command(kind: str, genome: int, stimulus: list, task: dict | None) -> str:
+    """The textual TX command of b4q_cmd.h's grammar for a declared stimulus and task — the one builder the session sends and the
+    console verifier rebuilds from a record's ctx (its kind / genome / stimulus / task) to hold the retained TX line to."""
+    steps = [step_word(s) for s in stimulus[1:]]
+    cmd = f"TX {kind} {genome:08x} {len(steps)} " + " ".join(f"{w:07x}" for w in steps)
+    if task:
+        cmd += f" TASK {task['digest']} {len(task['mask'])} " + " ".join(f"{s} {e} {t} {w}" for (s, e), t, w in zip(task["mask"], task["target"], task["weights"]))
+    return cmd
+
+
 class SessionRefusal(ValueError):
     pass
 
@@ -235,10 +245,7 @@ class Session:
             raise SessionRefusal("the session is halted: " + self.halted + " — nothing further is signed without a ruling")
         if self.records and not (self.prev_x is not None and self.prev_x["status"] in ("closed", "injection_open")):
             raise SessionRefusal("the previous transaction did not close: no candidate is signed while the last X is not closed (5.2) or injection_open (5.6)")
-        steps = [step_word(s) for s in stimulus[1:]]
-        cmd = f"TX {kind} {genome:08x} {len(steps)} " + " ".join(f"{w:07x}" for w in steps)
-        if task:
-            cmd += f" TASK {task['digest']} {len(task['mask'])} " + " ".join(f"{s} {e} {t} {w}" for (s, e), t, w in zip(task["mask"], task["target"], task["weights"]))
+        cmd = tx_command(kind, genome, stimulus, task)
         if self.proc is None or self.proc.poll() is not None:
             raise SessionRefusal("the executing-side program is not running (the transport was interrupted): nothing follows without a ruling")
         nonce_before = self.backend.carrier.nonce

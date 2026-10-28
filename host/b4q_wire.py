@@ -108,3 +108,53 @@ def parse_page(words: list[int]) -> dict | None:
 
 def new_token() -> str:
     return os.urandom(16).hex()
+
+
+# ---------------------------------------------------------------- the command grammar (firmware/b4q/b4q_cmd.h), as the C unit checks it
+_HEX = "0123456789abcdef"
+_KINDS = ("normal", "root", "inject", "a5")
+
+
+def _u32(tok: str, base: int, maxv: int) -> int | None:
+    if not tok or len(tok) > (8 if base == 16 else 10) or any(c not in (_HEX if base == 16 else "0123456789") for c in tok):
+        return None
+    v = int(tok, base)
+    return v if v <= maxv else None
+
+
+def parse_tx(cmd: str) -> dict | None:
+    """The TX grammar of b4q_cmd.h: {kind, genome, steps, task} or None when refused — held to the C parser by tests/test_b4q_app.py.
+    Fields one or more spaces apart, trailing spaces allowed, nothing else."""
+    if not cmd.startswith("TX ") or any(c in cmd for c in "\t\r\n"):
+        return None
+    toks = [t for t in cmd.split(" ") if t != ""]
+    if len(toks) < 4 or toks[0] != "TX" or toks[1] not in _KINDS:
+        return None
+    genome = _u32(toks[2], 16, 0xFFFFFFFF)
+    if genome is None or genome & ~0x001FFFFF:
+        return None
+    n = _u32(toks[3], 10, 28)
+    if n is None or (toks[1] == "root" and n != 0) or len(toks) < 4 + n:
+        return None
+    steps = []
+    for tok in toks[4:4 + n]:
+        v = _u32(tok, 16, 0x1FFFFFF)
+        if v is None:
+            return None
+        steps.append(v)
+    rest = toks[4 + n:]
+    task = None
+    if rest:
+        if rest[0] != "TASK" or len(rest) < 3 or len(rest[1]) != 64 or any(c not in _HEX for c in rest[1]):
+            return None
+        m = _u32(rest[2], 10, 256)
+        if m is None or len(rest) != 3 + 4 * m:
+            return None
+        cells = []
+        for j in range(m):
+            s, e, t, w = (_u32(rest[3 + 4 * j + k], 10, mx) for k, mx in enumerate((n, 7, 1, 65535)))
+            if s is None or s == 0 or e is None or t is None or w is None:
+                return None
+            cells.append((s, e, t, w))
+        task = {"digest": rest[1], "cells": cells}
+    return {"kind": toks[1], "genome": genome, "steps": steps, "task": task}

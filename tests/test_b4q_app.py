@@ -208,13 +208,13 @@ class ConsoleScenarios(unittest.TestCase):
         def reframe(line, edit_payload):
             f = w.parse(line + "\n"); return w.frame(f["type"], f["seq"], f["token"], edit_payload(f["payload"].decode())).rstrip("\n")
         d = copy("dropped"); (d / "console.jsonl").unlink()
-        rep = vf.verify(d); self.assertIn("console.jsonl: missing", rep["refused"] or "")
+        rep = vf.verify(d); self.assertIn("console", rep["refused"] or ""); self.assertIn("console.jsonl is absent", rep["refused"] or "")
         cases = [("ident_crc", lambda e: e["dir"] == "board" and " IDENT " in e["line"], lambda l: l[:-1] + ("0" if l[-1] != "0" else "1"), "bad crc"),
                  ("result_fitness", lambda e: e["dir"] == "board" and " RESULT " in e["line"] and '"has_fitness": 1' in w.parse(e["line"] + "\n")["payload"].decode(),
                   lambda l: reframe(l, lambda p: p.replace('"has_fitness": 1, "fitness": ', '"has_fitness": 1, "fitness": 999, "fitness_was": ')), "not the retained transaction result"),
                  ("ident_token", lambda e: e["dir"] == "board" and " IDENT " in e["line"], lambda l: reframe(l, lambda p: p.replace('"token": "', '"token": "ff')[:len(p)] if False else __import__("re").sub(r'"token": "[0-9a-f]{32}"', '"token": "' + "f" * 32 + '"', p)), "token"),
                  ("end_transactions", lambda e: e["dir"] == "board" and " END " in e["line"], lambda l: reframe(l, lambda p: __import__("re").sub(r'"transactions": \d+', '"transactions": 999', p)), "END.transactions"),
-                 ("result_dropped", lambda e: e["dir"] == "board" and " RESULT " in e["line"], lambda l: w.frame("HB", w.parse(l + "\n")["seq"], w.parse(l + "\n")["token"]).rstrip("\n"), "RESULT lines for"),
+                 ("result_dropped", lambda e: e["dir"] == "board" and " RESULT " in e["line"], lambda l: w.frame("HB", w.parse(l + "\n")["seq"], w.parse(l + "\n")["token"]).rstrip("\n"), "still open"),
                  ("signreply_words", lambda e: e["dir"] == "host" and " SIGNREPLY " in e["line"] and not e.get("note"), lambda l: reframe(l, lambda p: p[:-8] + ("00000000" if p[-8:] != "00000000" else "00000001")), "not the notary's"),
                  ("board_seq_dup", lambda e: e["dir"] == "board" and " HB " in e["line"] or (e["dir"] == "board" and " EV " in e["line"] and "MARK transaction_begin" in w.parse(e["line"] + "\n")["payload"].decode()),
                   lambda l: w.frame(w.parse(l + "\n")["type"], 0, w.parse(l + "\n")["token"], w.parse(l + "\n")["payload"]).rstrip("\n"), "not fresh")]
@@ -224,7 +224,7 @@ class ConsoleScenarios(unittest.TestCase):
             self.assertIsNone(rep["refused"], name); self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name)
             self.assertTrue(any(needle in m for m in rep["session"]), (name, rep["session"]))
         for name, pred, change, edit_tr, needle in (("coord_ident_token", lambda e: e["dir"] == "board" and " IDENT " in e["line"],
-                                                      lambda l: reframe(l, lambda p: __import__("re").sub(r'"token": "[0-9a-f]{32}"', '"token": "' + "f" * 32 + '"', p)), lambda tr: tr["ident"].update({"token": "f" * 32}), "IDENT's token is not the page's"),
+                                                      lambda l: reframe(l, lambda p: __import__("re").sub(r'"token": "[0-9a-f]{32}"', '"token": "' + "f" * 32 + '"', p)), lambda tr: tr["ident"].update({"token": "f" * 32}), "page fields (token"),
                                                      ("coord_end_transactions", lambda e: e["dir"] == "board" and " END " in e["line"],
                                                       lambda l: reframe(l, lambda p: __import__("re").sub(r'"transactions": \d+', '"transactions": 999', p)), lambda tr: tr["end"].update({"transactions": 999}), "END.transactions")):
             d = copy(name); edit_line(d, pred, change)
@@ -266,6 +266,124 @@ class ConsoleScenarios(unittest.TestCase):
         for c in s["malformed"]:
             self.assertEqual((c["status"], c["new_signreqs"], c["new_trace_events"], c["new_submits"]), (7, 0, 0, 0), c["cmd"]); self.assertIn("malformed TX", c["reason"])
         self.assertEqual((s["then"]["status"], s["then"]["x"]), (0, "closed")); self.assertEqual(s["end"]["nacks"], 6)
+
+    def _console_copy(self, name, src="valid"):
+        import shutil
+        d = _S["root"] / f"c_{name}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(_S["root"] / src, d); return d
+
+    def _console_edit(self, d, pred, change, which=0):
+        lines = [json.loads(l) for l in (d / "console.jsonl").read_text().splitlines() if l.strip()]
+        hits = [e for e in lines if e.get("line") and pred(e)]
+        if not hits:
+            raise AssertionError("no line matched")
+        e = hits[which]
+        if change is None:
+            lines.remove(e)
+        else:
+            e["line"] = change(e["line"])
+        (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in lines))
+        return lines
+
+    def test_c1_the_console_source_is_anchored_in_the_raw_evidence(self):
+        """the owner's C1 (0606758): removing BOTH the transport and the console log must not downgrade a console archive into a clean
+        host-only one — the program's identity-page reads (and the harness's identity) anchor the expected source"""
+        d = self._console_copy("downgrade")
+        m = json.loads((d / "manifest.json").read_text()); m.pop("transport"); (d / "manifest.json").write_text(json.dumps(m)); (d / "console.jsonl").unlink()
+        rep = vf.verify(d)
+        self.assertIsNotNone(rep["refused"]); self.assertIn("downgraded source", rep["refused"]); self.assertIn("identity page 24 time", rep["refused"])
+        d = self._console_copy("downgrade2")                                  # the transport alone removed: the same refusal
+        m = json.loads((d / "manifest.json").read_text()); m.pop("transport"); (d / "manifest.json").write_text(json.dumps(m))
+        self.assertIn("downgraded source", vf.verify(d)["refused"] or "")
+        rep = vf.verify(_S["root"] / "valid"); self.assertTrue(rep["clean"])      # the untouched one still clean
+        import b4q_e2e as ee
+        hroot = Path(tempfile.mkdtemp(prefix="b4q_hostonly_"))               # a genuine host-only archive keeps its own contract (no page reads, no console)
+        p = subprocess.run([sys.executable, "-B", str(R / "host/b4q_e2e.py"), str(hroot), "valid"], capture_output=True, text=True, timeout=600)
+        self.assertEqual(p.returncode, 0, p.stderr[-500:])
+        rep = vf.verify(hroot / "valid"); self.assertTrue(rep["clean"], rep["session"]); self.assertNotIn("console", rep)
+
+    def test_c2_the_exchange_is_bound_to_the_records_the_trace_and_the_notary(self):
+        """the owner's C2: a changed TX genome, every TX removed, a changed reply request id, a reply moved before its request, the
+        signed words changed in the console AND the notary log, the IDENT's nonce echo changed in the line AND the cached IDENT — each
+        contradicts untouched evidence and is never clean"""
+        import re
+        def reframe(line, edit):
+            f = w.parse(line + "\n"); return w.frame(f["type"], f["seq"], f["token"], edit(f["payload"].decode())).rstrip("\n")
+        is_tx = lambda e: e["dir"] == "host" and " TX " in e["line"] and not e.get("note")
+        is_reply = lambda e: e["dir"] == "host" and " SIGNREPLY " in e["line"] and not e.get("note")
+        cases = {}
+        d = self._console_copy("tx_genome"); self._console_edit(d, is_tx, lambda l: reframe(l, lambda p: p.replace("TX normal 00000000", "TX normal 00000001", 1)), which=1); cases["tx_genome_changed"] = (d, "not the command of record")
+        d = self._console_copy("tx_removed")
+        for _ in range(4):
+            self._console_edit(d, is_tx, None)
+        m = json.loads((d / "manifest.json").read_text()); m["transport"]["console_lines"] -= 4; (d / "manifest.json").write_text(json.dumps(m)); cases["tx_all_removed"] = (d, "without an admitted TX")
+        d = self._console_copy("reply_req"); self._console_edit(d, is_reply, lambda l: reframe(l, lambda p: re.sub(r"^OK \d+", "OK 999999", p))); cases["reply_req_changed"] = (d, "not an open request")
+        d = self._console_copy("reply_first")
+        lines = [json.loads(l) for l in (d / "console.jsonl").read_text().splitlines() if l.strip()]
+        ir = next(i for i, e in enumerate(lines) if e.get("line") and is_reply(e)); iq = next(i for i, e in enumerate(lines) if e["dir"] == "board" and " SIGNREQ " in (e.get("line") or ""))
+        lines.insert(iq, lines.pop(ir)); (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in lines)); cases["reply_before_request"] = (d, "not an open request")
+        d = self._console_copy("words_both")
+        self._console_edit(d, is_reply, lambda l: reframe(l, lambda p: p[:-8] + ("00000000" if p[-8:] != "00000000" else "00000001")))
+        nl = json.loads((d / "notary_log.json").read_text()); e0 = next(e for e in nl if "words" in e); e0["words"][23] = 0 if e0["words"][23] != 0 else 1; (d / "notary_log.json").write_text(json.dumps(nl))
+        cases["reply_notary_words_changed"] = (d, "staged into PAYLOAD / TAG")
+        d = self._console_copy("ident_echo")
+        self._console_edit(d, lambda e: e["dir"] == "board" and " IDENT " in e["line"],
+                           lambda l: reframe(l, lambda p: re.sub(r'"page_nonce_seen": "[0-9a-f]{16}"', '"page_nonce_seen": "ffffffffffffffff"', p.replace('"nonce_echo_equal": 1', '"nonce_echo_equal": 0'))))
+        m = json.loads((d / "manifest.json").read_text()); m["transport"]["ident"].update({"nonce_echo_equal": 0, "page_nonce_seen": "ffffffffffffffff"}); (d / "manifest.json").write_text(json.dumps(m))
+        cases["ident_nonce_echo_changed"] = (d, "nonce")
+        d = self._console_copy("ident_echo_flag")                            # the echo flag alone (line + cache): only its derivation catches it
+        self._console_edit(d, lambda e: e["dir"] == "board" and " IDENT " in e["line"], lambda l: reframe(l, lambda p: p.replace('"nonce_echo_equal": 1', '"nonce_echo_equal": 0')))
+        m = json.loads((d / "manifest.json").read_text()); m["transport"]["ident"]["nonce_echo_equal"] = 0; (d / "manifest.json").write_text(json.dumps(m)); cases["ident_echo_flag_only"] = (d, "nonce echo flag")
+        d = self._console_copy("extra_result")                               # an extra RESULT with the END and its cache raised to match: only the exchange catches it
+        lines = [json.loads(l) for l in (d / "console.jsonl").read_text().splitlines() if l.strip()]
+        last_res = [x for x in lines if x["dir"] == "board" and " RESULT " in (x.get("line") or "")][-1]
+        end_i = next(i for i, x in enumerate(lines) if x["dir"] == "board" and " END " in (x.get("line") or ""))
+        fr_ = w.parse(last_res["line"] + "\n"); fe = w.parse(lines[end_i]["line"] + "\n")
+        extra = dict(last_res); extra["line"] = w.frame("RESULT", fe["seq"] + 999, fr_["token"], fr_["payload"]).rstrip("\n")
+        endp = json.loads(fe["payload"].decode()); endp["transactions"] += 1; endp["lines"] += 1; endp["kicks"] += 1
+        lines[end_i]["line"] = w.frame("END", fe["seq"] + 1000, fe["token"], json.dumps(endp)).rstrip("\n"); lines.insert(end_i, extra)
+        (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in lines))
+        m = json.loads((d / "manifest.json").read_text()); m["transport"]["end"] = endp; m["transport"]["console_lines"] = len(lines); (d / "manifest.json").write_text(json.dumps(m)); cases["extra_result"] = (d, "without an admitted TX")
+        for name, (d, needle) in cases.items():
+            rep = vf.verify(d)
+            self.assertIsNone(rep["refused"], name); self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name)
+            self.assertTrue(any(needle in x for x in rep["session"]), (name, rep["session"]))
+        for name in ("valid", "a5", "reply_corrupt", "reply_dropped_once", "stale_reply", "duplicate_tx", "after_stop_tx", "malformed_tx", "notary_refuses", "replies_dropped", "interrupt"):
+            rep = _S["verify"][name][1]
+            self.assertTrue(rep["agree"], (name, rep["session"])); self.assertEqual(rep["console"]["findings"], [], name)
+
+    def test_c3_every_console_payload_is_shaped_before_it_is_used(self):
+        """the owner's C3: a non-object IDENT / END, a [] SIGNREQ, a SIGNREQ.req that is an object, an invalid RESULT JSON, a float
+        counter — each a named finding (exit 1), never a bypass and never a verifier error"""
+        import re
+        def reframe(line, edit):
+            f = w.parse(line + "\n"); return w.frame(f["type"], f["seq"], f["token"], edit(f["payload"].decode())).rstrip("\n")
+        for name, kind, edit, needle in (("ident_array", "IDENT", lambda p: "[]", "IDENT at line"), ("end_array", "END", lambda p: "[]", "END at line"),
+                                         ("signreq_array", "SIGNREQ", lambda p: "[]", "SIGNREQ at line"), ("signreq_req_obj", "SIGNREQ", lambda p: re.sub(r'"req": \d+', '"req": {}', p), "req: not an int"),
+                                         ("result_broken", "RESULT", lambda p: "{broken", "not JSON"), ("end_float", "END", lambda p: re.sub(r'"transactions": \d+', '"transactions": 4.0', p), "transactions: not an int")):
+            d = self._console_copy(name); self._console_edit(d, lambda e, kind=kind: e["dir"] == "board" and f" {kind} " in e["line"], lambda l, edit=edit: reframe(l, edit))
+            if name == "end_float":
+                m = json.loads((d / "manifest.json").read_text()); m["transport"]["end"]["transactions"] = 4.0; (d / "manifest.json").write_text(json.dumps(m))
+            p = subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d), "--json", str(d / "v.json")], capture_output=True, text=True)
+            rep = json.loads((d / "v.json").read_text())
+            self.assertEqual(p.returncode, 1, (name, p.stdout[:200])); self.assertNotIn("VERIFIER ERROR", p.stdout, name); self.assertNotIn("Traceback", p.stderr, name)
+            self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name); self.assertTrue(any(needle in x for x in rep["session"]), (name, rep["session"]))
+        for name in ("tx_grammar",):                                            # the C grammar and its Python twin agree on every case the twin tests
+            D = "a" * 64
+            cases = ["TX mystery 0 0", "TX normal 100000000 0", "TX normal 0 1 100000000", "TX normal 0 0 GARBAGE", f"TX normal 0 0 TASK {D} 2 1 0 0 1", f"TX normal 0 0 TASK {D} 1 257 256 256 65537",
+                     "TX normal 00200000 0", "TX normal 0 1 2000000", "TX root 0 1 0", "TX normal 0 00000000001 0", "TX normal 000000001 0", f"TX normal 0 1 0 TASK {D} 2 1 0 0 1",
+                     "TX root 00000000 0", "TX normal 001fffff 2 1ffffff 0   ", f"TX a5 18 1 1000001 TASK {D} 2 1 0 0 1 1 7 1 65535", f"TX inject 18 1 1000001 TASK {D} 0", "TX  normal 0 0", "TX normal  0 0"]
+            tw = _S["tw"]
+            for c in cases:
+                tw.stdin.write(c + "\n"); tw.stdin.flush(); r = tw.stdout.readline().rstrip("\n")
+                self.assertEqual(r.startswith("OK "), w.parse_tx(c) is not None, c)
+
+    def test_c4_the_sequence_never_wraps_wherever_a_line_is_emitted(self):
+        """the owner's C4: at B4Q_APP_SEQ_LIMIT - 1 inside a silent sign wait (the owner's wrap fixture), the next line is the terminal
+        END PROTOCOL with the limit's own sequence, nothing follows, no wrap"""
+        p = subprocess.run([str(R / "build/b4q_firmware/b4q_wait_twin"), "7"], capture_output=True, text=True, timeout=120)
+        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+        out = dict(kv.split("=") for kv in p.stdout.split())
+        self.assertEqual((out["first"], out["last"], out["lines"], out["wraps"], out["ends"], out["terminal"], out["end"], out["ret"]), ("ffffffef", "fffffff0", "2", "0", "1", "1", "3", "-1"))
 
     def test_the_executing_sides_own_stop_reaches_the_host_through_the_console(self):
         s = self.summary("pre_event_corrupt")
@@ -317,7 +435,9 @@ class SourceAudit(unittest.TestCase):
                 self.assertNotIn(bad, t, (p.name, bad))
         app = (tdir / "b4q_app.c").read_text()
         self.assertNotIn("Xil_", app); self.assertNotIn("0x43C", app); self.assertNotIn("0xF80", app)
-        self.assertEqual(app.count("b4q_plat_kick()"), 1)                    # one kick site: after a framed line went out
+        self.assertEqual(app.count("b4q_plat_kick()"), 2)                    # two kick sites, both right after a framed line went out: the ordinary line and the terminal END
+        for seg in app.split("b4q_plat_kick()")[:-1]:
+            self.assertIn("for (i = 0; i < len; i++) b4q_con_putc(g_out[i]);", seg[-400:])
         hal = (tdir / "b4q_board_hal.c").read_text()
         self.assertEqual(hal.count("Xil_In32("), 1); self.assertEqual(hal.count("Xil_Out32("), 1)
         self.assertIn("if (!b4q_psmap_readable(addr))", hal); self.assertIn("if (!b4q_psmap_writable(addr))", hal)

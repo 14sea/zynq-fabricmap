@@ -38,7 +38,8 @@
 #define B4Q_APP_HB_EVERY 5000000u
 #endif
 #define B4Q_APP_SIGN_ATTEMPTS 3
-#define B4Q_APP_SEQ_LIMIT 0xFFFFFFF0u      /* this side's line sequence never wraps: the session ends PROTOCOL before it */
+#define B4Q_APP_SEQ_LIMIT 0xFFFFFFF0u      /* this side's line sequence never wraps: the line that would carry this sequence is the terminal END PROTOCOL instead,
+                                            wherever it is emitted (a wait's heartbeat, a NACK, a request, an event, a result); after it nothing is emitted, requested or run (C4) */
 #define B4Q_APP_PROTOCOL "b4q-v1"
 #define B4Q_APP_MAX_NACKS 8                /* malformed host lines tolerated per wait before the session ends PROTOCOL */
 

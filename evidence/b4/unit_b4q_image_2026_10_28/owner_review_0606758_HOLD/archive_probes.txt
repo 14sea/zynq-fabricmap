@@ -1,0 +1,137 @@
+[
+  {
+    "case": "untouched",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "missing_console_control",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "console.jsonl: missing (the console source's retained lines are the evidence of its framing, identity and results)",
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "source_downgrade",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "tx_genome_changed",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "tx_all_removed",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "reply_req_changed",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "reply_before_request",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "ident_array",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "end_array",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "signreq_array",
+    "exit": 2,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": "AttributeError: 'list' object has no attribute 'get'",
+    "session": []
+  },
+  {
+    "case": "signreq_bad_req_type",
+    "exit": 2,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": "TypeError: unhashable type: 'dict'",
+    "session": []
+  },
+  {
+    "case": "result_invalid_json",
+    "exit": 2,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": "JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
+    "session": []
+  },
+  {
+    "case": "end_counter_float",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "reply_notary_words_changed",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "ident_nonce_echo_changed",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  }
+]

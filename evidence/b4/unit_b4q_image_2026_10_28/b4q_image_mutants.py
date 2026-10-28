@@ -247,6 +247,113 @@ def probe_grammar(root):
     return False, "as expected"
 
 
+def probe_c1_c3(root):
+    """C1: both the transport and the console log removed is refused as a downgraded source; C3: a [] IDENT / END, a [] SIGNREQ, an
+    object req, a broken RESULT, a float counter are named findings (exit 1), never clean, never a verifier error"""
+    import re
+    import shutil
+    s = e2e(root, "valid")
+    if "error" in s:
+        return True, s["error"][:200]
+    sys.path[:0] = [str(R / "host"), str(R / "b4/host")]
+    import importlib
+    import b4q_wire as w
+    import b4q_verify as vf
+    importlib.reload(vf)
+    src = root / "valid"
+    def copy(name):
+        d = root / f"c13_{name}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d); return d
+    d = copy("downgrade"); m = json.loads((d / "manifest.json").read_text()); m.pop("transport"); (d / "manifest.json").write_text(json.dumps(m)); (d / "console.jsonl").unlink()
+    rep = vf.verify(d)
+    if not rep.get("refused") or rep.get("clean"):
+        return True, f"downgrade: refused {rep.get('refused')!r} clean {rep.get('clean')}"
+    def reframe(line, edit):
+        f = w.parse(line + "\n"); return w.frame(f["type"], f["seq"], f["token"], edit(f["payload"].decode())).rstrip("\n")
+    for name, kind, edit in (("ident_array", "IDENT", lambda p: "[]"), ("end_array", "END", lambda p: "[]"), ("signreq_array", "SIGNREQ", lambda p: "[]"),
+                             ("signreq_req_obj", "SIGNREQ", lambda p: re.sub(r'"req": \d+', '"req": {}', p)), ("result_broken", "RESULT", lambda p: "{broken"),
+                             ("end_float", "END", lambda p: re.sub(r'"transactions": \d+', '"transactions": 4.0', p))):
+        d = copy(name)
+        lines = [json.loads(l) for l in (d / "console.jsonl").read_text().splitlines() if l.strip()]
+        for e in lines:
+            if e.get("line") and e["dir"] == "board" and f" {kind} " in e["line"]:
+                e["line"] = reframe(e["line"], edit); break
+        (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in lines))
+        if name == "end_float":
+            m = json.loads((d / "manifest.json").read_text()); m["transport"]["end"]["transactions"] = 4.0; (d / "manifest.json").write_text(json.dumps(m))
+        p = subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d), "--json", str(d / "v.json")], capture_output=True, text=True)
+        rep = json.loads((d / "v.json").read_text()) if (d / "v.json").is_file() else {}
+        if p.returncode != 1 or rep.get("clean") or rep.get("agree") or "VERIFIER ERROR" in p.stdout:
+            return True, f"{name}: exit {p.returncode} clean {rep.get('clean')} agree {rep.get('agree')} {p.stdout[:80]}"
+    return False, "as expected"
+
+
+def probe_c2(root):
+    """C2: a changed TX genome, every TX removed, a changed reply request id, a reply before its request, the signed words changed in
+    the console and the notary log together, the IDENT's nonce echo changed in the line and the cache together — never clean"""
+    import re
+    import shutil
+    s = e2e(root, "valid")
+    if "error" in s:
+        return True, s["error"][:200]
+    sys.path[:0] = [str(R / "host"), str(R / "b4/host")]
+    import importlib
+    import b4q_wire as w
+    import b4q_verify as vf
+    importlib.reload(vf)
+    src = root / "valid"
+    def copy(name):
+        d = root / f"c2_{name}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d); return d
+    def reframe(line, edit):
+        f = w.parse(line + "\n"); return w.frame(f["type"], f["seq"], f["token"], edit(f["payload"].decode())).rstrip("\n")
+    def lines_of(d):
+        return [json.loads(l) for l in (d / "console.jsonl").read_text().splitlines() if l.strip()]
+    def write(d, lines):
+        (d / "console.jsonl").write_text("".join(json.dumps(x) + "\n" for x in lines))
+    is_tx = lambda e: e["dir"] == "host" and e.get("line") and " TX " in e["line"] and not e.get("note")
+    is_reply = lambda e: e["dir"] == "host" and e.get("line") and " SIGNREPLY " in e["line"] and not e.get("note")
+    cases = {}
+    d = copy("tx_genome"); L = lines_of(d); e = [x for x in L if is_tx(x)][1]; e["line"] = reframe(e["line"], lambda p: p.replace("TX normal 00000000", "TX normal 00000001", 1)); write(d, L); cases["tx_genome"] = d
+    d = copy("tx_removed"); L = [x for x in lines_of(d) if not is_tx(x)]; write(d, L); m = json.loads((d / "manifest.json").read_text()); m["transport"]["console_lines"] = len(L); (d / "manifest.json").write_text(json.dumps(m)); cases["tx_removed"] = d
+    d = copy("reply_req"); L = lines_of(d); e = [x for x in L if is_reply(x)][0]; e["line"] = reframe(e["line"], lambda p: re.sub(r"^OK \d+", "OK 999999", p)); write(d, L); cases["reply_req"] = d
+    d = copy("reply_first"); L = lines_of(d); ir = next(i for i, x in enumerate(L) if is_reply(x)); iq = next(i for i, x in enumerate(L) if x["dir"] == "board" and " SIGNREQ " in (x.get("line") or "")); L.insert(iq, L.pop(ir)); write(d, L); cases["reply_first"] = d
+    d = copy("words_both"); L = lines_of(d); e = [x for x in L if is_reply(x)][0]; e["line"] = reframe(e["line"], lambda p: p[:-8] + ("00000000" if p[-8:] != "00000000" else "00000001")); write(d, L)
+    nl = json.loads((d / "notary_log.json").read_text()); e0 = next(x for x in nl if "words" in x); e0["words"][23] = 0 if e0["words"][23] != 0 else 1; (d / "notary_log.json").write_text(json.dumps(nl)); cases["words_both"] = d
+    d = copy("ident_echo"); L = lines_of(d); e = next(x for x in L if x["dir"] == "board" and " IDENT " in (x.get("line") or ""))
+    e["line"] = reframe(e["line"], lambda p: re.sub(r'"page_nonce_seen": "[0-9a-f]{16}"', '"page_nonce_seen": "ffffffffffffffff"', p.replace('"nonce_echo_equal": 1', '"nonce_echo_equal": 0'))); write(d, L)
+    m = json.loads((d / "manifest.json").read_text()); m["transport"]["ident"].update({"nonce_echo_equal": 0, "page_nonce_seen": "ffffffffffffffff"}); (d / "manifest.json").write_text(json.dumps(m)); cases["ident_echo"] = d
+    # the echo flag ALONE changed (line + cache): only its derivation from the page and the opening can catch it
+    d = copy("ident_echo_flag"); L = lines_of(d); e = next(x for x in L if x["dir"] == "board" and " IDENT " in (x.get("line") or ""))
+    e["line"] = reframe(e["line"], lambda p: p.replace('"nonce_echo_equal": 1', '"nonce_echo_equal": 0')); write(d, L)
+    m = json.loads((d / "manifest.json").read_text()); m["transport"]["ident"]["nonce_echo_equal"] = 0; (d / "manifest.json").write_text(json.dumps(m)); cases["ident_echo_flag"] = d
+    # an extra RESULT (a copy of the last, a fresh board sequence) with the END's transaction count and the cached END raised to match:
+    # the records still count four; only the exchange (a RESULT without an admitted TX) can catch it
+    d = copy("extra_result"); L = lines_of(d)
+    last_res = [x for x in L if x["dir"] == "board" and " RESULT " in (x.get("line") or "")][-1]
+    end_i = next(i for i, x in enumerate(L) if x["dir"] == "board" and " END " in (x.get("line") or ""))
+    fr_ = w.parse(last_res["line"] + "\n"); fe = w.parse(L[end_i]["line"] + "\n")
+    extra = dict(last_res); extra["line"] = w.frame("RESULT", fe["seq"] - 1 + 1000, fr_["token"], fr_["payload"]).rstrip("\n"); extra["seq"] = fe["seq"] + 999
+    endp = json.loads(fe["payload"].decode()); endp["transactions"] += 1; endp["lines"] += 1; endp["kicks"] += 1
+    L[end_i]["line"] = w.frame("END", fe["seq"] + 1000, fe["token"], json.dumps(endp)).rstrip("\n"); L[end_i]["seq"] = fe["seq"] + 1000
+    L.insert(end_i, extra); write(d, L)
+    m = json.loads((d / "manifest.json").read_text()); m["transport"]["end"] = endp; m["transport"]["console_lines"] = len(L); (d / "manifest.json").write_text(json.dumps(m)); cases["extra_result"] = d
+    for name, d in cases.items():
+        rep = vf.verify(d)
+        if rep.get("refused") or rep.get("clean") or rep.get("agree"):
+            return True, f"{name}: refused {rep.get('refused')!r} clean {rep.get('clean')} agree {rep.get('agree')}"
+    return False, "never clean"
+
+
+def probe_c4(root):
+    """C4: at SEQ_LIMIT - 1 in a silent sign wait, the next line is the terminal END with the limit's sequence; no wrap, nothing after"""
+    p = subprocess.run([str(WAIT), "7"], capture_output=True, text=True, timeout=120)
+    if p.returncode != 0:
+        return True, f"exit {p.returncode}: {p.stdout.strip()[:100]}"
+    out = dict(kv.split("=") for kv in p.stdout.split())
+    if (out["first"], out["last"], out["lines"], out["wraps"], out["ends"], out["terminal"]) != ("ffffffef", "fffffff0", "2", "0", "1", "1"):
+        return True, p.stdout.strip()[:160]
+    return False, "as expected"
+
+
 MUTANTS = [
     ("K1", APP, "    b4q_plat_kick(); S.sum.kicks_requested++;      /* the one place the watchdog is kicked: after a framed line went out */\n", "    S.sum.kicks_requested++;\n", "the watchdog kick removed (the application still CLAIMS the kicks)", probe_kicks),
     ("P1", WIRE, "    if (words[0] != B4Q_PAGE_MAGIC || words[1] != B4Q_PAGE_LAYOUT || words[B4Q_PAGE_WORDS - 1] != checksum) return -1;\n", "    if (words[0] != B4Q_PAGE_MAGIC || words[1] != B4Q_PAGE_LAYOUT) return -1;\n", "the page checksum no longer checked", probe_page_and_watchdog),
@@ -260,23 +367,42 @@ MUTANTS = [
     ("A1", PSMAP, "    return 0;   /* the key window among the rest: the signer principal's, never this program's */\n", "    return off >= 0x2160u && off < 0x2170u;\n", "the key window writable", probe_allowlist),
     ("A2", PSMAP, "    return 0;   /* the identity page is the host's (written before `go`), the IDCODE is read-only, the key window absent */\n", "    return in_buffer(addr, B4Q_PSMAP_PAGE_ADDR, B4Q_PAGE_WORDS);\n", "the identity page writable by the program", probe_allowlist),
     # the round-2 guards (the owner's HOLD on ba18e3c)
-    ("R1a", APP, "    if (b->left == 0) return -1;\n    b->left--; b->spent++;\n", "    b->spent++;\n", "the budget never spent (no poll charged)", probe_budget),
+    ("R1a", APP, "    if (b->left == 0 || S.terminal) return -1;\n    b->left--; b->spent++;\n", "    if (S.terminal) return -1;\n    b->spent++;\n", "the budget never spent (no poll charged)", probe_budget),
     ("R1b", APP, "            if (strcmp(f.type, \"SIGNREPLY\") != 0) continue;       /* another frame during the wait: charged, not this reply */\n", "            if (strcmp(f.type, \"SIGNREPLY\") != 0) { b.left = B4Q_APP_REPLY_POLLS; continue; }\n", "another frame replenishes the attempt's budget again", probe_budget),
     ("R1c", APP, "                    ready = poll_rx(b);\n                    if (ready < 0) return 0;\n                    if (ready && b4q_con_getc() == '\\n') break;\n", "                    if (b4q_con_rx_ready() && b4q_con_getc() == '\\n') break;\n", "the oversize discard uncharged again", probe_budget),
     ("R2a", APP, "        if (S.have_host_seq && f->seq <= S.last_host_seq) {     /* R2: a duplicate or decreasing host sequence has no effect */", "        if (0) {", "the host sequence no longer checked by the application", probe_freshness),
     ("R2b", SESSION, "            if self.board_seq is not None and f[\"seq\"] <= self.board_seq:        # R2: a duplicate or decreasing board sequence has no effect", "            if False:", "the board sequence no longer checked by the host", probe_freshness),
     ("R3a", APP, "            if (S.sum.halted) {                          /* R3: nothing further is run or signed after a transaction that did not close */", "            if (0) {", "the application's session latch removed (a TX after a failed one runs)", probe_latch),
     ("R3b", SESSION, "        if self.halted is not None:                       # R3: a halted session signs nothing more, whatever the application asks", "        if False:", "the host's notary no longer refuses while halted", probe_latch),
-    ("R4a", VERIFY, "        _need((d / \"console.jsonl\").is_file(), \"console.jsonl: missing (the console source's retained lines are the evidence of its framing, identity and results)\")\n        console = jl(d / \"console.jsonl\")\n", "        console = jl(d / \"console.jsonl\") if (d / \"console.jsonl\").is_file() else []\n", "a dropped console log no longer refused", probe_console_archive),
-    ("R4b", VERIFY, "        if canon(got) != canon(files[tx_dirs[k].name][\"fw\"]):\n            F.append(f\"RESULT {k + 1}: not the retained transaction result of {tx_dirs[k].name}\")\n", "", "the RESULT lines no longer held to the retained results", probe_console_archive),
-    ("R4c", VERIFY, "            if page and ident.get(\"token\") != page[\"token\"]:\n                F.append(\"the IDENT's token is not the page's\")\n", "", "the IDENT's token no longer held to the page", probe_console_archive),
-    ("R4d", VERIFY, "            for k, v in counts.items():\n                if end.get(k) != v:\n                    F.append(f\"END.{k} is {end.get(k)}, the lines say {v}\")\n", "", "the END's counters no longer recomputed", probe_console_archive),
-    ("R4e", VERIFY, "            if canon(ident) != canon(tr[\"ident\"]):\n                F.append(\"the transport's cached IDENT is not the one the console carried\")\n", "", "the cached IDENT no longer held to the carried one", probe_console_archive),
+    ("R4a", VERIFY, "        _need((d / \"console.jsonl\").is_file(), \"console.jsonl: missing (the console source's retained lines are the evidence of its framing, identity and results)\")\n        console = jl(d / \"console.jsonl\")\n", "        console = jl(d / \"console.jsonl\") if (d / \"console.jsonl\").is_file() else []\n", "a dropped console log no longer refused by the console branch (since round 3 masked by C1a's source anchor, which refuses it first: see R4a+C1a)", probe_console_archive),
+    ("R4b", VERIFY, "            if canon(m[\"obj\"]) != canon(r[\"fw\"]):\n                F.append(f\"board RESULT at line {m['idx']}: not the retained transaction result of {tx_dirs[cur['k']].name}\")\n", "", "the RESULT lines no longer held to the retained results", probe_console_archive),
+    ("R4c", VERIFY, "                if o[\"token\"] != page[\"token\"] or o[\"carrier_sha256\"] != page[\"carrier_sha256\"] or o[\"flags\"] != page[\"flags\"] or o[\"uboot_epoch\"] != page[\"uboot_epoch\"]:\n", "                if o[\"carrier_sha256\"] != page[\"carrier_sha256\"] or o[\"flags\"] != page[\"flags\"] or o[\"uboot_epoch\"] != page[\"uboot_epoch\"]:\n", "the IDENT's token no longer held to the page", probe_console_archive),
+    ("R4d", VERIFY, "            for kk, v in counts.items():\n                if o[kk] != v:\n                    F.append(f\"END.{kk} is {o[kk]}, the lines say {v}\")\n", "", "the END's counters no longer recomputed", probe_console_archive),
+    ("R4e", VERIFY, "            if canon(o) != canon(tr[\"ident\"]):\n                F.append(\"the transport's cached IDENT is not the one the console carried\")\n", "", "the cached IDENT no longer held to the carried one", probe_console_archive),
     ("R5a", CMD, "    else return -1;                                      /* an unknown kind is refused, never defaulted */", "    else { while (*p && *p != ' ') p++; out->kind = B4Q_KIND_NORMAL; }", "an unknown kind consumed and defaulted to normal again", probe_grammar),
     ("R5b", CMD, "        if (n >= (base == 16 ? 8 : 10)) return -1;       /* more digits than the width allows: never truncated */\n", "", "a number wider than the field no longer refused", probe_grammar),
     ("R5c", CMD, "    return *p == 0 ? 0 : -1;                             /* nothing but trailing spaces after the grammar */", "    return 0;", "trailing text ignored again", probe_grammar),
     ("R5d", CMD, "                if (!spaces(&p) || b4q_cmd_u32(&p, 10, (unsigned long long)out->n_steps, &s) != 0 || s == 0) return -1;   /* 1 .. n */", "                if (!spaces(&p) || b4q_cmd_u32(&p, 10, (unsigned long long)out->n_steps, &s) != 0 || s == 0) break;", "a partial TASK accepted again (the count declared, fewer cells given)", probe_grammar),
+    # the round-3 guards (the owner's HOLD on 0606758)
+    ("C1a", VERIFY, "    console_expected = page_reads > 0 or Path(manifest[\"executing_side\"][\"binary\"]).name == \"b4q_apphost\"\n", "    console_expected = False\n", "the console source no longer anchored in the raw evidence (a downgrade verifies as host-only)", probe_c1_c3),
+    ("C2a", VERIFY, "        if m[\"text\"] != want:\n            F.append(f\"host TX at line {m['idx']}: not the command of record {tx_dirs[k].name} (its kind / genome / declared steps / task)\")\n", "", "the admitted TX no longer held to its record's command", probe_c2),
+    ("C2b", VERIFY, "            if phase != \"admitted\" or cur is None:\n                F.append(f\"board RESULT at line {m['idx']}: without an admitted TX\"); continue\n", "            if phase != \"admitted\" or cur is None:\n                continue\n", "a RESULT without an admitted TX no longer a finding", probe_c2),
+ ("C2c", VERIFY, "                if req is None:\n                    F.append(f\"host SIGNREPLY at line {m['idx']}: answers request {o['req']}, which is not an open request of the current transaction\")\n                    continue\n", "                if req is None:\n                    continue\n", "a reply to no open request (a changed id, a reply before its request) no longer a finding", probe_c2),
+    ("C2d", VERIFY, "                    elif staged != q[\"answered\"][\"words\"]:\n                        F.append(f\"the words staged into PAYLOAD / TAG after request {q['req']}'s reply are not the reply's\")\n", "", "the reply's words no longer held to the staged PAYLOAD / TAG writes", probe_c2),
+    ("C2e", VERIFY, "                if o[\"nonce_echo_equal\"] != int(f\"{page['nonce_seen']:016x}\" == o[\"open\"][\"nonce\"]):\n                    F.append(\"the IDENT's nonce echo flag is not what the page and the opening say\")\n", "", "the IDENT's nonce echo no longer derived from the page and the opening", probe_c2),
+    ("C3a", VERIFY, "    if not isinstance(obj, dict):\n        return \"not an object\"\n", "    if not isinstance(obj, dict):\n        return None\n", "a non-object payload passes the shape check (its contracts skipped)", probe_c1_c3),
+    ("C3b", VERIFY, "            if type(v) is not int:\n                return f\"{k}: not an int\"\n", "            if not isinstance(v, (int, float)):\n                return f\"{k}: not an int\"\n", "a float counter accepted as an int again", probe_c1_c3),
+    ("C4a", APP, "    if (S.seq >= B4Q_APP_SEQ_LIMIT) {                /* C4: the last usable sequence carries the terminal END, whatever this line was going to be */", "    if (0) {", "the emitter's exhaustion gate removed (the sequence wraps inside a wait)", probe_c4),
 ]
+
+
+COMBINED = [
+    ("R4a+C1a", ["R4a", "C1a"], "the source anchor AND the console branch's log requirement removed: a dropped console log verifies", probe_console_archive),
+]
+
+
+def _m(mid):
+    return [m for m in MUTANTS if m[0] == mid][0]
 
 
 def main(argv=None) -> int:
@@ -290,7 +416,8 @@ def main(argv=None) -> int:
     tmp = Path(tempfile.mkdtemp(prefix="b4q_img_mut_"))
     subprocess.run(BUILD, check=True, capture_output=True)
     for name, probe in (("kicks", probe_kicks), ("page_and_watchdog", probe_page_and_watchdog), ("framing", probe_framing), ("bounds", probe_bounds), ("allowlist", probe_allowlist),
-                        ("budget", probe_budget), ("freshness", probe_freshness), ("latch", probe_latch), ("console_archive", probe_console_archive), ("grammar", probe_grammar)):
+                        ("budget", probe_budget), ("freshness", probe_freshness), ("latch", probe_latch), ("console_archive", probe_console_archive), ("grammar", probe_grammar),
+                        ("c1_c3", probe_c1_c3), ("c2", probe_c2), ("c4", probe_c4)):
         broken, why = probe(tmp / "base")
         lines.append(f"BASELINE {name}: {'BROKEN — ' + why if broken else 'green'}")
         if broken:
@@ -312,6 +439,31 @@ def main(argv=None) -> int:
             broken, why = probe(root)
         finally:
             path.write_text(text); assert sha(path) == before, f"{path} not restored"
+            subprocess.run(BUILD, check=True, capture_output=True)
+        if broken:
+            killed += 1; lines.append(f"{mid} KILLED — {what}: {why[:160]}")
+        else:
+            survived += 1; lines.append(f"{mid} SURVIVED — {what}: {why[:160]}")
+        print(lines[-1], flush=True)
+    for mid, parts, what, probe in COMBINED:
+        if only and mid not in only:
+            continue
+        n += 1
+        edits = [_m(x) for x in parts]
+        saved = {e[1]: (e[1].read_text(), sha(e[1])) for e in edits}
+        if any(saved[e[1]][0].count(e[2]) != 1 for e in edits):
+            lines.append(f"{mid} EDIT-MISS — {what}"); missed += 1; continue
+        try:
+            for e in edits:
+                e[1].write_text(e[1].read_text().replace(e[2], e[3]))
+            b = subprocess.run(BUILD, capture_output=True, text=True)
+            if b.returncode != 0:
+                lines.append(f"{mid} KILLED (the build refused the mutant) — {what}"); killed += 1; continue
+            root = tmp / mid.replace("+", "_"); root.mkdir(parents=True, exist_ok=True)
+            broken, why = probe(root)
+        finally:
+            for path, (text, before) in saved.items():
+                path.write_text(text); assert sha(path) == before
             subprocess.run(BUILD, check=True, capture_output=True)
         if broken:
             killed += 1; lines.append(f"{mid} KILLED — {what}: {why[:160]}")

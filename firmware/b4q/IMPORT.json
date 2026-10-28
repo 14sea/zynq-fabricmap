@@ -133,12 +133,12 @@
   "firmware/b4q/target/b4q_app.c": {
    "kind": "new",
    "role": "the board application's session over the console / platform / HAL interfaces (pure: runs on the host harness and on the board)",
-   "sha256": "8712cb3e4797fe959f154e47ea7ab47599100a84877f1da68fbf5fae4f0c7e15"
+   "sha256": "af79ac25420e95e2d21411e6de2e65df9eba6a760378e0ce01082cd607a23d2a"
   },
   "firmware/b4q/target/b4q_app.h": {
    "kind": "new",
    "role": "b4q_app.c's interface and bounds",
-   "sha256": "6a18791b2651364b512b75ad1365e1afc5f6cc9c45002f7f989f055ffe129a7e"
+   "sha256": "1d24d3cde970adc36d7bb7eb7d32b2e3907f011f9c4f63bea9c4f6fd1b4260ff"
   },
   "firmware/b4q/target/b4q_app_host.c": {
    "kind": "new",
@@ -183,7 +183,7 @@
   "firmware/b4q/target/b4q_wait_twin.c": {
    "kind": "new",
    "role": "the receive-budget twin: the application's own waits under injected console fixtures (tests/test_b4q_app.py::test_r1)",
-   "sha256": "576974d5cab07e965ca11054e5fddd72a68bbab97064dd6418079186e7d80872"
+   "sha256": "6f12d1e4f7d242004e4dd2acee13485cc3acc940d17e60acef77c3a855ec17e0"
   },
   "firmware/b4q/target/b4q_wire.c": {
    "base": "firmware/b1/p3_derive.c",

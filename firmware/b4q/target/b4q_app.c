@@ -19,7 +19,10 @@ static struct {
     uint32_t last_host_seq;          /* the last host sequence accepted; valid when have_host_seq */
     int have_host_seq;
     const char *sign_why;            /* why the last b4q_sign returned -1 (reported on the EV line) */
+    int terminal;                    /* C4: the line sequence reached B4Q_APP_SEQ_LIMIT — the END PROTOCOL went out with that sequence; nothing is emitted or run after it */
 } S;
+
+static void end_json(char *buf, size_t max);
 
 static char g_out[12288];            /* one outbound framed line */
 static char g_in[8192];              /* one inbound line */
@@ -29,10 +32,10 @@ static char g_json[8192];            /* one result */
 /* ---------------------------------------------------------------- the receive budget (R1) ----- */
 typedef struct { uint32_t left, spent; } b4q_budget;
 
-/* one readiness poll charged to the budget; -1 when the budget is spent, else the console's answer */
+/* one readiness poll charged to the budget; -1 when the budget is spent (or the session is terminal), else the console's answer */
 static int poll_rx(b4q_budget *b)
 {
-    if (b->left == 0) return -1;
+    if (b->left == 0 || S.terminal) return -1;
     b->left--; b->spent++;
     return b4q_con_rx_ready();
 }
@@ -40,7 +43,19 @@ static int poll_rx(b4q_budget *b)
 /* ---------------------------------------------------------------- emitting ----- */
 static void emit_raw(const char *type, const uint8_t *plain, size_t n)
 {
-    size_t len = b4q_wire_frame(type, S.seq, S.token, plain, n, g_out, sizeof g_out), i;
+    size_t len, i;
+    if (S.terminal) return;                          /* after the terminal END nothing more is put on the console */
+    if (S.seq >= B4Q_APP_SEQ_LIMIT) {                /* C4: the last usable sequence carries the terminal END, whatever this line was going to be */
+        static char endbuf[640];
+        S.terminal = 1;                              /* set first: the END built below is framed directly, never through this gate again */
+        if (S.sum.end == B4Q_END_NONE) { S.sum.end = B4Q_END_PROTOCOL; S.sum.reason = "this side's line sequence is exhausted"; }
+        end_json(endbuf, sizeof endbuf);
+        len = b4q_wire_frame("END", S.seq, S.token, (const uint8_t *)endbuf, strlen(endbuf), g_out, sizeof g_out);
+        for (i = 0; i < len; i++) b4q_con_putc(g_out[i]);
+        S.sum.lines++; b4q_plat_kick(); S.sum.kicks_requested++;
+        return;
+    }
+    len = b4q_wire_frame(type, S.seq, S.token, plain, n, g_out, sizeof g_out);
     if (len == 0) {                  /* a line that does not fit is never truncated: a minimal NACK names it instead */
         len = b4q_wire_frame("NACK", S.seq, S.token, (const uint8_t *)"line too long", 13, g_out, sizeof g_out);
         S.sum.nacks++;
@@ -52,16 +67,22 @@ static void emit_raw(const char *type, const uint8_t *plain, size_t n)
 
 static void emit_text(const char *type, const char *text) { emit_raw(type, (const uint8_t *)text, strlen(text)); }
 
-static void emit_end(b4q_end_kind kind, const char *reason)
+static void end_json(char *buf, size_t max)
 {
     static const char *const NAME[] = {"NONE", "COMPLETED", "STOPPED", "PROTOCOL", "ABORT"};
-    char buf[640];
-    if (S.sum.end == B4Q_END_NONE) { S.sum.end = kind; S.sum.reason = reason; }   /* the first cause is the one recorded */
-    snprintf(buf, sizeof buf, "{\"kind\": \"%s\", \"reason\": \"%s\", \"lines\": %lu, \"hb\": %lu, \"nacks\": %lu, \"sign_requests\": %lu, \"sign_replies\": %lu, "
+    snprintf(buf, max, "{\"kind\": \"%s\", \"reason\": \"%s\", \"lines\": %lu, \"hb\": %lu, \"nacks\": %lu, \"sign_requests\": %lu, \"sign_replies\": %lu, "
              "\"transactions\": %lu, \"kicks\": %lu, \"flushed\": %lu, \"stale_frames\": %lu, \"refused_tx\": %lu, \"watchdog_armed\": %d, \"opened\": %d, \"halted\": \"%s\"}",
              NAME[S.sum.end], S.sum.reason ? S.sum.reason : "", (unsigned long)S.sum.lines, (unsigned long)S.sum.hb, (unsigned long)S.sum.nacks,
              (unsigned long)S.sum.sign_requests, (unsigned long)S.sum.sign_replies, (unsigned long)S.sum.transactions, (unsigned long)S.sum.kicks_requested,
              (unsigned long)S.sum.flushed, (unsigned long)S.sum.stale_frames, (unsigned long)S.sum.refused_tx, S.sum.watchdog_armed, S.sum.opened, S.sum.halted ? S.sum.halted : "");
+}
+
+static void emit_end(b4q_end_kind kind, const char *reason)
+{
+    char buf[640];
+    if (S.terminal) return;                          /* the terminal END already went out */
+    if (S.sum.end == B4Q_END_NONE) { S.sum.end = kind; S.sum.reason = reason; }   /* the first cause is the one recorded */
+    end_json(buf, sizeof buf);
     emit_text("END", buf);
 }
 
@@ -158,6 +179,7 @@ int b4q_sign(const char *genome_hex, const char *nonce_hex, uint32_t words[24])
     uint32_t req_seq = S.seq;
     int attempt;
     S.sign_why = NULL;
+    if (S.terminal) return -1;                           /* C4: nothing is requested after the terminal END */
     if (S.sum.halted) {                                  /* R3: a halted session requests no signature */
         snprintf(g_json, sizeof g_json, "EV sign: refused by this side: the session is halted (%s)", S.sum.halted);
         emit_text("EV", g_json);
@@ -265,8 +287,9 @@ void b4q_app_run(void)
         b4q_wire_frame_t f;
         b4q_budget b = {B4Q_APP_IDLE_POLLS, 0};          /* one budget per wait for the next command: renewed only after a transaction ran */
         int rc;
-        if (S.seq >= B4Q_APP_SEQ_LIMIT) { emit_end(B4Q_END_PROTOCOL, "this side's line sequence is exhausted"); return; }
+        if (S.terminal) return;                          /* the terminal END already went out (inside a wait or a transaction) */
         rc = wait_command(&b, &f);
+        if (S.terminal) return;
         if (rc == 0) { emit_end(B4Q_END_STOPPED, "no host command within the idle bound"); return; }
         if (rc < 0) { emit_end(B4Q_END_PROTOCOL, "the console produced only malformed or unknown lines"); return; }
         if (rc == 2) { emit_end(B4Q_END_COMPLETED, "the host closed the session"); return; }
@@ -274,6 +297,7 @@ void b4q_app_run(void)
         S.sum.transactions++;
         b4q_transaction(g_cmd.genome, g_cmd.steps, g_cmd.n_steps, g_cmd.kind, g_cmd.task.n ? &g_cmd.task : NULL, &r);
         if (r.status != 0) S.sum.halted = r.reason ? r.reason : "the transaction did not close";
+        if (S.terminal) return;                          /* the sequence ran out inside the transaction: its END went out, no RESULT follows */
         if (b4q_tx_json(&r, g_json, sizeof g_json) == 0) { emit_end(B4Q_END_PROTOCOL, "a RESULT did not fit its line"); return; }
         emit_text("RESULT", g_json);
     }

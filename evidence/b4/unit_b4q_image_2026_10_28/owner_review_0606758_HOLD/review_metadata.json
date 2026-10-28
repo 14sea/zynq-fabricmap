@@ -1,0 +1,81 @@
+{
+  "review_completed_utc": "2026-10-28T07:06:22.809274+00:00",
+  "reviewed_tip": "0606758275f5828cd3594c3b689866e6a1060ce6",
+  "code_baseline": "c96edce11071aa362e0a5d6f1fca5ca6a6760f5b",
+  "repair_commit": "1a215e3f794efcb84e2eb41f5e6e0d69cc72c66f",
+  "decision": "HOLD",
+  "accepted_repairs": [
+    "R1 cumulative receive budget",
+    "R2 duplicate/decreasing frame rejection",
+    "R3 application and notary session latch",
+    "R5 checked command grammar",
+    "P3 raw-bin reproducibility wording"
+  ],
+  "remaining": {
+    "C1": {
+      "priority": "P1",
+      "previous": "R4",
+      "finding": "source downgrade bypass"
+    },
+    "C2": {
+      "priority": "P1",
+      "previous": "R4",
+      "finding": "TX/request/reply/staging/identity exchange bindings"
+    },
+    "C3": {
+      "priority": "P2",
+      "previous": "R4",
+      "finding": "message shapes/type checks and malformed evidence classification"
+    },
+    "C4": {
+      "priority": "P2",
+      "previous": "R2",
+      "finding": "sequence wraps inside a wait"
+    }
+  },
+  "independent_checks": {
+    "unittest_count": 95,
+    "unittest_exit": 0,
+    "fresh_archive_count": 36,
+    "fresh_all_exit0_agree": true,
+    "raw_bin_sha256": "f50930a19981c13e16351582a2fc353cab7fdcc2bd3bba2f205e565452ea8c63",
+    "raw_bin_matches_submitted": true,
+    "two_clean_builds_match": true,
+    "imports": {
+      "b4/IMPORT.json": {
+        "entries": 59,
+        "hashed": 59,
+        "mismatch": []
+      },
+      "firmware/b4q/IMPORT.json": {
+        "entries": 35,
+        "hashed": 34,
+        "mismatch": []
+      }
+    },
+    "protected_since_e267405": [],
+    "transaction_unchanged": true,
+    "a7_findings": [],
+    "xcheck_exit": 0,
+    "bad_archives_wrongly_clean": 10,
+    "malformed_archives_verifier_error": 3,
+    "focused_mutants_independently_rerun": false,
+    "author_mutant_log": "27 killed / 0 survived / 0 edit-miss; inspected, not independently rerun",
+    "wrap_boundary_fixture": "wrap_probe.c and wrap_probe.txt",
+    "previous_review_integrity": {
+      "payload_count": 97,
+      "mismatch": [],
+      "checksum_file_equal_to_original": true
+    }
+  },
+  "canonical_status_final": "",
+  "canonical_main": "dd8a7b9b0bea5acc37e55ef92513303af2b0fcec",
+  "snapshot_status_final": "",
+  "tracked_changes_by_reviewer": false,
+  "production_seed_derivation": false,
+  "board_connection": false,
+  "image_loading": false,
+  "push_or_merge": false,
+  "review_artifacts": "ignored build/wip only",
+  "limitations": "Host-only internal consistency and listed fixtures; no general totality proof or physical qualification. Netlist is a copied pre-existing ignored fixture, not fresh synthesis."
+}

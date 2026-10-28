@@ -1,4 +1,4 @@
-# B4Q — the PS image (host-only preparation, v0.2, 2026-10-28; v0.1 held by the owner's review of `ba18e3c`, R1–R5 repaired — §7): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
+# B4Q — the PS image (host-only preparation, v0.3, 2026-10-28; v0.1 held by the owner's review of `ba18e3c`, R1–R5 repaired — §7; v0.2 held by the review of `0606758`, C1–C4 repaired — §8): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
 
 > **Authorisation.** The owner's PASS on `a41f573` (archived in `evidence/b4/unit_b4q_integration_2026_10_27/owner_review_a41f573_PASS/`,
 > its section 4): one complete B4Q PS-image preparation unit, host-only — "the actual PS board-image preparation", to satisfy the
@@ -53,8 +53,9 @@ primitive's own cap (4096 bytes) and counted apart (`END.flushed`). The harness 
 **Freshness:** each side's line sequence starts at 0 (the board) / 1 (the host) and is strictly increasing; a host frame whose
 sequence is not greater than the last accepted one is refused by name (NACK `stale sequence`) before any effect — a gap is accepted (a
 dropped frame); the host refuses a duplicate / decreasing board frame the same way (noted in the console log, a console finding, the
-session halted); the request id binds a SIGNREPLY to its SIGNREQ in addition. Neither side wraps: the application ends the session
-PROTOCOL and the host refuses to frame before 0xFFFFFFF0.
+session halted); the request id binds a SIGNREPLY to its SIGNREQ in addition. Neither side wraps: the line that would carry
+0xFFFFFFF0 is the application's terminal END PROTOCOL instead, wherever it is emitted — a wait's heartbeat, a NACK, a request, an event, a
+result — and nothing is emitted, requested or run after it; the host refuses to frame before that sequence.
 
 **The session latch:** after a transaction that did not close (any status but 0 — the A5 `injection_open` close is status 0 and no
 stop), the application NACKs every further TX by name (`halted: <the first failure>`) and `b4q_sign` refuses without a request;
@@ -118,3 +119,12 @@ prediction / session sizes and the freeze of 2c are not touched (`docs/b4q_plan.
 
 A command the application refused by name is a named host non-success that ran nothing: no transaction record, the console log and the
 transport summary carry it, the session halts on it (`docs/b4q_plan.md` §4.2). The notary's log now carries the 24 words it handed out.
+
+## 8. The repair after the owner's HOLD on `0606758` (2026-10-28)
+
+| item | what was wrong | what changed | held by |
+|---|---|---|---|
+| C1 source downgrade | the console contract chosen only by the optional material | the source anchored in the raw evidence (the identity-page reads of the A7 region, the harness's identity): a console archive without its transport / log is refused as downgraded; a host-only archive keeps its contract | `test_c1_*`; mutant C1a |
+| C2 the exchange | counted and classified, not replayed | the ordered exchange replayed from the lines and bound to the records (the TX text rebuilt from each record), the trace (the nonce read before each request, the words staged after each reply), the notary log, the page and the opening; refused commands owed their NACK; the END recomputed | `test_c2_*`; mutants C2a–e |
+| C3 payload shape | typed messages checked only when they happened to be objects; counters untyped | every message decoded once and shaped (exact types) before use; a malformed one a named finding, never a bypass or a verifier error | `test_c3_*`; mutants C3a / C3b |
+| C4 sequence wrap | the limit checked only between waits | the emitter's gate: the terminal END carries the limit, nothing after (§2) | the budget twin's mode 7; `test_c4_*`; mutant C4a |

@@ -5,6 +5,7 @@
  *   1  a flood of stale SIGNREPLYs          4  the command wait of the main loop under a flood of well-formed non-command frames
  *   2  one endless overlong line             5  the idle wait under a silent host
  *   6  a flood of well-formed fresh TX frames during a sign wait (another type: charged, never a reply)
+ *   7  the sequence at B4Q_APP_SEQ_LIMIT - 1 during a silent sign wait (the owner's wrap probe): the terminal END, no wrap, nothing after
  * Prints "ret=<r> polls=<n> requests=<k> frames=<f> hb=<h>"; the budget is the build's (B4Q_APP_REPLY_POLLS / IDLE_POLLS). The
  * fixture itself caps at 50 x the budget so that a missing bound ends as OVER_BUDGET (exit 77), never as a hang. */
 #include <stdio.h>
@@ -12,7 +13,8 @@
 #include <string.h>
 #include "b4q_app.c"
 
-static unsigned polls_seen, requests, frames;
+static unsigned polls_seen, requests, frames, lines_out, wraps, ends;
+static uint32_t first_seq, last_seq;
 static int mode, enabled;
 static char rx[2048], tx[16384];
 static size_t rn, rp, tn;
@@ -21,7 +23,14 @@ static const unsigned CAP = 50u * (B4Q_APP_REPLY_POLLS > B4Q_APP_IDLE_POLLS ? B4
 void b4q_con_putc(char c)
 {
     if (tn + 1 < sizeof tx) tx[tn++] = c;
-    if (c == '\n') { tx[tn] = 0; if (strstr(tx, "B4Q1 SIGNREQ ") == tx) { requests++; enabled = 1; } tn = 0; }
+    if (c == '\n') {
+        unsigned long seq = 0;
+        tx[tn] = 0;
+        if (strstr(tx, "B4Q1 SIGNREQ ") == tx) { requests++; enabled = 1; }
+        if (strstr(tx, "B4Q1 END ") == tx) ends++;
+        if (sscanf(tx, "B4Q1 %*s %lu", &seq) == 1) { if (lines_out && (uint32_t)seq <= last_seq) wraps++; if (!lines_out) first_seq = (uint32_t)seq; last_seq = (uint32_t)seq; lines_out++; }
+        tn = 0;
+    }
 }
 
 int b4q_con_rx_ready(void)
@@ -61,6 +70,13 @@ int main(int argc, char **argv)
     mode = argc > 1 ? atoi(argv[1]) : 0;
     memset(&S, 0, sizeof S);
     strcpy(S.token, B4Q_WIRE_ZERO_TOKEN);
+    if (mode == 7) {
+        S.seq = B4Q_APP_SEQ_LIMIT - 1u; S.sum.lines = S.seq; S.sum.kicks_requested = S.seq;
+        ret = b4q_sign("00000000", "0000000000000000", words);
+        printf("ret=%d first=%08lx last=%08lx lines=%u wraps=%u ends=%u polls=%u requests=%u terminal=%d end=%d\n", ret, (unsigned long)first_seq, (unsigned long)last_seq,
+               lines_out, wraps, ends, polls_seen, requests, S.terminal, (int)S.sum.end);
+        return 0;
+    }
     if (mode == 4 || mode == 5) {
         b4q_wire_frame_t f;
         b4q_budget b = {B4Q_APP_IDLE_POLLS, 0};
