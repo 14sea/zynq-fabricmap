@@ -278,6 +278,11 @@ class ConsoleSession(ss.Session):
         line = self._readline("console")
         if line is None:
             raise ss.SessionRefusal("the console closed")
+        return self._handle_console_line(line)
+
+    def _handle_console_line(self, line: str) -> dict | None:
+        """One console line (without its newline) parsed and dispatched: None when it was a HB / NACK / EV / SIGNREQ (handled), the result
+        when it was an IDENT / RESULT / END / RING / CHUNK. Shared by the pipe session and the runner (which owns its own byte buffer)."""
         if True:
             try:
                 f = wire.parse(line, None)
@@ -372,10 +377,8 @@ class ConsoleSession(ss.Session):
         return r
 
     def _backend_manifest(self):
-        if not self.ps:
+        if not self.ps or self.backend is None:
             return super()._backend_manifest()
-        if self.backend is None:
-            return None
         return {**super()._backend_manifest(), "role": "MMIO answered on this process's pipe (the surrogate device): its trace / PCAP log are NOT read for any record — declared knobs only"}
 
     def _standing(self) -> str:
@@ -529,7 +532,7 @@ class ConsoleSession(ss.Session):
         r = self._acquire(r)
         self.ident = r.get("ident")
         if self.ps and self.ident is not None and type(self.ident.get("open", {}).get("timing")) is int:
-            self.timing = {**rm.decode_timing(self.ident["open"]["timing"]), "pulse": self.timing["pulse"]}   # the timing word the PS read at its opening (the pulse count is the carrier design's constant)
+            self.timing = {**rm.decode_timing(self.ident["open"]["timing"]), "pulse": (self.timing or {}).get("pulse", 2)}   # the timing word the PS read at its opening (the pulse count is the carrier design's constant, b4q_emu.TIMING)
         so = self._opened(r)
         if self.ident is not None:
             findings = so["findings"]

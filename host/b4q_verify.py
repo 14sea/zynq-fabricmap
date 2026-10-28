@@ -40,6 +40,7 @@ import b4q_qual as ql  # noqa: E402
 import b4q_evidence_log as el  # noqa: E402
 BOOT_BANNER_LINE_RE = __import__('re').compile(r"^(?:U-Boot SPL|U-Boot \d|Trying to boot from|Model: Ebang)")   # the runner's cut marker (host/b4q_runner.BANNER_LINE_RE)
 import b4q_session as ss  # noqa: E402
+import b4q_verify_runner as vr  # noqa: E402
 import b4q_frames as fr  # noqa: E402
 import b4q_schema as sc  # noqa: E402
 import b4q_view as vw  # noqa: E402
@@ -153,6 +154,19 @@ def load_archive(d: Path) -> dict:
     d = Path(d)
     if not d.is_dir():
         raise ArchiveRefusal(f"{d}: not a directory")
+    if not (d / "manifest.json").is_file():
+        raise ArchiveRefusal("manifest.json: missing")
+    try:
+        m0 = json.loads((d / "manifest.json").read_text())
+    except (ValueError, UnicodeDecodeError) as e:
+        raise ArchiveRefusal(f"manifest.json: not JSON ({e})")
+    if isinstance(m0, dict) and m0.get("no_session") is True:
+        # a RUNNER archive without a session (the control plane alone, or a stop before the opening): its contract is the runner's — the raw
+        # streams and uboot.json, verified by b4q_verify_runner; nothing of a session is claimed, so nothing of a session is required here.
+        # The runner material's shape and the streams' account are judged in verify() (a `go` in the streams refutes the account).
+        _need(isinstance(m0.get("transport"), dict) and m0["transport"].get("kind") in vr.RUNNER_KINDS, "no_session: a non-runner transport")
+        console = jl(d / "console.jsonl") if (d / "console.jsonl").is_file() else []
+        return {"manifest": m0, "no_session": True, "console": console, "so_doc": None, "notary": [], "trace": [], "pcap": [], "acc": [], "files": {}, "raw": None}
     for f in ("manifest.json", "trace.jsonl", "pcap_log.jsonl", "session_open.json", "notary_log.json"):
         if not (d / f).is_file():
             raise ArchiveRefusal(f"{f}: missing")
@@ -181,8 +195,6 @@ def load_archive(d: Path) -> dict:
     _need(all(isinstance(m, str) for m in manifest["chain_findings"]), "manifest.chain_findings: not strings")
     _need(_is_hex(manifest["loaded_frames_reference_sha256"], 64) and _is_hex(manifest["base_readback_reference_sha256"], 64), "manifest: a reference is not a sha256 hex")
     validate_qualification_index(manifest["qualification_plan"])
-    if so_doc is None and not manifest.get("records") and isinstance(manifest.get("transport"), dict) and isinstance(manifest["transport"].get("runner"), dict) and manifest["transport"]["runner"].get("stops"):
-        raise ControlPlaneStop(manifest["transport"]["runner"]["stops"][0].get("why", "?"))   # no session was opened: the runner stopped before `go` (uboot.json names it)
     if not isinstance(so_doc, dict) or not isinstance(so_doc.get("record"), dict) or not isinstance(so_doc.get("findings"), list):
         raise ArchiveRefusal("session_open.json: not {record, findings, ...}")
     _fields(so_doc["record"], "session_open.record", {"status": str, "instrument": dict, "base_frames_reference_sha256": str, "startup_readback_sha256": str})
@@ -236,9 +248,12 @@ def load_archive(d: Path) -> dict:
         _need(isinstance(tr, dict), "manifest.transport: missing or not an object while console material is present")
         _fields(tr, "manifest.transport", {"kind": str, "protocol": str, "token": str, "page_words": list, "page_flags": int, "knobs": dict, "stats": dict, "console_lines": int, "findings": list,
                                            "ident": None, "end": None})
-        if tr["kind"] == "uart-board":
-            raise ArchiveRefusal("manifest.transport.kind: a board transport (uart-board) — outside the claims this verifier version is granted: it verifies host-only archives (a pipe or a PTY to the surrogate); a board archive is not verified as one")
-        _need(tr["kind"] in ("console-emulated", "console-pty-surrogate"), f"manifest.transport.kind: {tr['kind']!r} is not a transport this verifier knows")
+        _need(tr["kind"] in ("console-emulated",) + vr.RUNNER_KINDS, f"manifest.transport.kind: {tr['kind']!r} is not a transport this verifier knows")
+        if tr["kind"] in vr.RUNNER_KINDS:
+            try:
+                vr.load_runner(d, manifest)                                 # the runner material's shape (R1): the raw streams and uboot.json present and the declared bytes
+            except vr.RunnerRefusal as e:
+                raise ArchiveRefusal(f"runner archive: {e}")
         _need(_is_hex(tr["token"], wire.TOKEN_HEX), "manifest.transport.token: not 32 hex")
         _need(len(tr["page_words"]) == wire.PAGE_WORDS and all(_is_hex(w, 8) for w in tr["page_words"]), "manifest.transport.page_words: not 24 hex words")
         _need(tr["ident"] is None or isinstance(tr["ident"], dict), "manifest.transport.ident: not an object or null")
@@ -409,15 +424,22 @@ def verify(d: Path, repo_root: Path = R) -> dict:
     S = rep["session"]
     try:
         A = load_archive(d)
-    except ControlPlaneStop as e:
-        # a runner archive with NO session: the control plane stopped before `go` (a load / page witness, no prompt, a cut) — the archive is the
-        # transcript of that stop (raw/console.bin, uboot.json); nothing to verify as a session, the stop named: the verifier agrees with the account
-        rep.update({"refused": None, "clean": False, "agree": True, "chain": [], "a7": {"findings": []}, "control_plane_stop": str(e), "qualification": {"findings": []}})
-        return rep
     except ArchiveRefusal as e:
         rep.update({"refused": str(e), "clean": False, "agree": False, "chain": [], "a7": {"findings": [f"not run: {e}"]}})
         return rep
     manifest, so_doc, trace, pcap, acc = A["manifest"], A["so_doc"], A["trace"], A["pcap"], A["acc"]
+    if A.get("no_session"):
+        # a runner archive without a session: judged by the runner contract alone (the streams recomputed; a named stop demonstrated or the
+        # control plane complete at pre-go); `agree` = the archive's account is what its raw streams show; never `clean` (no session was sealed)
+        rr = vr.verify_runner(d, manifest, A["console"], no_session=True)
+        rep.update({"runner": rr, "provenance": rr.get("provenance"), "chain": [], "a7": {"findings": []}, "qualification": {"findings": []}, "transactions": [],
+                    "refused": rr.get("refused"), "control_plane": {"phase": rr.get("phase"), "stop": rr.get("stop")}})
+        S += [f"runner: {m}" for m in rr["findings"]]
+        if rr.get("refused"):
+            S.append(f"runner: refused: {rr['refused']}")
+        rep["agree"] = not S
+        rep["clean"] = False
+        return rep
     # 6. the manifest's references
     data_rec = json.loads((repo_root / "firmware/b4q/b4q_data.json").read_text())
     if manifest.get("write_set") != data_rec:
@@ -427,8 +449,16 @@ def verify(d: Path, repo_root: Path = R) -> dict:
     hyp, mp = hy.load(), bm.site_mapping()
     if manifest.get("hypothesis", {}).get("sha256") != hyp.sha256 or manifest.get("mapping", {}).get("certificate_sha256") != mp.certificate_sha256:
         S.append("manifest: the hypothesis / certificate digests are not the repository's")
-    if not manifest.get("emulated"):
+    if not manifest.get("emulated") and (manifest.get("transport") or {}).get("kind") != "uart-board":
         S.append("manifest: not labelled emulated")
+    # the runner archive contract (R1 / R4): the control plane's witnesses recomputed from the raw streams, the console linked to them, the
+    # provenance reported apart from the consistency (a PTY is a fixture; the device format is never "observed on a device" here)
+    if (manifest.get("transport") or {}).get("kind") in vr.RUNNER_KINDS:
+        rep["runner"] = vr.verify_runner(d, manifest, A.get("console"), no_session=False)
+        rep["provenance"] = rep["runner"].get("provenance")
+        S += [f"runner: {m}" for m in rep["runner"]["findings"]]
+        if rep["runner"].get("refused"):
+            S.append(f"runner: refused: {rep['runner']['refused']}")
     # the source (the runner unit): the PS log's derivation recomputed and held to the archived trace / pcap / accesses; the raw log held
     # to what the board reported (the END's / the last RING's position and digest); beside an emulated source, the PS log held to the
     # emulation's own trace (the two witnesses of one session must agree)
@@ -1038,6 +1068,8 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
                 pulls.pop(0)                                  # a board line that does not parse while a PULL / RINGINFO is open: its failed answer (the host re-asks)
             continue
         if phase in ("ended", "epilogue_closed"):
+            if phase == "ended" and protocol == "b4q-v2" and m["type"] == "HB":
+                hb += 1; continue                                 # the epilogue's wait heartbeats like any wait (through the kicking emitter): admitted, counted
             if phase == "ended" and protocol == "b4q-v2" and m["type"] in ("RING", "CHUNK"):
                 if not pulls:
                     F.append(f"board {m['type']} at line {m['idx']}: answers no RINGINFO / PULL")

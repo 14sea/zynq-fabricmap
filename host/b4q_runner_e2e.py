@@ -55,12 +55,33 @@ def scenario_three(s):
     return {"tx": [a, b]}
 
 
-def expect_stop(prefix: str):
-    return {"stop_prefix": prefix, "opened": False}
+def expect_stop(prefix: str, phase: str | None = None):
+    e = {"stop_prefix": prefix, "opened": False}
+    if phase:
+        e["phase_at_stop"] = phase
+    return e
 
 
-# name: (body, surrogate args, runner kw, expect)
+WRONG_IMAGE = R / "build/b4q_runner_e2e_wrong_image.bin"
+
+
+def wrong_image() -> Path:
+    """A local file that is NOT the pinned image (the pinned image with its last byte flipped): the admission must refuse it before any load."""
+    data = bytearray(rn.IMAGE.read_bytes()); data[-1] ^= 1
+    WRONG_IMAGE.write_bytes(bytes(data))
+    return WRONG_IMAGE
+
+
+# name: (body, surrogate args, runner kw, expect[, context kw])
 SCENARIOS = {
+    # the control plane alone (no `go`) and the admission's refusals (R3) — each before anything execution-sensitive
+    "control_plane_only": (rn.body_control_plane, [], {}, {"opened": False, "phase": "pre-go", "verify": 0, "no_go": True, "load_witness": True, "page_witness": True}),
+    "image_not_pinned": (scenario_two, [], {"image": "wrong"}, {**expect_stop("image: the selected file", "prompt"), "no_loady": True}),
+    "board_not_permitted": (scenario_two, ["--board=4205"], {}, {**expect_stop("board: the model", "prompt"), "no_loady": True}),
+    "board_dram_short": (scenario_two, ["--board=4205"], {}, {**expect_stop("board: DRAM 256 MiB", "prompt"), "no_loady": True}, {"board_models": ("Ebang EBAZ4205",)}),
+    "wrong_variant": (scenario_two, ["--fault=wrong-variant"], {}, {**expect_stop("carrier: the VARIANT word", "prompt"), "no_loady": True}),
+    "fclk0_mismatch": (scenario_two, [], {}, {**expect_stop("clock: FPGA0_CLK_CTRL", "prompt"), "no_loady": True}, {"fclk0_ctrl_expected": 0x00100A00}),
+    "miner_uboot_break": (scenario_two, ["--board=4205"], {}, {"opened": True, "verify": 0}, {"board_models": ("Ebang EBAZ4205",), "dram_min_mib": 256}),
     # the console e2e's scenarios over the PTY (the host-side knobs are the runner session's; the device-side ones the surrogate's)
     "valid": (ce.scenario_valid, [], {}, {"opened": True, "records": 4, "closed": 4, "verify": 0, "digest_equal": True}),
     "a5": (ce.scenario_a5, [], {}, {"opened": True, "verify": 0}),
@@ -88,7 +109,7 @@ SCENARIOS = {
     "page_witness_fails": (scenario_two, ["--fault=corrupt-mw"], {}, expect_stop("page witness:")),
     "missed_autoboot": (scenario_two, ["--fault=missed-autoboot"], {"break_s": 4.0}, expect_stop("no U-Boot prompt: a boot banner was seen")),
     "no_prompt": (scenario_two, ["--fault=no-prompt"], {"break_s": 4.0}, expect_stop("no U-Boot prompt")),
-    "unknown_image": (scenario_two, ["--fault=unknown-image"], {"silence_s": 3.0}, {"opened": False, "transport_stop": "the console was silent"}),
+    "unknown_image": (scenario_two, ["--fault=unknown-image"], {"silence_s": 3.0}, {"opened": False, "transport_stop": "the console was silent", "verify": 0}),
     "silence_mid_session": (scenario_three, ["--fault=silence-after=40"], {"silence_s": 3.0}, {"opened": True, "transport_stop": "the console was silent", "verify": 0}),
     "reset_mid_session": (scenario_three, ["--fault=reset-after-lines=40"], {"silence_s": 5.0}, {"opened": True, "transport_stop": "a boot banner on the console mid-session", "verify": 0}),
     "corrupt_chunk": (ce.scenario_valid, ["--fault=corrupt-chunk=2"], {}, {"opened": True, "records": 4, "closed": 4, "verify": 0, "bad_chunks": 1, "digest_equal": True}),
@@ -136,11 +157,22 @@ def check(expect: dict, summary: dict, verify_rc: int, verify: dict) -> list[str
         bad.append("tail_unobtainable")
     if "page_witness" in expect and bool((summary.get("page_witness") or {}).get("equal")) != expect["page_witness"]:
         bad.append("page witness")
+    if "load_witness" in expect and bool((summary.get("load_witness") or {}).get("equal")) != expect["load_witness"]:
+        bad.append("load witness")
+    if "phase" in expect and summary.get("phase") != expect["phase"]:
+        bad.append(f"phase {summary.get('phase')} (expected {expect['phase']})")
+    if "phase_at_stop" in expect and summary.get("phase_at_stop") != expect["phase_at_stop"]:
+        bad.append(f"phase at stop {summary.get('phase_at_stop')} (expected {expect['phase_at_stop']})")
+    if expect.get("no_go") and summary.get("go_in_tx"):
+        bad.append("a `go` was issued")
+    if expect.get("no_loady") and summary.get("loady_in_tx"):
+        bad.append("a `loady` was issued")
     return bad
 
 
 def run_scenario(root: Path, name: str) -> dict:
-    body, sargs, kw, expect = SCENARIOS[name]
+    body, sargs, kw, expect = SCENARIOS[name][:4]
+    ctx_kw = dict(SCENARIOS[name][4]) if len(SCENARIOS[name]) > 4 else {}
     out = root / name
     (out / "private").mkdir(parents=True, exist_ok=True)
     link = Path(f"/tmp/b4q-runner-e2e-{os.getpid()}-{name}")
@@ -151,7 +183,11 @@ def run_scenario(root: Path, name: str) -> dict:
         body_kw = dict(kw)
         break_s = body_kw.pop("break_s", 20.0)
         silence_s = body_kw.pop("silence_s", 20.0)
-        summary = rn.run(str(link), out, body, silence_s=silence_s, label=f"B4Q-runner-{name}", break_s=break_s, **body_kw)
+        image = body_kw.pop("image", None)
+        if image == "wrong":
+            ctx_kw["image_path"] = str(wrong_image())
+        ctx = rn.ExecutionContext.pinned(**ctx_kw)                       # the pin from the build evidence of record, never from the file
+        summary = rn.run(str(link), out, body, context=ctx, silence_s=silence_s, label=f"B4Q-runner-{name}", break_s=break_s, **body_kw)
     finally:
         sur.kill()
         try:
@@ -173,6 +209,10 @@ def run_scenario(root: Path, name: str) -> dict:
     m = json.loads((out / "manifest.json").read_text()) if (out / "manifest.json").is_file() else {}
     summary["stats_pull"] = ((m.get("transport") or {}).get("evidence_log") or {}).get("stats")
     summary["tail_unobtainable"] = (m.get("source") or {}).get("tail_unobtainable")
+    u = json.loads((out / "uboot.json").read_text()) if (out / "uboot.json").is_file() else {}
+    summary["phase_at_stop"] = u.get("phase_at_stop")
+    tx = (out / "raw/console_tx.bin").read_bytes() if (out / "raw/console_tx.bin").is_file() else b""
+    summary["go_in_tx"], summary["loady_in_tx"] = b"go 02000000\r" in tx, b"loady 02000000\r" in tx
     summary.update({"name": name, "wall_s": round(time.time() - t0, 3), "surrogate_args": sargs, "verify_rc": verify_rc, "verify_agree": verify.get("agree"),
                     "verify_session": verify.get("session"), "verify_limitations": (verify.get("source") or {}).get("limitations"), "expect": expect})
     summary["expect_failures"] = check(expect, summary, verify_rc, verify)

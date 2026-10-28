@@ -93,8 +93,25 @@ only meaning it has here), A7 run on the logged accesses, the console contract r
 
 The sessions: `host/b4q_console_session.ConsoleSession(source="ps-evidence-log-v1")` over the pipe (the backend answers MMIO only;
 its trace is not read for a record — the e2e's 19 scenarios run this way too), and `host/b4q_runner.RunnerSession` over a serial
-endpoint with NO backend in its process (the device surrogate on a PTY, `host/b4q_device_surrogate.py`; a board's UART under a
-ruling not given). The nonce of a transaction's links is the one the PS read (`NONCE_LO` / `NONCE_HI` in the log); the timing
+endpoint that constructs no backend at all (`make_backend=False`; the device surrogate on a PTY, `host/b4q_device_surrogate.py`; a
+board's UART under a ruling not given).
+
+**The runner archive contract and its verification (the owner's R1 / R4 on `dad9e4de`; `host/b4q_verify_runner.py`).** A runner
+archive (`transport.kind` = `console-pty-surrogate`, a declared host fixture, or `uart-board`, the device format) retains both raw
+streams (`raw/console.bin`, every byte received; `raw/console_tx.bin`, every byte sent) and `uboot.json` (schema `b4q_runner_uboot`
+v2: the execution context, the control-plane steps with their stream offsets, the admission, the load and page witnesses, the
+execution phase — persisted after every step and BEFORE `go`). Nothing in `uboot.json` is an authority: the verifier re-assembles the
+YMODEM blocks from the sent stream (their sha256 IS the transferred image, held to the archive's executing-side identity and the
+context's pin), holds the device's `crc32 for <start> ... <end>` line to the crc32 of those bytes over exactly the loaded range and
+U-Boot's `## Total Size` to their length, holds the page's 24 `mw.l` words (sent) to the `md.l` dump (received) and to the
+transport's page words and the page's nonce to the `md.l` of NONCE_LO / NONCE_HI, holds the admission's model / DRAM / VARIANT /
+FPGA0_CLK_CTRL to the received stream, holds the phase to the streams (`go` sent ⇔ a post-go phase; `## Starting application` ⇒
+`go` sent), links every retained console line to the streams in order after `go`, and accepts a control-plane-only archive (no
+session) only when the streams show no `go`, no board frame, no transaction directory and the named stop is DEMONSTRATED by them.
+Provenance is reported apart (`verify.json: provenance`): a PTY archive is a fixture; a `uart-board` archive's consistency is held
+with `observed_on_device: false` (a later ruling's claim, never this verifier's); a synthetic device-format fixture
+(`host/b4q_device_fixture.py`, `manifest.synthetic`) is reported as such; a device-format archive carrying an emulator-only witness
+(the surrogate's banner, a backend record, a private directory, `emulated: true`, a declared fixture) is found. The nonce of a transaction's links is the one the PS read (`NONCE_LO` / `NONCE_HI` in the log); the timing
 word is the one the IDENT reports; a transaction cut by the transport has an empty range and no record of its own (the verifier's
 completeness rule names the gap).
 
@@ -112,3 +129,4 @@ completeness rule names the gap).
 | the log's tail after the terminal END, or after a transport cut | nothing is framed after the exhausted sequence; a dead transport answers no PULL | a named limitation (`tail_unobtainable`; `interrupted.transport`); the cut transaction has no record of its own |
 | the device's handling of a DMA (`mode`) | the PS sees its own tuple and the later status, not the device's queue | `submit.mode = "unwitnessed"` |
 | what the surrogate's backend did | its logs are private to its process | nothing — a test may cross-check them; the runner never reads them |
+| that a device-format archive was observed on a device | a byte stream and a program's log prove internal consistency, not physical behaviour | `provenance.observed_on_device: false` on every archive this verifier accepts; the claim is a ruling's, after the bring-up |

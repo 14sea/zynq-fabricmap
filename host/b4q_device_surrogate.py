@@ -43,28 +43,44 @@ import b4q_ymodem as ym  # noqa: E402
 
 APPHOST = R / "build/b4q_firmware/b4q_apphost"
 IMAGE = R / "build/b4q_image/b4q_app_v2.bin"
-PROMPT = b"zynq-uboot> "
-BANNER = (b"\r\n\r\nU-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\n"
-          b"NAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\n")
+BOARDS = {   # the two host fixture profiles: what each U-Boot puts on the wire (the model line, the DRAM line, the prompt, the break key)
+    "4203": {"prompt": b"Zynq> ", "break_any_key": True, "dram_mib": 512,
+             "banner": (b"\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\n"
+                        b"Model: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\n")},
+    "4205": {"prompt": b"zynq-uboot> ", "break_any_key": False, "dram_mib": 256,
+             "banner": (b"\r\n\r\nU-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\n"
+                        b"NAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\n")},
+}
+SLCR_FPGA0_CLK_CTRL = 0xF8000170
 MINER_BOOT = (b"\r\nNAND read: device 0 offset 0x300000, size 0x500000\r\n 5242880 bytes read: OK\r\n## Booting kernel from Legacy Image at 03000000 ...\r\n"
               b"   Image Name:   Linux-3.x (surrogate)\r\n   Verifying Checksum ... OK\r\n   Loading Kernel Image ... OK\r\n\r\nStarting kernel ...\r\n\r\n")
 BREAK_KEY = b"d"
 
 
 class Endpoint:
-    """The PTY master as the ymodem receiver's port (read(timeout) / write)."""
+    """The PTY master as a port with ONE receive buffer (`buf` / `fill`): the ymodem receiver and the prompt loop share it, so the bytes
+    the transfer's last read took beyond its own end (the host's next command) reach the prompt loop."""
 
     def __init__(self, fd: int):
         self.fd = fd
+        self.buf = bytearray()
+
+    def fill(self, timeout: float) -> int:
+        r, _, _ = select.select([self.fd], [], [], max(0.0, timeout))
+        if not r:
+            return 0
+        try:
+            data = os.read(self.fd, 65536)
+        except OSError:
+            return 0
+        self.buf += data
+        return len(data)
 
     def read(self, timeout: float) -> bytes:
-        r, _, _ = select.select([self.fd], [], [], timeout)
-        if not r:
-            return b""
-        try:
-            return os.read(self.fd, 65536)
-        except OSError:
-            return b""
+        if not self.buf:
+            self.fill(timeout)
+        data = bytes(self.buf); del self.buf[:]
+        return data
 
     def write(self, data: bytes):
         os.write(self.fd, data)
@@ -88,6 +104,8 @@ class Surrogate:
             self.backend.devc.corrupt_frame_reads.add(int(n))
         for off in a.refuse_write or []:
             self.backend.refuse_writes.add(int(off, 0))
+        self.board = BOARDS[a.board]
+        self.backend.mem.wr(SLCR_FPGA0_CLK_CTRL, int(a.fclk0_ctrl, 16))          # the SLCR word U-Boot's md.l shows (a fixture value: the real one is the bring-up's M3)
         self.table = {hashlib.sha256(IMAGE.read_bytes()).hexdigest(): APPHOST} if IMAGE.is_file() else {}
         for spec in a.image_table or []:
             sha, _, path = spec.partition("=")
@@ -135,6 +153,8 @@ class Surrogate:
     def mem_word(self, addr: int) -> int:
         if bk.AXI_BASE <= addr < bk.AXI_BASE + 0x10000:
             d, resp, _ = self.backend.rd32(addr)                              # U-Boot's own read of the PL window (a host-side read, not the PS application's)
+            if self.faults.get("wrong-variant") and addr == bk.AXI_BASE + 0x2034:
+                return 0x42340002                                             # another carrier's variant word
             return d if resp == 0 else 0xFFFFFFFF
         for base, data in self.loaded.items():
             if base <= addr < base + len(data):
@@ -162,7 +182,7 @@ class Surrogate:
             while not self.ep.read(3600):                                    # "power-on" when the host first speaks: the first byte starts the boot (a bench convenience, not a board behaviour)
                 pass
         self.note("boot", n=self.boots)
-        self.out(BANNER)
+        self.out(self.board["banner"])
         broken = False
         secs = self.a.autoboot_s
         self.out(b"Hit any key to stop autoboot: ")
@@ -171,7 +191,7 @@ class Surrogate:
             deadline = time.time() + 1.0
             while time.time() < deadline:
                 data = self.ep.read(max(0.0, deadline - time.time()))
-                if data and BREAK_KEY in data and not self.faults.get("missed-autoboot"):
+                if data and (BREAK_KEY in data or (self.board["break_any_key"] and data.strip(b"\r\n"))) and not self.faults.get("missed-autoboot"):
                     broken = True; break
             if broken:
                 break
@@ -193,6 +213,7 @@ class Surrogate:
 
     def prompt_loop(self):
         buf = b""
+        PROMPT = self.board["prompt"]
         self.out(PROMPT)
         while True:
             data = self.ep.read(3600)
@@ -262,6 +283,9 @@ class Surrogate:
             elif cmd == "reset":
                 self.out(b"resetting ...\r\n")
                 return "reboot"
+            elif cmd == "bdinfo":
+                size = self.board["dram_mib"] * 1024 * 1024
+                self.out(f"arch_number = 0x00000000\r\nboot_params = 0x00000100\r\nDRAM bank   = 0x00000000\r\n-> start    = 0x00000000\r\n-> size     = 0x{size:08x}\r\nbaudrate    = 115200 bps\r\n".encode())
             elif cmd == "version":
                 self.out(b"U-Boot 2014.01 (surrogate)\r\n")
             elif cmd == "help":
@@ -392,7 +416,9 @@ class Surrogate:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--link", help="a symlink to the PTY slave for the runner")
-    ap.add_argument("--fault", action="append", help="interrupted-load=K | wrong-crc | md-garbage | corrupt-page | corrupt-mw | missed-autoboot | no-prompt | silence-after=N | corrupt-chunk=N | reset-after-lines=N | ring-bytes=N | wdt-fail | unknown-image | no-wdt-reset")
+    ap.add_argument("--fault", action="append", help="interrupted-load=K | wrong-crc | md-garbage | corrupt-page | corrupt-mw | missed-autoboot | no-prompt | silence-after=N | corrupt-chunk=N | reset-after-lines=N | ring-bytes=N | wdt-fail | unknown-image | no-wdt-reset | wrong-variant")
+    ap.add_argument("--board", choices=sorted(BOARDS), default="4203", help="the host fixture profile: the EBAZ4203 (512 MiB, mainline U-Boot) or the EBAZ4205 (256 MiB, the miner U-Boot)")
+    ap.add_argument("--fclk0-ctrl", default="0x00200A00", help="the SLCR FPGA0_CLK_CTRL word the fixture shows (hex)")
     ap.add_argument("--image-table", action="append", help="sha256=path: the binary that stands for an image (default: the pinned v2 image -> the host harness)")
     ap.add_argument("--devc-fault", action="append", help="kind:ordinal:mode on the backend's DevC fake")
     ap.add_argument("--corrupt-frame-read", action="append", help="the ordinal of a frame read the bench corrupts")

@@ -99,20 +99,25 @@ class SessionRefusal(ValueError):
 
 class Session:
     def __init__(self, out_dir: Path, label: str = "B4Q-host", power_on: str = "init", gsr_init_effect: bool = True, binary: Path = BINARY, devc_faults: dict | None = None,
-                 provision_key: bytes | None = None, notary_deny: set | None = None, interrupt_after_accesses: int | None = None, interrupt_tx: int | None = None):
+                 provision_key: bytes | None = None, notary_deny: set | None = None, interrupt_after_accesses: int | None = None, interrupt_tx: int | None = None,
+                 make_backend: bool = True):
         """The negative-path knobs are the ENVIRONMENT's, never the program's: `devc_faults` {(kind, ordinal): mode} on the DevC fake;
         `provision_key` a key other than the notary's (an AUTH fault); `notary_deny` genomes the notary refuses; `interrupt_after_accesses`
         the transport cut after that many accesses of the next transaction (an external interruption)."""
         self.out = Path(out_dir); self.out.mkdir(parents=True, exist_ok=True)
         self.label = label
         self.base, self.wl = fr.load_base(), fr.whitelist()
-        self.backend = bk.Backend(self.base, self.wl, power_on=power_on, gsr_init_effect=gsr_init_effect)
-        if devc_faults:
-            self.backend.devc.faults.update(devc_faults)
-        self.corrupt_frame_reads = self.backend.devc.corrupt_frame_reads   # one shared set: a scenario adds ordinals before the session opens
         self.notary = nt.Notary(self.base, self.wl)
         self.notary_deny = set(notary_deny or ())
-        self.backend.provision_key(provision_key if provision_key is not None else self.notary.key)   # the signer principal provisions the write-once key; the application never touches it
+        if make_backend:
+            self.backend = bk.Backend(self.base, self.wl, power_on=power_on, gsr_init_effect=gsr_init_effect)
+            if devc_faults:
+                self.backend.devc.faults.update(devc_faults)
+            self.corrupt_frame_reads = self.backend.devc.corrupt_frame_reads   # one shared set: a scenario adds ordinals before the session opens
+            self.backend.provision_key(provision_key if provision_key is not None else self.notary.key)   # the signer principal provisions the write-once key; the application never touches it
+        else:
+            self.backend = None                 # no emulated device in this process at all (the runner: the device is on the other end of a port); the subclass sets `evidence` and `timing`
+            self.corrupt_frame_reads = set()
         self.evidence = self.backend            # the SOURCE of the records: the emulated backend's own trace / PCAP log / accesses (host-only), or — a console
         self.emulated = True                    # session with source=ps-evidence-log-v1 — the PS's evidence log pulled through the console (b4q_console_session.PsEvidence)
         self.source = None                      # the manifest's `source` object when the records come from the PS's log; None = the emulated source
@@ -136,7 +141,7 @@ class Session:
         self.instrument = {"variant": f"{rm.VARIANT_WORD:08x}", "carrier_sha256": self.base["bitstream_sha256"], "image_sha256": sha256_file(self.binary)}
         self.loaded_reference = fr.frames_hash(self.base["frames"])      # the loaded image's write-set frames, FAR-ordered (what a startup readback must reproduce)
         self.base_reference = fr.frames_hash(fr.derive_frames(0, self.base["frames"], self.wl))   # the restored study base (signed genome 0): a different commitment
-        self.timing = {**rm.decode_timing(self.backend.carrier.timing_word), "pulse": self.backend.carrier.timing["pulse"]}
+        self.timing = {**rm.decode_timing(self.backend.carrier.timing_word), "pulse": self.backend.carrier.timing["pulse"]} if self.backend is not None else None
         self.mapping, self.hyp = bm.site_mapping(), hy.load()
 
     # ---------------------------------------------------------------- the transport
@@ -340,7 +345,7 @@ class Session:
         return self.proc is not None and self.proc.poll() is None
 
     def _nonce_before_tx(self):
-        return self.backend.carrier.nonce
+        return self.backend.carrier.nonce if self.backend is not None else None
 
     def _nonce_from_evidence(self, t_begin: int) -> str:
         raise SessionRefusal("no nonce: the emulated source knows its carrier's nonce before the transaction")
@@ -349,6 +354,8 @@ class Session:
         return r
 
     def _backend_manifest(self):
+        if self.backend is None:
+            return None
         return {"power_on": "init" if self.backend.carrier.fab.q and None not in self.backend.carrier.fab.q else "x", "nonce_seed": f"{self.backend.carrier.nonce_seed:016x}", "devc_faults": {f"{k[0]}:{k[1]}": str(v) for k, v in self.backend.devc.faults.items()},
                 "fault_injections": {"refuse_writes": sorted(f"{o:#06x}" for o in self.backend.refuse_writes), "corrupt_frame_reads": sorted(self.backend.devc.corrupt_frame_reads),
                                      "refuse_reads": sorted(f"{o:#06x}" for o in self.refused_reads), "refuse_mem_reads": sorted(f"{a:#010x}" for a in self.refused_mem_reads),
