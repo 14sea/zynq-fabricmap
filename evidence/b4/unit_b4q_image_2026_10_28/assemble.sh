@@ -11,7 +11,7 @@ cd "$R"
 { echo "HEAD $(git rev-parse HEAD)"; echo "UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)"; } > "$U/run_header.txt"
 python3 -B host/b4q_build_evidence.py --build --out "$U/build_evidence.json" > "$U/build_evidence.txt" 2>&1
 bash firmware/b4q/build.sh > /dev/null
-make -C firmware/b4q BUILD="$R/build/b4q_firmware" apphost wiretwin > "$U/host_build.txt" 2>&1
+make -C firmware/b4q BUILD="$R/build/b4q_firmware" apphost wiretwin seqcut > "$U/host_build.txt" 2>&1
 (cd firmware/b4q && make BUILD="$R/build/b4q_firmware" xcheck) > "$U/xcheck.txt" 2>&1 || true
 rm -rf "$E"; python3 -B host/b4q_console_e2e.py "$E" > "$U/e2e_run.log" 2>&1
 rm -rf "$U/e2e"; mkdir -p "$U/e2e"

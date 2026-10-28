@@ -1,0 +1,42 @@
+[
+  {
+    "mode": "baseline",
+    "opening_findings": [],
+    "first_return_status": 0,
+    "end": null,
+    "new_trace_events_after_END": 0,
+    "write_ops_after_END": 0,
+    "pcap_entries_after_END": 0,
+    "drain": null,
+    "post_end_write_examples": []
+  },
+  {
+    "mode": "sequence_cut",
+    "opening_findings": [],
+    "first_return_status": 6,
+    "end": {
+      "kind": "PROTOCOL",
+      "reason": "this side's line sequence is exhausted",
+      "lines": 5,
+      "hb": 0,
+      "nacks": 0,
+      "sign_requests": 1,
+      "sign_replies": 1,
+      "transactions": 1,
+      "kicks": 5,
+      "flushed": 0,
+      "stale_frames": 0,
+      "refused_tx": 0,
+      "watchdog_armed": 1,
+      "opened": 1,
+      "halted": ""
+    },
+    "new_trace_events_after_END": 1,
+    "write_ops_after_END": 0,
+    "pcap_entries_after_END": 0,
+    "drain": {
+      "exception": "SessionRefusal: the console closed"
+    },
+    "post_end_write_examples": []
+  }
+]

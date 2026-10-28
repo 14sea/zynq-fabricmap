@@ -30,7 +30,7 @@ TC = Path("/home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1
 
 
 def setUpModule():
-    for target in ("host", "apphost", "wiretwin", "waittwin"):
+    for target in ("host", "apphost", "wiretwin", "waittwin", "seqcut"):
         p = subprocess.run(["make", "-C", str(R / "firmware/b4q"), f"BUILD={R / 'build/b4q_firmware'}", target], capture_output=True, text=True)
         if p.returncode != 0:
             raise AssertionError(p.stdout[-2000:] + p.stderr[-2000:])
@@ -452,6 +452,27 @@ class ConsoleScenarios(unittest.TestCase):
         lines = console_lines("sequence_cut")
         end = next(e for e in lines if e.get("type") == "END"); self.assertEqual(end["seq"], 0xFFFFFFF0)
         self.assertFalse(any(e.get("type") == "RESULT" for e in lines)); self.assertEqual([e for e in lines if e["dir"] == "board"][-1]["type"], "END")
+
+    def test_exhaustion_end_requires_the_publishers_limit(self):
+        """An exhaustion label cannot replace the publisher's sequence witness, on complete or cut archives."""
+        import shutil
+        for name in ("valid", "sequence_cut"):
+            with tempfile.TemporaryDirectory(prefix="b4q_end_limit_") as tmp:
+                d = Path(tmp) / "session"; shutil.copytree(_S["root"] / name, d)
+                lines = [json.loads(x) for x in (d / "console.jsonl").read_text().splitlines()]
+                board = [e for e in lines if e["dir"] == "board" and e.get("line")]
+                end = board[-1]; f = w.parse(end["line"]); body = json.loads(f["payload"])
+                body["kind"] = "PROTOCOL"; body["reason"] = "this side's line sequence is exhausted"
+                if name == "sequence_cut":
+                    prev = board[-2]; pf = w.parse(prev["line"])
+                    prev["line"] = w.frame(pf["type"], 100, pf["token"], pf["payload"]).rstrip("\n"); prev["seq"] = 100
+                end["line"] = w.frame("END", 101, f["token"], json.dumps(body)).rstrip("\n"); end["seq"] = 101
+                m = json.loads((d / "manifest.json").read_text()); m["transport"]["end"] = body; m["transport"]["board_seq_last"] = 101
+                (d / "manifest.json").write_text(json.dumps(m)); (d / "console.jsonl").write_text("".join(json.dumps(e) + "\n" for e in lines))
+                rep = vf.verify(d)
+                self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name)
+                self.assertTrue(any("below the exhaustion limit" in x for x in rep["session"]), (name, rep["session"]))
+        self.assertTrue(_S["verify"]["sequence_cut"][1]["agree"])
 
     def test_the_executing_sides_own_stop_reaches_the_host_through_the_console(self):
         s = self.summary("pre_event_corrupt")

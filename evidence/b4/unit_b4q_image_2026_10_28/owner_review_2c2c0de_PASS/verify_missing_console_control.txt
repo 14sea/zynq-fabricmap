@@ -1,0 +1,3 @@
+COMMAND ['/usr/bin/python3', '-B', '/tmp/owner_b4q_r4_vv0dliwh/host/b4q_verify.py', '/tmp/owner_b4q_r4_vv0dliwh/build/owner_archive_probes/missing_console_control', '--json', '/home/test/zynq_fabricmap/build/wip/owner_review_2c2c0de_2026_10_28/verify_missing_console_control.json']
+EXIT 1
+/tmp/owner_b4q_r4_vv0dliwh/build/owner_archive_probes/missing_console_control: REFUSED — a console source without its console evidence: the program read the identity page 24 time(s) / the executing side is b4q_apphost, but manifest.transport is present and console.jsonl is absent (a downgraded source is never verified as a host-only archive)

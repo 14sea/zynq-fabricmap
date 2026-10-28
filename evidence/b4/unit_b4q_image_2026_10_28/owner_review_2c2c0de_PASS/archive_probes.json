@@ -1,0 +1,206 @@
+[
+  {
+    "case": "untouched",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "missing_console_control",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "a console source without its console evidence: the program read the identity page 24 time(s) / the executing side is b4q_apphost, but manifest.transport is present and console.jsonl is absent (a downgraded source is never verified as a host-only archive)",
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "source_downgrade",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "a console source without its console evidence: the program read the identity page 24 time(s) / the executing side is b4q_apphost, but manifest.transport is absent and console.jsonl is absent (a downgraded source is never verified as a host-only archive)",
+    "verifier_error": null,
+    "session": []
+  },
+  {
+    "case": "tx_genome_changed",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: host TX at line 12: not the command of record tx_002 (its kind / genome / declared steps / task)"
+    ]
+  },
+  {
+    "case": "tx_all_removed",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: board SIGNREQ at line 3: outside an admitted transaction",
+      "console: host SIGNREPLY at line 4: answers request 3, which is not an open request of the current transaction",
+      "console: board RESULT at line 10: without an admitted TX",
+      "console: board SIGNREQ at line 12: outside an admitted transaction",
+      "console: host SIGNREPLY at line 13: answers request 11, which is not an open request of the current transaction",
+      "console: board RESULT at line 19: without an admitted TX",
+      "console: board SIGNREQ at line 21: outside an admitted transaction",
+      "console: host SIGNREPLY at line 22: answers request 19, which is not an open request of the current transaction",
+      "console: board RESULT at line 28: without an admitted TX",
+      "console: board SIGNREQ at line 30: outside an admitted transaction",
+      "console: host SIGNREPLY at line 31: answers request 27, which is not an open request of the current transaction",
+      "console: board RESULT at line 37: without an admitted TX",
+      "console: END.transactions is 4, the lines say 0",
+      "console: END.sign_replies is 4, the lines say 0",
+      "console: 0 TX admitted for 4 retained records",
+      "console: 4 retained record(s) without an admitted TX",
+      "console: the transport's stats.signreply is 4, the lines say 0"
+    ]
+  },
+  {
+    "case": "reply_req_changed",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: host SIGNREPLY at line 5: answers request 999999, which is not an open request of the current transaction",
+      "console: board RESULT at line 11: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: END.sign_replies is 4, the lines say 3",
+      "console: the transport's stats.signreply is 4, the lines say 3"
+    ]
+  },
+  {
+    "case": "reply_before_request",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: host SIGNREPLY at line 4: answers request 3, which is not an open request of the current transaction",
+      "console: board RESULT at line 11: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: END.sign_replies is 4, the lines say 3",
+      "console: the transport's stats.signreply is 4, the lines say 3"
+    ]
+  },
+  {
+    "case": "ident_array",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: board IDENT at line 1: payload: not an object",
+      "console: host TX at line 2: before the IDENT / after the END",
+      "console: END.lines is 34, the lines say 33",
+      "console: no IDENT line and no END as the first board line",
+      "console: the transport caches an IDENT the console never carried"
+    ]
+  },
+  {
+    "case": "end_array",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: board END at line 43: payload: not an object",
+      "console: no END line and the session was not interrupted"
+    ]
+  },
+  {
+    "case": "signreq_array",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: board SIGNREQ at line 4: payload: not an object",
+      "console: host SIGNREPLY at line 5: answers request 3, which is not an open request of the current transaction",
+      "console: board RESULT at line 11: a closed transaction whose signing call was not answered by an accepted OK reply (requests: none)",
+      "console: END.lines is 34, the lines say 33",
+      "console: END.sign_requests is 4, the lines say 3",
+      "console: END.sign_replies is 4, the lines say 3",
+      "console: the transport's stats.signreq is 4, the lines say 3",
+      "console: the transport's stats.signreply is 4, the lines say 3"
+    ]
+  },
+  {
+    "case": "signreq_bad_req_type",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: board SIGNREQ at line 4: payload: req: not an int",
+      "console: host SIGNREPLY at line 5: answers request 3, which is not an open request of the current transaction",
+      "console: board RESULT at line 11: a closed transaction whose signing call was not answered by an accepted OK reply (requests: none)",
+      "console: END.lines is 34, the lines say 33",
+      "console: END.sign_requests is 4, the lines say 3",
+      "console: END.sign_replies is 4, the lines say 3",
+      "console: the transport's stats.signreq is 4, the lines say 3",
+      "console: the transport's stats.signreply is 4, the lines say 3"
+    ]
+  },
+  {
+    "case": "result_invalid_json",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: board RESULT at line 11: payload not JSON (Expecting property name enclosed in doub)",
+      "console: host TX at line 12: while transaction 1 is still open (no RESULT yet)",
+      "console: END.lines is 34, the lines say 33"
+    ]
+  },
+  {
+    "case": "end_counter_float",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: board END at line 43: payload: transactions: not an int",
+      "console: no END line and the session was not interrupted"
+    ]
+  },
+  {
+    "case": "reply_notary_words_changed",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: the words staged into PAYLOAD / TAG after request 3's reply are not the reply's"
+    ]
+  },
+  {
+    "case": "ident_nonce_echo_changed",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "console: the IDENT's page nonce / status are not the page's",
+      "console: the IDENT's nonce echo flag is not what the page and the opening say"
+    ]
+  }
+]

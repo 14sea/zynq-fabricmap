@@ -1,0 +1,45 @@
+................................................................../usr/lib/python3.12/unittest/case.py:589: ResourceWarning: unclosed file <_io.TextIOWrapper name=4 encoding='UTF-8'>
+  if method() is not None:
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/usr/lib/python3.12/unittest/case.py:589: ResourceWarning: unclosed file <_io.TextIOWrapper name=5 encoding='UTF-8'>
+  if method() is not None:
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.............E
+======================================================================
+ERROR: setUpModule (tests.test_b4q_app)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_r4_vv0dliwh/tests/test_b4q_app.py", line 40, in setUpModule
+    raise AssertionError(p.stdout[-3000:] + p.stderr[-3000:])
+AssertionError: ": {"kind": "COMPLETED", "reason": "the host closed the session", "lines": 18, "hb": 0, "nacks": 0, "sign_requests": 2, "sign_replies": 2, "transactions": 2, "kicks": 18, "flushed": 0, "stale_frames": 0, "refused_tx": 0, "watchdog_armed": 1, "opened": 1, "halted": ""}, "stats": {"hb": 0, "nack": 0, "signreq": 2, "signreply": 2, "corrupted": 0, "dropped": 0, "garbage": 0, "wrong_token": 0, "stale": 1, "stale_board": 0, "refused_halted": 0, "replayed": 0}, "console_lines": 25, "halted": null, "open_findings": [
+== duplicate_tx
+{"name": "duplicate_tx", "wall_s": 2.366, "chain_findings": [], "accesses": 41186, "end": {"kind": "COMPLETED", "reason": "the host closed the session", "lines": 19, "hb": 0, "nacks": 1, "sign_requests": 2, "sign_replies": 2, "transactions": 2, "kicks": 19, "flushed": 0, "stale_frames": 1, "refused_tx": 0, "watchdog_armed": 1, "opened": 1, "halted": ""}, "stats": {"hb": 0, "nack": 1, "signreq": 2, "signreply": 2, "corrupted": 0, "dropped": 0, "garbage": 0, "wrong_token": 0, "stale": 0, "stale_board": 0, "refused_halted": 0, "replayed": 1}, "console_lines": 26, "halted": "transaction 3: no obse
+== after_stop_tx
+{"name": "after_stop_tx", "wall_s": 1.333, "chain_findings": [], "accesses": 22884, "end": {"kind": "COMPLETED", "reason": "the host closed the session", "lines": 16, "hb": 0, "nacks": 1, "sign_requests": 2, "sign_replies": 2, "transactions": 2, "kicks": 16, "flushed": 0, "stale_frames": 0, "refused_tx": 1, "watchdog_armed": 1, "opened": 1, "halted": "STOP_SIGN: the notary refused the candidate"}, "stats": {"hb": 0, "nack": 1, "signreq": 2, "signreply": 2, "corrupted": 0, "dropped": 0, "garbage": 0, "wrong_token": 0, "stale": 0, "stale_board": 0, "refused_halted": 0, "replayed": 0}, "console_l
+== malformed_tx
+{"name": "malformed_tx", "wall_s": 2.325, "chain_findings": [], "accesses": 41186, "end": {"kind": "COMPLETED", "reason": "the host closed the session", "lines": 24, "hb": 0, "nacks": 6, "sign_requests": 2, "sign_replies": 2, "transactions": 2, "kicks": 24, "flushed": 0, "stale_frames": 0, "refused_tx": 0, "watchdog_armed": 1, "opened": 1, "halted": ""}, "stats": {"hb": 0, "nack": 6, "signreq": 2, "signreply": 2, "corrupted": 0, "dropped": 0, "garbage": 0, "wrong_token": 0, "stale": 0, "stale_board": 0, "refused_halted": 0, "replayed": 0}, "console_lines": 36, "halted": null, "open_findings": 
+== host_seq_gap
+{"name": "host_seq_gap", "wall_s": 2.242, "chain_findings": [], "accesses": 41186, "end": {"kind": "COMPLETED", "reason": "the host closed the session", "lines": 18, "hb": 0, "nacks": 0, "sign_requests": 2, "sign_replies": 2, "transactions": 2, "kicks": 18, "flushed": 0, "stale_frames": 0, "refused_tx": 0, "watchdog_armed": 1, "opened": 1, "halted": ""}, "stats": {"hb": 0, "nack": 0, "signreq": 2, "signreply": 2, "corrupted": 0, "dropped": 0, "garbage": 0, "wrong_token": 0, "stale": 0, "stale_board": 0, "refused_halted": 0, "replayed": 0}, "console_lines": 24, "halted": null, "open_findings": 
+== sequence_cut
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_r4_vv0dliwh/host/b4q_console_e2e.py", line 274, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/tmp/owner_b4q_r4_vv0dliwh/host/b4q_console_e2e.py", line 267, in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/owner_b4q_r4_vv0dliwh/host/b4q_console_e2e.py", line 33, in run_session
+    s = cs.ConsoleSession(out, label=f"B4Q-console-{name}", **kw)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/owner_b4q_r4_vv0dliwh/host/b4q_console_session.py", line 40, in __init__
+    super().__init__(out_dir, label=label, binary=binary, **kw)
+  File "/tmp/owner_b4q_r4_vv0dliwh/host/b4q_session.py", line 124, in __init__
+    raise SessionRefusal(f"the executing-side program is not built: {self.binary}")
+b4q_session.SessionRefusal: the executing-side program is not built: /tmp/owner_b4q_r4_vv0dliwh/build/b4q_firmware/b4q_seqcut_twin
+
+
+----------------------------------------------------------------------
+Ran 79 tests in 129.602s
+
+FAILED (errors=1)
+sys:1: ResourceWarning: unclosed file <_io.TextIOWrapper name=5 encoding='UTF-8'>

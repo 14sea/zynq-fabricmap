@@ -1,0 +1,101 @@
+[
+  {
+    "case": "untouched",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "session": [],
+    "refused": null,
+    "verifier_error": null
+  },
+  {
+    "case": "all_replies_removed",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "session": [
+      "console: board RESULT at line 10: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: board RESULT at line 19: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: board RESULT at line 28: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: board RESULT at line 37: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: END.sign_replies is 4, the lines say 0",
+      "console: the transport's stats.signreply is 4, the lines say 0"
+    ],
+    "refused": null,
+    "verifier_error": null
+  },
+  {
+    "case": "all_replies_removed_counters",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "session": [
+      "console: board RESULT at line 10: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: board RESULT at line 19: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: board RESULT at line 28: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: board RESULT at line 37: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])"
+    ],
+    "refused": null,
+    "verifier_error": null
+  },
+  {
+    "case": "first_reply_removed",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "session": [
+      "console: board RESULT at line 10: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: END.sign_replies is 4, the lines say 3",
+      "console: the transport's stats.signreply is 4, the lines say 3"
+    ],
+    "refused": null,
+    "verifier_error": null
+  },
+  {
+    "case": "last_reply_removed",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "session": [
+      "console: board RESULT at line 40: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: END.sign_replies is 4, the lines say 3",
+      "console: the transport's stats.signreply is 4, the lines say 3"
+    ],
+    "refused": null,
+    "verifier_error": null
+  },
+  {
+    "case": "reply_noted_stale",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "session": [
+      "console: host SIGNREPLY at line 5: noted as stale but it answers the open request 3",
+      "console: board RESULT at line 11: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: END.sign_replies is 4, the lines say 3",
+      "console: the transport's stats.signreply is 4, the lines say 3"
+    ],
+    "refused": null,
+    "verifier_error": null
+  },
+  {
+    "case": "signreq_only_unanswered",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "session": [
+      "console: host SIGNREPLY at line 5: noted as stale but it answers the open request 3",
+      "console: board RESULT at line 11: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: host SIGNREPLY at line 15: noted as stale but it answers the open request 11",
+      "console: board RESULT at line 21: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: host SIGNREPLY at line 25: noted as stale but it answers the open request 19",
+      "console: board RESULT at line 31: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: host SIGNREPLY at line 35: noted as stale but it answers the open request 27",
+      "console: board RESULT at line 41: a closed transaction whose signing call was not answered by an accepted OK reply (requests: ['unanswered'])",
+      "console: END.sign_replies is 4, the lines say 0",
+      "console: the transport's stats.signreply is 4, the lines say 0"
+    ],
+    "refused": null,
+    "verifier_error": null
+  }
+]

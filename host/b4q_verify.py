@@ -44,6 +44,7 @@ import b4q_view as vw  # noqa: E402
 import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
 import b4q_wire as wire  # noqa: E402
+from b4q_console_session import SEQ_LIMIT  # noqa: E402
 
 
 def canon(o) -> str:
@@ -943,6 +944,8 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
             ends.append(m)
             o = m["obj"]
             terminal = o["kind"] == "PROTOCOL" and "sequence is exhausted" in o["reason"]   # the emitter's terminal END (C4): it may fall inside a transaction
+            if terminal and m["seq"] < SEQ_LIMIT:
+                F.append(f"board END at line {m['idx']}: sequence {m['seq']} is below the exhaustion limit {SEQ_LIMIT}")
             if phase == "admitted" and manifest.get("interrupted") is None and not terminal:
                 F.append(f"board END at line {m['idx']}: inside transaction {cur['k'] + 1} (no RESULT) and the session was not interrupted")
             if phase == "admitted":
