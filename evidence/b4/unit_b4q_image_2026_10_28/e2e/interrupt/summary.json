@@ -1,6 +1,6 @@
 {
  "name": "interrupt",
- "wall_s": 1.498,
+ "wall_s": 1.683,
  "records": [
   {
    "seq": 1,
@@ -59,7 +59,10 @@
   "dropped": 0,
   "garbage": 0,
   "wrong_token": 0,
-  "stale": 0
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
  },
  "console_lines": 16,
  "halted": "transaction 2: no observation sealed (interrupted: the transport closed mid-transaction)",

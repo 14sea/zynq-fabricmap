@@ -1,6 +1,6 @@
 {
  "name": "notary_refuses",
- "wall_s": 1.259,
+ "wall_s": 1.542,
  "records": [
   {
    "seq": 1,
@@ -59,8 +59,12 @@
   "sign_replies": 2,
   "transactions": 2,
   "kicks": 15,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
   "watchdog_armed": 1,
-  "opened": 1
+  "opened": 1,
+  "halted": "STOP_SIGN: the notary refused the candidate"
  },
  "stats": {
   "hb": 0,
@@ -71,7 +75,10 @@
   "dropped": 0,
   "garbage": 0,
   "wrong_token": 0,
-  "stale": 0
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
  },
  "console_lines": 21,
  "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",

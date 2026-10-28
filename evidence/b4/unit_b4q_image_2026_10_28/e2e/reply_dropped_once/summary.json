@@ -1,6 +1,6 @@
 {
  "name": "reply_dropped_once",
- "wall_s": 2.182,
+ "wall_s": 2.625,
  "records": [
   {
    "seq": 1,
@@ -57,8 +57,12 @@
   "sign_replies": 2,
   "transactions": 2,
   "kicks": 23,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
   "watchdog_armed": 1,
-  "opened": 1
+  "opened": 1,
+  "halted": ""
  },
  "stats": {
   "hb": 4,
@@ -69,7 +73,10 @@
   "dropped": 1,
   "garbage": 0,
   "wrong_token": 0,
-  "stale": 0
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
  },
  "console_lines": 30,
  "halted": null,

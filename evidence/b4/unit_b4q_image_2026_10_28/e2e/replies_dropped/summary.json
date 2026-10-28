@@ -1,6 +1,6 @@
 {
  "name": "replies_dropped",
- "wall_s": 1.555,
+ "wall_s": 1.58,
  "records": [
   {
    "seq": 1,
@@ -59,8 +59,12 @@
   "sign_replies": 1,
   "transactions": 2,
   "kicks": 29,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
   "watchdog_armed": 1,
-  "opened": 1
+  "opened": 1,
+  "halted": "STOP_SIGN: the notary refused the candidate"
  },
  "stats": {
   "hb": 12,
@@ -71,7 +75,10 @@
   "dropped": 3,
   "garbage": 0,
   "wrong_token": 0,
-  "stale": 0
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
  },
  "console_lines": 37,
  "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
@@ -89,6 +96,6 @@
  },
  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate) \u2014 nothing further is signed without a ruling",
  "sign_events": [
-  "EV sign: no valid SIGNREPLY after 3 attempts: no SIGNREPLY within the bound"
+  "EV sign: no valid SIGNREPLY after 3 attempts: no SIGNREPLY within the attempt's budget"
  ]
 }

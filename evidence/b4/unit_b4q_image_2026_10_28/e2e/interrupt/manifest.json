@@ -2,23 +2,23 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-interrupt",
- "generated_utc": "2026-10-27T23:17:35Z",
+ "generated_utc": "2026-10-28T06:35:19Z",
  "emulated": true,
  "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
  "instrument": {
   "variant": "42340001",
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
-  "image_sha256": "d88b8b1fba684f91cb1b09faf76400b7e1fdb25dc00632eb4f2c776a047e24c4"
+  "image_sha256": "aec27efa18b3dafc7e2f612503d1dea7b657107439131ef58edc998c6db0f306"
  },
  "executing_side": {
   "binary": "build/b4q_firmware/b4q_apphost",
-  "sha256": "d88b8b1fba684f91cb1b09faf76400b7e1fdb25dc00632eb4f2c776a047e24c4",
+  "sha256": "aec27efa18b3dafc7e2f612503d1dea7b657107439131ef58edc998c6db0f306",
   "build": {
    "compiler": "/usr/bin/cc",
    "version": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
    "flags": "-std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion",
    "binaries": {
-    "b4q_host": "47620e9bcbbe2c02dc95a2d244d1e9cfaf6073b326703fc0fd980a062b941438",
+    "b4q_host": "6109cd86b797140407f4c2bb4c3a4e932d8634ed01aed7ea89c2391416dbd424",
     "b4q_derive_twin": "15da92797a3bd25c5f6499600c04b5610e936442bc297b690679fff64da48906"
    }
   }
@@ -322,16 +322,16 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v1",
-  "token": "127a3bab62f1430f07a6561ebb7fc2ec",
+  "token": "d7f6c34f62e83f8a571805995d98b12f",
   "page_words": [
    "42345149",
    "00000001",
-   "127a3bab",
-   "62f1430f",
-   "07a6561e",
-   "bb7fc2ec",
+   "d7f6c34f",
+   "62e83f8a",
+   "57180599",
+   "5d98b12f",
    "6553f100",
-   "d88b8b1f",
+   "aec27efa",
    "4e406f12",
    "80d3cf5c",
    "abf43d00",
@@ -347,7 +347,7 @@
    "00000000",
    "00000000",
    "00000000",
-   "bd69f7b0"
+   "b8eca670"
   ],
   "page_flags": 2,
   "knobs": {
@@ -357,7 +357,9 @@
    "garbage_before_tx": 0,
    "watchdog_fail": false,
    "wrong_token_lines": 0,
-   "stale_reply_first": 0
+   "stale_reply_first": 0,
+   "seq_gap": 0,
+   "replay_tx": 0
   },
   "stats": {
    "hb": 0,
@@ -368,14 +370,17 @@
    "dropped": 0,
    "garbage": 0,
    "wrong_token": 0,
-   "stale": 0
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
   },
   "end": null,
   "ident": {
    "protocol": "b4q-v1",
-   "token": "127a3bab62f1430f07a6561ebb7fc2ec",
+   "token": "d7f6c34f62e83f8a571805995d98b12f",
    "uboot_epoch": 1700000000,
-   "app_image_sha_lo32": 3633023775,
+   "app_image_sha_lo32": 2931982074,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
    "flags": 2,
    "page_nonce_seen": "9e3779b97f4a7c15",
@@ -395,6 +400,10 @@
     "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
    }
   },
-  "console_lines": 16
+  "console_lines": 16,
+  "findings": [],
+  "host_seq_last": 4,
+  "board_seq_last": 11,
+  "refused_commands": []
  }
 }

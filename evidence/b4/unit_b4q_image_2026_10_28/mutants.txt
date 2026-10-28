@@ -1,18 +1,39 @@
-B4Q PS-image mutant battery — 2026-10-27T23:07:08Z HEAD e267405
+B4Q PS-image mutant battery — 2026-10-28T06:19:15Z HEAD ba18e3c
 BASELINE kicks: green
 BASELINE page_and_watchdog: green
 BASELINE framing: green
 BASELINE bounds: green
 BASELINE allowlist: green
+BASELINE budget: green
+BASELINE freshness: green
+BASELINE latch: green
+BASELINE console_archive: green
+BASELINE grammar: green
 K1 KILLED — the watchdog kick removed (the application still CLAIMS the kicks): platform kicks 0 / end kicks 34 / lines 34
 P1 KILLED — the page checksum no longer checked: bad_page: ident True signatures 1 end COMPLETED
 P2 KILLED — the reserved page words no longer held to zero: page with a reserved word set accepted: ['OK 00000000000000000000000000000000 0 0 0000000000000000000000000000000000000000000000000000000000000000 0000000000000
 W1 KILLED — a watchdog that cannot be armed no longer ends the session: watchdog_fail: ident True signatures 1 end COMPLETED
 F1 KILLED — the CRC no longer checked: reply_corrupt: status 0 nacks 0 sign_requests 2
-F2 KILLED — the token no longer refused (the comparison kept so that the build accepts the mutant: a kill must come from the probe): wrong_token: status 0 nacks []
-F3 KILLED — a SIGNREPLY to another request accepted (the stale reply's garbage words staged): stale_reply: status 1 x None
-B1 KILLED — the reply bound no longer ends the wait: the run did not end within 240 s: a bound is not enforced
+F2 KILLED — the token no longer refused (the comparison kept so that the build accepts the mutant: a kill must come from the probe): wrong_token: status 0 nacks ['NACK stale sequence']
+F3 KILLED (the build refused the mutant) — a SIGNREPLY to another request accepted (the stale reply's garbage words staged)
+B1 KILLED — the reply budget refilled when spent: the wait never ends: the run did not end within 240 s: a bound is not enforced
 B2 KILLED — the idle bound no longer ends the session: the run did not end within 240 s: a bound is not enforced
 A1 KILLED — the key window writable: allowlist ['r=0 w=1', 'r=0 w=1', 'r=1 w=0', 'r=0 w=0', 'r=1 w=0'] (want ['r=0 w=0', 'r=0 w=0', 'r=1 w=0', 'r=0 w=0', 'r=1 w=0'])
 A2 KILLED — the identity page writable by the program: allowlist ['r=0 w=0', 'r=0 w=0', 'r=1 w=1', 'r=0 w=0', 'r=1 w=0'] (want ['r=0 w=0', 'r=0 w=0', 'r=1 w=0', 'r=0 w=0', 'r=1 w=0'])
-TOTAL killed 11 survived 0 edit-miss 0 of 11
+R1a KILLED — the budget never spent (no poll charged): mode 0: exit 77: OVER_BUDGET mode=0 polls=1000001 requests=1 frames=0
+R1b KILLED — another frame replenishes the attempt's budget again: mode 6: exit 77: OVER_BUDGET mode=6 polls=1000001 requests=1 frames=12483
+R1c KILLED — the oversize discard uncharged again: mode 2: exit 77: OVER_BUDGET mode=2 polls=1000001 requests=1 frames=0
+R2a KILLED — the host sequence no longer checked by the application: duplicate_tx: status 0 signreqs 1 trace 155
+R2b KILLED — the board sequence no longer checked by the host: host board freshness: 3 0 False 
+R3a KILLED — the application's session latch removed (a TX after a failed one runs): after_stop_tx: status 1 signreqs 0 trace 4
+R3b KILLED — the host's notary no longer refuses while halted: host halted notary: 1 False 
+R4a KILLED — a dropped console log no longer refused: a dropped console log was not refused
+R4b KILLED — the RESULT lines no longer held to the retained results: result_fitness: clean True agree True
+R4c KILLED — the IDENT's token no longer held to the page: coord_ident_token: clean True agree True
+R4d KILLED — the END's counters no longer recomputed: coord_end_transactions: clean True agree True
+R4e KILLED — the cached IDENT no longer held to the carried one: cached_ident: clean True agree True
+R5a KILLED — an unknown kind consumed and defaulted to normal again: parser: ['OK kind=0 genome=00000000 n=0 steps= task=0 -', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'RE
+R5b KILLED — a number wider than the field no longer refused: parser: ['REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'OK kind=0 genome=00000000 n=1 steps=0000000 task=0 
+R5c KILLED — trailing text ignored again: parser: ['REFUSED', 'REFUSED', 'REFUSED', 'OK kind=0 genome=00000000 n=0 steps= task=0 -', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'RE
+R5d KILLED — a partial TASK accepted again (the count declared, fewer cells given): parser: ['REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'REFUSED', 'OK kind=0 genome=00000000 n=1
+TOTAL killed 27 survived 0 edit-miss 0 of 27

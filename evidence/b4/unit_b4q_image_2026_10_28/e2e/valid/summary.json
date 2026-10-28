@@ -1,6 +1,6 @@
 {
  "name": "valid",
- "wall_s": 4.149,
+ "wall_s": 4.448,
  "records": [
   {
    "seq": 1,
@@ -99,8 +99,12 @@
   "sign_replies": 4,
   "transactions": 4,
   "kicks": 34,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
   "watchdog_armed": 1,
-  "opened": 1
+  "opened": 1,
+  "halted": ""
  },
  "stats": {
   "hb": 0,
@@ -111,7 +115,10 @@
   "dropped": 0,
   "garbage": 0,
   "wrong_token": 0,
-  "stale": 0
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
  },
  "console_lines": 44,
  "halted": null,
@@ -119,9 +126,9 @@
  "platform_kicks": 35,
  "ident": {
   "protocol": "b4q-v1",
-  "token": "e6450043dacf866431369aea507f6dec",
+  "token": "c7715f2c719c9c26d346ce765296f765",
   "uboot_epoch": 1700000000,
-  "app_image_sha_lo32": 3633023775,
+  "app_image_sha_lo32": 2931982074,
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
   "flags": 2,
   "page_nonce_seen": "9e3779b97f4a7c15",

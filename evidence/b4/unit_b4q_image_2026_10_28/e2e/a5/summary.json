@@ -1,6 +1,6 @@
 {
  "name": "a5",
- "wall_s": 4.706,
+ "wall_s": 5.225,
  "records": [
   {
    "seq": 1,
@@ -120,8 +120,12 @@
   "sign_replies": 5,
   "transactions": 5,
   "kicks": 41,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
   "watchdog_armed": 1,
-  "opened": 1
+  "opened": 1,
+  "halted": ""
  },
  "stats": {
   "hb": 0,
@@ -132,7 +136,10 @@
   "dropped": 0,
   "garbage": 0,
   "wrong_token": 0,
-  "stale": 0
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
  },
  "console_lines": 53,
  "halted": null,

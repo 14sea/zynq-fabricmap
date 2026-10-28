@@ -1,6 +1,6 @@
 {
  "name": "silent_host",
- "wall_s": 1.292,
+ "wall_s": 1.55,
  "records": [
   {
    "seq": 1,
@@ -36,8 +36,12 @@
   "sign_replies": 1,
   "transactions": 1,
   "kicks": 18,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
   "watchdog_armed": 1,
-  "opened": 1
+  "opened": 1,
+  "halted": ""
  },
  "stats": {
   "hb": 8,
@@ -48,11 +52,14 @@
   "dropped": 0,
   "garbage": 0,
   "wrong_token": 0,
-  "stale": 0
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
  },
  "console_lines": 21,
  "halted": null,
  "open_findings": [],
- "platform_kicks": null,
+ "platform_kicks": 19,
  "served": 6
 }
