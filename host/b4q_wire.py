@@ -20,6 +20,8 @@ PAGE_LAYOUT = 1
 PAGE_FLAG_WATCHDOG = 0x2
 BOARD_TYPES = ("IDENT", "HB", "SIGNREQ", "EV", "RESULT", "NACK", "END")
 HOST_TYPES = ("TX", "QUIT", "SIGNREPLY")
+BOARD_TYPES_V2 = BOARD_TYPES + ("RING", "CHUNK")       # protocol b4q-v2: the evidence log's pull
+HOST_TYPES_V2 = HOST_TYPES + ("RINGINFO", "PULL")
 
 
 class WireError(ValueError):

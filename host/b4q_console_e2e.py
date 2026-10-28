@@ -28,9 +28,12 @@ G_BASE, G_CESR, G_SYNC = ee.G_BASE, ee.G_CESR, ee.G_SYNC
 FIX0, FIX1, FIX2 = ee.FIX0, ee.FIX1, ee.FIX2
 
 
+SOURCE = "emulated"                                   # --source ps-evidence-log-v1: the records from the PS's log pulled through the console
+
+
 def run_session(root: Path, name: str, body, **kw) -> dict:
     out = root / name
-    s = cs.ConsoleSession(out, label=f"B4Q-console-{name}", **kw)
+    s = cs.ConsoleSession(out, label=f"B4Q-console-{name}", source=SOURCE, **kw)
     t0 = time.time()
     try:
         extra = body(s) or {}
@@ -56,7 +59,8 @@ def scenario_valid(s):
     s.transaction("normal", G_BASE, stim(FIX0), task_for(7, "fix0"))
     s.transaction("normal", G_CESR, stim(FIX1), task_for(7, "fix1"))
     s.transaction("normal", G_SYNC, stim(FIX2), task_for(7, "fix2"))
-    return {"ident": s.ident}
+    info = s.pull_log()                                                    # protocol v2: the evidence log pulled through the console, held to the board's digest
+    return {"ident": s.ident, "log": {k: info[k] for k in ("used", "capacity", "overflow", "digest_equal")}, "pull_stats": dict(s.pull_stats)}
 
 
 def scenario_a5(s):
@@ -135,9 +139,9 @@ def scenario_duplicate_tx(s):
     s.open(); s.transaction("root", 0, stim([]))
     first = _tx(s, "normal", G_BASE, FIX0)
     s.knobs["replay_tx"] = 1                                   # the next TX goes out as the previous TX line, byte for byte
-    signs, trace = s.stats["signreq"], len(s.backend.trace)
+    signs, trace = s.stats["signreq"], len(s.evidence.trace)
     second = _tx(s, "normal", G_BASE, FIX0)
-    return {"first": first, "second": second, "new_signreqs": s.stats["signreq"] - signs, "new_trace_events": len(s.backend.trace) - trace, "halted": s.halted}
+    return {"first": first, "second": second, "new_signreqs": s.stats["signreq"] - signs, "new_trace_events": len(s.evidence.trace) - trace, "halted": s.halted}
 
 
 def scenario_after_stop_tx(s):
@@ -150,12 +154,12 @@ def scenario_after_stop_tx(s):
         s.transaction("normal", G_BASE, stim(FIX0)); api_refused = False
     except ss.SessionRefusal:
         api_refused = True
-    signs, trace = s.stats["signreq"], len(s.backend.trace)
+    signs, trace = s.stats["signreq"], len(s.evidence.trace)
     words = [ss.step_word(x) for x in stim(FIX0)[1:]]
     s._send(f"TX normal {G_BASE:08x} {len(words)} " + " ".join(f"{w:07x}" for w in words))
     r = s.serve()
     return {"failed": failed, "api_refused": api_refused, "raw_next": {k: r.get(k) for k in ("status", "reason")}, "new_signreqs": s.stats["signreq"] - signs,
-            "new_trace_events": len(s.backend.trace) - trace, "halted": s.halted}
+            "new_trace_events": len(s.evidence.trace) - trace, "halted": s.halted}
 
 
 def scenario_malformed_tx(s):
@@ -164,11 +168,11 @@ def scenario_malformed_tx(s):
     out = []
     for cmd in ("TX mystery 00000000 0", "TX normal 100000000 0", "TX normal 00000000 1 2000000", "TX normal 00000000 0 GARBAGE",
                 "TX normal 00000000 0 TASK " + "a" * 64 + " 2 1 0 0 1", "TX normal 00000000 1 0000001 TASK " + "a" * 64 + " 1 257 256 256 65537"):
-        signs, trace, submits = s.stats["signreq"], len(s.backend.trace), sum(1 for e in s.backend.pcap_log if e.get("pcap") == "submit")
+        signs, trace, submits = s.stats["signreq"], len(s.evidence.trace), sum(1 for e in s.evidence.pcap_log if e.get("pcap") == "submit")
         s._send(cmd)
         r = s.serve()
-        out.append({"cmd": cmd, "status": r.get("status"), "reason": r.get("reason"), "new_signreqs": s.stats["signreq"] - signs, "new_trace_events": len(s.backend.trace) - trace,
-                    "new_submits": sum(1 for e in s.backend.pcap_log if e.get("pcap") == "submit") - submits})
+        out.append({"cmd": cmd, "status": r.get("status"), "reason": r.get("reason"), "new_signreqs": s.stats["signreq"] - signs, "new_trace_events": len(s.evidence.trace) - trace,
+                    "new_submits": sum(1 for e in s.evidence.pcap_log if e.get("pcap") == "submit") - submits})
     ok = _tx(s, "normal", G_BASE, FIX0, task_for(7, "fix0"))               # a legitimate one still runs
     return {"malformed": out, "then": ok}
 
@@ -185,17 +189,17 @@ def scenario_sequence_cut(s):
     terminal END goes out, the executing side's next write is refused by the HAL and it stops — no register write, no DMA submission,
     no RESULT after the END (R2); the session halts on the unsealed outcome"""
     s.open()
-    trace0 = len(s.backend.trace)
+    trace0 = len(s.evidence.trace)
     r = s.transaction("root", 0, stim([]))
     drained = s.drain_after_end() if r["firmware"].get("status") == cs.END_STATUS else {}   # the owner's method: keep answering MMIO after the END and look
     end_entry = next((e for e in s.console if e["dir"] == "board" and e.get("type") == "END"), None)
     i_end = end_entry["i"] if end_entry else None
-    after = s.backend.trace[i_end:] if i_end is not None else []
+    after = s.evidence.trace[i_end:] if i_end is not None else []
     n_pcap_at_end = end_entry.get("pcap_n") if end_entry else None
     return {"tx": {"status": r["firmware"]["status"], "reason": r["firmware"]["reason"], "o": r["o"] is not None}, "end": s.ended, "end_trace_index": i_end,
             "writes_after_end": sum(1 for e in after if e.get("op") == "wr"), "reads_after_end": sum(1 for e in after if e.get("op") == "rd"),
-            "submits_after_end": (sum(1 for e in s.backend.pcap_log[n_pcap_at_end:] if e.get("pcap") == "submit") if n_pcap_at_end is not None else None),
-            "trace_events_in_tx": len(s.backend.trace) - trace0, "halted": s.halted, **drained}
+            "submits_after_end": (sum(1 for e in s.evidence.pcap_log[n_pcap_at_end:] if e.get("pcap") == "submit") if n_pcap_at_end is not None else None),
+            "trace_events_in_tx": len(s.evidence.trace) - trace0, "halted": s.halted, **drained}
 
 
 def scenario_bad_page(s):
@@ -256,7 +260,10 @@ SCENARIOS = {
 
 
 def main(argv=None) -> int:
-    argv = argv if argv is not None else sys.argv[1:]
+    global SOURCE
+    argv = list(argv if argv is not None else sys.argv[1:])
+    if "--source" in argv:
+        k = argv.index("--source"); SOURCE = argv[k + 1]; del argv[k:k + 2]
     root = Path(argv[0]) if argv else R / "build/b4q_console_e2e"
     root.mkdir(parents=True, exist_ok=True)
     names = argv[1:] or list(SCENARIOS)

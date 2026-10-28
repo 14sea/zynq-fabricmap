@@ -34,9 +34,9 @@ INSTRUMENT = Path(os.environ.get("PSORACLE_ROOT", "/home/test/zynq_psoracle"))
 TC = INSTRUMENT / "toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1"
 SA = Path(os.environ.get("EMBEDDEDSW_STANDALONE", "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src"))
 WD = Path(os.environ.get("EMBEDDEDSW_SCUWDT", "/home/test/Xilinx/2025.2/data/embeddedsw/XilinxProcessorIPLib/drivers/scuwdt_v2_6/src"))
-IMAGE = "b4q_app"
+IMAGE = "b4q_app_v2"                 # protocol b4q-v2: the evidence log and its pull (the runner unit); the v1 image 010f6a05... is history (docs/b4q_image.md)
 APP_SOURCES = ("target/b4q_board_main.c", "target/b4q_board_hal.c", "target/b4q_board_console.c", "target/b4q_app.c", "target/b4q_app.h", "target/b4q_wire.c", "target/b4q_wire.h",
-               "target/b4q_psmap.c", "target/b4q_psmap.h", "target/b4q_console.h", "target/b4q_platform.h",
+               "target/b4q_psmap.c", "target/b4q_psmap.h", "target/b4q_console.h", "target/b4q_platform.h", "target/b4q_ring.c", "target/b4q_ring.h",
                "b4q_tx.c", "b4q_tx.h", "b4q_cmd.c", "b4q_cmd.h", "b4q_derive.c", "b4q_derive.h", "b4q_hal.h", "b4q_data.h", "b4q_regmap.h",
                "bsp/build.sh", "bsp/lscript.ld", "bsp/src/console.c", "bsp/include/bspconfig.h", "bsp/include/xmem_config.h", "bsp/include/xparameters.h")
 B1_VERBATIM = {"bsp/lscript.ld": "firmware/b1/bsp/lscript.ld", "bsp/src/console.c": "firmware/b1/bsp/src/console.c", "bsp/include/bspconfig.h": "firmware/b1/bsp/include/bspconfig.h",
@@ -147,7 +147,8 @@ def buffers() -> dict:
             "DST_BUF": {"addr": f"{consts['B4Q_PSMAP_DST_BUF']:#010x}", "words": words.get("READBACK_WORDS")},
             "WR_BUF": {"addr": f"{consts['B4Q_PSMAP_WR_BUF']:#010x}", "words": (words.get("STREAM_WORDS") or 0) * (words.get("ENVELOPE_COUNT") or 0), "envelopes": words.get("ENVELOPE_COUNT")},
             "PAGE": {"addr": f"{consts['B4Q_PSMAP_PAGE_ADDR']:#010x}", "words": 24, "written_by": "the host before go (mw.l), read-only for the program"},
-            "mmu": "the four 1 MiB sections holding CMD_BUF / DST_BUF / WR_BUF / PAGE mapped strongly-ordered non-cacheable (Xil_SetTlbAttributes 0x14de2) before any access; the image's own code / data cacheable",
+            "mmu": "the four 1 MiB sections holding CMD_BUF / DST_BUF / WR_BUF / PAGE and the 16 sections of the evidence log (0x10800000, 16 MiB) mapped strongly-ordered non-cacheable (Xil_SetTlbAttributes 0x14de2) before any access; the image's own code / data cacheable",
+            "evidence_log": {"addr": "0x10800000", "bytes": 16 * 1024 * 1024, "record_bytes": 16, "note": "b4q_ring: append-only, pulled through the console (protocol b4q-v2); its DDR must exist on the device (the bring-up plan's DDR-size check)"},
             "carrier_window": f"{consts['B4Q_PSMAP_AXI_BASE']:#010x} (+{consts['B4Q_PSMAP_AXI_SIZE']:#x})", "devcfg": f"{consts['B4Q_PSMAP_DEVCFG_BASE']:#010x}", "slcr_idcode": f"{consts['B4Q_PSMAP_SLCR_PSS_IDCODE']:#010x}"}
 
 
@@ -179,7 +180,7 @@ def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--build", action="store_true")
-    ap.add_argument("--out", type=Path, default=REPO_ROOT / "evidence/b4/unit_b4q_image_2026_10_28/build_evidence.json")
+    ap.add_argument("--out", type=Path, default=REPO_ROOT / "evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json")
     a = ap.parse_args(argv)
     ev = build_evidence(a.build)
     a.out.parent.mkdir(parents=True, exist_ok=True)

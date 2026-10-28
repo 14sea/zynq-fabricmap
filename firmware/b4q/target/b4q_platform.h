@@ -9,5 +9,9 @@
 int b4q_plat_watchdog_start(void);   /* 0 armed; -1 the watchdog could not be brought up (fail-closed: the session does not run) */
 void b4q_plat_kick(void);            /* restart the watchdog; a no-op until armed */
 void b4q_plat_halt(void);            /* never returns: the board spins (an armed watchdog then resets the PS); the host exits */
+/* the evidence log's memory (the board: a strongly-ordered DDR region; the host: a buffer) and the tick stamped on its records
+ * (the board: the global timer's low word, unmeasured; the host: a counter) */
+uint8_t *b4q_plat_ring_base(uint32_t *capacity);
+uint32_t b4q_plat_tick(void);
 
 #endif /* B4Q_PLATFORM_H */
