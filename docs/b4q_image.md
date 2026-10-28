@@ -1,4 +1,4 @@
-# B4Q — the PS image (host-only preparation, v0.3, 2026-10-28; v0.1 held by the owner's review of `ba18e3c`, R1–R5 repaired — §7; v0.2 held by the review of `0606758`, C1–C4 repaired — §8; v0.3 held by the review of `d4ff43e`, R1–R2 repaired — §9): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
+# B4Q — the PS image (host-only preparation, v0.4, **engineering accepted — the owner's PASS on `2c2c0de`, 2026-10-28**; v0.1 held by the owner's review of `ba18e3c`, R1–R5 repaired — §7; v0.2 held by the review of `0606758`, C1–C4 repaired — §8; v0.3 held by the review of `d4ff43e`, R1–R2 repaired — §9): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
 
 > **Authorisation.** The owner's PASS on `a41f573` (archived in `evidence/b4/unit_b4q_integration_2026_10_27/owner_review_a41f573_PASS/`,
 > its section 4): one complete B4Q PS-image preparation unit, host-only — "the actual PS board-image preparation", to satisfy the
@@ -137,3 +137,11 @@ transport summary carry it, the session halts on it (`docs/b4q_plan.md` §4.2). 
 |---|---|---|---|
 | R1 the accepted reply | a closed result needed a request, not an accepted answer; a note skipped a line | the signing call's state explicit; a closed result needs it answered OK (causally, once, with the notary's and the staged words); STOP_SIGN needs it unanswered or refused; one signing call per transaction (the restore does not sign); notes validated from the bytes | `test_r1_*`; mutants R1x / R1y |
 | R2 the effect boundary | the executing side ran on after the terminal END | `b4q_app_terminal()`; both HAL write halves refuse after it; the executing side stops at its first refused write (§2) | the sequence-cut twin; `test_r2_*`; mutant R2x |
+
+## 10. Closure (the owner's PASS on `2c2c0de`, 2026-10-28)
+
+Accepted as the host-only PS-image preparation with the owner's pre-approved follow-up applied (the exhaustion END held to the sequence
+limit; the seqcut twin built by the test setup and the assembly). The verifier's explicit relations are what it establishes; the END's
+observer-position annotations (`i` / `pcap_n`) are not independently validated by it, and verifier agreement is never a proof of
+quiescence or a device fact — the no-new-write / no-new-DMA evidence is the HAL's gate plus the drained fixtures (§4 stays: UART, DMA /
+PCAP, the watchdog's clock, aborts and timing are the device's). P2 of `docs/b4q_plan.md` §8 remains NOT met as a board prerequisite.
