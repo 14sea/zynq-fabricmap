@@ -107,7 +107,10 @@ class Surrogate:
         self.board = BOARDS[a.board]
         self.backend.mem.wr(SLCR_FPGA0_CLK_CTRL, int(a.fclk0_ctrl, 16))          # the SLCR word U-Boot's md.l shows (a fixture value: the real one is the bring-up's M3)
         io_pll = 0x0001E000 | (1 if self.faults.get("clock-gated") else 0)       # IO PLL CTRL: FDIV 30 (1000 MHz from 33.333 MHz); the fault: PLL_RESET set — no running FCLK0
+        io_pll |= (2 if self.faults.get("pll-powerdown") else 0) | (0x10 if self.faults.get("pll-bypass-force") else 0) | (8 if self.faults.get("pll-bypass-qual") else 0)
         self.backend.mem.wr(0xF8000100, 0x0001A000); self.backend.mem.wr(0xF8000104, 0x00020000); self.backend.mem.wr(0xF8000108, io_pll)   # ARM / DDR / IO PLL CTRL fixture words
+        self.backend.mem.wr(0xF800010C, 0x0000003B if self.faults.get("pll-unlocked") else 0x0000003F)                                       # PLL_STATUS: all locked and stable (the fault: IO_PLL_LOCK clear)
+        self.backend.mem.wr(0xF800025C, 0x00000015 if self.faults.get("pll-bypass-qual") else 0x00000005)                                    # BOOT_MODE: SD boot; the fault: the sampled PLL_BYPASS pin set
         if self.faults.get("clock-slow"):
             self.backend.mem.wr(SLCR_FPGA0_CLK_CTRL, 0x00201400)                 # DIVISOR0 = 20: 25 MHz, not the pinned 50
         self.env = {"boardid": a.boardid, "ethaddr": "02:eb:a2:03:00:01"}
@@ -435,7 +438,7 @@ class Surrogate:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--link", help="a symlink to the PTY slave for the runner")
-    ap.add_argument("--fault", action="append", help="interrupted-load=K | wrong-crc | md-garbage | corrupt-page | corrupt-mw | missed-autoboot | no-prompt | silence-after=N | corrupt-chunk=N | reset-after-lines=N | ring-bytes=N | wdt-fail | unknown-image | no-wdt-reset | wrong-variant | clock-gated | clock-slow | no-role | wrong-boardid")
+    ap.add_argument("--fault", action="append", help="interrupted-load=K | wrong-crc | md-garbage | corrupt-page | corrupt-mw | missed-autoboot | no-prompt | silence-after=N | corrupt-chunk=N | reset-after-lines=N | ring-bytes=N | wdt-fail | unknown-image | no-wdt-reset | wrong-variant | clock-gated | clock-slow | no-role | wrong-boardid | pll-powerdown | pll-bypass-force | pll-bypass-qual | pll-unlocked")
     ap.add_argument("--board", choices=sorted(BOARDS), default="4203", help="the host fixture profile: the EBAZ4203 (512 MiB, mainline U-Boot) or the EBAZ4205 (256 MiB, the miner U-Boot)")
     ap.add_argument("--fclk0-ctrl", default="0x00200A00", help="the SLCR FPGA0_CLK_CTRL word the fixture shows (hex)")
     ap.add_argument("--boardid", default="F8B3", help="the fixture's saved boardid")

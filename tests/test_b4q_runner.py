@@ -271,7 +271,7 @@ class Runner(unittest.TestCase):
         self.assertEqual(sent[first_pl], f"md.l {rn.VARIANT_ADDR:08x} 1"); self.assertEqual(u["uboot_steps"][first_pl]["words"], [f"{rm.VARIANT_WORD:08x}"])
         self.assertLess(sent.index(f"md.l {rn.SLCR_FPGA0_CLK_CTRL:08x} 1"), first_pl); self.assertLess(sent.index("printenv role"), first_pl)
         self.assertEqual(u["admission"]["identity"], {**u["admission"]["identity"], "boardid": "F8B3", "role": "verify", "boardid_ok": True, "role_ok": True})
-        self.assertEqual(u["admission"]["clock"]["derived"]["mhz"], 50.0)
+        self.assertEqual(u["admission"]["clock"]["eligibility"]["nominal"]["mhz"], 50.0); self.assertTrue(u["admission"]["clock"]["eligibility"]["eligible"])
         self.assertIn("loady", whats); self.assertIn("crc32", whats); self.assertIn("go", whats)
         self.assertEqual(u["load_witness"]["host_crc32"], u["load_witness"]["uboot_crc32"])
         self.assertEqual(whats.count("mw.l"), w.PAGE_WORDS)
@@ -436,11 +436,11 @@ class FakePort:
         self.closed = True
 
 
-PLL_WORDS = {0xF8000100: 0x0001A000, 0xF8000104: 0x00020000, 0xF8000108: 0x0001E000}      # ARM / DDR / IO PLL CTRL: FDIV 26 / 32 / 30 (the 4203 fixture)
+PLL_WORDS = {0xF8000100: 0x0001A000, 0xF8000104: 0x00020000, 0xF8000108: 0x0001E000, 0xF800010C: 0x0000003F, 0xF800025C: 0x00000005}   # ARM / DDR / IO PLL CTRL (FDIV 26 / 32 / 30), PLL_STATUS (all locked, stable), BOOT_MODE (SD, no bypass pin)
 
 
 def scripted_uboot(model=b"Ebang EBAZ4203 (fixture)", dram=512, variant=rm.VARIANT_WORD, fclk0=0x00200A00, page=None, crc_range=None, md_addr_shift=0,
-                   boardid="F8B3", role="verify", io_pll=0x0001E000):
+                   boardid="F8B3", role="verify", io_pll=0x0001E000, pll_status=0x0000003F, boot_mode=0x00000005):
     """A minimal scripted U-Boot: the banner on the first CR, md.l of the words it knows (the SLCR clock words among them), printenv of
     boardid / role, mw.l accepted, crc32 answered for the asked range (or `crc_range` when the fixture lies), go announced. `page`: the
     words md.l shows for the page (None: what mw.l wrote). `role=None`: no role saved (reference)."""
@@ -448,7 +448,7 @@ def scripted_uboot(model=b"Ebang EBAZ4203 (fixture)", dram=512, variant=rm.VARIA
     env = {"boardid": boardid}
     if role is not None:
         env["role"] = role
-    words_fixed = dict(PLL_WORDS); words_fixed[0xF8000108] = io_pll
+    words_fixed = dict(PLL_WORDS); words_fixed[0xF8000108] = io_pll; words_fixed[0xF800010C] = pll_status; words_fixed[0xF800025C] = boot_mode
     state = {"booted": False, "ym": None, "received": b"", "eot": 0}
     PROMPT = b"Zynq> "
 
@@ -632,8 +632,12 @@ class Admission(unittest.TestCase):
                  (scripted_uboot(role=None), {}, "identity: the board's role"),
                  (scripted_uboot(role="reference"), {}, "identity: the board's role"),
                  (scripted_uboot(), {"expected_boardid": None}, "identity: the context pins no boardid"),
-                 (scripted_uboot(io_pll=0x0001E001), {}, "clock: FPGA0_CLK_CTRL"),                      # the IO PLL in reset: no running FCLK0
-                 (scripted_uboot(fclk0=0x00100A00), {}, "clock: FCLK0 derives to"),                     # 100 MHz, not the pinned 50
+                 (scripted_uboot(io_pll=0x0001E001), {}, "clock: the selected io PLL is not an eligible running source (PLL_RESET"),
+                 (scripted_uboot(io_pll=0x0001E002), {}, "clock: the selected io PLL is not an eligible running source (PLL_PWRDWN"),       # the owner's R2a: powered down, FDIV still 30
+                 (scripted_uboot(io_pll=0x0001E010), {}, "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_FORCE"),
+                 (scripted_uboot(io_pll=0x0001E008, boot_mode=0x00000015), {}, "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_QUAL"),   # R2b: qualified by the sampled pin
+                 (scripted_uboot(pll_status=0x0000003B), {}, "clock: the selected io PLL is not an eligible running source (IO_PLL_LOCK clear"),
+                 (scripted_uboot(fclk0=0x00100A00), {}, "clock: FCLK0's nominal rate"),                 # 100 MHz, not the pinned 50
                  (scripted_uboot(variant=0x42340002), {}, "carrier: the VARIANT word")]
         for script, kw, prefix in cases:
             kw = {"expected_boardid": "F8B3", **kw}
@@ -919,12 +923,42 @@ class Binding(unittest.TestCase):
         self.assertNotEqual(hashlib.sha256(f.read_bytes()).hexdigest(), pin)
 
     def test_the_runner_and_the_verifier_derive_the_same_clock(self):
-        for f0, pll in ((0x00200A00, {"io": 0x0001E000, "arm": 0x0001A000, "ddr": 0x00020000}), (0x00100A00, {"io": 0x0001E000, "arm": 0, "ddr": 0}),
-                        (0x00200A20, {"io": 0, "arm": 0x0001A000, "ddr": 0}), (0x00200A00, {"io": 0x0001E001, "arm": 0, "ddr": 0}), (0x00200A00, {"io": 0x0001E010, "arm": 0, "ddr": 0})):
-            self.assertEqual(rn.fclk0_from_words(f0, pll), vr.fclk0_from_words(f0, pll))
+        self.assertIs(rn.fclk0_from_words, vr.fclk0_from_words)                                                   # one function (host/b4q_zynq_clk.py), not two copies
         self.assertEqual(rn.fclk0_from_words(0x00200A00, {"io": 0x0001E000, "arm": 0, "ddr": 0})["mhz"], 50.0)
         self.assertEqual(rn.fclk0_from_words(0x00200A20, {"io": 0, "arm": 0x0001A000, "ddr": 0})["mhz"], 43.333)   # ARM PLL (FDIV 26) / 20
         self.assertIsNone(rn.fclk0_from_words(0x00200A00, {"io": 0x0001E001, "arm": 0, "ddr": 0})["mhz"])          # the PLL in reset: no clock
+        self.assertIsNone(rn.fclk0_from_words(0x00200A00, {"io": 0x0001E002, "arm": 0, "ddr": 0})["mhz"])          # powered down: no clock (the owner's R2a)
+
+    def test_the_eligibility_follows_ug585_bit_definitions(self):
+        """UG585: PLL CTRL bit 0 RESET, bit 1 PWRDWN, bit 3 BYPASS_QUAL, bit 4 BYPASS_FORCE; PLL_STATUS bits 0..2 LOCK (ARM, DDR, IO), 3..5 STABLE;
+        BOOT_MODE bit 4 the sampled PLL_BYPASS pin; FPGA0_CLK_CTRL SRCSEL bits 5:4."""
+        import b4q_zynq_clk as zc
+        good = {"fpga0": 0x00200A00, "arm": 0x0001A000, "ddr": 0x00020000, "io": 0x0001E000, "status": 0x3F, "boot_mode": 0x05}
+        e = zc.fclk0_eligibility(good); self.assertTrue(e["eligible"]); self.assertEqual(e["pll"], "io"); self.assertEqual(e["nominal"]["mhz"], 50.0)
+        for change, why in (({"io": 0x0001E001}, "PLL_RESET"), ({"io": 0x0001E002}, "PLL_PWRDWN"), ({"io": 0x0001E010}, "PLL_BYPASS_FORCE"),
+                            ({"io": 0x0001E008, "boot_mode": 0x15}, "PLL_BYPASS_QUAL"), ({"status": 0x3B}, "IO_PLL_LOCK clear"), ({"status": None}, "not read")):
+            e = zc.fclk0_eligibility({**good, **change})
+            self.assertFalse(e["eligible"], change); self.assertTrue(any(why in w for w in e["why"]), (change, e["why"]))
+        e = zc.fclk0_eligibility({**good, "io": 0x0001E008, "boot_mode": 0x05}); self.assertTrue(e["eligible"])             # qualified bypass with the pin clear: not bypassed
+        e = zc.fclk0_eligibility({**good, "fpga0": 0x00200A20, "status": 0x3E})                                               # SRCSEL = ARM PLL: its own lock bit and FDIV
+        self.assertEqual(e["pll"], "arm"); self.assertFalse(e["eligible"]); self.assertIn("ARM_PLL_LOCK clear", e["why"][0])
+        e = zc.fclk0_eligibility({**good, "fpga0": 0x00200A20, "status": 0x3F}); self.assertTrue(e["eligible"]); self.assertEqual(e["nominal"]["mhz"], 43.333)
+
+    def test_the_role_policy_cannot_be_widened_by_a_context(self):
+        pin = hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest()
+        for roles in (("reference",), (None,), (), ("verify", "spare"), ("sacrificial", "reference")):
+            with self.assertRaises(rn.ContextRefusal, msg=roles):
+                rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), expected_boardid="F8B3", allowed_roles=roles)
+        ctx = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), expected_boardid="F8B3", allowed_roles=("sacrificial",))   # a NARROWING: allowed
+        port = FakePort(scripted_uboot(role="verify"))
+        s = rn.run("fake", Path(tempfile.mkdtemp(prefix="b4q_r1_")) / "run", rn.body_control_plane, context=ctx, port=port)
+        self.assertEqual(s["stop"]["kind"], "AdmissionStop"); self.assertTrue(s["stop"]["why"].startswith("identity: the board's role 'verify'")); self.assertNotIn(b"md.l 43c", port.tx_log)
+        port = FakePort(scripted_uboot(role="sacrificial"))
+        s = rn.run("fake", Path(tempfile.mkdtemp(prefix="b4q_r1_")) / "run", rn.body_control_plane, context=ctx, port=port)
+        self.assertIsNone(s["stop"]); self.assertEqual(s["phase"], "pre-go")
+        import subprocess as sp
+        p = sp.run([sys.executable, "-B", str(R / "host/b4q_runner.py"), "--port", "/dev/null", "--out", tempfile.mkdtemp(prefix="b4q_r1_"), "--boardid", "F8B3", "--role", "reference"], capture_output=True, text=True)
+        self.assertEqual(p.returncode, 2); self.assertIn("outside the fixed content-class policy", p.stderr)
 
 
 class SourceSelection(unittest.TestCase):
@@ -942,3 +976,59 @@ class SourceSelection(unittest.TestCase):
         self.assertIn("manifest.source: absent on a runner archive", vf.verify(d)["refused"] or "")
         rep = vf.verify(_S["runner"] / "valid")                             # the positive control: the declared source selected
         self.assertEqual(rep["source"]["kind"], el.SOURCE_KIND); self.assertTrue(rep["agree"])
+
+
+class StateMachineRound3(unittest.TestCase):
+    """The owner's R1 / R2 on 6eeacfc2: a coherently widened role in an archive, and a late PLL read, are found; the proper prefix passes."""
+
+    def _copy(self, name="valid") -> Path:
+        d = Path(tempfile.mkdtemp(prefix="b4q_r3_")) / name
+        shutil.copytree(_S["runner"] / name, d)
+        return d
+
+    def _verify(self, d: Path) -> dict:
+        subprocess.run([sys.executable, "-B", str(R / "host/b4q_verify.py"), str(d), "--json", str(d / "verify.json")], capture_output=True, text=True, timeout=600)
+        return json.loads((d / "verify.json").read_text())
+
+    def test_a_reference_board_with_a_widened_context_is_found_twice(self):
+        d = self._copy()
+        rx = (d / "raw/console.bin").read_bytes().replace(b"role=verify", b"role=reference", 1); (d / "raw/console.bin").write_bytes(rx)
+        def fix(u, mf):
+            u["context"]["allowed_roles"] = ["reference"]
+            u["admission"]["identity"].update({"role": "reference", "allowed_roles": ["reference"], "role_ok": True})
+            for s in u["uboot_steps"]:
+                if s.get("sent") == "printenv role":
+                    s["value"] = "reference"; s["reply"] = s["reply"].replace("role=verify", "role=reference")
+        _runner_edit(d, fix)
+        rep = self._verify(d)
+        self.assertFalse(rep["agree"])
+        self.assertTrue(any("widens the fixed content-class policy" in x for x in rep["session"]), rep["session"])
+        self.assertTrue(any("state: `go` was issued although" in x and "identity / role" in x for x in rep["session"]), rep["session"])
+
+    def test_a_pll_read_moved_after_the_first_pl_read_is_found(self):
+        d = self._copy()
+        tx = (d / "raw/console_tx.bin").read_bytes(); rx = (d / "raw/console.bin").read_bytes()
+        io_cmd, var_cmd = b"md.l f8000108 1\r", f"md.l {rn.VARIANT_ADDR:08x} 1\r".encode()
+        i, j = tx.find(io_cmd), tx.find(var_cmd); self.assertTrue(0 <= i < j)
+        tx2 = tx[:i] + tx[i + len(io_cmd):j + len(var_cmd)] + io_cmd + tx[j + len(var_cmd):]                      # the IO PLL read now after VARIANT in the sent stream
+        io_line = re.search(rb"md\.l f8000108 1\r\n[^\n]*\n[^\n]*Zynq> ", rx); var_line = re.search(rb"md\.l 43c02034 1\r\n[^\n]*\n[^\n]*Zynq> ", rx)
+        self.assertTrue(io_line and var_line and io_line.start() < var_line.start())
+        rx2 = rx[:io_line.start()] + rx[io_line.end():var_line.end()] + rx[io_line.start():io_line.end()] + rx[var_line.end():]   # and its reply after VARIANT's in the received stream
+        (d / "raw/console_tx.bin").write_bytes(tx2); (d / "raw/console.bin").write_bytes(rx2)
+        _runner_edit(d, lambda u, mf: None)
+        rep = self._verify(d)
+        self.assertFalse(rep["agree"])
+        self.assertTrue(any("before the identity / clock inputs were all read" in x for x in rep["session"]) or any("not read: io" in x for x in rep["session"]), rep["session"])
+        self.assertTrue(any("state: `go` was issued although" in x for x in rep["session"]), rep["session"])   # the eligibility no longer established before the PL read
+        rep = self._verify(self._copy())                                                                        # the proper-prefix positive
+        self.assertTrue(rep["clean"], rep["session"]); self.assertTrue(rep["runner"]["witnesses"]["clock"]["eligibility"]["eligible"])
+        self.assertLess(rep["runner"]["witnesses"]["identity"]["prefix_end"], len((d / "raw/console.bin").read_bytes()))
+
+    def test_commands_reordered_in_the_sent_stream_alone_are_found_against_their_echoes(self):
+        d = self._copy()
+        tx = (d / "raw/console_tx.bin").read_bytes(); a, b = b"md.l f8000170 1\r", f"md.l {rn.VARIANT_ADDR:08x} 1\r".encode()
+        i, j = tx.find(a), tx.find(b); self.assertTrue(0 <= i < j)
+        (d / "raw/console_tx.bin").write_bytes(tx[:i] + b + tx[i + len(a):j] + a + tx[j + len(b):])
+        _runner_edit(d, lambda u, mf: None)
+        rep = self._verify(d)
+        self.assertFalse(rep["agree"]); self.assertTrue(any("command echoes" in x for x in rep["session"]), rep["session"])

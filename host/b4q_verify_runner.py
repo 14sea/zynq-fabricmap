@@ -38,6 +38,9 @@ for p in (R / "host", R / "b4/host"):
 import b4carrier_regmap as rm  # noqa: E402
 import b4q_backend as bk  # noqa: E402
 import b4q_wire as wire  # noqa: E402
+import b4q_zynq_clk as zc  # noqa: E402
+
+ROLES_CONTENT = ("verify", "sacrificial")                                # the fixed content-class policy (docs/board_roles.md): a context narrows it, never widens it
 
 RUNNER_KINDS = ("console-pty-surrogate", "uart-board")
 PRE_GO_PHASES = ("init", "prompt", "admitted", "loaded", "page-written", "pre-go")
@@ -50,16 +53,16 @@ ENV_RE = re.compile(rb"^(boardid|role)=([^\r\n]*)", re.M)
 PL_READ_RE = re.compile(rb"md\.l 43c[0-9a-f]{5} [0-9a-f]+\r")
 
 
-def fclk0_from_words(fpga0_ctrl: int, pll_ctrl: dict, ps_clk_mhz: float = PS_CLK_MHZ) -> dict:
-    """The verifier's own copy of the runner's derivation (host/b4q_runner.fclk0_from_words; held equal by a test): FCLK0 from the SLCR words."""
-    srcsel = (fpga0_ctrl >> 4) & 3
-    name = {0: "io", 1: "io", 2: "arm", 3: "ddr"}[srcsel]
-    ctrl = pll_ctrl[name]
-    fdiv = (ctrl >> 12) & 0x7F
-    div0, div1 = (fpga0_ctrl >> 8) & 0x3F, (fpga0_ctrl >> 20) & 0x3F
-    reset, bypass = bool(ctrl & 1), bool(ctrl & 0x10)
-    mhz = (ps_clk_mhz * fdiv / (div0 * div1)) if (div0 and div1 and not reset and not bypass) else None
-    return {"srcsel": srcsel, "pll": name, "pll_ctrl": f"{ctrl:08x}", "fdiv": fdiv, "div0": div0, "div1": div1, "pll_reset": reset, "pll_bypass": bypass, "mhz": (round(mhz, 3) if mhz else None)}
+fclk0_from_words = zc.fclk0_from_words                                   # the arithmetic helper; the eligibility is zc.fclk0_eligibility (one module, written against UG585)
+
+
+def first_pl_reply_offset(rx: bytes) -> int | None:
+    """The offset in the received stream of the first md.l line of the carrier window (0x43C0xxxx): the first PL access's reply. Every
+    identity / clock input of the admission must lie BEFORE it."""
+    for off, a, words in md_dumps(rx):
+        if bk.AXI_BASE <= a < bk.AXI_BASE + 0x10000:
+            return off
+    return None
 PROMPT_RE = re.compile(rb"(?:zynq-uboot|Zynq)> ")
 MODEL_RE = re.compile(rb"^Model: (.+?)\r?$", re.M)
 DRAM_RE = re.compile(rb"^DRAM: +(?:ECC [a-z]+ )?(\d+) MiB", re.M)
@@ -69,7 +72,7 @@ CRC_RE = re.compile(rb"crc32 for ([0-9a-fA-F]{8}) \.\.\. ([0-9a-fA-F]{8}) ==> ([
 TOTAL_RE = re.compile(rb"## Total Size = 0x([0-9a-fA-F]+)")
 STARTING_RE = re.compile(rb"## Starting application[^\n]*\n")      # the whole start line: what follows it is the application's
 READY_RE = re.compile(rb"## Ready for binary \(ymodem\) download")
-CMD_RE = re.compile(rb"(loady [0-9a-f]{8}|crc32 [0-9a-f]{8} [0-9a-f]+|mw\.l [0-9a-f]{8} [0-9a-f]{8} 1|md\.l [0-9a-f]{8} [0-9a-f]+|go [0-9a-f]{8}|bdinfo|version)\r")
+CMD_RE = re.compile(rb"(loady [0-9a-f]{8}|crc32 [0-9a-f]{8} [0-9a-f]+|mw\.l [0-9a-f]{8} [0-9a-f]{8} 1|md\.l [0-9a-f]{8} [0-9a-f]+|go [0-9a-f]{8}|bdinfo|version|printenv [a-z]+)\r")
 FRAME_RE = re.compile(rb"B4Q1 [A-Z]+ \d+ [0-9a-f]{32} [^\n]*\n")
 SURROGATE_MARK = b"(surrogate)"
 SOH, STX, EOT, ACK, NAK, CAN = 0x01, 0x02, 0x04, 0x06, 0x15, 0x18
@@ -263,35 +266,50 @@ def verify_runner(d: Path, manifest: dict, console: list | None, no_session: boo
         if bool(board.get("model_ok")) != model_ok or bool(board.get("dram_ok")) != dram_ok:
             F.append("admission.board: the recorded verdicts are not what the stream and the context give")
     # ---- the board's own identity and role (printenv in the streams), held to the context
+    pl_off = first_pl_reply_offset(rx)
+    prefix_end = pl_off if pl_off is not None else (go_rx_off if go_rx_off is not None else len(rx))   # the admission's inputs must come from before the first PL reply
     env = {}
-    for m in ENV_RE.finditer(rx[:go_rx_off] if go_rx_off is not None else rx):
+    for m in ENV_RE.finditer(rx[:prefix_end]):
         env[m.group(1).decode()] = m.group(2).decode("utf-8", "replace").strip()
     boardid, role = env.get("boardid"), env.get("role")
     boardid_ok = ctx.get("expected_boardid") is not None and boardid == ctx["expected_boardid"]
-    role_ok = role in ctx["allowed_roles"]
-    rep["witnesses"]["identity"] = {"boardid": boardid, "role": role, "boardid_ok": boardid_ok, "role_ok": role_ok}
+    roles_in_floor = all(r in ROLES_CONTENT for r in ctx["allowed_roles"]) and bool(ctx["allowed_roles"])
+    if not roles_in_floor:
+        F.append(f"context: allowed_roles {ctx['allowed_roles']} widens the fixed content-class policy {list(ROLES_CONTENT)} (a context narrows it, never widens it)")
+    role_ok = role in ROLES_CONTENT and role in ctx["allowed_roles"]      # the floor first, independently of the context
+    rep["witnesses"]["identity"] = {"boardid": boardid, "role": role, "boardid_ok": boardid_ok, "role_ok": role_ok, "prefix_end": prefix_end}
     ident = adm.get("identity")
     if ident:
         if ident.get("boardid") != boardid or ident.get("role") != role or bool(ident.get("boardid_ok")) != boardid_ok or bool(ident.get("role_ok")) != role_ok:
             F.append(f"admission.identity: uboot.json says boardid {ident.get('boardid')!r} / role {ident.get('role')!r}, the received stream shows {boardid!r} / {role!r} against the context")
     # ---- the clock, derived from the PS words in the stream (BEFORE any PL read), held to the context
-    f0 = md_value(rx, SLCR_FPGA0_CLK_CTRL, before=go_rx_off)
-    pll = {k: md_value(rx, a, before=go_rx_off) for k, a in (("arm", SLCR_ARM_PLL_CTRL), ("ddr", SLCR_DDR_PLL_CTRL), ("io", SLCR_IO_PLL_CTRL))}
+    words = {k: md_value(rx, zc.ADDR[k], before=prefix_end) for k in zc.WORDS}   # every input from the prefix BEFORE the first PL reply: a later good state is no earlier admission
+    f0 = words["fpga0"]
+    el_ = zc.fclk0_eligibility(words, ctx.get("ps_clk_mhz", PS_CLK_MHZ))
+    mhz = (el_.get("nominal") or {}).get("mhz")
     clock = adm.get("clock")
-    derived = fclk0_from_words(f0, pll, ctx.get("ps_clk_mhz", PS_CLK_MHZ)) if f0 is not None and None not in pll.values() else None
-    clock_ok = (derived is not None and derived["mhz"] is not None and (ctx.get("fclk0_mhz") is None or abs(derived["mhz"] - ctx["fclk0_mhz"]) < 0.5)
+    clock_ok = (el_["eligible"] and mhz is not None and (ctx.get("fclk0_mhz") is None or abs(mhz - ctx["fclk0_mhz"]) < 0.5)
                 and (ctx.get("fclk0_ctrl_expected") is None or f0 == ctx["fclk0_ctrl_expected"]))
-    rep["witnesses"]["clock"] = {"fpga0_ctrl": (f"{f0:08x}" if f0 is not None else None), "derived": derived, "ok": clock_ok}
+    rep["witnesses"]["clock"] = {"inputs": {k: (f"{v:08x}" if v is not None else None) for k, v in words.items()}, "eligibility": el_, "ok": clock_ok, "prefix_end": prefix_end}
     if clock:
-        if clock.get("fpga0_ctrl") != (f"{f0:08x}" if f0 is not None else None) or (clock.get("derived") or {}).get("mhz") != (derived or {}).get("mhz") or bool(clock.get("ok")) != clock_ok:
-            F.append("admission.clock: the recorded words / derivation / verdict are not what the stream and the context give")
-    # the order: no PL read (the carrier window) before the clock words were read and the identity answered
+        rec_in = {k: (v or {}).get("word") for k, v in (clock.get("inputs") or {}).items()}
+        if rec_in != {k: (f"{v:08x}" if v is not None else None) for k, v in words.items()} or bool((clock.get("eligibility") or {}).get("eligible")) != el_["eligible"] or bool(clock.get("ok")) != clock_ok:
+            F.append("admission.clock: the recorded inputs / eligibility / verdict are not what the stream's prefix before the first PL read and the context give")
+    # the sent commands and their echoes in the received stream are one sequence (U-Boot echoes what it is sent): a stream reordered alone is found
+    pre_go_tx = tx[:go_tx_off] if go_tx_off is not None else tx
+    sent_cmds = [c for _, c in commands(pre_go_tx)]
+    echoed = [m.group(1).decode("ascii") for m in re.finditer(rb"(?:^|> )(loady [0-9a-f]{8}|crc32 [0-9a-f]{8} [0-9a-f]+|mw\.l [0-9a-f]{8} [0-9a-f]{8} 1|md\.l [0-9a-f]{8} [0-9a-f]+|bdinfo|version|printenv [a-z]+)\r?$", rx[:go_rx_off] if go_rx_off is not None else rx, re.M)]   # U-Boot echoes the command after its prompt on the same line
+    sent_cmp = [c for c in sent_cmds if not c.startswith("go ")]
+    if echoed != sent_cmp:
+        k = next((i for i, (x, y) in enumerate(zip(echoed, sent_cmp)) if x != y), min(len(echoed), len(sent_cmp)))
+        F.append(f"the command echoes in the received stream are not the sent commands in order (they differ at command {k}: echoed {echoed[k] if k < len(echoed) else '(end)'!r}, sent {sent_cmp[k] if k < len(sent_cmp) else '(end)'!r})")
+    # the order: every identity / clock command (printenv boardid / role, the six words) before the first PL read command in the sent stream
     first_pl = PL_READ_RE.search(tx)
     if first_pl is not None:
-        clk_cmd = tx.find(f"md.l {SLCR_FPGA0_CLK_CTRL:08x} 1\r".encode())
-        env_cmd = tx.find(b"printenv role\r")
-        if clk_cmd < 0 or clk_cmd > first_pl.start() or env_cmd < 0 or env_cmd > first_pl.start():
-            F.append("admission: a PL read was issued before the clock words were read and the role answered (the order a gated clock forbids)")
+        required = [b"printenv boardid\r", b"printenv role\r"] + [f"md.l {zc.ADDR[k]:08x} 1\r".encode() for k in zc.WORDS]
+        late = [c.decode().strip() for c in required if tx.find(c) < 0 or tx.find(c) > first_pl.start()]
+        if late:
+            F.append(f"admission: a PL read was issued before the identity / clock inputs were all read ({', '.join(late)} missing or later): the order a stopped clock forbids")
     # ---- the carrier (VARIANT)
     carrier = adm.get("carrier")
     v = md_value(rx, VARIANT_ADDR, before=go_rx_off)
@@ -528,6 +546,8 @@ def _demonstrated(why: str, rx: bytes, tx: bytes, ctx: dict, W: dict, prompt_see
         return v is not None and int(v, 16) != ctx["variant_word"]
     if why.startswith("clock:"):
         return W.get("clock", {}).get("ok") is False
+    if why.startswith("context:"):
+        return True                                                           # a refused context: nothing was issued (the streams hold the prompt alone)
     if why.startswith("identity: the board's boardid") or why.startswith("identity: the board's role") or why.startswith("identity: the context pins no boardid"):
         ide = W.get("identity", {})
         return not (ide.get("boardid_ok") and ide.get("role_ok"))

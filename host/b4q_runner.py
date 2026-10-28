@@ -55,6 +55,7 @@ import b4q_evidence_log as el  # noqa: E402
 import b4q_session as ss  # noqa: E402
 import b4q_wire as wire  # noqa: E402
 import b4q_ymodem as ym  # noqa: E402
+import b4q_zynq_clk as zc  # noqa: E402
 
 IMAGE = R / "build/b4q_image/b4q_app_v2.bin"
 PIN_FILE = R / "evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json"          # the pin of record: the build evidence's image sha256, independent of the file selected
@@ -93,18 +94,11 @@ class PersistStop(TransportStop):
     """The evidence could not be persisted: a fail-closed barrier — nothing guarded (a load, a page write, `go`) proceeds after it."""
 
 
-def fclk0_from_words(fpga0_ctrl: int, pll_ctrl: dict, ps_clk_mhz: float = PS_CLK_MHZ) -> dict:
-    """The FCLK0 rate derived from PS-accessible SLCR words (Zynq-7000 TRM 25.10): SRCSEL (bits 5:4) picks IO PLL (0b0x), ARM PLL
-    (0b10) or DDR PLL (0b11); FCLK0 = PS_CLK × PLL_FDIV (bits 18:12 of that PLL's CTRL) / (DIVISOR0 (13:8) × DIVISOR1 (25:20)); a PLL
-    in reset (bit 0) or forced bypass (bit 4) gives no usable clock. `pll_ctrl`: {"io": word, "arm": word, "ddr": word}."""
-    srcsel = (fpga0_ctrl >> 4) & 3
-    name = {0: "io", 1: "io", 2: "arm", 3: "ddr"}[srcsel]
-    ctrl = pll_ctrl[name]
-    fdiv = (ctrl >> 12) & 0x7F
-    div0, div1 = (fpga0_ctrl >> 8) & 0x3F, (fpga0_ctrl >> 20) & 0x3F
-    reset, bypass = bool(ctrl & 1), bool(ctrl & 0x10)
-    mhz = (ps_clk_mhz * fdiv / (div0 * div1)) if (div0 and div1 and not reset and not bypass) else None
-    return {"srcsel": srcsel, "pll": name, "pll_ctrl": f"{ctrl:08x}", "fdiv": fdiv, "div0": div0, "div1": div1, "pll_reset": reset, "pll_bypass": bypass, "mhz": (round(mhz, 3) if mhz else None)}
+fclk0_from_words = zc.fclk0_from_words                                                   # the arithmetic helper (host/b4q_zynq_clk.py); the admission uses zc.fclk0_eligibility
+
+
+class ContextRefusal(AdmissionStop):
+    """An execution context outside the fixed policy: a role list that would widen the content-class policy, an empty one."""
 
 
 # ---------------------------------------------------------------- the execution context (R3)
@@ -128,6 +122,14 @@ class ExecutionContext:
     fclk0_mhz: float | None = 50.0                 # the FCLK0 rate the P4 prerequisites pin, derived from PS-accessible words BEFORE any PL read; None: recorded, not held
     ps_clk_mhz: float = PS_CLK_MHZ
     fixture: dict | None = None                    # {"profile": ..., "note": ...} when the endpoint is a PTY (set by the runner from the port kind)
+
+    def __post_init__(self):
+        """The role policy is FIXED (docs/board_roles.md: content-class work on verify / sacrificial only): a context may NARROW it, never
+        widen it — any role outside the floor, a None, an empty list, refuses the context itself."""
+        roles = tuple(self.allowed_roles)
+        if not roles or any(r not in ROLES_CONTENT for r in roles):
+            raise ContextRefusal(f"context: allowed_roles {list(roles)} is not within the fixed content-class policy {list(ROLES_CONTENT)} (a context narrows the policy; it never widens it)")
+        self.allowed_roles = roles
 
     @staticmethod
     def pinned(image: Path = IMAGE, pin_file: Path = PIN_FILE, **kw) -> "ExecutionContext":
@@ -493,8 +495,9 @@ class RunnerSession(cs.ConsoleSession):
             raise AdmissionStop(f"board: DRAM {dram} MiB is below the {c.dram_min_mib} MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)")
         # 3. the board's own identity and role (its saved U-Boot environment, docs/board_roles.md): the interlock, before anything content-sensitive
         boardid, role = self.uboot.printenv("boardid"), self.uboot.printenv("role")
-        adm["identity"] = {"boardid": boardid, "role": role, "expected_boardid": c.expected_boardid, "allowed_roles": list(c.allowed_roles),
-                           "boardid_ok": c.expected_boardid is not None and boardid == c.expected_boardid, "role_ok": role in c.allowed_roles, "purpose": c.purpose}
+        adm["identity"] = {"boardid": boardid, "role": role, "expected_boardid": c.expected_boardid, "allowed_roles": list(c.allowed_roles), "policy_floor": list(ROLES_CONTENT),
+                           "boardid_ok": c.expected_boardid is not None and boardid == c.expected_boardid,
+                           "role_ok": role in ROLES_CONTENT and role in c.allowed_roles, "purpose": c.purpose}   # the floor first, then the context's narrowing
         self._guard("the admission")
         if c.expected_boardid is None:
             raise AdmissionStop("identity: the context pins no boardid: no board is a permitted target without one")
@@ -502,18 +505,21 @@ class RunnerSession(cs.ConsoleSession):
             raise AdmissionStop(f"identity: the board's boardid {boardid!r} is not the context's {c.expected_boardid!r}: not this board")
         if not adm["identity"]["role_ok"]:
             raise AdmissionStop(f"identity: the board's role {role!r} is not one of {list(c.allowed_roles)} (no role = reference = refused; docs/board_roles.md)")
-        # 4. the clock, from PS-accessible words BEFORE any PL read (a gated / stopped FCLK0 hangs a PL access): FPGA0_CLK_CTRL and the PLLs
-        f = self.uboot.md_l(SLCR_FPGA0_CLK_CTRL, 1)[0]
-        pll = {"arm": self.uboot.md_l(SLCR_ARM_PLL_CTRL, 1)[0], "ddr": self.uboot.md_l(SLCR_DDR_PLL_CTRL, 1)[0], "io": self.uboot.md_l(SLCR_IO_PLL_CTRL, 1)[0]}
-        d = fclk0_from_words(f, pll, c.ps_clk_mhz)
-        adm["clock"] = {"fpga0_ctrl_addr": f"{SLCR_FPGA0_CLK_CTRL:#010x}", "fpga0_ctrl": f"{f:08x}", "pll_ctrl": {k: f"{v:08x}" for k, v in pll.items()}, "derived": d,
+        # 4. the clock, from the six PS-accessible words BEFORE any PL read (a stopped / bypassed / unlocked source hangs a PL access): the
+        #    FPGA0 divider, the three PLL CTRLs, PLL_STATUS, BOOT_MODE — the selected PLL's ELIGIBILITY (host/b4q_zynq_clk.py), then the nominal rate
+        words = {k: self.uboot.md_l(zc.ADDR[k], 1)[0] for k in zc.WORDS}
+        el_ = zc.fclk0_eligibility(words, c.ps_clk_mhz)
+        f = words["fpga0"]
+        mhz = (el_["nominal"] or {}).get("mhz")
+        adm["clock"] = {"inputs": {k: {"addr": f"{zc.ADDR[k]:#010x}", "word": f"{words[k]:08x}"} for k in zc.WORDS}, "eligibility": el_,
                         "expected_mhz": c.fclk0_mhz, "expected_ctrl": (f"{c.fclk0_ctrl_expected:08x}" if c.fclk0_ctrl_expected is not None else None),
-                        "ok": (d["mhz"] is not None and (c.fclk0_mhz is None or abs(d["mhz"] - c.fclk0_mhz) < 0.5) and (c.fclk0_ctrl_expected is None or f == c.fclk0_ctrl_expected))}
+                        "ok": (el_["eligible"] and mhz is not None and (c.fclk0_mhz is None or abs(mhz - c.fclk0_mhz) < 0.5) and (c.fclk0_ctrl_expected is None or f == c.fclk0_ctrl_expected)),
+                        "note": "software register consistency: the configured nominal rate of an eligible source — not a measured clock (the bring-up's M3)"}
         self._guard("the admission")
-        if d["mhz"] is None:
-            raise AdmissionStop(f"clock: FPGA0_CLK_CTRL {f:#010x} with {d['pll']} PLL {d['pll_ctrl']} gives no running clock (reset={d['pll_reset']}, bypass={d['pll_bypass']}, divisors {d['div0']}/{d['div1']}): no PL access")
-        if c.fclk0_mhz is not None and abs(d["mhz"] - c.fclk0_mhz) >= 0.5:
-            raise AdmissionStop(f"clock: FCLK0 derives to {d['mhz']} MHz, not the pinned {c.fclk0_mhz} MHz: no PL access")
+        if not el_["eligible"]:
+            raise AdmissionStop(f"clock: the selected {el_.get('pll') or '?'} PLL is not an eligible running source ({'; '.join(el_['why'])}): no PL access")
+        if c.fclk0_mhz is not None and abs(mhz - c.fclk0_mhz) >= 0.5:
+            raise AdmissionStop(f"clock: FCLK0's nominal rate is {mhz} MHz, not the pinned {c.fclk0_mhz} MHz: no PL access")
         if c.fclk0_ctrl_expected is not None and f != c.fclk0_ctrl_expected:
             raise AdmissionStop(f"clock: FPGA0_CLK_CTRL {f:#010x} is not the expected {c.fclk0_ctrl_expected:#010x}")
         # 5. the carrier: the FIRST PL access
@@ -773,6 +779,10 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     kw = {"image_path": str(a.image), "dram_min_mib": a.dram_min, "expected_boardid": a.boardid}
     if a.role:
+        bad = [r for r in a.role if r not in ROLES_CONTENT]
+        if bad:
+            print(f"--role {bad}: outside the fixed content-class policy {list(ROLES_CONTENT)} (a context narrows it, never widens it)", file=sys.stderr)
+            return 2
         kw["allowed_roles"] = tuple(a.role)
     if a.board_model:
         kw["board_models"] = tuple(a.board_model)

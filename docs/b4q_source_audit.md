@@ -125,7 +125,21 @@ the cut), the sent frames the retained host lines, nothing else sent; a named st
 is refused, never defaulted to the pipe session's emulated contract. The runner's own barriers (C2 / C3): the evidence is persisted
 before every guarded step and `go` (a failed persistence is a `PersistStop`: nothing guarded follows); the sent-byte log commits
 only what the OS accepted, an incomplete write kept apart as intent; the admitted image's bytes are held from the hash to the wire
-(the file is never re-read); the identity, the clock and the carrier are refused by name before anything content-sensitive. The nonce of a transaction's links is the one the PS read (`NONCE_LO` / `NONCE_HI` in the log); the timing
+(the file is never re-read); the identity, the clock and the carrier are refused by name before anything content-sensitive.
+
+The role policy and the clock eligibility exactly (the owner's R1 / R2 on `6eeacfc2`): the content-class policy of
+`docs/board_roles.md` is a FIXED floor — `role ∈ {verify, sacrificial}`, read from the board's own saved environment, no role =
+reference = refused; a context may only narrow it (`ExecutionContext.__post_init__` refuses any other list; `--role` likewise;
+the verifier recomputes the verdict with the floor first, independently of the context, and finds a context list that widens it).
+The clock: the admission reads SIX PS words before any PL access — `FPGA0_CLK_CTRL`, the ARM / DDR / IO PLL `CTRL`s, `PLL_STATUS`,
+`BOOT_MODE` — and the selected PLL (SRCSEL) is an ELIGIBLE source iff `PLL_RESET` = 0, `PLL_PWRDWN` = 0, not bypassed (`PLL_BYPASS_FORCE`
+= 0, and if `PLL_BYPASS_QUAL` = 1 the `BOOT_MODE` sampled `PLL_BYPASS` pin = 0) and its `PLL_STATUS` lock bit = 1
+(`host/b4q_zynq_clk.py`, one module written against AMD UG585, used by the runner and the verifier alike); only then the nominal
+rate PS_CLK × FDIV / (DIVISOR0 × DIVISOR1) is held to the pinned 50 MHz. The verifier takes every identity / clock input from the
+received prefix BEFORE the first PL reply and requires every such command before the first PL read command; a later good state is
+no earlier admission. All of this is software register consistency — the configured nominal rate of a source the registers call
+running — never a measured clock (the bring-up's M3). Modes outside this predicate (a stable-but-unlocked PLL, another SRCSEL
+source's unread status, a word not read) are refused as unresolved, not assumed. The nonce of a transaction's links is the one the PS read (`NONCE_LO` / `NONCE_HI` in the log); the timing
 word is the one the IDENT reports; a transaction cut by the transport has an empty range and no record of its own (the verifier's
 completeness rule names the gap).
 
