@@ -1,8 +1,6 @@
 {
  "dir": "/home/test/zynq_fabricmap/build/b4q_console_evidence_ps/sequence_cut",
- "session": [
-  "source: the END reports 24464 log bytes, 6816 were retained: the tail of the session's log is missing"
- ],
+ "session": [],
  "transactions": [
   {
    "dir": "tx_001",
@@ -111,13 +109,13 @@
   ],
   "accesses": 4648
  },
- "agree": false,
+ "agree": true,
  "refused": null,
  "source": {
-  "findings": [
-   "the END reports 24464 log bytes, 6816 were retained: the tail of the session's log is missing"
+  "findings": [],
+  "limitations": [
+   "the terminal END leaves 17648 log bytes unobtainable (no export epilogue after the exhausted sequence): the session's last transaction has no PS evidence"
   ],
-  "limitations": [],
   "kind": "ps-evidence-log-v1",
   "raw_bytes": 6816,
   "records": 426
@@ -150,9 +148,7 @@
  },
  "chain": [],
  "session_findings_stored": [],
- "session_only_here": [
-  "source: the END reports 24464 log bytes, 6816 were retained: the tail of the session's log is missing"
- ],
+ "session_only_here": [],
  "session_only_stored": [],
  "clean": false
 }

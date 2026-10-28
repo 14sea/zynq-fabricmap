@@ -1,7 +1,7 @@
 [
  {
   "label": "B4Q-runner-control_plane_only",
-  "wall_s": 1.458,
+  "wall_s": 1.431,
   "stop": null,
   "opened": false,
   "phase": "pre-go",
@@ -105,7 +105,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.223
+    "seconds": 0.214
    }
   },
   "page_witness": {
@@ -139,7 +139,7 @@
  },
  {
   "label": "B4Q-runner-image_not_pinned",
-  "wall_s": 1.067,
+  "wall_s": 1.074,
   "stop": {
    "kind": "AdmissionStop",
    "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded"
@@ -185,7 +185,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208121.962,
+    "t": 1793208848.268,
     "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",
     "kind": "AdmissionStop"
    }
@@ -212,7 +212,7 @@
  },
  {
   "label": "B4Q-runner-board_not_permitted",
-  "wall_s": 1.048,
+  "wall_s": 1.053,
   "stop": {
    "kind": "AdmissionStop",
    "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)"
@@ -271,7 +271,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208123.322,
+    "t": 1793208849.622,
     "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)",
     "kind": "AdmissionStop"
    }
@@ -300,7 +300,7 @@
  },
  {
   "label": "B4Q-runner-board_dram_short",
-  "wall_s": 1.066,
+  "wall_s": 1.071,
   "stop": {
    "kind": "AdmissionStop",
    "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)"
@@ -359,7 +359,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208124.693,
+    "t": 1793208850.991,
     "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",
     "kind": "AdmissionStop"
    }
@@ -388,7 +388,7 @@
  },
  {
   "label": "B4Q-runner-wrong_variant",
-  "wall_s": 1.059,
+  "wall_s": 1.091,
   "stop": {
    "kind": "AdmissionStop",
    "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access"
@@ -485,7 +485,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208126.049,
+    "t": 1793208852.394,
     "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access",
     "kind": "AdmissionStop"
    }
@@ -514,7 +514,7 @@
  },
  {
   "label": "B4Q-runner-fclk0_mismatch",
-  "wall_s": 1.083,
+  "wall_s": 1.08,
   "stop": {
    "kind": "AdmissionStop",
    "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00"
@@ -606,7 +606,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208127.438,
+    "t": 1793208853.771,
     "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00",
     "kind": "AdmissionStop"
    }
@@ -633,7 +633,7 @@
  },
  {
   "label": "B4Q-runner-clock_gated",
-  "wall_s": 1.073,
+  "wall_s": 1.062,
   "stop": {
    "kind": "AdmissionStop",
    "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access"
@@ -725,7 +725,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208128.817,
+    "t": 1793208855.132,
     "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access",
     "kind": "AdmissionStop"
    }
@@ -755,7 +755,7 @@
  },
  {
   "label": "B4Q-runner-clock_slow",
-  "wall_s": 1.078,
+  "wall_s": 1.074,
   "stop": {
    "kind": "AdmissionStop",
    "why": "clock: FCLK0 derives to 25.0 MHz, not the pinned 50.0 MHz: no PL access"
@@ -847,7 +847,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208130.196,
+    "t": 1793208856.508,
     "why": "clock: FCLK0 derives to 25.0 MHz, not the pinned 50.0 MHz: no PL access",
     "kind": "AdmissionStop"
    }
@@ -877,7 +877,7 @@
  },
  {
   "label": "B4Q-runner-no_role",
-  "wall_s": 1.078,
+  "wall_s": 1.093,
   "stop": {
    "kind": "AdmissionStop",
    "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"
@@ -947,7 +947,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208131.578,
+    "t": 1793208857.914,
     "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)",
     "kind": "AdmissionStop"
    }
@@ -977,7 +977,7 @@
  },
  {
   "label": "B4Q-runner-wrong_boardid",
-  "wall_s": 1.087,
+  "wall_s": 1.054,
   "stop": {
    "kind": "AdmissionStop",
    "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board"
@@ -1047,7 +1047,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208132.949,
+    "t": 1793208859.278,
     "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board",
     "kind": "AdmissionStop"
    }
@@ -1077,7 +1077,7 @@
  },
  {
   "label": "B4Q-runner-role_reference",
-  "wall_s": 1.069,
+  "wall_s": 1.101,
   "stop": {
    "kind": "AdmissionStop",
    "why": "identity: the board's role 'reference' is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"
@@ -1147,7 +1147,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208134.328,
+    "t": 1793208860.659,
     "why": "identity: the board's role 'reference' is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)",
     "kind": "AdmissionStop"
    }
@@ -1177,7 +1177,7 @@
  },
  {
   "label": "B4Q-runner-miner_uboot_break",
-  "wall_s": 4.025,
+  "wall_s": 3.851,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1230,13 +1230,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 112,
-   "hb": 6,
+   "lines": 111,
+   "hb": 5,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 112,
+   "kicks": 111,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -1246,10 +1246,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "896e373810aaed8c451ec098b24c7f471853c0d3065558442a0f28563bdcd88e"
+   "log_sha256": "7bca26c2bf8552d0c13ec758f1481c085a962ffb0375e3ae8a7f51c8b57869b7"
   },
   "stats": {
-   "hb": 6,
+   "hb": 5,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -1262,7 +1262,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 209,
+  "console_lines": 208,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -1344,7 +1344,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.216
+    "seconds": 0.225
    }
   },
   "page_witness": {
@@ -1391,7 +1391,7 @@
  },
  {
   "label": "B4Q-runner-valid",
-  "wall_s": 6.184,
+  "wall_s": 6.355,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1486,13 +1486,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 213,
-   "hb": 10,
+   "lines": 212,
+   "hb": 9,
    "nacks": 0,
    "sign_requests": 4,
    "sign_replies": 4,
    "transactions": 4,
-   "kicks": 213,
+   "kicks": 212,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -1502,10 +1502,10 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "3b0e34621618003f93e0bc08901b44c4590943bfb905e4cbfbd7787672ba98c6"
+   "log_sha256": "29486a774e824fedfb9e45cfe897b0593a7c5b04d81f0aca1933e4d5f355f9ee"
   },
   "stats": {
-   "hb": 10,
+   "hb": 9,
    "nack": 0,
    "signreq": 4,
    "signreply": 4,
@@ -1518,7 +1518,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 395,
+  "console_lines": 394,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -1600,7 +1600,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.233
+    "seconds": 0.202
    }
   },
   "page_witness": {
@@ -1615,7 +1615,7 @@
   "transport_stops": [],
   "ident": {
    "protocol": "b4q-v2",
-   "token": "ac48a42e414885b8ee2ccbf990edb3c3",
+   "token": "17a53e040209d83a3136520b38ed1912",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 1301847784,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -1677,7 +1677,7 @@
  },
  {
   "label": "B4Q-runner-a5",
-  "wall_s": 6.567,
+  "wall_s": 6.725,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1793,13 +1793,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 243,
-   "hb": 9,
+   "lines": 244,
+   "hb": 10,
    "nacks": 0,
    "sign_requests": 5,
    "sign_replies": 5,
    "transactions": 5,
-   "kicks": 243,
+   "kicks": 244,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -1809,10 +1809,10 @@
    "log": 140864,
    "log_overflow": 0,
    "log_records": 8804,
-   "log_sha256": "fa409d4d225f2e861b0f06a015660882a56f0676e00ee8b0d096734723063211"
+   "log_sha256": "e3b8eeee7db456e5b86f03ddbf258bd70917fc21913613ad066181aac538cc07"
   },
   "stats": {
-   "hb": 9,
+   "hb": 10,
    "nack": 0,
    "signreq": 5,
    "signreply": 5,
@@ -1825,7 +1825,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 451,
+  "console_lines": 452,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -1907,7 +1907,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.225
+    "seconds": 0.217
    }
   },
   "page_witness": {
@@ -1945,7 +1945,7 @@
  },
  {
   "label": "B4Q-runner-notary_refuses",
-  "wall_s": 3.028,
+  "wall_s": 3.177,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2000,13 +2000,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 67,
-   "hb": 2,
+   "lines": 68,
+   "hb": 3,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 67,
+   "kicks": 68,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -2016,10 +2016,10 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "5fbb2863173ad6eb10575dccd0a4eeaafca2131f3cd4a0f7a41ab8f42219108f"
+   "log_sha256": "71b852ad83d49fbe0a5a6196d032cbc0f49ab15ae05bb0c3cb9b874f688503ff"
   },
   "stats": {
-   "hb": 2,
+   "hb": 3,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -2032,7 +2032,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 126,
+  "console_lines": 127,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -2114,7 +2114,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.221
+    "seconds": 0.215
    }
   },
   "page_witness": {
@@ -2139,7 +2139,7 @@
   },
   "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate) \u2014 nothing further is signed without a ruling",
   "sign_events": [
-   "EV sign: refused: 61 the bench notary refuses this genome (a configured refusal)"
+   "EV sign: refused: 62 the bench notary refuses this genome (a configured refusal)"
   ],
   "stats_pull": {
    "pulls": 4,
@@ -2165,7 +2165,7 @@
  },
  {
   "label": "B4Q-runner-reply_corrupt",
-  "wall_s": 4.084,
+  "wall_s": 3.865,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2234,7 +2234,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "ce32e83b517b3c4f3f76aaba5721811e54c144c303e3674024f92068434ee437"
+   "log_sha256": "7388d8a8e7036c74b967ec92d73ab7790d6ec3d36ac31d12f4ac372c3d2ad7d2"
   },
   "stats": {
    "hb": 8,
@@ -2332,7 +2332,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.225
+    "seconds": 0.221
    }
   },
   "page_witness": {
@@ -2377,7 +2377,7 @@
  },
  {
   "label": "B4Q-runner-reply_dropped_once",
-  "wall_s": 4.031,
+  "wall_s": 4.401,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2446,7 +2446,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "fbcb096acba18081f74ad5a0a9e3d5374e9ef76218e6e546dbef660b11b092df"
+   "log_sha256": "5c8537e1e975a0d482c701f9d2ff4b8442405dc0b89e0c5a30645134912c0341"
   },
   "stats": {
    "hb": 8,
@@ -2589,7 +2589,7 @@
  },
  {
   "label": "B4Q-runner-replies_dropped",
-  "wall_s": 3.245,
+  "wall_s": 3.048,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2660,7 +2660,7 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b"
+   "log_sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19"
   },
   "stats": {
    "hb": 14,
@@ -2758,7 +2758,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.224
+    "seconds": 0.216
    }
   },
   "page_witness": {
@@ -2809,7 +2809,7 @@
  },
  {
   "label": "B4Q-runner-silent_host",
-  "wall_s": 3.192,
+  "wall_s": 2.986,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2841,13 +2841,13 @@
   "end": {
    "kind": "STOPPED",
    "reason": "no host command within the idle bound",
-   "lines": 67,
-   "hb": 9,
+   "lines": 66,
+   "hb": 8,
    "nacks": 0,
    "sign_requests": 1,
    "sign_replies": 1,
    "transactions": 1,
-   "kicks": 67,
+   "kicks": 66,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -2857,10 +2857,10 @@
    "log": 35104,
    "log_overflow": 0,
    "log_records": 2194,
-   "log_sha256": "bd109729c7cef5f9e857a46903495fa9206829a23f6165466246c7a10e50deda"
+   "log_sha256": "72d57c0814040e03af0837d5e2ea7524ad108bac27c63c153f66417b447597a5"
   },
   "stats": {
-   "hb": 9,
+   "hb": 8,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -2873,7 +2873,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 119,
+  "console_lines": 118,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -2955,7 +2955,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.231
+    "seconds": 0.209
    }
   },
   "page_witness": {
@@ -2993,7 +2993,7 @@
  },
  {
   "label": "B4Q-runner-garbage_command",
-  "wall_s": 4.486,
+  "wall_s": 4.052,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3062,7 +3062,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "5de7b2f2371f546e678a54eab5240b90f3c6271dc67ce0d08934e8b59d8a82e2"
+   "log_sha256": "abbec0d98b7b701cc7e16cb8a4dfbb823e70e12c2e695a1ab5a5487053cd08ff"
   },
   "stats": {
    "hb": 4,
@@ -3160,7 +3160,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.22
+    "seconds": 0.216
    }
   },
   "page_witness": {
@@ -3205,7 +3205,7 @@
  },
  {
   "label": "B4Q-runner-wrong_token",
-  "wall_s": 4.031,
+  "wall_s": 4.105,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3258,13 +3258,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 112,
-   "hb": 5,
+   "lines": 111,
+   "hb": 4,
    "nacks": 1,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 112,
+   "kicks": 111,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -3274,10 +3274,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "2589d24c6b8c0ccc92a46b3ceb49ae505975e9a6f8e8fe4e9d74eba9ee561175"
+   "log_sha256": "7b5abe3bac1300a7151294377dc9ba2becd5b8b587110c674cad96f71778e9c4"
   },
   "stats": {
-   "hb": 5,
+   "hb": 4,
    "nack": 1,
    "signreq": 2,
    "signreply": 2,
@@ -3290,7 +3290,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 210,
+  "console_lines": 209,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -3372,7 +3372,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.22
+    "seconds": 0.226
    }
   },
   "page_witness": {
@@ -3420,7 +3420,7 @@
  },
  {
   "label": "B4Q-runner-stale_reply",
-  "wall_s": 3.877,
+  "wall_s": 3.852,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3489,7 +3489,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "8a5e535be2ff17fdbe7a9e4e5dd0908b2f64584dc40c2000554140c99cab6bb7"
+   "log_sha256": "229ec910527ce54886ce8ba8fc8621b5c77c369b5934317304a6b5b71cf72e80"
   },
   "stats": {
    "hb": 4,
@@ -3587,7 +3587,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.219
+    "seconds": 0.221
    }
   },
   "page_witness": {
@@ -3632,7 +3632,7 @@
  },
  {
   "label": "B4Q-runner-duplicate_tx",
-  "wall_s": 4.219,
+  "wall_s": 4.07,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3701,7 +3701,7 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "15f08a8661e2a83bcb4bfccbcae87b6b8dc91414568233efc57c1f5eb8a72103"
+   "log_sha256": "f4eddfa04a249b92faf7a8aa23656acd57d9b7f2c45583cba8a839b8fd0aa155"
   },
   "stats": {
    "hb": 4,
@@ -3799,7 +3799,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.219
+    "seconds": 0.218
    }
   },
   "page_witness": {
@@ -3856,7 +3856,7 @@
  },
  {
   "label": "B4Q-runner-after_stop_tx",
-  "wall_s": 2.803,
+  "wall_s": 2.835,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3911,13 +3911,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 68,
-   "hb": 2,
+   "lines": 69,
+   "hb": 3,
    "nacks": 1,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 68,
+   "kicks": 69,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 1,
@@ -3927,10 +3927,10 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "678bf8f0dd1813566f89b411c4efd5808fa3c4dcdafc28b60aa9379014e6d465"
+   "log_sha256": "463f4bc1e04a3c57b1da21aa6bd1369552a5d647e679fa0b0b3543a5bc63e81b"
   },
   "stats": {
-   "hb": 2,
+   "hb": 3,
    "nack": 1,
    "signreq": 2,
    "signreply": 2,
@@ -3943,7 +3943,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 128,
+  "console_lines": 129,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -4025,7 +4025,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.21
+    "seconds": 0.223
    }
   },
   "page_witness": {
@@ -4079,7 +4079,7 @@
  },
  {
   "label": "B4Q-runner-malformed_tx",
-  "wall_s": 4.104,
+  "wall_s": 4.165,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -4132,13 +4132,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 117,
-   "hb": 5,
+   "lines": 116,
+   "hb": 4,
    "nacks": 6,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 117,
+   "kicks": 116,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -4148,10 +4148,10 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "02b4a64dec8e86914935d29a3ea08a2555479b4817b66858a955452a3c96e7bd"
+   "log_sha256": "3e98cd9406e17a29b6c50ca195bd07cc08c4c5dee1737301e464f51171281091"
   },
   "stats": {
-   "hb": 5,
+   "hb": 4,
    "nack": 6,
    "signreq": 2,
    "signreply": 2,
@@ -4164,7 +4164,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 220,
+  "console_lines": 219,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -4246,7 +4246,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.22
+    "seconds": 0.239
    }
   },
   "page_witness": {
@@ -4341,7 +4341,7 @@
  },
  {
   "label": "B4Q-runner-host_seq_gap",
-  "wall_s": 4.038,
+  "wall_s": 3.844,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -4394,13 +4394,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 111,
-   "hb": 5,
+   "lines": 110,
+   "hb": 4,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 111,
+   "kicks": 110,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -4410,10 +4410,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "383cc1cf9460573c92ba32bb16f925b2850dcd235a92f9beb93cd6c0c8d98461"
+   "log_sha256": "963097b700c39dabaaa1c86541c5c05a457f5b12e26801cd06085b7df5034f48"
   },
   "stats": {
-   "hb": 5,
+   "hb": 4,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -4426,7 +4426,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 208,
+  "console_lines": 207,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -4508,7 +4508,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.222
+    "seconds": 0.22
    }
   },
   "page_witness": {
@@ -4554,7 +4554,7 @@
  },
  {
   "label": "B4Q-runner-bad_page",
-  "wall_s": 1.445,
+  "wall_s": 1.437,
   "stop": null,
   "opened": false,
   "phase": "ended",
@@ -4583,7 +4583,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "3f561682882e6c8c058a032e2dbe173cef8dcf345626ff1063842e86c2645977"
+   "log_sha256": "af40900970cdf532da9fbfcd1a009c2aeaf8db974c4c232ed05a44cdf0138649"
   },
   "stats": {
    "hb": 0,
@@ -4681,7 +4681,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.219
+    "seconds": 0.21
    }
   },
   "page_witness": {
@@ -4728,7 +4728,7 @@
  },
  {
   "label": "B4Q-runner-sequence_cut",
-  "wall_s": 2.562,
+  "wall_s": 2.69,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -4778,7 +4778,7 @@
    "log": 24464,
    "log_overflow": 0,
    "log_records": 1529,
-   "log_sha256": "2d9fb5952d6e87c859199f56e7f0eb22234db87d199daa90fdf51f0cd3738279"
+   "log_sha256": "1c31bf67a63084dc0657348f1d99b0be3b39a13ac2f0477300187310c9da1a61"
   },
   "stats": {
    "hb": 0,
@@ -4876,7 +4876,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.218
+    "seconds": 0.228
    }
   },
   "page_witness": {
@@ -4934,7 +4934,7 @@
  },
  {
   "label": "B4Q-runner-watchdog_fail",
-  "wall_s": 1.454,
+  "wall_s": 1.436,
   "stop": null,
   "opened": false,
   "phase": "ended",
@@ -4963,7 +4963,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "58dec1f2b52193d893731265e4609a166c9be69ff3d3dc8c1c8f466055607b1b"
+   "log_sha256": "c658199eaab2a71fdc7b3ccab8e14c175817a9bf8866f818ba18cc26f6c0fef0"
   },
   "stats": {
    "hb": 0,
@@ -5061,7 +5061,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.227
+    "seconds": 0.22
    }
   },
   "page_witness": {
@@ -5110,7 +5110,7 @@
  },
  {
   "label": "B4Q-runner-pre_event_corrupt",
-  "wall_s": 3.222,
+  "wall_s": 3.241,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -5181,7 +5181,7 @@
    "log": 46208,
    "log_overflow": 0,
    "log_records": 2888,
-   "log_sha256": "43210c595ee3c6ecd5a7ad4808ede25022584daee46224a3ceec57090bf3a737"
+   "log_sha256": "3743ed7c66984f1a1eb5f11763cf23f4bb5ad5a83e36911ef85d94c4f5f8898d"
   },
   "stats": {
    "hb": 2,
@@ -5279,7 +5279,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.227
+    "seconds": 0.215
    }
   },
   "page_witness": {
@@ -5330,7 +5330,7 @@
  },
  {
   "label": "B4Q-runner-interrupted_load",
-  "wall_s": 1.14,
+  "wall_s": 1.134,
   "stop": {
    "kind": "TransportStop",
    "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20"
@@ -5427,7 +5427,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208212.022,
+    "t": 1793208937.968,
     "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20",
     "kind": "TransportStop"
    }
@@ -5454,7 +5454,7 @@
  },
  {
   "label": "B4Q-runner-wrong_crc",
-  "wall_s": 1.368,
+  "wall_s": 1.37,
   "stop": {
    "kind": "TransportStop",
    "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)"
@@ -5561,14 +5561,14 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.22
+    "seconds": 0.217
    }
   },
   "page_witness": {},
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208213.654,
+    "t": 1793208939.596,
     "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)",
     "kind": "TransportStop"
    }
@@ -5595,7 +5595,7 @@
  },
  {
   "label": "B4Q-runner-md_garbage",
-  "wall_s": 1.081,
+  "wall_s": 1.07,
   "stop": {
    "kind": "TransportStop",
    "why": "md.l 0xf8000170 1: 0 words parsed, not 1"
@@ -5665,7 +5665,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208215.093,
+    "t": 1793208941.022,
     "why": "md.l 0xf8000170 1: 0 words parsed, not 1",
     "kind": "TransportStop"
    }
@@ -5692,7 +5692,7 @@
  },
  {
   "label": "B4Q-runner-corrupt_page",
-  "wall_s": 1.434,
+  "wall_s": 1.424,
   "stop": {
    "kind": "SessionRefusal",
    "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)"
@@ -5724,7 +5724,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "d7986dcd0c499636f2d78b87edecd7580329183725c6b606f07f07bf1c5a5923"
+   "log_sha256": "b70dcb7c57783a34153996c9893ea7abbcd195c5d5c36693b13c35c9a0d35013"
   },
   "stats": {
    "hb": 0,
@@ -5822,7 +5822,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.229
+    "seconds": 0.215
    }
   },
   "page_witness": {
@@ -5836,7 +5836,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793208216.747,
+    "t": 1793208942.678,
     "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
     "kind": "SessionRefusal"
    }
@@ -5874,7 +5874,7 @@
  },
  {
   "label": "B4Q-runner-page_witness_fails",
-  "wall_s": 1.417,
+  "wall_s": 1.415,
   "stop": {
    "kind": "TransportStop",
    "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)"
@@ -5981,7 +5981,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.217
+    "seconds": 0.227
    }
   },
   "page_witness": {
@@ -5991,7 +5991,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208218.491,
+    "t": 1793208944.416,
     "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)",
     "kind": "TransportStop"
    }
@@ -6018,7 +6018,7 @@
  },
  {
   "label": "B4Q-runner-missed_autoboot",
-  "wall_s": 5.097,
+  "wall_s": 5.094,
   "stop": {
    "kind": "TransportStop",
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
@@ -6050,7 +6050,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208223.934,
+    "t": 1793208949.857,
     "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
     "kind": "TransportStop"
    }
@@ -6077,7 +6077,7 @@
  },
  {
   "label": "B4Q-runner-no_prompt",
-  "wall_s": 5.1,
+  "wall_s": 5.078,
   "stop": {
    "kind": "TransportStop",
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
@@ -6109,7 +6109,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208229.342,
+    "t": 1793208955.255,
     "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
     "kind": "TransportStop"
    }
@@ -6136,7 +6136,7 @@
  },
  {
   "label": "B4Q-runner-unknown_image",
-  "wall_s": 4.438,
+  "wall_s": 4.49,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the console was silent for 3.0 s while awaiting IDENT"
@@ -6243,7 +6243,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.223
+    "seconds": 0.225
    }
   },
   "page_witness": {
@@ -6253,7 +6253,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208234.025,
+    "t": 1793208959.969,
     "why": "the console was silent for 3.0 s while awaiting IDENT",
     "awaiting": "IDENT",
     "kind": "TransportStop"
@@ -6282,197 +6282,10 @@
  },
  {
   "label": "B4Q-runner-silence_mid_session",
-  "wall_s": 6.035,
+  "wall_s": 6.159,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling"
-  },
-  "opened": true,
-  "phase": "stopped",
-  "records": [
-   {
-    "seq": 1,
-    "dir": "tx_001",
-    "kind": "root",
-    "genome_hex": "000000",
-    "o": false,
-    "f": false,
-    "x": null,
-    "o_status": null,
-    "executing_side_status": 0,
-    "phase": "",
-    "findings": [
-     "no observation sealed: a complete observation needs every PCAP-side witness; the link of P4 did not complete and no fault stopped the acquisition: nothing to seal",
-     "the executing side reports a closed transaction but no observation was sealed",
-     "the executing side reports success but the records do not show a sealed complete O with a closed / injection_open X"
-    ],
-    "trace_range": [
-     8,
-     75
-    ],
-    "pcap_range": [
-     48,
-     118
-    ]
-   }
-  ],
-  "chain_findings": [],
-  "halted": "transport: the console was silent for 3.0 s while awaiting CHUNK",
-  "end": null,
-  "stats": {
-   "hb": 1,
-   "nack": 0,
-   "signreq": 1,
-   "signreply": 1,
-   "corrupted": 0,
-   "dropped": 0,
-   "garbage": 0,
-   "wrong_token": 0,
-   "stale": 0,
-   "stale_board": 0,
-   "refused_halted": 0,
-   "replayed": 0
-  },
-  "console_lines": 72,
-  "admission": {
-   "image": {
-    "file": "build/b4q_image/b4q_app_v2.bin",
-    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
-    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
-    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true,
-    "bytes": 98324
-   },
-   "board": {
-    "model": "Ebang EBAZ4203 (surrogate)",
-    "dram_mib": 512,
-    "permitted_models": [
-     "Ebang EBAZ4203"
-    ],
-    "dram_min_mib": 512,
-    "fixture": {
-     "profile": "pty-surrogate",
-     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
-    },
-    "model_ok": true,
-    "dram_ok": true
-   },
-   "identity": {
-    "boardid": "F8B3",
-    "role": "verify",
-    "expected_boardid": "F8B3",
-    "allowed_roles": [
-     "verify",
-     "sacrificial"
-    ],
-    "boardid_ok": true,
-    "role_ok": true,
-    "purpose": "bringup-rehearsal"
-   },
-   "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
-    },
-    "derived": {
-     "srcsel": 0,
-     "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
-    },
-    "expected_mhz": 50.0,
-    "expected_ctrl": null,
-    "ok": true
-   },
-   "carrier": {
-    "variant_addr": "0x43c02034",
-    "variant": "42340001",
-    "expected": "42340001",
-    "equal": true
-   },
-   "ok": true
-  },
-  "load_witness": {
-   "host_crc32": "f5d2dd33",
-   "uboot_crc32": "f5d2dd33",
-   "equal": true,
-   "bytes": 98324,
-   "range": [
-    "02000000",
-    "02018013"
-   ],
-   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
-   "ymodem": {
-    "blocks": 97,
-    "retries": 0,
-    "naks": 0,
-    "junk": 33,
-    "seconds": 0.219
-   }
-  },
-  "page_witness": {
-   "nonce_md": "9e3779b97f4a7c15",
-   "equal": true
-  },
-  "source": {
-   "bytes": 20640,
-   "records": 1290,
-   "digest_equal": false
-  },
-  "transport_stops": [
-   {
-    "t": 1793208240.256,
-    "why": "the console was silent for 3.0 s while awaiting CHUNK",
-    "awaiting": "CHUNK",
-    "kind": "TransportStop"
-   },
-   {
-    "t": 1793208240.274,
-    "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling",
-    "kind": "SessionRefusal"
-   }
-  ],
-  "stats_pull": {
-   "pulls": 1,
-   "chunks": 27,
-   "bad_chunks": 0
-  },
-  "tail_unobtainable": null,
-  "phase_at_stop": "application",
-  "go_in_tx": true,
-  "loady_in_tx": true,
-  "pl_read_in_tx": true,
-  "name": "silence_mid_session",
-  "surrogate_args": [
-   "--fault=silence-after=40"
-  ],
-  "verify_rc": 0,
-  "verify_agree": true,
-  "verify_session": [],
-  "verify_limitations": [
-   "the export was cut by the transport (the console was silent for 3.0 s while awaiting CHUNK): 20640 of the 35104 bytes the board's last RING reported were pulled; the records after the cut have no PS evidence"
-  ],
-  "expect": {
-   "opened": true,
-   "transport_stop": "the console was silent",
-   "verify": 0
-  },
-  "expect_failures": []
- },
- {
-  "label": "B4Q-runner-reset_mid_session",
-  "wall_s": 2.972,
-  "stop": {
-   "kind": "SessionRefusal",
-   "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling"
   },
   "opened": true,
   "phase": "stopped",
@@ -6504,7 +6317,7 @@
    }
   ],
   "chain_findings": [],
-  "halted": "transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
+  "halted": "transport: the console was silent for 3.0 s while awaiting CHUNK",
   "end": null,
   "stats": {
    "hb": 0,
@@ -6520,7 +6333,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 74,
+  "console_lines": 73,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -6602,7 +6415,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.219
+    "seconds": 0.223
    }
   },
   "page_witness": {
@@ -6616,20 +6429,207 @@
   },
   "transport_stops": [
    {
-    "t": 1793208243.554,
-    "why": "a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
+    "t": 1793208966.318,
+    "why": "the console was silent for 3.0 s while awaiting CHUNK",
     "awaiting": "CHUNK",
     "kind": "TransportStop"
    },
    {
-    "t": 1793208243.564,
-    "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling",
+    "t": 1793208966.342,
+    "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
   ],
   "stats_pull": {
    "pulls": 1,
    "chunks": 28,
+   "bad_chunks": 0
+  },
+  "tail_unobtainable": null,
+  "phase_at_stop": "application",
+  "go_in_tx": true,
+  "loady_in_tx": true,
+  "pl_read_in_tx": true,
+  "name": "silence_mid_session",
+  "surrogate_args": [
+   "--fault=silence-after=40"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": [
+   "the export was cut by the transport (the console was silent for 3.0 s while awaiting CHUNK): 21408 of the 35104 bytes the board's last RING reported were pulled; the records after the cut have no PS evidence"
+  ],
+  "expect": {
+   "opened": true,
+   "transport_stop": "the console was silent",
+   "verify": 0
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-reset_mid_session",
+  "wall_s": 3.155,
+  "stop": {
+   "kind": "SessionRefusal",
+   "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling"
+  },
+  "opened": true,
+  "phase": "stopped",
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [
+     "no observation sealed: a complete observation needs every PCAP-side witness; the link of P4 did not complete and no fault stopped the acquisition: nothing to seal",
+     "the executing side reports a closed transaction but no observation was sealed",
+     "the executing side reports success but the records do not show a sealed complete O with a closed / injection_open X"
+    ],
+    "trace_range": [
+     8,
+     75
+    ],
+    "pcap_range": [
+     48,
+     118
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "halted": "transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
+  "end": null,
+  "stats": {
+   "hb": 1,
+   "nack": 0,
+   "signreq": 1,
+   "signreply": 1,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 73,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
+   "carrier": {
+    "variant_addr": "0x43c02034",
+    "variant": "42340001",
+    "expected": "42340001",
+    "equal": true
+   },
+   "ok": true
+  },
+  "load_witness": {
+   "host_crc32": "f5d2dd33",
+   "uboot_crc32": "f5d2dd33",
+   "equal": true,
+   "bytes": 98324,
+   "range": [
+    "02000000",
+    "02018013"
+   ],
+   "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "ymodem": {
+    "blocks": 97,
+    "retries": 0,
+    "naks": 0,
+    "junk": 33,
+    "seconds": 0.213
+   }
+  },
+  "page_witness": {
+   "nonce_md": "9e3779b97f4a7c15",
+   "equal": true
+  },
+  "source": {
+   "bytes": 20640,
+   "records": 1290,
+   "digest_equal": false
+  },
+  "transport_stops": [
+   {
+    "t": 1793208969.796,
+    "why": "a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
+    "awaiting": "CHUNK",
+    "kind": "TransportStop"
+   },
+   {
+    "t": 1793208969.812,
+    "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling",
+    "kind": "SessionRefusal"
+   }
+  ],
+  "stats_pull": {
+   "pulls": 1,
+   "chunks": 27,
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
@@ -6645,7 +6645,7 @@
   "verify_agree": true,
   "verify_session": [],
   "verify_limitations": [
-   "the export was cut by the transport (a boot banner on the console mid-session: the PS reset (the session is cut; its ): 21408 of the 35104 bytes the board's last RING reported were pulled; the records after the cut have no PS evidence"
+   "the export was cut by the transport (a boot banner on the console mid-session: the PS reset (the session is cut; its ): 20640 of the 35104 bytes the board's last RING reported were pulled; the records after the cut have no PS evidence"
   ],
   "expect": {
    "opened": true,
@@ -6656,7 +6656,7 @@
  },
  {
   "label": "B4Q-runner-corrupt_chunk",
-  "wall_s": 6.049,
+  "wall_s": 6.277,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -6767,7 +6767,7 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "673fb3b25e3d11864f841dbe8f2df1b15528f0f7786ebb90243e03a8ba6fe323"
+   "log_sha256": "94ad02cecde5c9914b145c6ec89cf3d58de6033df0d48d388773b0d36258a7d9"
   },
   "stats": {
    "hb": 9,
@@ -6865,7 +6865,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.228
+    "seconds": 0.227
    }
   },
   "page_witness": {
@@ -6880,7 +6880,7 @@
   "transport_stops": [],
   "ident": {
    "protocol": "b4q-v2",
-   "token": "825050bbdcb9aa4d5ae835547845c6aa",
+   "token": "409811cceed9cafd8c7f826b3c33a006",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 1301847784,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -6945,7 +6945,7 @@
  },
  {
   "label": "B4Q-runner-log_overflow",
-  "wall_s": 2.999,
+  "wall_s": 3.044,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling"
@@ -6984,13 +6984,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 34,
-   "hb": 0,
+   "lines": 35,
+   "hb": 1,
    "nacks": 0,
    "sign_requests": 1,
    "sign_replies": 1,
    "transactions": 1,
-   "kicks": 34,
+   "kicks": 35,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -7000,10 +7000,10 @@
    "log": 16384,
    "log_overflow": 1,
    "log_records": 1024,
-   "log_sha256": "c11aa8289f068bbae06a0181d91bdcbbd1c6f7230c099ab31879406ac1a43fc8"
+   "log_sha256": "786df240b6ed769d162f81bfda04a8a28ee7a93996ba79b66060189e88d8f8f3"
   },
   "stats": {
-   "hb": 0,
+   "hb": 1,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -7016,7 +7016,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 65,
+  "console_lines": 66,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -7098,7 +7098,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.227
+    "seconds": 0.215
    }
   },
   "page_witness": {
@@ -7112,7 +7112,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793208253.236,
+    "t": 1793208979.764,
     "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -7146,7 +7146,7 @@
  },
  {
   "label": "B4Q-runner-devc_never",
-  "wall_s": 7.512,
+  "wall_s": 7.047,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling"
@@ -7183,13 +7183,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 30,
-   "hb": 6,
+   "lines": 29,
+   "hb": 5,
    "nacks": 0,
    "sign_requests": 1,
    "sign_replies": 1,
    "transactions": 1,
-   "kicks": 30,
+   "kicks": 29,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -7199,10 +7199,10 @@
    "log": 11536,
    "log_overflow": 0,
    "log_records": 721,
-   "log_sha256": "1c37cd4822935961e4e21ad00236aeee70a5be6ad524825c90c8fd369e412ffc"
+   "log_sha256": "5c4fc5ee33ce7ee2d5e67ef4bf05a8518ab998ad44a4a66100e9239a4c5b2ee7"
   },
   "stats": {
-   "hb": 6,
+   "hb": 5,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -7215,7 +7215,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 55,
+  "console_lines": 54,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -7297,7 +7297,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.216
+    "seconds": 0.22
    }
   },
   "page_witness": {
@@ -7311,7 +7311,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793208260.607,
+    "t": 1793208986.686,
     "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }

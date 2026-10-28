@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-log_overflow",
- "wall_s": 2.999,
+ "wall_s": 3.044,
  "stop": {
   "kind": "SessionRefusal",
   "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling"
@@ -39,13 +39,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 34,
-  "hb": 0,
+  "lines": 35,
+  "hb": 1,
   "nacks": 0,
   "sign_requests": 1,
   "sign_replies": 1,
   "transactions": 1,
-  "kicks": 34,
+  "kicks": 35,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -55,10 +55,10 @@
   "log": 16384,
   "log_overflow": 1,
   "log_records": 1024,
-  "log_sha256": "c11aa8289f068bbae06a0181d91bdcbbd1c6f7230c099ab31879406ac1a43fc8"
+  "log_sha256": "786df240b6ed769d162f81bfda04a8a28ee7a93996ba79b66060189e88d8f8f3"
  },
  "stats": {
-  "hb": 0,
+  "hb": 1,
   "nack": 0,
   "signreq": 1,
   "signreply": 1,
@@ -71,7 +71,7 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 65,
+ "console_lines": 66,
  "admission": {
   "image": {
    "file": "build/b4q_image/b4q_app_v2.bin",
@@ -153,7 +153,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.227
+   "seconds": 0.215
   }
  },
  "page_witness": {
@@ -167,7 +167,7 @@
  },
  "transport_stops": [
   {
-   "t": 1793208253.236,
+   "t": 1793208979.764,
    "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling",
    "kind": "SessionRefusal"
   }

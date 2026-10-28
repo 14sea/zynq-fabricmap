@@ -7,7 +7,7 @@
   "runner": {
    "schema": "b4q_runner_uboot",
    "schema_version": 2,
-   "port": "/tmp/b4q-runner-e2e-930354-clock_slow",
+   "port": "/tmp/b4q-runner-e2e-934550-clock_slow",
    "port_real": "/dev/pts/14",
    "kind": "console-pty-surrogate",
    "phase": "stopped",
@@ -40,7 +40,7 @@
    "load_addr": 33554432,
    "stops": [
     {
-     "t": 1793208130.196,
+     "t": 1793208856.508,
      "why": "clock: FCLK0 derives to 25.0 MHz, not the pinned 50.0 MHz: no PL access",
      "kind": "AdmissionStop"
     }
@@ -113,7 +113,7 @@
    "uboot_steps": [
     {
      "what": "prompt",
-     "t": 1793208129.681,
+     "t": 1793208855.991,
      "rx_at": 0,
      "tx_at": 0,
      "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
@@ -126,7 +126,7 @@
     },
     {
      "what": "printenv",
-     "t": 1793208130.188,
+     "t": 1793208856.499,
      "rx_at": 345,
      "tx_at": 2,
      "sent": "printenv boardid",
@@ -138,7 +138,7 @@
     },
     {
      "what": "printenv",
-     "t": 1793208130.189,
+     "t": 1793208856.5,
      "rx_at": 383,
      "tx_at": 19,
      "sent": "printenv role",
@@ -150,7 +150,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208130.191,
+     "t": 1793208856.502,
      "rx_at": 417,
      "tx_at": 33,
      "sent": "md.l f8000170 1",
@@ -164,7 +164,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208130.192,
+     "t": 1793208856.503,
      "rx_at": 468,
      "tx_at": 49,
      "sent": "md.l f8000100 1",
@@ -178,7 +178,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208130.193,
+     "t": 1793208856.505,
      "rx_at": 519,
      "tx_at": 65,
      "sent": "md.l f8000104 1",
@@ -192,7 +192,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208130.194,
+     "t": 1793208856.506,
      "rx_at": 570,
      "tx_at": 81,
      "sent": "md.l f8000108 1",
@@ -216,7 +216,7 @@
    "phase_at_stop": "prompt"
   },
   "protocol": "b4q-v2",
-  "token": "b5b687def5576263d7bdac23fa09216b",
+  "token": "ae36788a1b45bc330c669b94f6eb389a",
   "page_words": [],
   "page_flags": 2,
   "knobs": {

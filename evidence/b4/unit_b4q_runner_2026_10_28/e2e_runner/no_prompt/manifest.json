@@ -7,7 +7,7 @@
   "runner": {
    "schema": "b4q_runner_uboot",
    "schema_version": 2,
-   "port": "/tmp/b4q-runner-e2e-930354-no_prompt",
+   "port": "/tmp/b4q-runner-e2e-934550-no_prompt",
    "port_real": "/dev/pts/14",
    "kind": "console-pty-surrogate",
    "phase": "stopped",
@@ -40,7 +40,7 @@
    "load_addr": 33554432,
    "stops": [
     {
-     "t": 1793208229.342,
+     "t": 1793208955.255,
      "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
      "kind": "TransportStop"
     }
@@ -53,7 +53,7 @@
    "uboot_steps": [
     {
      "what": "prompt",
-     "t": 1793208224.818,
+     "t": 1793208950.731,
      "rx_at": 0,
      "tx_at": 0,
      "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\n",
@@ -76,7 +76,7 @@
    "phase_at_stop": "init"
   },
   "protocol": "b4q-v2",
-  "token": "0394be2406d17a4660214d035d67848e",
+  "token": "8c29304c45d0bf4d58baf168d1ff403f",
   "page_words": [],
   "page_flags": 2,
   "knobs": {

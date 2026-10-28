@@ -1,7 +1,7 @@
 {
  "schema": "b4q_runner_uboot",
  "schema_version": 2,
- "port": "/tmp/b4q-runner-e2e-930354-wrong_variant",
+ "port": "/tmp/b4q-runner-e2e-934550-wrong_variant",
  "port_real": "/dev/pts/14",
  "kind": "console-pty-surrogate",
  "phase": "stopped",
@@ -34,7 +34,7 @@
  "load_addr": 33554432,
  "stops": [
   {
-   "t": 1793208126.049,
+   "t": 1793208852.394,
    "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access",
    "kind": "AdmissionStop"
   }
@@ -112,7 +112,7 @@
  "uboot_steps": [
   {
    "what": "prompt",
-   "t": 1793208125.53,
+   "t": 1793208851.874,
    "rx_at": 0,
    "tx_at": 0,
    "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
@@ -125,7 +125,7 @@
   },
   {
    "what": "printenv",
-   "t": 1793208126.037,
+   "t": 1793208852.383,
    "rx_at": 345,
    "tx_at": 2,
    "sent": "printenv boardid",
@@ -137,7 +137,7 @@
   },
   {
    "what": "printenv",
-   "t": 1793208126.038,
+   "t": 1793208852.384,
    "rx_at": 383,
    "tx_at": 19,
    "sent": "printenv role",
@@ -149,7 +149,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208126.04,
+   "t": 1793208852.387,
    "rx_at": 417,
    "tx_at": 33,
    "sent": "md.l f8000170 1",
@@ -163,7 +163,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208126.041,
+   "t": 1793208852.388,
    "rx_at": 468,
    "tx_at": 49,
    "sent": "md.l f8000100 1",
@@ -177,7 +177,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208126.043,
+   "t": 1793208852.389,
    "rx_at": 519,
    "tx_at": 65,
    "sent": "md.l f8000104 1",
@@ -191,7 +191,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208126.044,
+   "t": 1793208852.39,
    "rx_at": 570,
    "tx_at": 81,
    "sent": "md.l f8000108 1",
@@ -205,7 +205,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208126.046,
+   "t": 1793208852.392,
    "rx_at": 621,
    "tx_at": 97,
    "sent": "md.l 43c02034 1",

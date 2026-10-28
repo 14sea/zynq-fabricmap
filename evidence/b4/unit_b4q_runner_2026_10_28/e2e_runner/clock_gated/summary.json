@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-clock_gated",
- "wall_s": 1.073,
+ "wall_s": 1.062,
  "stop": {
   "kind": "AdmissionStop",
   "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access"
@@ -92,7 +92,7 @@
  "source": null,
  "transport_stops": [
   {
-   "t": 1793208128.817,
+   "t": 1793208855.132,
    "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access",
    "kind": "AdmissionStop"
   }

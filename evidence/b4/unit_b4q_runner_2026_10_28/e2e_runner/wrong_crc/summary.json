@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-wrong_crc",
- "wall_s": 1.368,
+ "wall_s": 1.37,
  "stop": {
   "kind": "TransportStop",
   "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)"
@@ -107,14 +107,14 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.22
+   "seconds": 0.217
   }
  },
  "page_witness": {},
  "source": null,
  "transport_stops": [
   {
-   "t": 1793208213.654,
+   "t": 1793208939.596,
    "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)",
    "kind": "TransportStop"
   }

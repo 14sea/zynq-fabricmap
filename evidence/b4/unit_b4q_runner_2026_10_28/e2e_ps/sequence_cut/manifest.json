@@ -2,25 +2,29 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-sequence_cut",
- "generated_utc": "2026-10-28T17:21:54Z",
+ "generated_utc": "2026-10-28T17:34:00Z",
  "emulated": true,
  "standing": "the records built from the PS's OWN evidence log (b4q_ring, pulled through the console, held to the board's digest): the carrier-window events, the DMA tuples, the staged words and the frames the PS read back are what the executing side did and received; a device effect (a frame store, a bus response beyond the PS's own abort flag) is not witnessed; the MMIO was answered by an emulation on this host \u2014 not silicon, not a physical link",
  "source": {
   "kind": "ps-evidence-log-v1",
   "raw": "raw/evidence_log.bin",
   "bytes": 6816,
-  "sha256": "f5803c879cd51425debd28f448a2830ffcc84fadc77c7c91c0f977c18c6e2d70",
+  "sha256": "88e8dfad878057fadbca043a7cb037c458237a646cdd42fc9f20e24724302c33",
   "records": 426,
   "board": {
    "used": 6816,
    "capacity": 16777216,
    "overflow": 0,
-   "sha256": "f5803c879cd51425debd28f448a2830ffcc84fadc77c7c91c0f977c18c6e2d70"
+   "sha256": "88e8dfad878057fadbca043a7cb037c458237a646cdd42fc9f20e24724302c33"
   },
   "digest_equal": true,
   "end_log": 24464,
-  "end_log_sha256": "eb832b462ac54110e58035fa286adb8bc456677f6ed657d88c629622f074b0cc",
-  "tail_unobtainable": null,
+  "end_log_sha256": "aec89979900fa9a21b8ba9e90256382a76840b6d6c64f5d57c4abd6ddcb89803",
+  "tail_unobtainable": {
+   "why": "the terminal END (the executing side's sequence is exhausted): no export epilogue exists after it",
+   "end_log": 24464,
+   "pulled": 6816
+  },
   "adapter": "host/b4q_evidence_log.py",
   "adapter_sha256": "03dbc58ed924f48b7cff6cf314d2c24479e31c6ee18ff99b09f9c028efaa3255",
   "derived": [
@@ -334,14 +338,14 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v2",
-  "token": "040abb97d94d432a1e0c41d86209159a",
+  "token": "73f555dc75e00f11ff731002757a0818",
   "page_words": [
    "42345149",
    "00000001",
-   "040abb97",
-   "d94d432a",
-   "1e0c41d8",
-   "6209159a",
+   "73f555dc",
+   "75e00f11",
+   "ff731002",
+   "757a0818",
    "6553f100",
    "902cc781",
    "4e406f12",
@@ -359,7 +363,7 @@
    "00000000",
    "00000000",
    "00000000",
-   "98defb87"
+   "b58015af"
   ],
   "page_flags": 2,
   "time_origin": "console entries' `t`: this host's wall clock (time.time()) at the line's receipt / send \u2014 a host timestamp, never a device time",
@@ -407,11 +411,11 @@
    "log": 24464,
    "log_overflow": 0,
    "log_records": 1529,
-   "log_sha256": "eb832b462ac54110e58035fa286adb8bc456677f6ed657d88c629622f074b0cc"
+   "log_sha256": "aec89979900fa9a21b8ba9e90256382a76840b6d6c64f5d57c4abd6ddcb89803"
   },
   "ident": {
    "protocol": "b4q-v2",
-   "token": "040abb97d94d432a1e0c41d86209159a",
+   "token": "73f555dc75e00f11ff731002757a0818",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 2418853761,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -447,8 +451,8 @@
      "used": 6816,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "f5803c879cd51425debd28f448a2830ffcc84fadc77c7c91c0f977c18c6e2d70",
-     "pulled_sha256": "f5803c879cd51425debd28f448a2830ffcc84fadc77c7c91c0f977c18c6e2d70",
+     "sha256": "88e8dfad878057fadbca043a7cb037c458237a646cdd42fc9f20e24724302c33",
+     "pulled_sha256": "88e8dfad878057fadbca043a7cb037c458237a646cdd42fc9f20e24724302c33",
      "digest_equal": true,
      "upto": 6816
     }

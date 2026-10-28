@@ -1,7 +1,7 @@
 {
  "schema": "b4q_runner_uboot",
  "schema_version": 2,
- "port": "/tmp/b4q-runner-e2e-930354-board_not_permitted",
+ "port": "/tmp/b4q-runner-e2e-934550-board_not_permitted",
  "port_real": "/dev/pts/14",
  "kind": "console-pty-surrogate",
  "phase": "stopped",
@@ -34,7 +34,7 @@
  "load_addr": 33554432,
  "stops": [
   {
-   "t": 1793208123.322,
+   "t": 1793208849.622,
    "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)",
    "kind": "AdmissionStop"
   }
@@ -74,7 +74,7 @@
  "uboot_steps": [
   {
    "what": "prompt",
-   "t": 1793208122.817,
+   "t": 1793208849.115,
    "rx_at": 0,
    "tx_at": 0,
    "reply": "\r\n\r\nU-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\nNAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nzynq-uboot> ",

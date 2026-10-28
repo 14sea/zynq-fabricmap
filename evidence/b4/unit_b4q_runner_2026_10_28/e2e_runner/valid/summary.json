@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-valid",
- "wall_s": 6.184,
+ "wall_s": 6.355,
  "stop": null,
  "opened": true,
  "phase": "ended",
@@ -95,13 +95,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 213,
-  "hb": 10,
+  "lines": 212,
+  "hb": 9,
   "nacks": 0,
   "sign_requests": 4,
   "sign_replies": 4,
   "transactions": 4,
-  "kicks": 213,
+  "kicks": 212,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -111,10 +111,10 @@
   "log": 123344,
   "log_overflow": 0,
   "log_records": 7709,
-  "log_sha256": "3b0e34621618003f93e0bc08901b44c4590943bfb905e4cbfbd7787672ba98c6"
+  "log_sha256": "29486a774e824fedfb9e45cfe897b0593a7c5b04d81f0aca1933e4d5f355f9ee"
  },
  "stats": {
-  "hb": 10,
+  "hb": 9,
   "nack": 0,
   "signreq": 4,
   "signreply": 4,
@@ -127,7 +127,7 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 395,
+ "console_lines": 394,
  "admission": {
   "image": {
    "file": "build/b4q_image/b4q_app_v2.bin",
@@ -209,7 +209,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.233
+   "seconds": 0.202
   }
  },
  "page_witness": {
@@ -224,7 +224,7 @@
  "transport_stops": [],
  "ident": {
   "protocol": "b4q-v2",
-  "token": "ac48a42e414885b8ee2ccbf990edb3c3",
+  "token": "17a53e040209d83a3136520b38ed1912",
   "uboot_epoch": 1700000000,
   "app_image_sha_lo32": 1301847784,
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",

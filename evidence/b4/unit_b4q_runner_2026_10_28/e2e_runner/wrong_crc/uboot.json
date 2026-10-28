@@ -1,7 +1,7 @@
 {
  "schema": "b4q_runner_uboot",
  "schema_version": 2,
- "port": "/tmp/b4q-runner-e2e-930354-wrong_crc",
+ "port": "/tmp/b4q-runner-e2e-934550-wrong_crc",
  "port_real": "/dev/pts/14",
  "kind": "console-pty-surrogate",
  "phase": "stopped",
@@ -34,7 +34,7 @@
  "load_addr": 33554432,
  "stops": [
   {
-   "t": 1793208213.654,
+   "t": 1793208939.596,
    "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)",
    "kind": "TransportStop"
   }
@@ -121,7 +121,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.22
+   "seconds": 0.217
   }
  },
  "page_witness": null,
@@ -129,7 +129,7 @@
  "uboot_steps": [
   {
    "what": "prompt",
-   "t": 1793208212.895,
+   "t": 1793208938.844,
    "rx_at": 0,
    "tx_at": 0,
    "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
@@ -142,7 +142,7 @@
   },
   {
    "what": "printenv",
-   "t": 1793208213.403,
+   "t": 1793208939.353,
    "rx_at": 345,
    "tx_at": 2,
    "sent": "printenv boardid",
@@ -154,7 +154,7 @@
   },
   {
    "what": "printenv",
-   "t": 1793208213.404,
+   "t": 1793208939.353,
    "rx_at": 383,
    "tx_at": 19,
    "sent": "printenv role",
@@ -166,7 +166,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208213.406,
+   "t": 1793208939.355,
    "rx_at": 417,
    "tx_at": 33,
    "sent": "md.l f8000170 1",
@@ -180,7 +180,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208213.407,
+   "t": 1793208939.356,
    "rx_at": 468,
    "tx_at": 49,
    "sent": "md.l f8000100 1",
@@ -194,7 +194,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208213.408,
+   "t": 1793208939.357,
    "rx_at": 519,
    "tx_at": 65,
    "sent": "md.l f8000104 1",
@@ -208,7 +208,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208213.409,
+   "t": 1793208939.358,
    "rx_at": 570,
    "tx_at": 81,
    "sent": "md.l f8000108 1",
@@ -222,7 +222,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208213.412,
+   "t": 1793208939.359,
    "rx_at": 621,
    "tx_at": 97,
    "sent": "md.l 43c02034 1",
@@ -236,7 +236,7 @@
   },
   {
    "what": "loady",
-   "t": 1793208213.416,
+   "t": 1793208939.362,
    "rx_at": 672,
    "tx_at": 113,
    "sent": "loady 02000000",
@@ -246,7 +246,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.22
+    "seconds": 0.217
    },
    "reply": "xyzModem - CRC mode, 0(SOH)/97(STX)/0(CAN) packets, 0 retries\r\n## Total Size = 0x00018014 = 98324 Bytes\r\nZynq> ",
    "total": 98324,
@@ -256,7 +256,7 @@
   },
   {
    "what": "crc32",
-   "t": 1793208213.638,
+   "t": 1793208939.58,
    "rx_at": 973,
    "tx_at": 100209,
    "sent": "crc32 02000000 18014",

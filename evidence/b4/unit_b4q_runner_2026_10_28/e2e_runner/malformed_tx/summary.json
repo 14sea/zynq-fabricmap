@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-malformed_tx",
- "wall_s": 4.104,
+ "wall_s": 4.165,
  "stop": null,
  "opened": true,
  "phase": "ended",
@@ -53,13 +53,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 117,
-  "hb": 5,
+  "lines": 116,
+  "hb": 4,
   "nacks": 6,
   "sign_requests": 2,
   "sign_replies": 2,
   "transactions": 2,
-  "kicks": 117,
+  "kicks": 116,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -69,10 +69,10 @@
   "log": 64400,
   "log_overflow": 0,
   "log_records": 4025,
-  "log_sha256": "02b4a64dec8e86914935d29a3ea08a2555479b4817b66858a955452a3c96e7bd"
+  "log_sha256": "3e98cd9406e17a29b6c50ca195bd07cc08c4c5dee1737301e464f51171281091"
  },
  "stats": {
-  "hb": 5,
+  "hb": 4,
   "nack": 6,
   "signreq": 2,
   "signreply": 2,
@@ -85,7 +85,7 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 220,
+ "console_lines": 219,
  "admission": {
   "image": {
    "file": "build/b4q_image/b4q_app_v2.bin",
@@ -167,7 +167,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.22
+   "seconds": 0.239
   }
  },
  "page_witness": {

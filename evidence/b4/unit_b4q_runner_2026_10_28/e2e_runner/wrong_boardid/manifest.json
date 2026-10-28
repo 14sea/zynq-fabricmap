@@ -7,7 +7,7 @@
   "runner": {
    "schema": "b4q_runner_uboot",
    "schema_version": 2,
-   "port": "/tmp/b4q-runner-e2e-930354-wrong_boardid",
+   "port": "/tmp/b4q-runner-e2e-934550-wrong_boardid",
    "port_real": "/dev/pts/14",
    "kind": "console-pty-surrogate",
    "phase": "stopped",
@@ -40,7 +40,7 @@
    "load_addr": 33554432,
    "stops": [
     {
-     "t": 1793208132.949,
+     "t": 1793208859.278,
      "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board",
      "kind": "AdmissionStop"
     }
@@ -91,7 +91,7 @@
    "uboot_steps": [
     {
      "what": "prompt",
-     "t": 1793208132.439,
+     "t": 1793208858.77,
      "rx_at": 0,
      "tx_at": 0,
      "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
@@ -104,7 +104,7 @@
     },
     {
      "what": "printenv",
-     "t": 1793208132.946,
+     "t": 1793208859.275,
      "rx_at": 345,
      "tx_at": 2,
      "sent": "printenv boardid",
@@ -116,7 +116,7 @@
     },
     {
      "what": "printenv",
-     "t": 1793208132.947,
+     "t": 1793208859.277,
      "rx_at": 383,
      "tx_at": 19,
      "sent": "printenv role",
@@ -138,7 +138,7 @@
    "phase_at_stop": "prompt"
   },
   "protocol": "b4q-v2",
-  "token": "11c138cfcbf5a84556f691964044d1dc",
+  "token": "7a427983dc073d3b82d2db7347fc4480",
   "page_words": [],
   "page_flags": 2,
   "knobs": {

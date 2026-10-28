@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-devc_never",
- "wall_s": 7.512,
+ "wall_s": 7.047,
  "stop": {
   "kind": "SessionRefusal",
   "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling"
@@ -37,13 +37,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 30,
-  "hb": 6,
+  "lines": 29,
+  "hb": 5,
   "nacks": 0,
   "sign_requests": 1,
   "sign_replies": 1,
   "transactions": 1,
-  "kicks": 30,
+  "kicks": 29,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -53,10 +53,10 @@
   "log": 11536,
   "log_overflow": 0,
   "log_records": 721,
-  "log_sha256": "1c37cd4822935961e4e21ad00236aeee70a5be6ad524825c90c8fd369e412ffc"
+  "log_sha256": "5c4fc5ee33ce7ee2d5e67ef4bf05a8518ab998ad44a4a66100e9239a4c5b2ee7"
  },
  "stats": {
-  "hb": 6,
+  "hb": 5,
   "nack": 0,
   "signreq": 1,
   "signreply": 1,
@@ -69,7 +69,7 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 55,
+ "console_lines": 54,
  "admission": {
   "image": {
    "file": "build/b4q_image/b4q_app_v2.bin",
@@ -151,7 +151,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.216
+   "seconds": 0.22
   }
  },
  "page_witness": {
@@ -165,7 +165,7 @@
  },
  "transport_stops": [
   {
-   "t": 1793208260.607,
+   "t": 1793208986.686,
    "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling",
    "kind": "SessionRefusal"
   }

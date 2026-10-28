@@ -2,24 +2,24 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-runner-replies_dropped",
- "generated_utc": "2026-10-28T17:22:47Z",
+ "generated_utc": "2026-10-28T17:34:54Z",
  "emulated": true,
  "standing": "the records built from the PS's OWN evidence log (b4q_ring, pulled through the console, held to the board's digest): the carrier-window events, the DMA tuples, the staged words and the frames the PS read back are what the executing side did and received; a device effect (a frame store, a bus response beyond the PS's own abort flag) is not witnessed; the MMIO was answered by an emulation on this host \u2014 not silicon, not a physical link",
  "source": {
   "kind": "ps-evidence-log-v1",
   "raw": "raw/evidence_log.bin",
   "bytes": 35168,
-  "sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b",
+  "sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19",
   "records": 2198,
   "board": {
    "used": 35168,
    "capacity": 16777216,
    "overflow": 0,
-   "sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b"
+   "sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19"
   },
   "digest_equal": true,
   "end_log": 35168,
-  "end_log_sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b",
+  "end_log_sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19",
   "tail_unobtainable": null,
   "adapter": "host/b4q_evidence_log.py",
   "adapter_sha256": "03dbc58ed924f48b7cff6cf314d2c24479e31c6ee18ff99b09f9c028efaa3255",
@@ -351,14 +351,14 @@
   "kind": "console-pty-surrogate",
   "standing": "the board application's host harness behind the device surrogate's emulated U-Boot on a PTY (a declared host fixture): the bytes are the ones the image would put on UART1, the MMIO is an emulation in another process this host never reads; not a board",
   "protocol": "b4q-v2",
-  "token": "20092ecf3ba8bb1ed46fa0553b079364",
+  "token": "6f776fe8f52e0a4100a38b8db1351c06",
   "page_words": [
    "42345149",
    "00000001",
-   "20092ecf",
-   "3ba8bb1e",
-   "d46fa055",
-   "3b079364",
+   "6f776fe8",
+   "f52e0a41",
+   "00a38b8d",
+   "b1351c06",
    "6553f100",
    "4d989ee8",
    "4e406f12",
@@ -376,7 +376,7 @@
    "00000000",
    "00000000",
    "00000000",
-   "10e1a8f1"
+   "cfe7fc33"
   ],
   "page_flags": 2,
   "time_origin": "console entries' `t`: this host's wall clock (time.time()) at the line's receipt / send \u2014 a host timestamp, never a device time",
@@ -424,11 +424,11 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b"
+   "log_sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19"
   },
   "ident": {
    "protocol": "b4q-v2",
-   "token": "20092ecf3ba8bb1ed46fa0553b079364",
+   "token": "6f776fe8f52e0a4100a38b8db1351c06",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 1301847784,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -464,8 +464,8 @@
      "used": 6816,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "052e24bfd36ac980d10fbac100f669f31f43bf4d2883ef05530b74578ecfa4a3",
-     "pulled_sha256": "052e24bfd36ac980d10fbac100f669f31f43bf4d2883ef05530b74578ecfa4a3",
+     "sha256": "46254a88e12ff3f2fe8c1aa6869b5012afdf9f60722cbd327131d7fdc50e953d",
+     "pulled_sha256": "46254a88e12ff3f2fe8c1aa6869b5012afdf9f60722cbd327131d7fdc50e953d",
      "digest_equal": true,
      "upto": 6816
     },
@@ -473,8 +473,8 @@
      "used": 35104,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "75552fc8abff31d5f27af91136d21001f914e93c90cbe7c56a039ec0edbb1b88",
-     "pulled_sha256": "75552fc8abff31d5f27af91136d21001f914e93c90cbe7c56a039ec0edbb1b88",
+     "sha256": "15a3cb8821235b77d92ab92985d72d8ae3076b240242f22dd760e533fad4bcbe",
+     "pulled_sha256": "15a3cb8821235b77d92ab92985d72d8ae3076b240242f22dd760e533fad4bcbe",
      "digest_equal": true,
      "upto": 35104
     },
@@ -482,8 +482,8 @@
      "used": 35168,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b",
-     "pulled_sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b",
+     "sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19",
+     "pulled_sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19",
      "digest_equal": true,
      "upto": 35168
     },
@@ -491,8 +491,8 @@
      "used": 35168,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b",
-     "pulled_sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b",
+     "sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19",
+     "pulled_sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19",
      "digest_equal": true,
      "upto": 35168
     }
@@ -506,7 +506,7 @@
   "runner": {
    "schema": "b4q_runner_uboot",
    "schema_version": 2,
-   "port": "/tmp/b4q-runner-e2e-930354-replies_dropped",
+   "port": "/tmp/b4q-runner-e2e-934550-replies_dropped",
    "port_real": "/dev/pts/14",
    "kind": "console-pty-surrogate",
    "phase": "ended",
@@ -620,7 +620,7 @@
      "retries": 0,
      "naks": 0,
      "junk": 33,
-     "seconds": 0.224
+     "seconds": 0.216
     }
    },
    "page_witness": {
@@ -629,10 +629,10 @@
     "written": [
      "42345149",
      "00000001",
-     "20092ecf",
-     "3ba8bb1e",
-     "d46fa055",
-     "3b079364",
+     "6f776fe8",
+     "f52e0a41",
+     "00a38b8d",
+     "b1351c06",
      "6553f100",
      "4d989ee8",
      "4e406f12",
@@ -650,15 +650,15 @@
      "00000000",
      "00000000",
      "00000000",
-     "10e1a8f1"
+     "cfe7fc33"
     ],
     "read_back": [
      "42345149",
      "00000001",
-     "20092ecf",
-     "3ba8bb1e",
-     "d46fa055",
-     "3b079364",
+     "6f776fe8",
+     "f52e0a41",
+     "00a38b8d",
+     "b1351c06",
      "6553f100",
      "4d989ee8",
      "4e406f12",
@@ -676,19 +676,19 @@
      "00000000",
      "00000000",
      "00000000",
-     "10e1a8f1"
+     "cfe7fc33"
     ],
     "equal": true
    },
    "go": {
-    "t": 1793208165.707,
+    "t": 1793208892.549,
     "addr": "02000000",
     "issued": true
    },
    "uboot_steps": [
     {
      "what": "prompt",
-     "t": 1793208164.909,
+     "t": 1793208891.764,
      "rx_at": 0,
      "tx_at": 0,
      "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
@@ -701,7 +701,7 @@
     },
     {
      "what": "printenv",
-     "t": 1793208165.417,
+     "t": 1793208892.271,
      "rx_at": 345,
      "tx_at": 2,
      "sent": "printenv boardid",
@@ -713,7 +713,7 @@
     },
     {
      "what": "printenv",
-     "t": 1793208165.419,
+     "t": 1793208892.273,
      "rx_at": 383,
      "tx_at": 19,
      "sent": "printenv role",
@@ -725,7 +725,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208165.421,
+     "t": 1793208892.274,
      "rx_at": 417,
      "tx_at": 33,
      "sent": "md.l f8000170 1",
@@ -739,7 +739,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208165.422,
+     "t": 1793208892.275,
      "rx_at": 468,
      "tx_at": 49,
      "sent": "md.l f8000100 1",
@@ -753,7 +753,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208165.423,
+     "t": 1793208892.276,
      "rx_at": 519,
      "tx_at": 65,
      "sent": "md.l f8000104 1",
@@ -767,7 +767,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208165.425,
+     "t": 1793208892.277,
      "rx_at": 570,
      "tx_at": 81,
      "sent": "md.l f8000108 1",
@@ -781,7 +781,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208165.427,
+     "t": 1793208892.279,
      "rx_at": 621,
      "tx_at": 97,
      "sent": "md.l 43c02034 1",
@@ -795,7 +795,7 @@
     },
     {
      "what": "loady",
-     "t": 1793208165.431,
+     "t": 1793208892.282,
      "rx_at": 672,
      "tx_at": 113,
      "sent": "loady 02000000",
@@ -805,7 +805,7 @@
       "retries": 0,
       "naks": 0,
       "junk": 33,
-      "seconds": 0.224
+      "seconds": 0.216
      },
      "reply": "xyzModem - CRC mode, 0(SOH)/97(STX)/0(CAN) packets, 0 retries\r\n## Total Size = 0x00018014 = 98324 Bytes\r\nZynq> ",
      "total": 98324,
@@ -815,7 +815,7 @@
     },
     {
      "what": "crc32",
-     "t": 1793208165.657,
+     "t": 1793208892.499,
      "rx_at": 973,
      "tx_at": 100209,
      "sent": "crc32 02000000 18014",
@@ -831,7 +831,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208165.673,
+     "t": 1793208892.516,
      "rx_at": 1047,
      "tx_at": 100230,
      "sent": "md.l 43c0202c 1",
@@ -845,7 +845,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208165.675,
+     "t": 1793208892.517,
      "rx_at": 1098,
      "tx_at": 100246,
      "sent": "md.l 43c02030 1",
@@ -859,7 +859,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.677,
+     "t": 1793208892.519,
      "rx_at": 1149,
      "tx_at": 100262,
      "sent": "mw.l 10440000 42345149 1",
@@ -870,7 +870,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.678,
+     "t": 1793208892.521,
      "rx_at": 1181,
      "tx_at": 100287,
      "sent": "mw.l 10440004 00000001 1",
@@ -881,10 +881,10 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.68,
+     "t": 1793208892.522,
      "rx_at": 1213,
      "tx_at": 100312,
-     "sent": "mw.l 10440008 20092ecf 1",
+     "sent": "mw.l 10440008 6f776fe8 1",
      "reply": "",
      "ok": true,
      "rx_end": 1245,
@@ -892,10 +892,10 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.681,
+     "t": 1793208892.524,
      "rx_at": 1245,
      "tx_at": 100337,
-     "sent": "mw.l 1044000c 3ba8bb1e 1",
+     "sent": "mw.l 1044000c f52e0a41 1",
      "reply": "",
      "ok": true,
      "rx_end": 1277,
@@ -903,10 +903,10 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.682,
+     "t": 1793208892.525,
      "rx_at": 1277,
      "tx_at": 100362,
-     "sent": "mw.l 10440010 d46fa055 1",
+     "sent": "mw.l 10440010 00a38b8d 1",
      "reply": "",
      "ok": true,
      "rx_end": 1309,
@@ -914,10 +914,10 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.683,
+     "t": 1793208892.526,
      "rx_at": 1309,
      "tx_at": 100387,
-     "sent": "mw.l 10440014 3b079364 1",
+     "sent": "mw.l 10440014 b1351c06 1",
      "reply": "",
      "ok": true,
      "rx_end": 1341,
@@ -925,7 +925,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.684,
+     "t": 1793208892.527,
      "rx_at": 1341,
      "tx_at": 100412,
      "sent": "mw.l 10440018 6553f100 1",
@@ -936,7 +936,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.685,
+     "t": 1793208892.528,
      "rx_at": 1373,
      "tx_at": 100437,
      "sent": "mw.l 1044001c 4d989ee8 1",
@@ -947,7 +947,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.687,
+     "t": 1793208892.529,
      "rx_at": 1405,
      "tx_at": 100462,
      "sent": "mw.l 10440020 4e406f12 1",
@@ -958,7 +958,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.688,
+     "t": 1793208892.53,
      "rx_at": 1437,
      "tx_at": 100487,
      "sent": "mw.l 10440024 80d3cf5c 1",
@@ -969,7 +969,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.688,
+     "t": 1793208892.531,
      "rx_at": 1469,
      "tx_at": 100512,
      "sent": "mw.l 10440028 abf43d00 1",
@@ -980,7 +980,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.689,
+     "t": 1793208892.532,
      "rx_at": 1501,
      "tx_at": 100537,
      "sent": "mw.l 1044002c 1278ef3b 1",
@@ -991,7 +991,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.691,
+     "t": 1793208892.533,
      "rx_at": 1533,
      "tx_at": 100562,
      "sent": "mw.l 10440030 807a9ce4 1",
@@ -1002,7 +1002,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.691,
+     "t": 1793208892.534,
      "rx_at": 1565,
      "tx_at": 100587,
      "sent": "mw.l 10440034 a7d03644 1",
@@ -1013,7 +1013,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.693,
+     "t": 1793208892.535,
      "rx_at": 1597,
      "tx_at": 100612,
      "sent": "mw.l 10440038 5122f563 1",
@@ -1024,7 +1024,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.694,
+     "t": 1793208892.536,
      "rx_at": 1629,
      "tx_at": 100637,
      "sent": "mw.l 1044003c 6e3d18a9 1",
@@ -1035,7 +1035,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.695,
+     "t": 1793208892.537,
      "rx_at": 1661,
      "tx_at": 100662,
      "sent": "mw.l 10440040 7f4a7c15 1",
@@ -1046,7 +1046,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.696,
+     "t": 1793208892.538,
      "rx_at": 1693,
      "tx_at": 100687,
      "sent": "mw.l 10440044 9e3779b9 1",
@@ -1057,7 +1057,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.696,
+     "t": 1793208892.539,
      "rx_at": 1725,
      "tx_at": 100712,
      "sent": "mw.l 10440048 00000000 1",
@@ -1068,7 +1068,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.697,
+     "t": 1793208892.54,
      "rx_at": 1757,
      "tx_at": 100737,
      "sent": "mw.l 1044004c 00000002 1",
@@ -1079,7 +1079,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.698,
+     "t": 1793208892.541,
      "rx_at": 1789,
      "tx_at": 100762,
      "sent": "mw.l 10440050 00000000 1",
@@ -1090,7 +1090,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.699,
+     "t": 1793208892.542,
      "rx_at": 1821,
      "tx_at": 100787,
      "sent": "mw.l 10440054 00000000 1",
@@ -1101,7 +1101,7 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.7,
+     "t": 1793208892.543,
      "rx_at": 1853,
      "tx_at": 100812,
      "sent": "mw.l 10440058 00000000 1",
@@ -1112,10 +1112,10 @@
     },
     {
      "what": "mw.l",
-     "t": 1793208165.702,
+     "t": 1793208892.544,
      "rx_at": 1885,
      "tx_at": 100837,
-     "sent": "mw.l 1044005c 10e1a8f1 1",
+     "sent": "mw.l 1044005c cfe7fc33 1",
      "reply": "",
      "ok": true,
      "rx_end": 1917,
@@ -1123,21 +1123,21 @@
     },
     {
      "what": "md.l",
-     "t": 1793208165.703,
+     "t": 1793208892.545,
      "rx_at": 1917,
      "tx_at": 100862,
      "sent": "md.l 10440000 18",
-     "reply": "10440000: 42345149 00000001 20092ecf 3ba8bb1e    IQ4B....... ...;\r\n10440010: d46fa055 3b079364 6553f100 4d989ee8    U.o.d..;..Se...M\r\n10440020: 4e406f12 80d3cf5c abf43d00 1278ef3b    .o@N\\....=..;.x.\r\n10440030: 807a9ce4 a7d03644 5122f563 6e3d18a9    ..z.D6..c.\"Q..=n\r\n10440040: 7f4a7c15 9e3779b9 00000000 00000002    .|J..y7.........\r\n10440050: 00000000 00000000 00000000 10e1a8f1    ................\r\n",
+     "reply": "10440000: 42345149 00000001 6f776fe8 f52e0a41    IQ4B.....owoA...\r\n10440010: 00a38b8d b1351c06 6553f100 4d989ee8    ......5...Se...M\r\n10440020: 4e406f12 80d3cf5c abf43d00 1278ef3b    .o@N\\....=..;.x.\r\n10440030: 807a9ce4 a7d03644 5122f563 6e3d18a9    ..z.D6..c.\"Q..=n\r\n10440040: 7f4a7c15 9e3779b9 00000000 00000002    .|J..y7.........\r\n10440050: 00000000 00000000 00000000 cfe7fc33    ............3...\r\n",
      "ok": true,
      "rx_end": 2343,
      "tx_end": 100879,
      "words": [
       "42345149",
       "00000001",
-      "20092ecf",
-      "3ba8bb1e",
-      "d46fa055",
-      "3b079364",
+      "6f776fe8",
+      "f52e0a41",
+      "00a38b8d",
+      "b1351c06",
       "6553f100",
       "4d989ee8",
       "4e406f12",
@@ -1155,12 +1155,12 @@
       "00000000",
       "00000000",
       "00000000",
-      "10e1a8f1"
+      "cfe7fc33"
      ]
     },
     {
      "what": "go",
-     "t": 1793208165.709,
+     "t": 1793208892.55,
      "rx_at": 2343,
      "tx_at": 100879,
      "sent": "go 02000000",
@@ -1171,9 +1171,9 @@
     }
    ],
    "raw": {
-    "console_bin_sha256": "2b7c7d02341ad82327b2f6b13c08896f7a45a13c3cefe4ebaac9ce33ca18b3d1",
+    "console_bin_sha256": "38c214cd6909bf6adb5902c6df5c51bb3aa71a220175313a69335ba0d9b3c153",
     "console_bin_bytes": 75770,
-    "console_tx_bin_sha256": "a39b7c2b449c6eecb2f7a3f86efa7c3a5e9b06b13742ccbf6a1a04b4ef54117d",
+    "console_tx_bin_sha256": "77862fb162b09da44e6186229172a9c6a22c602354a140d41b6d06fa95082962",
     "console_tx_bin_bytes": 105029,
     "incomplete_writes": []
    },

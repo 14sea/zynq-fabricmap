@@ -1,7 +1,7 @@
 {
  "schema": "b4q_runner_uboot",
  "schema_version": 2,
- "port": "/tmp/b4q-runner-e2e-930354-image_not_pinned",
+ "port": "/tmp/b4q-runner-e2e-934550-image_not_pinned",
  "port_real": "/dev/pts/14",
  "kind": "console-pty-surrogate",
  "phase": "stopped",
@@ -34,7 +34,7 @@
  "load_addr": 33554432,
  "stops": [
   {
-   "t": 1793208121.962,
+   "t": 1793208848.268,
    "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",
    "kind": "AdmissionStop"
   }
@@ -61,7 +61,7 @@
  "uboot_steps": [
   {
    "what": "prompt",
-   "t": 1793208121.459,
+   "t": 1793208847.766,
    "rx_at": 0,
    "tx_at": 0,
    "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
