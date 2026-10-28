@@ -1,0 +1,105 @@
+{
+ "name": "replies_dropped",
+ "wall_s": 1.76,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    8,
+    93
+   ],
+   "pcap_range": [
+    48,
+    200
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 1,
+   "phase": "P1",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    93,
+    97
+   ],
+   "pcap_range": [
+    200,
+    200
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 22884,
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 81,
+  "hb": 14,
+  "nacks": 0,
+  "sign_requests": 4,
+  "sign_replies": 1,
+  "transactions": 2,
+  "kicks": 81,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "STOP_SIGN: the notary refused the candidate",
+  "log": 35168,
+  "log_overflow": 0,
+  "log_records": 2198,
+  "log_sha256": "aec8efcafd569f087891e54701f932d6e541b8a13b77668437c6dce1ca81512c"
+ },
+ "stats": {
+  "hb": 14,
+  "nack": 0,
+  "signreq": 4,
+  "signreply": 1,
+  "corrupted": 0,
+  "dropped": 3,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 142,
+ "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
+ "open_findings": [],
+ "platform_kicks": 83,
+ "tx": {
+  "status": 1,
+  "reason": "STOP_SIGN: the notary refused the candidate",
+  "phase": "P1",
+  "o": false,
+  "x": null,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ },
+ "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate) \u2014 nothing further is signed without a ruling",
+ "sign_events": [
+  "EV sign: no valid SIGNREPLY after 3 attempts: no SIGNREPLY within the attempt's budget"
+ ]
+}

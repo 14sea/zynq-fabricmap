@@ -99,20 +99,28 @@ class SessionRefusal(ValueError):
 
 class Session:
     def __init__(self, out_dir: Path, label: str = "B4Q-host", power_on: str = "init", gsr_init_effect: bool = True, binary: Path = BINARY, devc_faults: dict | None = None,
-                 provision_key: bytes | None = None, notary_deny: set | None = None, interrupt_after_accesses: int | None = None, interrupt_tx: int | None = None):
+                 provision_key: bytes | None = None, notary_deny: set | None = None, interrupt_after_accesses: int | None = None, interrupt_tx: int | None = None,
+                 make_backend: bool = True):
         """The negative-path knobs are the ENVIRONMENT's, never the program's: `devc_faults` {(kind, ordinal): mode} on the DevC fake;
         `provision_key` a key other than the notary's (an AUTH fault); `notary_deny` genomes the notary refuses; `interrupt_after_accesses`
         the transport cut after that many accesses of the next transaction (an external interruption)."""
         self.out = Path(out_dir); self.out.mkdir(parents=True, exist_ok=True)
         self.label = label
         self.base, self.wl = fr.load_base(), fr.whitelist()
-        self.backend = bk.Backend(self.base, self.wl, power_on=power_on, gsr_init_effect=gsr_init_effect)
-        if devc_faults:
-            self.backend.devc.faults.update(devc_faults)
-        self.corrupt_frame_reads = self.backend.devc.corrupt_frame_reads   # one shared set: a scenario adds ordinals before the session opens
         self.notary = nt.Notary(self.base, self.wl)
         self.notary_deny = set(notary_deny or ())
-        self.backend.provision_key(provision_key if provision_key is not None else self.notary.key)   # the signer principal provisions the write-once key; the application never touches it
+        if make_backend:
+            self.backend = bk.Backend(self.base, self.wl, power_on=power_on, gsr_init_effect=gsr_init_effect)
+            if devc_faults:
+                self.backend.devc.faults.update(devc_faults)
+            self.corrupt_frame_reads = self.backend.devc.corrupt_frame_reads   # one shared set: a scenario adds ordinals before the session opens
+            self.backend.provision_key(provision_key if provision_key is not None else self.notary.key)   # the signer principal provisions the write-once key; the application never touches it
+        else:
+            self.backend = None                 # no emulated device in this process at all (the runner: the device is on the other end of a port); the subclass sets `evidence` and `timing`
+            self.corrupt_frame_reads = set()
+        self.evidence = self.backend            # the SOURCE of the records: the emulated backend's own trace / PCAP log / accesses (host-only), or — a console
+        self.emulated = True                    # session with source=ps-evidence-log-v1 — the PS's evidence log pulled through the console (b4q_console_session.PsEvidence)
+        self.source = None                      # the manifest's `source` object when the records come from the PS's log; None = the emulated source
         self.interrupt_after = interrupt_after_accesses
         self.interrupt_tx = interrupt_tx                                    # the transaction number (1 = the root) the interruption is aimed at; None = any
         self.interrupted = None
@@ -133,7 +141,7 @@ class Session:
         self.instrument = {"variant": f"{rm.VARIANT_WORD:08x}", "carrier_sha256": self.base["bitstream_sha256"], "image_sha256": sha256_file(self.binary)}
         self.loaded_reference = fr.frames_hash(self.base["frames"])      # the loaded image's write-set frames, FAR-ordered (what a startup readback must reproduce)
         self.base_reference = fr.frames_hash(fr.derive_frames(0, self.base["frames"], self.wl))   # the restored study base (signed genome 0): a different commitment
-        self.timing = {**rm.decode_timing(self.backend.carrier.timing_word), "pulse": self.backend.carrier.timing["pulse"]}
+        self.timing = {**rm.decode_timing(self.backend.carrier.timing_word), "pulse": self.backend.carrier.timing["pulse"]} if self.backend is not None else None
         self.mapping, self.hyp = bm.site_mapping(), hy.load()
 
     # ---------------------------------------------------------------- the transport
@@ -175,13 +183,13 @@ class Session:
                     self.notary.log.append({"genome_hex": g, "nonce": n, "refused": str(e)})
                     self._send(f"REFUSED {e}")
             elif line.startswith("MARK "):
-                self.backend.mark(line[5:]); self.events.append({"i": len(self.backend.trace), "line": line})
+                self.evidence.mark(line[5:]); self.events.append({"i": len(self.evidence.trace), "line": line})
             elif line.startswith("EV "):
-                self.events.append({"i": len(self.backend.trace), "line": line})
+                self.events.append({"i": len(self.evidence.trace), "line": line})
             elif line.startswith("RESULT "):
                 return json.loads(line[7:])
             else:
-                self.events.append({"i": len(self.backend.trace), "line": "?? " + line})
+                self.events.append({"i": len(self.evidence.trace), "line": "?? " + line})
 
     def stop(self):
         if self.proc and self.proc.poll() is None:
@@ -216,7 +224,7 @@ class Session:
         self.open_result = r
         so = rec.session_open(self.instrument, r.get("startup_readback") or "", self.loaded_reference)
         # the host's own view of the startup readback: the PCAP log's last read_frame group (the backend's store, FAR-ordered)
-        host_view = [e for e in self.backend.pcap_log if e.get("pcap") == "read_frame"]
+        host_view = [e for e in self.evidence.pcap_log if e.get("pcap") == "read_frame"]
         host_hash = host_view[-1]["target_frames_hash"] if host_view else None
         # the opening's findings, worded exactly as the verifier recomputes them (its agreement rule compares the strings): the record's
         # validators and schema, the host's view of the readback, the executing side's own refusal
@@ -246,23 +254,26 @@ class Session:
         if self.records and not (self.prev_x is not None and self.prev_x["status"] in ("closed", "injection_open")):
             raise SessionRefusal("the previous transaction did not close: no candidate is signed while the last X is not closed (5.2) or injection_open (5.6)")
         cmd = tx_command(kind, genome, stimulus, task)
-        if self.proc is None or self.proc.poll() is not None:
+        if not self._transport_alive():
             raise SessionRefusal("the executing-side program is not running (the transport was interrupted): nothing follows without a ruling")
-        nonce_before = self.backend.carrier.nonce
-        t_begin = len(self.backend.trace)
-        pcap_begin = len(self.backend.pcap_log)
+        nonce_before = self._nonce_before_tx()                                 # the emulated carrier's nonce; None under the PS source (read from the log after the pull)
+        t_begin = len(self.evidence.trace)
+        pcap_begin = len(self.evidence.pcap_log)
         self._tx_accesses = 0
         self._send(cmd)
         r = self.serve()
         self._tx_accesses = None
         if r.get("status") == 5:
-            self.backend.mark("transaction_interrupted")
+            self.evidence.mark("transaction_interrupted")
+        r = self._acquire(r)                                                   # the PS source pulls its log up to the result's position here; the emulated source has it already
         self.seq += 1
         seq = self.seq
-        evs = self.backend.trace[t_begin:]
+        evs = self.evidence.trace[t_begin:]
+        if nonce_before is None:
+            nonce_before = self._nonce_from_evidence(t_begin)
         txs = rec.transactions(evs)
         tx_events = txs[0] if txs else [e for e in evs if "op" in e]
-        pcap = self.backend.pcap_log[pcap_begin:]
+        pcap = self.evidence.pcap_log[pcap_begin:]
         # the host's links: the notary's commit, the PCAP log's digests (the host's view of what the DMAs carried / delivered)
         commit = next((e["commit"] for e in reversed(self.notary.log) if e.get("genome") == genome and "commit" in e), None)
         subs = [e for e in pcap if e.get("pcap") == "stream_submitted"]
@@ -271,7 +282,7 @@ class Session:
         group_hash = [g[0]["target_frames_hash"] if len(g) == len(fr.TARGET_FARS) and len({x["target_frames_hash"] for x in g}) == 1 else None for g in groups]
         cand_staged = staging_witness(subs[0:2]) if len(subs) >= 2 else None        # the pre-write witness: the candidate's two streams as submitted
         base_staged = staging_witness(subs[2:4]) if len(subs) >= 4 else None
-        links = {"instrument": self.instrument, "nonce": f"{nonce_before:016x}", "config": config_list(genome)}
+        links = {"instrument": self.instrument, "nonce": nonce_before if isinstance(nonce_before, str) else f"{nonce_before:016x}", "config": config_list(genome)}
         for k, v in (("commit", commit), ("staging_readback_sha256", cand_staged), ("fabric_readback_sha256_pre_event", group_hash[0] if len(group_hash) > 0 else None),
                      ("fabric_readback_sha256_post_event", group_hash[1] if len(group_hash) > 1 else None), ("base_readback_sha256", group_hash[2] if len(group_hash) > 2 else None)):
             if v:
@@ -307,8 +318,12 @@ class Session:
                "loaded_frames_reference_sha256": self.loaded_reference, "predecessor_close_sha256": pred["close_sha256"], "predecessor_seq": pred["seq"]}
         if o is not None and not rec.validate_observation(o):
             findings += [f"bound: {m}" for m in rec.validate_bound(o, ctx, f, x)]
+        if r.get("status") == 0 and o is None:
+            findings.append("the executing side reports a closed transaction but no observation was sealed")   # the verifier's rules, recorded here too: a PS source whose log was cut / overflowed can leave exactly this
+        if r.get("status") == 0 and not (o is not None and o["status"] == "complete" and x is not None and x["status"] in ("closed", "injection_open")):
+            findings.append("the executing side reports success but the records do not show a sealed complete O with a closed / injection_open X")
         entry = {"seq": seq, "kind": kind, "genome": genome, "genome_hex": f"{genome:06x}", "o": o, "f": f, "x": x, "ctx": ctx, "links": links, "firmware": r, "interrupted": self.interrupted if r.get("status") == 5 else None,
-                 "findings": findings, "trace_range": [t_begin, len(self.backend.trace)], "pcap_range": [pcap_begin, len(self.backend.pcap_log)],
+                 "findings": findings, "trace_range": [t_begin, len(self.evidence.trace)], "pcap_range": [pcap_begin, len(self.evidence.pcap_log)],
                  "emulation": {"unmodelled_cells": sum(1 for e in tx_events if e.get("op") == "rd" and e.get("x") is not None)}}
         self.records.append(entry)
         if x is not None and x["status"] in ("closed", "injection_open"):
@@ -325,6 +340,30 @@ class Session:
             self.halt(f"transaction {seq}: interrupted")
         return entry
 
+    # ---------------------------------------------------------------- the source hooks (the emulated source's defaults; the PS source overrides)
+    def _transport_alive(self) -> bool:
+        return self.proc is not None and self.proc.poll() is None
+
+    def _nonce_before_tx(self):
+        return self.backend.carrier.nonce if self.backend is not None else None
+
+    def _nonce_from_evidence(self, t_begin: int) -> str:
+        raise SessionRefusal("no nonce: the emulated source knows its carrier's nonce before the transaction")
+
+    def _acquire(self, r: dict) -> dict:
+        return r
+
+    def _backend_manifest(self):
+        if self.backend is None:
+            return None
+        return {"power_on": "init" if self.backend.carrier.fab.q and None not in self.backend.carrier.fab.q else "x", "nonce_seed": f"{self.backend.carrier.nonce_seed:016x}", "devc_faults": {f"{k[0]}:{k[1]}": str(v) for k, v in self.backend.devc.faults.items()},
+                "fault_injections": {"refuse_writes": sorted(f"{o:#06x}" for o in self.backend.refuse_writes), "corrupt_frame_reads": sorted(self.backend.devc.corrupt_frame_reads),
+                                     "refuse_reads": sorted(f"{o:#06x}" for o in self.refused_reads), "refuse_mem_reads": sorted(f"{a:#010x}" for a in self.refused_mem_reads),
+                                     "note": "the bench's declared fault injections — a SIMULATION, never evidence that hardware refused or corrupted anything"}}
+
+    def _standing(self) -> str:
+        return "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path — not a physical link, not silicon, not A8"
+
     # ---------------------------------------------------------------- the evidence
     def chain(self) -> list[str]:
         if self.session_open is None:
@@ -333,9 +372,9 @@ class Session:
 
     def write(self) -> dict:
         out = self.out
-        (out / "trace.jsonl").write_text("".join(json.dumps(e) + "\n" for e in self.backend.trace))
-        (out / "pcap_log.jsonl").write_text("".join(json.dumps(e) + "\n" for e in self.backend.pcap_log))
-        (out / "accesses.jsonl").write_text("".join(json.dumps({"op": op, "addr": a, "resp": resp}) + "\n" for op, a, resp in self.backend.accesses))
+        (out / "trace.jsonl").write_text("".join(json.dumps(e) + "\n" for e in self.evidence.trace))
+        (out / "pcap_log.jsonl").write_text("".join(json.dumps(e) + "\n" for e in self.evidence.pcap_log))
+        (out / "accesses.jsonl").write_text("".join(json.dumps({"op": op, "addr": a, "resp": resp}) + "\n" for op, a, resp in self.evidence.accesses))
         (out / "events.jsonl").write_text("".join(json.dumps(e) + "\n" for e in self.events))
         (out / "notary_log.json").write_text(json.dumps(self.notary.log, indent=1) + "\n")
         (out / "session_open.json").write_text(json.dumps(self.session_open, indent=1) + "\n")
@@ -350,23 +389,20 @@ class Session:
             (d / "record.json").write_text(json.dumps({k: e[k] for k in ("seq", "kind", "genome", "genome_hex", "findings", "trace_range", "pcap_range", "emulation", "interrupted")}, indent=1) + "\n")
         chain = self.chain()
         manifest = {"schema": SCHEMA[0], "schema_version": SCHEMA[1], "label": self.label, "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                    "emulated": True, "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path — not a physical link, not silicon, not A8",
+                    "emulated": self.emulated, "standing": self._standing(), "source": self.source,
                     "instrument": self.instrument, "executing_side": {"binary": str(self.binary.relative_to(R)), "sha256": self.instrument["image_sha256"], "build": json.loads((self.binary.parent / "build.json").read_text()) if (self.binary.parent / "build.json").is_file() else None},
                     "loaded_frames_reference_sha256": self.loaded_reference, "base_readback_reference_sha256": self.base_reference,
                     "write_set": json.loads((R / "firmware/b4q/b4q_data.json").read_text()), "timing": self.timing,
                     "hypothesis": {"path": self.hyp.path, "sha256": self.hyp.sha256, "version": self.hyp.version}, "mapping": {"site": self.mapping.site, "certificate": self.mapping.certificate_rel, "certificate_sha256": self.mapping.certificate_sha256},
                     "notary": {"key_id": self.notary.key_id, "contract": "zero tables, no attestation (fixture key)"},
-                    "backend": {"power_on": "init" if self.backend.carrier.fab.q and None not in self.backend.carrier.fab.q else "x", "nonce_seed": f"{self.backend.carrier.nonce_seed:016x}", "devc_faults": {f"{k[0]}:{k[1]}": str(v) for k, v in self.backend.devc.faults.items()},
-                                "fault_injections": {"refuse_writes": sorted(f"{o:#06x}" for o in self.backend.refuse_writes), "corrupt_frame_reads": sorted(self.backend.devc.corrupt_frame_reads),
-                                                     "refuse_reads": sorted(f"{o:#06x}" for o in self.refused_reads), "refuse_mem_reads": sorted(f"{a:#010x}" for a in self.refused_mem_reads),
-                                                     "note": "the bench's declared fault injections — a SIMULATION, never evidence that hardware refused or corrupted anything"}},
+                    "backend": self._backend_manifest(),
                     "records": [{"seq": e["seq"], "dir": f"tx_{e['seq']:03d}", "kind": e["kind"], "genome_hex": e["genome_hex"], "o": e["o"] is not None, "f": e["f"] is not None, "x": e["x"]["status"] if e["x"] else None,
                                  "o_status": e["o"]["status"] if e["o"] else None, "executing_side_status": e["firmware"].get("status"), "phase": e["firmware"].get("phase"), "findings": e["findings"],
                                  "trace_range": e["trace_range"], "pcap_range": e["pcap_range"]} for e in self.records],
-                    "open_trace_range": [0, self.records[0]["trace_range"][0]] if self.records else [0, len(self.backend.trace)],
-                    "open_pcap_range": [0, self.records[0]["pcap_range"][0]] if self.records else [0, len(self.backend.pcap_log)],
+                    "open_trace_range": [0, self.records[0]["trace_range"][0]] if self.records else [0, len(self.evidence.trace)],
+                    "open_pcap_range": [0, self.records[0]["pcap_range"][0]] if self.records else [0, len(self.evidence.pcap_log)],
                     "halted": self.halted, "qualification_plan": self.qual_plan,
                     "notary_deny": sorted(f"{g:06x}" for g in self.notary_deny), "interrupted": self.interrupted,
-                    "chain_findings": chain, "accesses": len(self.backend.accesses), "trace_events": len(self.backend.trace)}
+                    "chain_findings": chain, "accesses": len(self.evidence.accesses), "trace_events": len(self.evidence.trace)}
         (out / "manifest.json").write_text(json.dumps(manifest, indent=1) + "\n")
         return manifest

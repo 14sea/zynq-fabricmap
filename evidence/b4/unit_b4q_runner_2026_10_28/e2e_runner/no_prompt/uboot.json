@@ -1,0 +1,71 @@
+{
+ "schema": "b4q_runner_uboot",
+ "schema_version": 2,
+ "port": "/tmp/b4q-runner-e2e-946397-no_prompt",
+ "port_real": "/dev/pts/15",
+ "kind": "console-pty-surrogate",
+ "phase": "stopped",
+ "context": {
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+  "image_path": "/home/test/zynq_fabricmap/build/b4q_image/b4q_app_v2.bin",
+  "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+  "board_models": [
+   "Ebang EBAZ4203"
+  ],
+  "dram_min_mib": 512,
+  "variant_word": 1110704129,
+  "fclk0_ctrl_expected": null,
+  "load_addr": 33554432,
+  "purpose": "bringup-rehearsal",
+  "expected_boardid": "F8B3",
+  "allowed_roles": [
+   "verify",
+   "sacrificial"
+  ],
+  "fclk0_mhz": 50.0,
+  "ps_clk_mhz": 33.333333,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  }
+ },
+ "image": "build/b4q_image/b4q_app_v2.bin",
+ "image_sha256_file": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+ "load_addr": 33554432,
+ "stops": [
+  {
+   "t": 1793211966.583,
+   "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
+   "kind": "TransportStop"
+  }
+ ],
+ "silence_s": 20.0,
+ "admission": null,
+ "load_witness": null,
+ "page_witness": null,
+ "go": null,
+ "uboot_steps": [
+  {
+   "what": "prompt",
+   "t": 1793211962.059,
+   "rx_at": 0,
+   "tx_at": 0,
+   "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\n",
+   "banner_seen": true,
+   "ok": false,
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "rx_end": 339,
+   "tx_end": 41
+  }
+ ],
+ "raw": {
+  "console_bin_sha256": "311ada2a6bb9f0f9b39dde6ac425d54f4c64bccb4ffc54cdbf96ca914d8b5d69",
+  "console_bin_bytes": 339,
+  "console_tx_bin_sha256": "b7f3fea51742580fbbf875f51368869eb3fe9f5cd66ba504c353b187ea9a025b",
+  "console_tx_bin_bytes": 41,
+  "incomplete_writes": []
+ },
+ "break_s": 4.0,
+ "phase_at_stop": "init"
+}

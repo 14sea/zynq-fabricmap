@@ -1,0 +1,95 @@
+== control_plane_only
+{"wall_s": 1.447, "stop": null, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== image_not_pinned
+{"wall_s": 1.054, "stop": {"kind": "AdmissionStop", "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== board_not_permitted
+{"wall_s": 1.065, "stop": {"kind": "AdmissionStop", "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== board_dram_short
+{"wall_s": 1.053, "stop": {"kind": "AdmissionStop", "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== wrong_variant
+{"wall_s": 1.071, "stop": {"kind": "AdmissionStop", "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== fclk0_mismatch
+{"wall_s": 1.085, "stop": {"kind": "AdmissionStop", "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== clock_gated
+{"wall_s": 1.074, "stop": {"kind": "AdmissionStop", "why": "clock: the selected io PLL is not an eligible running source (PLL_RESET): no PL access"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== clock_slow
+{"wall_s": 1.079, "stop": {"kind": "AdmissionStop", "why": "clock: FCLK0's nominal rate is 25.0 MHz, not the pinned 50.0 MHz: no PL access"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== pll_powerdown
+{"wall_s": 1.096, "stop": {"kind": "AdmissionStop", "why": "clock: the selected io PLL is not an eligible running source (PLL_PWRDWN): no PL access"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== pll_bypass_force
+{"wall_s": 1.06, "stop": {"kind": "AdmissionStop", "why": "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_FORCE): no PL access"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== pll_bypass_qual
+{"wall_s": 1.09, "stop": {"kind": "AdmissionStop", "why": "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_QUAL with the boot pin's PLL_BYPASS sampled): no PL access"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== pll_unlocked
+{"wall_s": 1.085, "stop": {"kind": "AdmissionStop", "why": "clock: the selected io PLL is not an eligible running source (IO_PLL_LOCK clear): no PL access"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== no_role
+{"wall_s": 1.082, "stop": {"kind": "AdmissionStop", "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== wrong_boardid
+{"wall_s": 1.076, "stop": {"kind": "AdmissionStop", "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== role_reference
+{"wall_s": 1.061, "stop": {"kind": "AdmissionStop", "why": "identity: the board's role 'reference' is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== miner_uboot_break
+{"wall_s": 4.03, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== valid
+{"wall_s": 6.238, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== a5
+{"wall_s": 6.689, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== notary_refuses
+{"wall_s": 3.138, "stop": null, "opened": true, "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)", "verify_rc": 0, "expect_failures": []}
+== reply_corrupt
+{"wall_s": 4.22, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== reply_dropped_once
+{"wall_s": 4.196, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== replies_dropped
+{"wall_s": 3.158, "stop": null, "opened": true, "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)", "verify_rc": 0, "expect_failures": []}
+== silent_host
+{"wall_s": 3.04, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== garbage_command
+{"wall_s": 4.674, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== wrong_token
+{"wall_s": 3.893, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== stale_reply
+{"wall_s": 4.23, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== duplicate_tx
+{"wall_s": 3.875, "stop": null, "opened": true, "halted": "transaction 3: no observation sealed (the application refused the command: stale sequence)", "verify_rc": 0, "expect_failures": []}
+== after_stop_tx
+{"wall_s": 3.203, "stop": null, "opened": true, "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)", "verify_rc": 0, "expect_failures": []}
+== malformed_tx
+{"wall_s": 3.897, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== host_seq_gap
+{"wall_s": 4.154, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== bad_page
+{"wall_s": 1.453, "stop": null, "opened": false, "halted": "the session did not open: session_open: session_open.startup_readback_sha256: bad value ''; session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'; session_open: no startup readback group in the PCAP log before the first record; session_open: the executing side refused to open: the session ended: STOPPED: the identity page
+== sequence_cut
+{"wall_s": 2.606, "stop": null, "opened": true, "halted": "transaction 1: no observation sealed (the session ended: PROTOCOL: this side's line sequence is exhausted)", "verify_rc": 0, "expect_failures": []}
+== watchdog_fail
+{"wall_s": 1.44, "stop": null, "opened": false, "halted": "the session did not open: session_open: session_open.startup_readback_sha256: bad value ''; session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'; session_open: no startup readback group in the PCAP log before the first record; session_open: the executing side refused to open: the session ended: STOPPED: the watchdog could
+== pre_event_corrupt
+{"wall_s": 3.396, "stop": null, "opened": true, "halted": "transaction 2: no observation sealed (STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it))", "verify_rc": 0, "expect_failures": []}
+== interrupted_load
+{"wall_s": 1.137, "stop": {"kind": "TransportStop", "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== wrong_crc
+{"wall_s": 1.385, "stop": {"kind": "TransportStop", "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== md_garbage
+{"wall_s": 1.057, "stop": {"kind": "TransportStop", "why": "md.l 0xf8000170 1: 0 words parsed, not 1"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== corrupt_page
+{"wall_s": 1.447, "stop": {"kind": "SessionRefusal", "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)"}, "opened": false, "halted": "the session did not open: session_open: session_open.startup_readback_sha256: bad value ''; session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'; session_open: no startup readback group in the PCAP 
+== page_witness_fails
+{"wall_s": 1.429, "stop": {"kind": "TransportStop", "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== missed_autoboot
+{"wall_s": 5.079, "stop": {"kind": "TransportStop", "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== no_prompt
+{"wall_s": 5.092, "stop": {"kind": "TransportStop", "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"}, "opened": false, "halted": null, "verify_rc": 0, "expect_failures": []}
+== unknown_image
+{"wall_s": 4.448, "stop": {"kind": "SessionRefusal", "why": "the console was silent for 3.0 s while awaiting IDENT"}, "opened": false, "halted": "transport: the console was silent for 3.0 s while awaiting IDENT", "verify_rc": 0, "expect_failures": []}
+== silence_mid_session
+{"wall_s": 5.775, "stop": {"kind": "SessionRefusal", "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling"}, "opened": true, "halted": "transport: the console was silent for 3.0 s while awaiting CHUNK", "verify_rc": 0, "expect_failures": []}
+== reset_mid_session
+{"wall_s": 3.052, "stop": {"kind": "SessionRefusal", "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling"}, "opened": true, "halted": "transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)", "verify_rc
+== corrupt_chunk
+{"wall_s": 5.802, "stop": null, "opened": true, "halted": null, "verify_rc": 0, "expect_failures": []}
+== log_overflow
+{"wall_s": 3.175, "stop": {"kind": "SessionRefusal", "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling"}, "opened": true, "halted": "the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed", "verify_rc": 0, "e
+== devc_never
+{"wall_s": 7.456, "stop": {"kind": "SessionRefusal", "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling"}, "opened": true, "halted": "transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted)", "verify_rc": 0, "expect_failures": []}
+expectation failures: none

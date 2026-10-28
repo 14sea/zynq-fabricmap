@@ -1,0 +1,380 @@
+{
+  "runner_root": "/tmp/b4q_runner_v2q06mf_",
+  "ps_root": "/tmp/b4q_ps_8c84eg_l",
+  "runner": [
+    {
+      "name": "control_plane_only",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "image_not_pinned",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "board_not_permitted",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "board_dram_short",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "wrong_variant",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "fclk0_mismatch",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "clock_gated",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "clock_slow",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "no_role",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "wrong_boardid",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "role_reference",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "miner_uboot_break",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "valid",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "a5",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "notary_refuses",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "reply_corrupt",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "reply_dropped_once",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "replies_dropped",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "silent_host",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "garbage_command",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "wrong_token",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "stale_reply",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "duplicate_tx",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "after_stop_tx",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "malformed_tx",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "host_seq_gap",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "bad_page",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "sequence_cut",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "watchdog_fail",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "pre_event_corrupt",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "interrupted_load",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "wrong_crc",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "md_garbage",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "corrupt_page",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "page_witness_fails",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "missed_autoboot",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "no_prompt",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "unknown_image",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "silence_mid_session",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "reset_mid_session",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "corrupt_chunk",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "log_overflow",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    },
+    {
+      "name": "devc_never",
+      "verify_rc": 0,
+      "verify_agree": true,
+      "expect_failures": []
+    }
+  ],
+  "ps": [
+    {
+      "name": "valid",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "a5",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "notary_refuses",
+      "agree": true,
+      "clean": false,
+      "refused": null
+    },
+    {
+      "name": "reply_corrupt",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "reply_dropped_once",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "replies_dropped",
+      "agree": true,
+      "clean": false,
+      "refused": null
+    },
+    {
+      "name": "silent_host",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "garbage_command",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "wrong_token",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "stale_reply",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "duplicate_tx",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "after_stop_tx",
+      "agree": true,
+      "clean": false,
+      "refused": null
+    },
+    {
+      "name": "malformed_tx",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "host_seq_gap",
+      "agree": true,
+      "clean": true,
+      "refused": null
+    },
+    {
+      "name": "sequence_cut",
+      "agree": true,
+      "clean": false,
+      "refused": null
+    },
+    {
+      "name": "bad_page",
+      "agree": true,
+      "clean": false,
+      "refused": null
+    },
+    {
+      "name": "watchdog_fail",
+      "agree": true,
+      "clean": false,
+      "refused": null
+    },
+    {
+      "name": "pre_event_corrupt",
+      "agree": true,
+      "clean": false,
+      "refused": null
+    },
+    {
+      "name": "interrupt",
+      "agree": true,
+      "clean": false,
+      "refused": null
+    }
+  ]
+}

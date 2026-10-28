@@ -1,0 +1,38 @@
+{
+  "reviewed_head": "30c5ccbaaa3c9df2abb686de71e5d0f98f11c4fd",
+  "code_head": "972b63c6",
+  "previous_reviewed_head": "dad9e4de",
+  "verdict": "HOLD",
+  "utc": "2026-10-28T16:36:20.823333+00:00",
+  "tracked_changes_by_reviewer": false,
+  "physical_device_contact": false,
+  "production_seed_derivation": false,
+  "tests": {
+    "bench_prerequisite": 1,
+    "final_run": 109,
+    "result": "OK",
+    "exit": 0,
+    "seconds": 338.0,
+    "first_run": "FAILED (2 failures, 16 errors): owner clone lacked ignored pinned image; retained separately; copied exact image dependency and reran without code changes"
+  },
+  "fresh_e2e": {
+    "ps": 19,
+    "ps_agree": 19,
+    "runner": 38,
+    "runner_agree": 38,
+    "expectation_failures": 0,
+    "emulated": "valid control and module coverage; not a separate full 19-case independent rerun"
+  },
+  "mutants": "author 43-case log inspected, not independently rerun",
+  "image": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+  "image_build": "reused exact previous independently reproduced image; firmware unchanged in repair; no redundant image rebuild",
+  "root": "/tmp/owner_b4q_runner_repair_ogyqg5da",
+  "findings": [
+    "C1 phase-dependent runner verifier completeness / raw console coverage",
+    "C2 persistence barrier and accepted-TX bytes",
+    "C3 board identity/role, clock order, and actual transferred-image pin",
+    "C4 trusted physical-source selection"
+  ],
+  "final_canonical_porcelain": "",
+  "test_command": "python3 -B -m unittest tests.test_b4q_app tests.test_b4q_wire tests.test_b4q_session tests.test_b4q_runner tests.test_b4q_derive tests.test_b4q_emu tests.test_b4q_firmware tests.test_b4q_schema tests.test_b4q_view"
+}

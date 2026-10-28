@@ -8,7 +8,7 @@
    "kind": "new",
    "note": "host builds only (twin, host, xcheck) into the top-level ignored build/; no image.",
    "role": "build",
-   "sha256": "87b4ae7c595ec3c9db40a9a22f67361b2ef9716ce7def67d7e4dcda5f75de17a"
+   "sha256": "8a65c926f4a33787bc68a5fd2b3b4fff11fbd32eed2ac587e51dcab8015777b8"
   },
   "firmware/b4q/b4q_cmd.c": {
    "kind": "new",
@@ -87,7 +87,7 @@
    "base_sha256": "6d06bca4897192a04b9755c71f27190f022c12970a346efb3064b3735facfc50",
    "kind": "derived",
    "role": "the image build (B1's, re-pointed at the B4Q sources and the top-level build/)",
-   "sha256": "0ea019a8f1f23898da0049e9a6db93d9dde2a3e2d3111991de14bb2bb4598aee"
+   "sha256": "dac45118e9a441bcfa37fa59cbb9ee06159083335de20e030a416760a8fe1ce1"
   },
   "firmware/b4q/bsp/include/bspconfig.h": {
    "base": "firmware/b1/bsp/include/bspconfig.h",
@@ -133,17 +133,17 @@
   "firmware/b4q/target/b4q_app.c": {
    "kind": "new",
    "role": "the board application's session over the console / platform / HAL interfaces (pure: runs on the host harness and on the board)",
-   "sha256": "57591a4ccee6b961b9b4d35cefb7c51111cef204cf373921777ccb2a5042affc"
+   "sha256": "2b92449df848585c673642710255f09deac2054ffab68443def8d3e23df1231e"
   },
   "firmware/b4q/target/b4q_app.h": {
    "kind": "new",
    "role": "b4q_app.c's interface and bounds",
-   "sha256": "2427c6de8f7ac0ab700d1c4383b7477a64a37b63fc39f8c8368f8139629f1983"
+   "sha256": "f435ef2862a48f94558c30752ca30173f048a24d6f8ad44edb06bb1e7ee5363c"
   },
   "firmware/b4q/target/b4q_app_host.c": {
    "kind": "new",
    "role": "the host harness of the board application (MMIO on stdio, the console on inherited descriptors)",
-   "sha256": "6e373e6b9687e5bc0c0fa6c585ab30ab6edce5c7a2585d4e42ee4011b9232320"
+   "sha256": "d058e3e43d60c445b81ebc63dc44783c7dae6c4cfde79f7867708220192611e0"
   },
   "firmware/b4q/target/b4q_board_console.c": {
    "kind": "new",
@@ -153,12 +153,12 @@
   "firmware/b4q/target/b4q_board_hal.c": {
    "kind": "new",
    "role": "the MMIO half of the HAL on the board behind the allowlist",
-   "sha256": "450af9b9485a37f8d3837c03d1e526c6df06b8cb1494a4cbecf6766640a469dc"
+   "sha256": "ca86273b5a24edf9013779b73ae10a36582a058a234ddd702b6b258d14c33abe"
   },
   "firmware/b4q/target/b4q_board_main.c": {
    "kind": "new",
    "role": "the image's platform layer: MMU attributes, exception handlers, watchdog, halt (compiled, never board-run)",
-   "sha256": "efca46089a94091a1e5d3caadb2ec9e375546c26e3ef6a1c5b092b05bdc2b6d5"
+   "sha256": "58c26ec396ca51cd18b48d9142bdc54bc5a87a1bee49b0739e512169ef3148cd"
   },
   "firmware/b4q/target/b4q_console.h": {
    "kind": "new",
@@ -168,7 +168,7 @@
   "firmware/b4q/target/b4q_platform.h": {
    "kind": "new",
    "role": "the platform acts' interface (watchdog, kick, halt)",
-   "sha256": "a5af2ed223d1e85f026fd00854e5c4f973040f408189d693b636181a435775ac"
+   "sha256": "42ee4094508f3bbc8f3dc2ade2f9d22ef36dafbfefe0c1b455143c702d96a495"
   },
   "firmware/b4q/target/b4q_psmap.c": {
    "kind": "new",
@@ -180,6 +180,16 @@
    "role": "b4q_psmap.c's interface and the PS addresses",
    "sha256": "842676811f7c41a7874f5e3ec4cc8a5804aa15bd989b8eea97f7186a552abc29"
   },
+  "firmware/b4q/target/b4q_ring.c": {
+   "kind": "new",
+   "role": "the evidence log (pure): append-only 16-byte records in DDR, poll / run compression, the digest on demand, the pull (the runner unit)",
+   "sha256": "e033fad58899f2343f97926995598842eab0abd563969416b3d6e0ea11d3ead0"
+  },
+  "firmware/b4q/target/b4q_ring.h": {
+   "kind": "new",
+   "role": "b4q_ring.c's interface and record grammar",
+   "sha256": "5f8b6e1a39958170e1476f9ec00ff703929e0f7f7598fb1f039b39928af60753"
+  },
   "firmware/b4q/target/b4q_seqcut_twin.c": {
    "kind": "new",
    "role": "the sequence-cut twin: the harness with the line sequence cut to its limit inside a transaction (R2 of the fourth review; tests/test_b4q_app.py::test_r2)",
@@ -188,7 +198,7 @@
   "firmware/b4q/target/b4q_wait_twin.c": {
    "kind": "new",
    "role": "the receive-budget twin: the application's own waits under injected console fixtures (tests/test_b4q_app.py::test_r1)",
-   "sha256": "6f12d1e4f7d242004e4dd2acee13485cc3acc940d17e60acef77c3a855ec17e0"
+   "sha256": "2e8c3ff2d2210c901980fe4d0badf4939cecd5f982e72997156aa8cf5d3668a3"
   },
   "firmware/b4q/target/b4q_wire.c": {
    "base": "firmware/b1/p3_derive.c",

@@ -1,0 +1,38 @@
+
+
+U-Boot SPL 2026.04-rc5 (surrogate)
+
+U-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)
+
+CPU:   Zynq 7z010
+Silicon: v3.1
+Model: Ebang EBAZ4203 (surrogate)
+DRAM:  ECC disabled 512 MiB
+MMC:   mmc@e0100000: 0
+In:    serial@e0001000
+Out:   serial@e0001000
+Err:   serial@e0001000
+Hit any key to stop autoboot:  2 
+Zynq> printenv boardid
+boardid=F8B3
+Zynq> printenv role
+role=verify
+Zynq> md.l f8000170 1
+f8000170: 00200a00    .. .
+Zynq> md.l f8000100 1
+f8000100: 0001a000    ....
+Zynq> md.l f8000104 1
+f8000104: 00020000    ....
+Zynq> md.l f8000108 1
+f8000108: 0001e000    ....
+Zynq> md.l f800010c 1
+f800010c: 0000003f    ?...
+Zynq> md.l f800025c 1
+f800025c: 00000005    ....
+Zynq> md.l 43c02034 1
+43c02034: 42340001    ..4B
+Zynq> loady 02000000
+## Ready for binary (ymodem) download to 0x02000000 at 115200 bps...
+CCxyzModem - CRC mode, 0(SOH)/0(STX)/2(CAN) packets, 0 retries
+## Total Size = 0x00000000 = 0 Bytes
+Zynq> 

@@ -54,6 +54,18 @@ void b4q_plat_halt(void)
     for (;;) { }                     /* the session ended by name; an armed watchdog resets the PS within its period */
 }
 
+#define B4Q_RING_ADDR 0x10800000u    /* the evidence log: 16 MiB of DDR (0x10800000 .. 0x11800000), strongly-ordered non-cacheable (B1's ring region, widened) */
+#define B4Q_RING_BYTES (16u * 1024u * 1024u)
+
+uint8_t *b4q_plat_ring_base(uint32_t *capacity) { *capacity = B4Q_RING_BYTES; return (uint8_t *)B4Q_RING_ADDR; }
+
+uint32_t b4q_plat_tick(void)
+{
+    XTime t;
+    XTime_GetTime(&t);
+    return (uint32_t)t;              /* the global timer's low word: an ordering stamp, not a measured time */
+}
+
 static void on_data_abort(void *data)
 {
     uint32_t dfsr = mfcp(XREG_CP15_DATA_FAULT_STATUS), dfar = mfcp(XREG_CP15_DATA_FAULT_ADDRESS);
@@ -83,6 +95,10 @@ int main(void)
     Xil_SetTlbAttributes(B4Q_PSMAP_DST_BUF, B4Q_NONCACHEABLE);
     Xil_SetTlbAttributes(B4Q_PSMAP_WR_BUF, B4Q_NONCACHEABLE);
     Xil_SetTlbAttributes(B4Q_PSMAP_PAGE_ADDR, B4Q_NONCACHEABLE);
+    {
+        uint32_t i;
+        for (i = 0; i < B4Q_RING_BYTES; i += 0x100000u) Xil_SetTlbAttributes(B4Q_RING_ADDR + i, B4Q_NONCACHEABLE);
+    }
     XTime_SetTime(0u);
     Xil_ExceptionInit();
     Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_DATA_ABORT_INT, on_data_abort, NULL);

@@ -22,8 +22,8 @@ wiretwin: $(BUILD)/b4q_wire_twin
 waittwin: $(BUILD)/b4q_wait_twin
 seqcut: $(BUILD)/b4q_seqcut_twin
 
-APP_SRCS = target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c b4q_tx.c b4q_derive.c b4q_cmd.c
-APP_HDRS = target/b4q_app.h target/b4q_wire.h target/b4q_psmap.h target/b4q_console.h target/b4q_platform.h b4q_tx.h b4q_hal.h b4q_derive.h b4q_data.h b4q_regmap.h b4q_cmd.h
+APP_SRCS = target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c target/b4q_ring.c b4q_tx.c b4q_derive.c b4q_cmd.c
+APP_HDRS = target/b4q_app.h target/b4q_wire.h target/b4q_psmap.h target/b4q_ring.h target/b4q_console.h target/b4q_platform.h b4q_tx.h b4q_hal.h b4q_derive.h b4q_data.h b4q_regmap.h b4q_cmd.h
 # the host harness waits in COUNTS of console polls like the board; the board's counts are the defaults in b4q_app.h, the harness's
 # are small so that a silent host is a fast test, never a measured time on either
 APP_HOST_BOUNDS = -DB4Q_APP_IDLE_POLLS=400000u -DB4Q_APP_REPLY_POLLS=200000u -DB4Q_APP_HB_EVERY=50000u
@@ -49,7 +49,7 @@ xcheck:
 	@if [ -x "$(XGCC)" ]; then \
 	  $(XGCC) -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -std=c99 -O2 -Wall -Wextra -Werror -c b4q_derive.c -o $(BUILD)/xcheck/b4q_derive.o && \
 	  $(XGCC) -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -std=c99 -O2 -Wall -Wextra -Werror -c b4q_tx.c -o $(BUILD)/xcheck/b4q_tx.o && \
-	  for u in b4q_cmd.c target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c; do $(XGCC) -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -std=c99 -O2 -Wall -Wextra -Werror -I. -Itarget -c $$u -o $(BUILD)/xcheck/$$(basename $$u).o || exit 1; done && \
+	  for u in b4q_cmd.c target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c target/b4q_ring.c; do $(XGCC) -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -std=c99 -O2 -Wall -Wextra -Werror -I. -Itarget -c $$u -o $(BUILD)/xcheck/$$(basename $$u).o || exit 1; done && \
 	  echo "xcheck: b4q_derive.c, b4q_tx.c, b4q_cmd.c and the target's pure units compile for cortex-a9 (objects only; the image is bsp/build.sh's)"; \
 	else echo "xcheck: cross toolchain absent at $(XGCC)"; exit 2; fi
 
@@ -60,9 +60,9 @@ clean:
 # stale replies, an overlong line, a flood of malformed lines), counting every readiness poll — tests/test_b4q_app.py::Bounds
 $(BUILD)/b4q_wait_twin: target/b4q_wait_twin.c target/b4q_app.c $(APP_SRCS) $(APP_HDRS)
 	@mkdir -p $(BUILD)
-	$(CC) $(CFLAGS) -Wno-unused-function -DB4Q_APP_IDLE_POLLS=20000u -DB4Q_APP_REPLY_POLLS=10000u -DB4Q_APP_HB_EVERY=2000u -I. -Itarget -o $@ target/b4q_wait_twin.c target/b4q_wire.c target/b4q_psmap.c b4q_tx.c b4q_derive.c b4q_cmd.c
+	$(CC) $(CFLAGS) -Wno-unused-function -DB4Q_APP_IDLE_POLLS=20000u -DB4Q_APP_REPLY_POLLS=10000u -DB4Q_APP_HB_EVERY=2000u -I. -Itarget -o $@ target/b4q_wait_twin.c target/b4q_wire.c target/b4q_psmap.c target/b4q_ring.c b4q_tx.c b4q_derive.c b4q_cmd.c
 
 # the sequence-cut twin: the harness with the line sequence cut to its limit inside a transaction (R2) — tests/test_b4q_app.py
 $(BUILD)/b4q_seqcut_twin: target/b4q_seqcut_twin.c target/b4q_app.c target/b4q_app_host.c $(APP_SRCS) $(APP_HDRS)
 	@mkdir -p $(BUILD)
-	$(CC) $(CFLAGS) -Wno-unused-function -D_POSIX_C_SOURCE=200809L $(APP_HOST_BOUNDS) -I. -Itarget -o $@ target/b4q_seqcut_twin.c target/b4q_wire.c target/b4q_psmap.c b4q_tx.c b4q_derive.c b4q_cmd.c
+	$(CC) $(CFLAGS) -Wno-unused-function -D_POSIX_C_SOURCE=200809L $(APP_HOST_BOUNDS) -I. -Itarget -o $@ target/b4q_seqcut_twin.c target/b4q_wire.c target/b4q_psmap.c target/b4q_ring.c b4q_tx.c b4q_derive.c b4q_cmd.c

@@ -7,6 +7,7 @@
 #include "b4q_hal.h"
 #include "b4q_tx.h"
 #include "b4q_cmd.h"
+#include "b4q_ring.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -20,7 +21,23 @@ static struct {
     int have_host_seq;
     const char *sign_why;            /* why the last b4q_sign returned -1 (reported on the EV line) */
     int terminal;                    /* C4: the line sequence reached B4Q_APP_SEQ_LIMIT — the END PROTOCOL went out with that sequence; nothing is emitted or run after it */
+    b4q_ring ring;                   /* the evidence log */
+    int ring_ready;
 } S;
+
+struct b4q_ring *b4q_app_ring(void) { return &S.ring; }
+void b4q_app_log_access(uint8_t kind, uint8_t op, uint32_t addr, uint32_t data, int refused)
+{
+    if (S.ring_ready) b4q_ring_access(&S.ring, kind, op, addr, data, refused, b4q_plat_tick());
+}
+
+static void hex32(const uint8_t *d, char out[65])
+{
+    static const char hx[] = "0123456789abcdef";
+    int i;
+    for (i = 0; i < 32; i++) { out[2 * i] = hx[d[i] >> 4]; out[2 * i + 1] = hx[d[i] & 15]; }
+    out[64] = 0;
+}
 
 static void end_json(char *buf, size_t max);
 
@@ -70,11 +87,15 @@ static void emit_text(const char *type, const char *text) { emit_raw(type, (cons
 static void end_json(char *buf, size_t max)
 {
     static const char *const NAME[] = {"NONE", "COMPLETED", "STOPPED", "PROTOCOL", "ABORT"};
+    uint8_t dg[32]; char dhex[65];
+    if (S.ring_ready) { b4q_ring_digest(&S.ring, dg); hex32(dg, dhex); } else strcpy(dhex, "");
     snprintf(buf, max, "{\"kind\": \"%s\", \"reason\": \"%s\", \"lines\": %lu, \"hb\": %lu, \"nacks\": %lu, \"sign_requests\": %lu, \"sign_replies\": %lu, "
-             "\"transactions\": %lu, \"kicks\": %lu, \"flushed\": %lu, \"stale_frames\": %lu, \"refused_tx\": %lu, \"watchdog_armed\": %d, \"opened\": %d, \"halted\": \"%s\"}",
+             "\"transactions\": %lu, \"kicks\": %lu, \"flushed\": %lu, \"stale_frames\": %lu, \"refused_tx\": %lu, \"watchdog_armed\": %d, \"opened\": %d, \"halted\": \"%s\", "
+             "\"log\": %lu, \"log_overflow\": %d, \"log_records\": %lu, \"log_sha256\": \"%s\"}",
              NAME[S.sum.end], S.sum.reason ? S.sum.reason : "", (unsigned long)S.sum.lines, (unsigned long)S.sum.hb, (unsigned long)S.sum.nacks,
              (unsigned long)S.sum.sign_requests, (unsigned long)S.sum.sign_replies, (unsigned long)S.sum.transactions, (unsigned long)S.sum.kicks_requested,
-             (unsigned long)S.sum.flushed, (unsigned long)S.sum.stale_frames, (unsigned long)S.sum.refused_tx, S.sum.watchdog_armed, S.sum.opened, S.sum.halted ? S.sum.halted : "");
+             (unsigned long)S.sum.flushed, (unsigned long)S.sum.stale_frames, (unsigned long)S.sum.refused_tx, S.sum.watchdog_armed, S.sum.opened, S.sum.halted ? S.sum.halted : "",
+             (unsigned long)S.ring.used, S.ring.overflow, (unsigned long)S.ring.records, dhex);
 }
 
 static void emit_end(b4q_end_kind kind, const char *reason)
@@ -185,7 +206,7 @@ int b4q_sign(const char *genome_hex, const char *nonce_hex, uint32_t words[24])
         emit_text("EV", g_json);
         return -1;
     }
-    snprintf(req, sizeof req, "{\"genome\": \"%s\", \"nonce\": \"%s\", \"req\": %lu}", genome_hex, nonce_hex, (unsigned long)req_seq);
+    snprintf(req, sizeof req, "{\"genome\": \"%s\", \"nonce\": \"%s\", \"req\": %lu, \"log\": %lu}", genome_hex, nonce_hex, (unsigned long)req_seq, (unsigned long)S.ring.used);
     for (attempt = 0; attempt < B4Q_APP_SIGN_ATTEMPTS; attempt++) {
         b4q_wire_frame_t f;
         b4q_budget b = {B4Q_APP_REPLY_POLLS, 0};         /* one budget for the whole attempt: every poll, every line, every byte */
@@ -214,7 +235,15 @@ int b4q_sign(const char *genome_hex, const char *nonce_hex, uint32_t words[24])
     return -1;
 }
 
-void b4q_emit(const char *line) { emit_text("EV", line); }
+void b4q_emit(const char *line)
+{
+    if (strncmp(line, "MARK ", 5) == 0 && S.ring_ready) {
+        uint32_t id = strcmp(line + 5, "transaction_begin") == 0 ? B4Q_RING_MARK_TX_BEGIN : strcmp(line + 5, "P6_sealed") == 0 ? B4Q_RING_MARK_P6_SEALED
+                      : strcmp(line + 5, "transaction_end") == 0 ? B4Q_RING_MARK_TX_END : 0u;
+        if (id) b4q_ring_mark(&S.ring, id, b4q_plat_tick());
+    }
+    emit_text("EV", line);
+}
 
 /* ---------------------------------------------------------------- the session ----- */
 static int read_page(void)
@@ -234,18 +263,51 @@ static void ident(const b4q_open_result *o)
     if (b4q_open_json(o, open_json, sizeof open_json) == 0) strcpy(open_json, "{}");
     snprintf(g_json, sizeof g_json,
              "{\"protocol\": \"%s\", \"token\": \"%s\", \"uboot_epoch\": %lu, \"app_image_sha_lo32\": %lu, \"carrier_sha256\": \"%s\", \"flags\": %lu, "
-             "\"page_nonce_seen\": \"%016llx\", \"page_status_seen\": %lu, \"nonce_echo_equal\": %d, \"watchdog\": \"%s\", \"open\": %s}",
+             "\"page_nonce_seen\": \"%016llx\", \"page_status_seen\": %lu, \"nonce_echo_equal\": %d, \"watchdog\": \"%s\", \"log\": %lu, \"log_capacity\": %lu, \"open\": %s}",
              B4Q_APP_PROTOCOL, S.page.token, (unsigned long)S.page.uboot_epoch, (unsigned long)S.page.app_image_sha_lo32, S.page.carrier_sha256, (unsigned long)S.page.flags,
              (unsigned long long)S.page.nonce_seen, (unsigned long)S.page.status_seen, S.page.nonce_seen == o->nonce,
-             S.sum.watchdog_armed ? "armed" : ((S.page.flags & B4Q_PAGE_FLAG_WATCHDOG) ? "requested" : "off"), open_json);
+             S.sum.watchdog_armed ? "armed" : ((S.page.flags & B4Q_PAGE_FLAG_WATCHDOG) ? "requested" : "off"), (unsigned long)S.ring.used, (unsigned long)S.ring.capacity, open_json);
     emit_text("IDENT", g_json);
 }
 
 static b4q_tx_command g_cmd;
 
+/* the export commands (protocol v2): RINGINFO -> RING (the log's position, capacity, overflow flag and digest); "PULL <offset> <n>" ->
+ * CHUNK (the bytes, base64url, re-askable). 3 answered; -2 a malformed / out-of-log PULL NACKed by name; 0 not an export command.
+ * Answered in a command wait AND after the END (export_epilogue): the log of a session that ended is still the host's to pull. */
+static int answer_export(const b4q_wire_frame_t *f)
+{
+    if (strcmp(f->type, "RINGINFO") == 0) {
+        uint8_t dg[32]; char dhex[65];
+        b4q_ring_digest(&S.ring, dg); hex32(dg, dhex);
+        snprintf(g_json, sizeof g_json, "RING %lu %lu %d %s", (unsigned long)S.ring.used, (unsigned long)S.ring.capacity, S.ring.overflow, dhex);
+        emit_text("RING", g_json);
+        return 3;
+    }
+    if (strcmp(f->type, "PULL") == 0) {
+        unsigned long off = 0, n = 0;
+        static uint8_t raw[B4Q_APP_PULL_MAX];
+        static char b64[B4Q_APP_PULL_MAX * 4 / 3 + 8];
+        const char *p = g_plain; unsigned long long v;
+        if (b4q_cmd_u32(&p, 10, 0xFFFFFFFFull, &v) != 0 || *p != ' ') { emit_text("NACK", "malformed PULL"); S.sum.nacks++; return -2; }
+        off = (unsigned long)v; while (*p == ' ') p++;
+        if (b4q_cmd_u32(&p, 10, B4Q_APP_PULL_MAX, &v) != 0 || v == 0) { emit_text("NACK", "malformed PULL"); S.sum.nacks++; return -2; }
+        n = (unsigned long)v;
+        {
+            uint32_t got = b4q_ring_read(&S.ring, (uint32_t)off, (uint32_t)n, raw);
+            if (got == 0) { emit_text("NACK", "PULL outside the log"); S.sum.nacks++; return -2; }
+            b4q_base64url(raw, got, b64);
+            snprintf(g_json, sizeof g_json, "CHUNK %lu %s", off, b64);
+            emit_text("CHUNK", g_json);
+            return 3;
+        }
+    }
+    return 0;
+}
+
 /* the wait for the next command on ONE budget: a frame that is not a command (another type, a malformed TX, a TX on a halted
  * session) is NACKed by name and the wait continues on the same budget; at most B4Q_APP_MAX_NACKS such refusals per wait.
- * 1 a TX parsed into g_cmd on a session that may run it; 2 QUIT; 0 the budget is spent; -1 the session must end PROTOCOL */
+ * 1 a TX parsed into g_cmd on a session that may run it; 2 QUIT; 3 an export command answered; 0 the budget is spent; -1 the session must end PROTOCOL */
 static int wait_command(b4q_budget *b, b4q_wire_frame_t *f)
 {
     uint32_t refusals = 0;
@@ -253,8 +315,14 @@ static int wait_command(b4q_budget *b, b4q_wire_frame_t *f)
         int rc = recv_frame(b, f);
         if (rc <= 0) return rc;
         if (strcmp(f->type, "QUIT") == 0) return 2;
+        rc = answer_export(f);
+        if (rc == 3) return 3;
+        if (rc == -2) { if (++refusals > B4Q_APP_MAX_NACKS) return -1; continue; }
         if (strcmp(f->type, "TX") == 0) {
-            if (S.sum.halted) {                          /* R3: nothing further is run or signed after a transaction that did not close */
+            if (S.ring.overflow) {                       /* the evidence log is full: nothing further is admitted (a named stop, never silent loss) */
+                emit_text("NACK", "halted: the evidence log is full: nothing further is admitted"); S.sum.nacks++; S.sum.refused_tx++;
+                if (!S.sum.halted) S.sum.halted = "the evidence log is full";
+            } else if (S.sum.halted) {                   /* R3: nothing further is run or signed after a transaction that did not close */
                 snprintf(g_json, sizeof g_json, "halted: %s: nothing further is signed without a ruling", S.sum.halted);
                 emit_text("NACK", g_json); S.sum.nacks++; S.sum.refused_tx++;
             } else if (b4q_parse_tx(g_plain, &g_cmd) != 0) {
@@ -265,12 +333,52 @@ static int wait_command(b4q_budget *b, b4q_wire_frame_t *f)
     }
 }
 
+/* after the END (one that is not the terminal, sequence-exhausted one): the EXPORT EPILOGUE — the host may still pull the evidence
+ * log of the session that ended (its tail holds the stop's own events). RINGINFO / PULL are answered, QUIT ends the epilogue, any
+ * other frame is NACKed "ended: export only" (nothing runs, nothing is signed, no effect: the HAL refuses writes after the END); one
+ * budget per wait, renewed after each answered export command; a spent budget or too many refusals ends it silently — the END
+ * already went out and no second END is ever emitted. */
+static void export_epilogue(void)
+{
+    for (;;) {
+        b4q_wire_frame_t f;
+        b4q_budget b = {B4Q_APP_IDLE_POLLS, 0};
+        uint32_t refusals = 0;
+        for (;;) {
+            int rc;
+            if (S.terminal) return;
+            rc = recv_frame(&b, &f);
+            if (rc <= 0) return;
+            if (strcmp(f.type, "QUIT") == 0) return;
+            rc = answer_export(&f);
+            if (rc == 3) break;                          /* answered: the next wait has its own budget */
+            if (rc == 0) { emit_text("NACK", "ended: export only"); S.sum.nacks++; }
+            if (++refusals > B4Q_APP_MAX_NACKS) return;
+        }
+    }
+}
+
+static void run_session(void);
+
 void b4q_app_run(void)
+{
+    run_session();
+    if (S.sum.end != B4Q_END_NONE && !S.terminal) export_epilogue();
+}
+
+static void run_session(void)
 {
     static b4q_tx_result r;
     b4q_open_result o;
     memset(&S, 0, sizeof S);
     strcpy(S.token, B4Q_WIRE_ZERO_TOKEN);
+    {
+        uint32_t cap = 0;
+        uint8_t *base = b4q_plat_ring_base(&cap);
+        if (base && cap >= 64u * B4Q_RING_RECORD) { b4q_ring_init(&S.ring, base, cap); S.ring_ready = 1; }
+    }
+    if (!S.ring_ready) { emit_end(B4Q_END_STOPPED, "no evidence log memory: nothing is observed without it"); return; }
+    b4q_ring_mark(&S.ring, B4Q_RING_MARK_OPEN, b4q_plat_tick());
     if (read_page() != 0) { emit_end(B4Q_END_STOPPED, "the identity page does not parse (magic / layout / checksum / reserved)"); return; }
     S.sum.page_ok = 1;
     strcpy(S.token, S.page.token);
@@ -293,12 +401,19 @@ void b4q_app_run(void)
         if (rc == 0) { emit_end(B4Q_END_STOPPED, "no host command within the idle bound"); return; }
         if (rc < 0) { emit_end(B4Q_END_PROTOCOL, "the console produced only malformed or unknown lines"); return; }
         if (rc == 2) { emit_end(B4Q_END_COMPLETED, "the host closed the session"); return; }
+        if (rc == 3) continue;                           /* a RINGINFO / PULL answered: the next command wait (its own budget) */
         /* rc == 1: a TX that parsed, on a session that may run it */
         S.sum.transactions++;
         b4q_transaction(g_cmd.genome, g_cmd.steps, g_cmd.n_steps, g_cmd.kind, g_cmd.task.n ? &g_cmd.task : NULL, &r);
         if (r.status != 0) S.sum.halted = r.reason ? r.reason : "the transaction did not close";
         if (S.terminal) return;                          /* the sequence ran out inside the transaction: its END went out, no RESULT follows */
-        if (b4q_tx_json(&r, g_json, sizeof g_json) == 0) { emit_end(B4Q_END_PROTOCOL, "a RESULT did not fit its line"); return; }
+        {
+            size_t n = b4q_tx_json(&r, g_json, sizeof g_json);
+            char tail[48];
+            if (n == 0 || n + 40 >= sizeof g_json) { emit_end(B4Q_END_PROTOCOL, "a RESULT did not fit its line"); return; }
+            snprintf(tail, sizeof tail, ", \"log\": %lu}", (unsigned long)S.ring.used);
+            strcpy(g_json + n - 1, tail);                /* the log position at the result, inside the object */
+        }
         emit_text("RESULT", g_json);
     }
 }

@@ -1,0 +1,112 @@
+{
+  "baseline": {
+    "exit": 0,
+    "agree": true,
+    "clean": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": [],
+    "runner": [],
+    "control_plane": null
+  },
+  "load_at_different_address": {
+    "exit": 1,
+    "agree": false,
+    "clean": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "runner: state: the load / crc / go / start addresses are not one address bound to the context: context=0x02000000, go=0x02000000, loady=0x04000000, crc_start=0x04000000, started_at=0x02000000"
+    ],
+    "runner": [
+      "state: the load / crc / go / start addresses are not one address bound to the context: context=0x02000000, go=0x02000000, loady=0x04000000, crc_start=0x04000000, started_at=0x02000000"
+    ],
+    "control_plane": null
+  },
+  "crc_false_but_executed": {
+    "exit": 1,
+    "agree": false,
+    "clean": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "runner: state: `go` was issued although the load witness is not a complete, equal transfer of the pinned image (execution after a failed or missing prerequisite)"
+    ],
+    "runner": [
+      "state: `go` was issued although the load witness is not a complete, equal transfer of the pinned image (execution after a failed or missing prerequisite)"
+    ],
+    "control_plane": null
+  },
+  "board_256_but_executed": {
+    "exit": 1,
+    "agree": false,
+    "clean": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "runner: state: `go` was issued although admission.ok is not true; the board class (model / DRAM) does not admit this image (execution after a failed or missing prerequisite)"
+    ],
+    "runner": [
+      "state: `go` was issued although admission.ok is not true; the board class (model / DRAM) does not admit this image (execution after a failed or missing prerequisite)"
+    ],
+    "control_plane": null
+  },
+  "missing_admission": {
+    "exit": 1,
+    "agree": false,
+    "clean": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "runner: state: `go` was issued although no admission recorded (execution after a failed or missing prerequisite)"
+    ],
+    "runner": [
+      "state: `go` was issued although no admission recorded (execution after a failed or missing prerequisite)"
+    ],
+    "control_plane": null
+  },
+  "null_context_pin": {
+    "exit": 1,
+    "agree": false,
+    "clean": false,
+    "refused": "runner archive: uboot.json.context.image_sha256: not a str",
+    "verifier_error": null,
+    "session": [],
+    "runner": null,
+    "control_plane": null
+  },
+  "extra_rx_frame": {
+    "exit": 1,
+    "agree": false,
+    "clean": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "runner: console accounting: the received stream after `go` holds 215 line(s), the retained console 214 board line(s); they differ at line 1: stream b'B4Q1 END 212 17a53e040209d83a3136520b38ed1912 eyJr'"
+    ],
+    "runner": [
+      "console accounting: the received stream after `go` holds 215 line(s), the retained console 214 board line(s); they differ at line 1: stream b'B4Q1 END 212 17a53e040209d83a3136520b38ed1912 eyJr'"
+    ],
+    "control_plane": null
+  },
+  "unknown_stop": {
+    "exit": 1,
+    "agree": false,
+    "clean": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [
+      "runner: no session: the named stop (OWNER INVENTED STOP WITH NO RAW WITNESS\u2026) is of a class this verifier cannot demonstrate from the streams: unverified"
+    ],
+    "runner": [
+      "no session: the named stop (OWNER INVENTED STOP WITH NO RAW WITNESS\u2026) is of a class this verifier cannot demonstrate from the streams: unverified"
+    ],
+    "control_plane": {
+      "phase": "stopped",
+      "stop": {
+        "why": "OWNER INVENTED STOP WITH NO RAW WITNESS",
+        "demonstrated": null
+      }
+    }
+  }
+}

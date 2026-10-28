@@ -58,6 +58,9 @@ char b4q_con_getc(void)
 
 int b4q_con_rx_flush(void) { enabled = 0; rp = rn = 0; return 0; }
 int b4q_plat_watchdog_start(void) { return 0; }
+static uint8_t g_ring_mem[65536];
+uint8_t *b4q_plat_ring_base(uint32_t *capacity) { *capacity = sizeof g_ring_mem; return g_ring_mem; }
+uint32_t b4q_plat_tick(void) { static uint32_t t; return ++t; }
 void b4q_plat_kick(void) { }
 void b4q_plat_halt(void) { exit(99); }
 uint32_t b4q_rd32(uint32_t a, uint32_t *resp) { (void)a; *resp = B4Q_RESP_SLVERR; return 0; }

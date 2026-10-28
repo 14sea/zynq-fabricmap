@@ -1,0 +1,139 @@
+{
+ "dir": "/home/test/zynq_fabricmap/build/b4q_runner_evidence/wrong_crc",
+ "session": [],
+ "transactions": [],
+ "a7": {
+  "findings": []
+ },
+ "agree": true,
+ "refused": null,
+ "runner": {
+  "findings": [],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "stopped",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "boardid_ok": true,
+    "role_ok": true,
+    "prefix_end": 740
+   },
+   "clock": {
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
+     "srcsel": 0,
+     "pll": "io",
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
+    },
+    "ok": true,
+    "prefix_end": 740
+   },
+   "variant": "42340001",
+   "image": {
+    "transferred_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "bytes": 98324,
+    "host_crc32": "f5d2dd33",
+    "ymodem": {
+     "name": "b4q_app_v2.bin",
+     "size": 98324,
+     "blocks": 97,
+     "end": 100106
+    },
+    "total": 98324,
+    "device_crc": {
+     "range": [
+      "02000000",
+      "02018013"
+     ],
+     "value": "f5d2dd32"
+    },
+    "equal": false
+   }
+  },
+  "stop": {
+   "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)",
+   "demonstrated": true
+  }
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
+ "chain": [],
+ "qualification": {
+  "findings": []
+ },
+ "control_plane": {
+  "phase": "stopped",
+  "stop": {
+   "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)",
+   "demonstrated": true
+  }
+ },
+ "clean": false
+}

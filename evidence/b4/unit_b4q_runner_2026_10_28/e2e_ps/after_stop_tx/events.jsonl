@@ -1,0 +1,13 @@
+{"i": 0, "line": "EV open startup_readback=e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421 "}
+{"i": 8, "line": "MARK transaction_begin"}
+{"i": 8, "line": "EV P2 commit=ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7 pre_event=ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7"}
+{"i": 8, "line": "EV P4 post_event=ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7 "}
+{"i": 8, "line": "MARK P6_sealed"}
+{"i": 8, "line": "EV P8 base_readback=ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7 "}
+{"i": 8, "line": "MARK transaction_end"}
+{"i": 93, "line": "MARK transaction_begin"}
+{"i": 93, "line": "EV sign: refused: 61 the bench notary refuses this genome (a configured refusal)"}
+{"i": 93, "line": "MARK transaction_end"}
+{"i": 97, "line": "NACK halted: STOP_SIGN: the notary refused the candidate: nothing further is signed without a ruling"}
+{"i": 97, "line": "END {\"kind\": \"COMPLETED\", \"reason\": \"the host closed the session\", \"lines\": 68, \"hb\": 2, \"nacks\": 1, \"sign_requests\": 2, \"sign_replies\": 2, \"transactions\": 2, \"kicks\": 68, \"flushed\": 0, \"stale_frames\": 0, \"refused_tx\": 1, \"watchdog_armed\": 1, \"opened\": 1, \"halted\": \"STOP_SIGN: the notary refused the candidate\", \"log\": 35168, \"log_overflow\": 0, \"log_records\": 2198, \"log_sha256\": \"7f6e0f3de62b81738c714dcdb5762dd38085c4c87844a438276a1b78e5d7e419\"}"}
+{"i": 97, "line": "HALT kicks=70"}

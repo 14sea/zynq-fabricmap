@@ -1,0 +1,127 @@
+{
+  "clock_mismatch": {
+    "stop": {
+      "kind": "AdmissionStop",
+      "why": "clock: FPGA0_CLK_CTRL 0x00100a00 is not the expected 0x00200a00"
+    },
+    "phase": "stopped",
+    "commands": "\rmd.l 43c02034 1\rmd.l f8000170 1\r",
+    "admission": {
+      "image": {
+        "file": "build/b4q_image/b4q_app_v2.bin",
+        "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+        "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+        "pin_source": "explicit",
+        "equal": true
+      },
+      "board": {
+        "model": "Ebang EBAZ4203 (fixture)",
+        "dram_mib": 512,
+        "permitted_models": [
+          "Ebang EBAZ4203"
+        ],
+        "dram_min_mib": 512,
+        "fixture": {
+          "profile": "pty-surrogate",
+          "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+        },
+        "model_ok": true,
+        "dram_ok": true
+      },
+      "carrier": {
+        "variant_addr": "0x43c02034",
+        "variant": "42340001",
+        "expected": "42340001",
+        "equal": true
+      },
+      "fclk0": {
+        "addr": "0xf8000170",
+        "ctrl": "00100a00",
+        "expected": "00200a00",
+        "held": true,
+        "equal": false
+      },
+      "ok": false
+    }
+  },
+  "reference_role": {
+    "stop": null,
+    "phase": "admitted",
+    "commands": "\rmd.l 43c02034 1\rmd.l f8000170 1\r",
+    "admission": {
+      "image": {
+        "file": "build/b4q_image/b4q_app_v2.bin",
+        "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+        "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+        "pin_source": "explicit",
+        "equal": true
+      },
+      "board": {
+        "model": "Ebang EBAZ4203 (fixture)",
+        "dram_mib": 512,
+        "permitted_models": [
+          "Ebang EBAZ4203"
+        ],
+        "dram_min_mib": 512,
+        "fixture": {
+          "profile": "pty-surrogate",
+          "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+        },
+        "model_ok": true,
+        "dram_ok": true
+      },
+      "carrier": {
+        "variant_addr": "0x43c02034",
+        "variant": "42340001",
+        "expected": "42340001",
+        "equal": true
+      },
+      "fclk0": {
+        "addr": "0xf8000170",
+        "ctrl": "00200a00",
+        "expected": null,
+        "held": false,
+        "equal": null
+      },
+      "ok": true
+    }
+  },
+  "pre_go_persist_failure": {
+    "outcome": "returned normally",
+    "go_calls": [
+      33554432
+    ],
+    "phase": "application",
+    "stops": [
+      {
+        "t": 1793205040.84,
+        "why": "persist: [Errno 28] injected full filesystem",
+        "kind": "OSError"
+      },
+      {
+        "t": 1793205040.84,
+        "why": "persist: [Errno 28] injected full filesystem",
+        "kind": "OSError"
+      }
+    ],
+    "uboot_exists": false
+  },
+  "partial_write_tx_commitment": {
+    "outcome": "OSError: [Errno 5] injected tty write error",
+    "accepted_bytes": "go",
+    "recorded_tx": "go 02000000\r",
+    "os_write_calls": [
+      "go 02000000\r",
+      " 02000000\r"
+    ]
+  },
+  "image_changed_after_admission": {
+    "pinned_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "transferred_sha256": "9755d088350b257b21c83fe360643496c4ee4602c9a4aceb46510f6bbbfec239",
+    "transferred_bytes": 70,
+    "go_calls": [
+      33554432
+    ],
+    "load_equal": true
+  }
+}

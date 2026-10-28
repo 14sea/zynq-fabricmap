@@ -1,0 +1,75 @@
+
+
+U-Boot SPL 2026.04-rc5 (surrogate)
+
+U-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)
+
+CPU:   Zynq 7z010
+Silicon: v3.1
+Model: Ebang EBAZ4203 (surrogate)
+DRAM:  ECC disabled 512 MiB
+MMC:   mmc@e0100000: 0
+In:    serial@e0001000
+Out:   serial@e0001000
+Err:   serial@e0001000
+Hit any key to stop autoboot:  2 
+Zynq> printenv boardid
+boardid=F8B3
+Zynq> printenv role
+role=verify
+Zynq> md.l f8000170 1
+f8000170: 00200a00    .. .
+Zynq> md.l f8000100 1
+f8000100: 0001a000    ....
+Zynq> md.l f8000104 1
+f8000104: 00020000    ....
+Zynq> md.l f8000108 1
+f8000108: 0001e000    ....
+Zynq> md.l f800010c 1
+f800010c: 0000003f    ?...
+Zynq> md.l f800025c 1
+f800025c: 00000005    ....
+Zynq> md.l 43c02034 1
+43c02034: 42340001    ..4B
+Zynq> loady 02000000
+## Ready for binary (ymodem) download to 0x02000000 at 115200 bps...
+CCCxyzModem - CRC mode, 0(SOH)/97(STX)/0(CAN) packets, 0 retries
+## Total Size = 0x00018014 = 98324 Bytes
+Zynq> crc32 02000000 18014
+crc32 for 02000000 ... 02018013 ==> f5d2dd33
+Zynq> md.l 43c0202c 1
+43c0202c: 7f4a7c15    .|J.
+Zynq> md.l 43c02030 1
+43c02030: 9e3779b9    .y7.
+Zynq> mw.l 10440000 42345149 1
+Zynq> mw.l 10440004 00000001 1
+Zynq> mw.l 10440008 265a729e 1
+Zynq> mw.l 1044000c 9a196336 1
+Zynq> mw.l 10440010 d0d44277 1
+Zynq> mw.l 10440014 fb42cc1e 1
+Zynq> mw.l 10440018 6553f100 1
+Zynq> mw.l 1044001c 4d989ee8 1
+Zynq> mw.l 10440020 4e406f12 1
+Zynq> mw.l 10440024 80d3cf5c 1
+Zynq> mw.l 10440028 abf43d00 1
+Zynq> mw.l 1044002c 1278ef3b 1
+Zynq> mw.l 10440030 807a9ce4 1
+Zynq> mw.l 10440034 a7d03644 1
+Zynq> mw.l 10440038 5122f563 1
+Zynq> mw.l 1044003c 6e3d18a9 1
+Zynq> mw.l 10440040 7f4a7c15 1
+Zynq> mw.l 10440044 9e3779b9 1
+Zynq> mw.l 10440048 00000000 1
+Zynq> mw.l 1044004c 00000002 1
+Zynq> mw.l 10440050 00000000 1
+Zynq> mw.l 10440054 00000000 1
+Zynq> mw.l 10440058 00000000 1
+Zynq> mw.l 1044005c 73fd91d0 1
+Zynq> md.l 10440000 18
+10440000: 42345149 00000001 265a729e 9a196336    IQ4B.....rZ&6c..
+10440010: d0d44277 fb42cc1e 6553f100 4d989ee8    wB....B...Se...M
+10440020: 4e406f12 80d3cf5c abf43d00 1278ef3b    .o@N\....=..;.x.
+10440030: 807a9ce4 a7d03644 5122f563 6e3d18a9    ..z.D6..c."Q..=n
+10440040: 7f4a7c15 9e3779b9 00000000 00000002    .|J..y7.........
+10440050: 00000000 00000000 00000000 73fd91d0    ...............s
+Zynq> 

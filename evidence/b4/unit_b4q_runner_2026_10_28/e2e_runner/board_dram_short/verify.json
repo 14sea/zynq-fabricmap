@@ -1,0 +1,101 @@
+{
+ "dir": "/home/test/zynq_fabricmap/build/b4q_runner_evidence/board_dram_short",
+ "session": [],
+ "transactions": [],
+ "a7": {
+  "findings": []
+ },
+ "agree": true,
+ "refused": null,
+ "runner": {
+  "findings": [],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "stopped",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4205 (surrogate)",
+    "dram_mib": 256,
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": false
+   },
+   "identity": {
+    "boardid": null,
+    "role": null,
+    "boardid_ok": false,
+    "role_ok": false,
+    "prefix_end": 300
+   },
+   "clock": {
+    "inputs": {
+     "fpga0": null,
+     "arm": null,
+     "ddr": null,
+     "io": null,
+     "status": null,
+     "boot_mode": null
+    },
+    "eligibility": {
+     "eligible": false,
+     "why": [
+      "word(s) not read: fpga0, arm, ddr, io, status, boot_mode"
+     ],
+     "missing": [
+      "fpga0",
+      "arm",
+      "ddr",
+      "io",
+      "status",
+      "boot_mode"
+     ],
+     "nominal": null,
+     "state": null,
+     "pll": null,
+     "srcsel": null
+    },
+    "ok": false,
+    "prefix_end": 300
+   },
+   "variant": null
+  },
+  "stop": {
+   "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",
+   "demonstrated": true
+  }
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
+ "chain": [],
+ "qualification": {
+  "findings": []
+ },
+ "control_plane": {
+  "phase": "stopped",
+  "stop": {
+   "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",
+   "demonstrated": true
+  }
+ },
+ "clean": false
+}

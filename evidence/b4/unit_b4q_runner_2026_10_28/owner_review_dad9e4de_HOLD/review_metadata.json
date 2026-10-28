@@ -1,0 +1,35 @@
+{
+  "reviewed_head": "dad9e4dedffbe4fac86db33cf758ec66074f29ec",
+  "implementation": "02d90207",
+  "base": "e34432ea",
+  "verdict": "HOLD",
+  "review_utc": "2026-10-28T14:57:54.248066+00:00",
+  "tracked_changes_by_reviewer": false,
+  "physical_device_contact": false,
+  "production_seed_derivation": false,
+  "tests": {
+    "bench_prerequisite": 1,
+    "unit_tests": 93,
+    "result": "OK"
+  },
+  "independent_regeneration": {
+    "ps_console_scenarios": 19,
+    "runner_scenarios": 31,
+    "runner_expectation_failures": 0,
+    "emulated_console": "valid control plus other module coverage; not a separate independent full 19-case rerun"
+  },
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+  "raw_bin_clean_builds_byte_identical": true,
+  "mutant_battery": "author record inspected; not independently repeated on this HOLD review",
+  "disposable_root": "/tmp/owner_b4q_runner__914ex6_",
+  "test_command": "python3 -B -m unittest tests.test_b4q_app tests.test_b4q_wire tests.test_b4q_session tests.test_b4q_runner tests.test_b4q_derive tests.test_b4q_emu tests.test_b4q_firmware tests.test_b4q_schema tests.test_b4q_view",
+  "ruling_sha256": "63ce1e55f9169517ec770d5ce16e00dec11dbc743cdd8c75e4afb95c1f653b5e",
+  "finding_ids": [
+    "R1 runner archive verification",
+    "R2 transport continuity/bounds/retention",
+    "R3 pinned admission",
+    "R4 physical-source offline contract",
+    "R5 bring-up plan"
+  ],
+  "final_canonical_porcelain": ""
+}

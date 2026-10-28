@@ -1,0 +1,109 @@
+{
+ "name": "duplicate_tx",
+ "wall_s": 2.124,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    97,
+    252
+   ],
+   "pcap_range": [
+    204,
+    360
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 41186,
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 19,
+  "hb": 0,
+  "nacks": 1,
+  "sign_requests": 2,
+  "sign_replies": 2,
+  "transactions": 2,
+  "kicks": 19,
+  "flushed": 0,
+  "stale_frames": 1,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "",
+  "log": 64400,
+  "log_overflow": 0,
+  "log_records": 4025,
+  "log_sha256": "9cffb0f7f3efad8d20b264aac17f58d37c222df3bc702778e9bda3ab6ae75ae7"
+ },
+ "stats": {
+  "hb": 0,
+  "nack": 1,
+  "signreq": 2,
+  "signreply": 2,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 1
+ },
+ "console_lines": 27,
+ "halted": "transaction 3: no observation sealed (the application refused the command: stale sequence)",
+ "open_findings": [],
+ "platform_kicks": 20,
+ "first": {
+  "status": 0,
+  "reason": "closed",
+  "phase": "",
+  "o": true,
+  "x": "closed",
+  "findings": []
+ },
+ "second": {
+  "status": 7,
+  "reason": "the application refused the command: stale sequence",
+  "phase": "?",
+  "o": false,
+  "x": null,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ },
+ "new_signreqs": 0,
+ "new_trace_events": 0
+}

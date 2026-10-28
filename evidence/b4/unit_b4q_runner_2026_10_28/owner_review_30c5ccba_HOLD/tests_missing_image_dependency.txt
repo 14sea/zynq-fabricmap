@@ -1,0 +1,269 @@
+..................................../usr/lib/python3.12/unittest/case.py:589: ResourceWarning: unclosed file <_io.TextIOWrapper name=4 encoding='UTF-8'>
+  if method() is not None:
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/usr/lib/python3.12/unittest/case.py:589: ResourceWarning: unclosed file <_io.TextIOWrapper name=7 encoding='UTF-8'>
+  if method() is not None:
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.........EEEEEEEEEEEE....EFFEE........E..................................
+======================================================================
+ERROR: test_an_arbitrary_local_file_is_refused_before_any_load_whatever_its_crc (tests.test_b4q_runner.Admission.test_an_arbitrary_local_file_is_refused_before_any_load_whatever_its_crc)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 567, in test_an_arbitrary_local_file_is_refused_before_any_load_whatever_its_crc
+    ctx = rn.ExecutionContext(image_sha256=hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest(), image_path=str(f))
+                                                          ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1021, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_b4q_runner_repair_ogyqg5da/build/b4q_image/b4q_app_v2.bin'
+
+======================================================================
+ERROR: test_the_board_the_dram_the_variant_and_the_clock_are_held_before_the_nonce_and_the_load (tests.test_b4q_runner.Admission.test_the_board_the_dram_the_variant_and_the_clock_are_held_before_the_nonce_and_the_load)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 582, in test_the_board_the_dram_the_variant_and_the_clock_are_held_before_the_nonce_and_the_load
+    pin = hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest()
+                         ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1021, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_b4q_runner_repair_ogyqg5da/build/b4q_image/b4q_app_v2.bin'
+
+======================================================================
+ERROR: test_the_pin_comes_from_the_build_evidence_not_the_file (tests.test_b4q_runner.Admission.test_the_pin_comes_from_the_build_evidence_not_the_file)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 575, in test_the_pin_comes_from_the_build_evidence_not_the_file
+    f = Path(tempfile.mkdtemp(prefix="b4q_img_")) / "b4q_app_v2.bin"; f.write_bytes(rn.IMAGE.read_bytes() + b"\x00")
+                                                                                    ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1021, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_b4q_runner_repair_ogyqg5da/build/b4q_image/b4q_app_v2.bin'
+
+======================================================================
+ERROR: test_a_console_line_not_in_the_stream_is_found (tests.test_b4q_runner.ArchiveContract.test_a_console_line_not_in_the_stream_is_found)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 640, in test_a_console_line_not_in_the_stream_is_found
+    d = self._copy()
+        ^^^^^^^^^^^^
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 603, in _copy
+    shutil.copytree(_S["runner"] / name, d)
+  File "/usr/lib/python3.12/shutil.py", line 598, in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/b4q_runner__b9jjydk/valid'
+
+======================================================================
+ERROR: test_a_forged_load_or_page_witness_is_found_against_the_streams (tests.test_b4q_runner.ArchiveContract.test_a_forged_load_or_page_witness_is_found_against_the_streams)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 619, in test_a_forged_load_or_page_witness_is_found_against_the_streams
+    d = self._copy(); self._edit(d, lambda u, m: u["load_witness"].update({"host_crc32": "11111111", "uboot_crc32": "22222222", "equal": True}))
+        ^^^^^^^^^^^^
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 603, in _copy
+    shutil.copytree(_S["runner"] / name, d)
+  File "/usr/lib/python3.12/shutil.py", line 598, in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/b4q_runner__b9jjydk/valid'
+
+======================================================================
+ERROR: test_an_invented_pre_go_stop_is_refuted_by_the_streams (tests.test_b4q_runner.ArchiveContract.test_an_invented_pre_go_stop_is_refuted_by_the_streams)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 631, in test_an_invented_pre_go_stop_is_refuted_by_the_streams
+    d = self._copy()
+        ^^^^^^^^^^^^
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 603, in _copy
+    shutil.copytree(_S["runner"] / name, d)
+  File "/usr/lib/python3.12/shutil.py", line 598, in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/b4q_runner__b9jjydk/valid'
+
+======================================================================
+ERROR: test_deleting_the_boot_evidence_is_refused (tests.test_b4q_runner.ArchiveContract.test_deleting_the_boot_evidence_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 614, in test_deleting_the_boot_evidence_is_refused
+    d = self._copy(); (d / f).unlink()
+        ^^^^^^^^^^^^
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 603, in _copy
+    shutil.copytree(_S["runner"] / name, d)
+  File "/usr/lib/python3.12/shutil.py", line 598, in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/b4q_runner__b9jjydk/valid'
+
+======================================================================
+ERROR: test_the_control_plane_only_archive_is_complete_at_pre_go (tests.test_b4q_runner.ArchiveContract.test_the_control_plane_only_archive_is_complete_at_pre_go)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 648, in test_the_control_plane_only_archive_is_complete_at_pre_go
+    rep = json.loads((_S["runner"] / "control_plane_only/verify.json").read_text())
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/b4q_runner__b9jjydk/control_plane_only/verify.json'
+
+======================================================================
+ERROR: test_a_relabelled_pty_archive_is_not_a_device_archive (tests.test_b4q_runner.DeviceFormat.test_a_relabelled_pty_archive_is_not_a_device_archive)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 679, in test_a_relabelled_pty_archive_is_not_a_device_archive
+    shutil.copytree(_S["runner"] / "valid", d)
+  File "/usr/lib/python3.12/shutil.py", line 598, in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/b4q_runner__b9jjydk/valid'
+
+======================================================================
+ERROR: test_a_synthetic_device_format_fixture_verifies_structurally_and_is_reported_as_such (tests.test_b4q_runner.DeviceFormat.test_a_synthetic_device_format_fixture_verifies_structurally_and_is_reported_as_such)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 658, in test_a_synthetic_device_format_fixture_verifies_structurally_and_is_reported_as_such
+    df.make(_S["runner"] / "valid", out)
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/host/b4q_device_fixture.py", line 36, in make
+    shutil.copytree(src, out)
+  File "/usr/lib/python3.12/shutil.py", line 598, in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/b4q_runner__b9jjydk/valid'
+
+======================================================================
+ERROR: test_downgrades_of_a_pty_archive_into_the_device_format_are_found (tests.test_b4q_runner.DeviceFormat.test_downgrades_of_a_pty_archive_into_the_device_format_are_found)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 669, in test_downgrades_of_a_pty_archive_into_the_device_format_are_found
+    df.make(_S["runner"] / "valid", out, downgrade=dg)
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/host/b4q_device_fixture.py", line 36, in make
+    shutil.copytree(src, out)
+  File "/usr/lib/python3.12/shutil.py", line 598, in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/b4q_runner__b9jjydk/valid'
+
+======================================================================
+ERROR: test_the_runner_constructs_no_backend (tests.test_b4q_runner.Guards.test_the_runner_constructs_no_backend)
+The actual source boundary (the owner's P3): a RunnerSession is built with NO Backend object at all — the base session is asked
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 367, in test_the_runner_constructs_no_backend
+    s = rn.RunnerSession(Path(tempfile.mkdtemp(prefix="b4q_nb_")), port, rn.UBoot(port, []), rn.ExecutionContext(image_sha256="0" * 64, image_path=str(rn.IMAGE)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/host/b4q_runner.py", line 368, in __init__
+    super().__init__(out_dir, label=label, binary=Path(context.image_path), **kw)
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/host/b4q_console_session.py", line 76, in __init__
+    super().__init__(out_dir, label=label, binary=binary, **kw)
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/host/b4q_session.py", line 132, in __init__
+    raise SessionRefusal(f"the executing-side program is not built: {self.binary}")
+b4q_session.SessionRefusal: the executing-side program is not built: /tmp/owner_b4q_runner_repair_ogyqg5da/build/b4q_image/b4q_app_v2.bin
+
+======================================================================
+ERROR: test_a_corrupted_chunk_is_re_asked_and_a_corrupted_page_is_the_device_s_stop (tests.test_b4q_runner.Runner.test_a_corrupted_chunk_is_re_asked_and_a_corrupted_page_is_the_device_s_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 304, in test_a_corrupted_chunk_is_re_asked_and_a_corrupted_page_is_the_device_s_stop
+    s = _S["runner_summary"]["corrupt_chunk"]
+        ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'corrupt_chunk'
+
+======================================================================
+ERROR: test_the_cut_sessions_are_interrupted_and_their_partial_export_is_a_named_limitation (tests.test_b4q_runner.Runner.test_the_cut_sessions_are_interrupted_and_their_partial_export_is_a_named_limitation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 296, in test_the_cut_sessions_are_interrupted_and_their_partial_export_is_a_named_limitation
+    m = json.loads((_S["runner"] / name / "manifest.json").read_text())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/b4q_runner__b9jjydk/reset_mid_session/manifest.json'
+
+======================================================================
+ERROR: test_the_valid_run_over_the_pty_carries_both_witnesses_and_verifies_clean (tests.test_b4q_runner.Runner.test_the_valid_run_over_the_pty_carries_both_witnesses_and_verifies_clean)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 257, in test_the_valid_run_over_the_pty_carries_both_witnesses_and_verifies_clean
+    s = _S["runner_summary"]["valid"]
+        ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+KeyError: 'valid'
+
+======================================================================
+ERROR: test_a_write_error_persists_the_acquired_prefix_closes_the_port_and_is_a_programming_error (tests.test_b4q_runner.Transport.test_a_write_error_persists_the_acquired_prefix_closes_the_port_and_is_a_programming_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 545, in test_a_write_error_persists_the_acquired_prefix_closes_the_port_and_is_a_programming_error
+    ctx = rn.ExecutionContext(image_sha256=hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest(), image_path=str(rn.IMAGE))
+                                                          ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1021, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_b4q_runner_repair_ogyqg5da/build/b4q_image/b4q_app_v2.bin'
+
+======================================================================
+FAIL: test_a_stop_before_go_retains_the_transcript_and_runs_nothing (tests.test_b4q_runner.Runner.test_a_stop_before_go_retains_the_transcript_and_runs_nothing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 283, in test_a_stop_before_go_retains_the_transcript_and_runs_nothing
+    self.assertTrue((d / "raw/console.bin").is_file() and (d / "uboot.json").is_file(), name)
+AssertionError: False is not true : wrong_crc
+
+======================================================================
+FAIL: test_every_scenario_met_its_declared_expectations (tests.test_b4q_runner.Runner.test_every_scenario_met_its_declared_expectations)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/tests/test_b4q_runner.py", line 250, in test_every_scenario_met_its_declared_expectations
+    self.assertTrue(_S["runner_summary"], _S["runner_out"])
+AssertionError: {} is not true : == control_plane_only
+{"wall_s": 0.467, "stop": {"kind": "SessionRefusal", "why": "the executing-side program is not built: /tmp/owner_b4q_runner_repair_ogyqg5da/build/b4q_image/b4q_app_v2.bin"}, "opened": false, "halted": null, "verify_rc": null, "expect_failures": ["verify rc None (expected 0): None", "page witness", "load witness", "phase init (expected pre-go)"]}
+== image_not_pinned
+Traceback (most recent call last):
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/host/b4q_runner_e2e.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/host/b4q_runner_e2e.py", line 231, in main
+    s = run_scenario(root, name)
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/host/b4q_runner_e2e.py", line 188, in run_scenario
+    ctx_kw["image_path"] = str(wrong_image())
+                               ^^^^^^^^^^^^^
+  File "/tmp/owner_b4q_runner_repair_ogyqg5da/host/b4q_runner_e2e.py", line 70, in wrong_image
+    data = bytearray(rn.IMAGE.read_bytes()); data[-1] ^= 1
+                     ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1021, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/owner_b4q_runner_repair_ogyqg5da/build/b4q_image/b4q_app_v2.bin'
+
+
+----------------------------------------------------------------------
+Ran 109 tests in 211.961s
+
+FAILED (failures=2, errors=16)
+sys:1: ResourceWarning: unclosed file <_io.TextIOWrapper name=5 encoding='UTF-8'>
+sys:1: ResourceWarning: unclosed file <_io.TextIOWrapper name=6 encoding='UTF-8'>

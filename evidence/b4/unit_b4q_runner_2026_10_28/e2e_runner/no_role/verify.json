@@ -1,0 +1,101 @@
+{
+ "dir": "/home/test/zynq_fabricmap/build/b4q_runner_evidence/no_role",
+ "session": [],
+ "transactions": [],
+ "a7": {
+  "findings": []
+ },
+ "agree": true,
+ "refused": null,
+ "runner": {
+  "findings": [],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "stopped",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": null,
+    "boardid_ok": true,
+    "role_ok": false,
+    "prefix_end": 434
+   },
+   "clock": {
+    "inputs": {
+     "fpga0": null,
+     "arm": null,
+     "ddr": null,
+     "io": null,
+     "status": null,
+     "boot_mode": null
+    },
+    "eligibility": {
+     "eligible": false,
+     "why": [
+      "word(s) not read: fpga0, arm, ddr, io, status, boot_mode"
+     ],
+     "missing": [
+      "fpga0",
+      "arm",
+      "ddr",
+      "io",
+      "status",
+      "boot_mode"
+     ],
+     "nominal": null,
+     "state": null,
+     "pll": null,
+     "srcsel": null
+    },
+    "ok": false,
+    "prefix_end": 434
+   },
+   "variant": null
+  },
+  "stop": {
+   "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)",
+   "demonstrated": true
+  }
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
+ "chain": [],
+ "qualification": {
+  "findings": []
+ },
+ "control_plane": {
+  "phase": "stopped",
+  "stop": {
+   "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)",
+   "demonstrated": true
+  }
+ },
+ "clean": false
+}

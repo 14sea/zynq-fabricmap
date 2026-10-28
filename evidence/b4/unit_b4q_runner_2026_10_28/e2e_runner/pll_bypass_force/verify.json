@@ -1,0 +1,123 @@
+{
+ "dir": "/home/test/zynq_fabricmap/build/b4q_runner_evidence/pll_bypass_force",
+ "session": [],
+ "transactions": [],
+ "a7": {
+  "findings": []
+ },
+ "agree": true,
+ "refused": null,
+ "runner": {
+  "findings": [],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "stopped",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "boardid_ok": true,
+    "role_ok": true,
+    "prefix_end": 723
+   },
+   "clock": {
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e010",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "eligibility": {
+     "eligible": false,
+     "why": [
+      "PLL_BYPASS_FORCE"
+     ],
+     "missing": [],
+     "srcsel": 0,
+     "pll": "io",
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e010",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": true,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": true,
+      "locked": true,
+      "stable": true,
+      "eligible": false,
+      "why": [
+       "PLL_BYPASS_FORCE"
+      ]
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e010",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
+    },
+    "ok": false,
+    "prefix_end": 723
+   },
+   "variant": null
+  },
+  "stop": {
+   "why": "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_FORCE): no PL access",
+   "demonstrated": true
+  }
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
+ "chain": [],
+ "qualification": {
+  "findings": []
+ },
+ "control_plane": {
+  "phase": "stopped",
+  "stop": {
+   "why": "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_FORCE): no PL access",
+   "demonstrated": true
+  }
+ },
+ "clean": false
+}

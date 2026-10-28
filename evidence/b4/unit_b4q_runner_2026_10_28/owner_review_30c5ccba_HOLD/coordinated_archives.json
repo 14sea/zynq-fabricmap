@@ -1,0 +1,88 @@
+{
+  "baseline": {
+    "exit": 0,
+    "agree": true,
+    "clean": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": [],
+    "runner": [],
+    "control_plane": null
+  },
+  "load_at_different_address": {
+    "exit": 0,
+    "agree": true,
+    "clean": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": [],
+    "runner": [],
+    "control_plane": null
+  },
+  "crc_false_but_executed": {
+    "exit": 0,
+    "agree": true,
+    "clean": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": [],
+    "runner": [],
+    "control_plane": null
+  },
+  "board_256_but_executed": {
+    "exit": 0,
+    "agree": true,
+    "clean": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": [],
+    "runner": [],
+    "control_plane": null
+  },
+  "missing_admission": {
+    "exit": 0,
+    "agree": true,
+    "clean": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": [],
+    "runner": [],
+    "control_plane": null
+  },
+  "null_context_pin": {
+    "exit": 1,
+    "agree": false,
+    "clean": false,
+    "refused": "runner archive: uboot.json.context.image_sha256: not a str",
+    "verifier_error": null,
+    "session": [],
+    "runner": null,
+    "control_plane": null
+  },
+  "extra_rx_frame": {
+    "exit": 0,
+    "agree": true,
+    "clean": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": [],
+    "runner": [],
+    "control_plane": null
+  },
+  "unknown_stop": {
+    "exit": 0,
+    "agree": true,
+    "clean": false,
+    "refused": null,
+    "verifier_error": null,
+    "session": [],
+    "runner": [],
+    "control_plane": {
+      "phase": "stopped",
+      "stop": {
+        "why": "OWNER INVENTED STOP WITH NO RAW WITNESS",
+        "demonstrated": null
+      }
+    }
+  }
+}

@@ -87,9 +87,9 @@ class ConsoleScenarios(unittest.TestCase):
                     continue
                 f = w.parse(e["line"] + "\n", tok)
                 if e["dir"] == "board":
-                    self.assertIn(f["type"], w.BOARD_TYPES, name); self.assertGreater(f["seq"], board_seq); board_seq = f["seq"]
+                    self.assertIn(f["type"], w.BOARD_TYPES_V2, name); self.assertGreater(f["seq"], board_seq); board_seq = f["seq"]
                 else:
-                    self.assertIn(f["type"], w.HOST_TYPES, name); self.assertGreater(f["seq"], host_seq); host_seq = f["seq"]
+                    self.assertIn(f["type"], w.HOST_TYPES_V2, name); self.assertGreater(f["seq"], host_seq); host_seq = f["seq"]
             end = self.summary(name)["end"]
             self.assertEqual(end["kicks"], end["lines"], name)         # the watchdog is kicked once per emitted line and nowhere else
             self.assertEqual(self.summary(name)["platform_kicks"], end["lines"] + 1, name)   # the platform's own count: every line incl. the END itself (its payload is fixed before it goes out)
@@ -97,7 +97,7 @@ class ConsoleScenarios(unittest.TestCase):
             self.assertEqual(m["transport"]["kind"], "console-emulated")
         self.assertEqual(self.summary("a5")["a5"], "pass")
         ident = self.summary("valid")["ident"]
-        self.assertEqual((ident["protocol"], ident["watchdog"], ident["nonce_echo_equal"]), ("b4q-v1", "armed", True))
+        self.assertEqual((ident["protocol"], ident["watchdog"], ident["nonce_echo_equal"]), ("b4q-v2", "armed", True))   # v2: the evidence log and its pull (the runner unit)
         self.assertEqual(ident["open"]["status"], 0)
 
     def test_the_console_notary_is_bounded_and_fail_closed(self):
@@ -536,7 +536,7 @@ class SourceAudit(unittest.TestCase):
                      ("bsp/include/xmem_config.h", "firmware/b1/bsp/include/xmem_config.h"), ("bsp/include/xparameters.h", "firmware/b1/bsp/include/xparameters.h")):
             self.assertEqual((R / "firmware/b4q" / s).read_bytes(), (R / b).read_bytes(), s)
         main = (tdir / "b4q_board_main.c").read_text()
-        self.assertEqual(main.count("Xil_SetTlbAttributes("), 4)
+        self.assertEqual(main.count("Xil_SetTlbAttributes("), 5)                # the window, the DMA buffers, the page, the carrier's DDR, the evidence log
         self.assertIn("B4Q_WDT_LOAD 1250000035u", main); self.assertIn("B4Q_WDT_PRESCALER 7u", main)   # B1's pinned values
         for h in ("XIL_EXCEPTION_ID_DATA_ABORT_INT", "XIL_EXCEPTION_ID_PREFETCH_ABORT_INT", "XIL_EXCEPTION_ID_UNDEFINED_INT"):
             self.assertIn(h, main)
@@ -549,8 +549,8 @@ class Image(unittest.TestCase):
         out = Path(tempfile.mkdtemp(prefix="b4q_image_"))
         p = subprocess.run(["bash", str(R / "firmware/b4q/bsp/build.sh")], capture_output=True, text=True, env={"OUT": str(out), "PATH": "/usr/bin:/bin"})
         self.assertEqual(p.returncode, 0, p.stdout[-1500:] + p.stderr[-1500:])
-        elf = out / "b4q_app.elf"
-        self.assertTrue(elf.is_file() and (out / "b4q_app.bin").is_file() and (out / "b4q_app.map").is_file())
+        elf = out / "b4q_app_v2.elf"
+        self.assertTrue(elf.is_file() and (out / "b4q_app_v2.bin").is_file() and (out / "b4q_app_v2.map").is_file())
         rh = subprocess.run([str(TC / "arm-none-eabi-readelf"), "-h", "-l", "-W", str(elf)], capture_output=True, text=True).stdout
         entry = int(re.search(r"Entry point address:\s+(0x[0-9a-f]+)", rh).group(1), 16)
         self.assertTrue(0x02000000 <= entry < 0x02001000, hex(entry))     # inside the first page: the vector table's reset path

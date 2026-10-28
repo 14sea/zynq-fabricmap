@@ -40,7 +40,8 @@
 #define B4Q_APP_SIGN_ATTEMPTS 3
 #define B4Q_APP_SEQ_LIMIT 0xFFFFFFF0u      /* this side's line sequence never wraps: the line that would carry this sequence is the terminal END PROTOCOL instead,
                                             wherever it is emitted (a wait's heartbeat, a NACK, a request, an event, a result); after it nothing is emitted, requested or run (C4) */
-#define B4Q_APP_PROTOCOL "b4q-v1"
+#define B4Q_APP_PROTOCOL "b4q-v2"            /* v2 (the runner unit, 2026-10-28): the evidence log, its pull, the `log` positions in the payloads */
+#define B4Q_APP_PULL_MAX 768u                /* bytes per CHUNK (base64 1024 chars) */
 #define B4Q_APP_MAX_NACKS 8                /* malformed host lines tolerated per wait before the session ends PROTOCOL */
 
 typedef enum { B4Q_END_NONE = 0, B4Q_END_COMPLETED, B4Q_END_STOPPED, B4Q_END_PROTOCOL, B4Q_END_ABORT } b4q_end_kind;
@@ -58,6 +59,10 @@ void b4q_app_run(void);
 /* from an exception handler (the board): emit END ABORT with the fault's name, address and status, then return (the caller spins) */
 void b4q_app_abort(const char *kind, uint32_t addr, uint32_t status);
 const b4q_app_summary *b4q_app_summary_get(void);
+/* the evidence log (docs/b4q_source_audit.md §3): the HALs append every access to it; the application the marks */
+struct b4q_ring;
+struct b4q_ring *b4q_app_ring(void);
+void b4q_app_log_access(uint8_t kind, uint8_t op, uint32_t addr, uint32_t data, int refused);
 /* R2 (the owner's HOLD on d4ff43e): the terminal state is an EFFECT boundary, not only an output one — once the terminal END went
  * out, the HAL's write half refuses every write (SLVERR, never issued), so the executing side's own admission invariant stops the
  * transaction in flight at its first refused write: no further register write, no staging, no DMA. Reads stay admitted. */

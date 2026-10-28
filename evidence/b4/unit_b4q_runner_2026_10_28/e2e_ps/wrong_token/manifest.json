@@ -1,0 +1,529 @@
+{
+ "schema": "b4q_session",
+ "schema_version": "1.0.0",
+ "label": "B4Q-console-wrong_token",
+ "generated_utc": "2026-10-28T18:23:51Z",
+ "emulated": true,
+ "standing": "the records built from the PS's OWN evidence log (b4q_ring, pulled through the console, held to the board's digest): the carrier-window events, the DMA tuples, the staged words and the frames the PS read back are what the executing side did and received; a device effect (a frame store, a bus response beyond the PS's own abort flag) is not witnessed; the MMIO was answered by an emulation on this host \u2014 not silicon, not a physical link",
+ "source": {
+  "kind": "ps-evidence-log-v1",
+  "raw": "raw/evidence_log.bin",
+  "bytes": 64416,
+  "sha256": "4590d8b124e4047a20537cece28fe8fe4525be43762a62b4ac4c0c8175c33f7e",
+  "records": 4026,
+  "board": {
+   "used": 64416,
+   "capacity": 16777216,
+   "overflow": 0,
+   "sha256": "4590d8b124e4047a20537cece28fe8fe4525be43762a62b4ac4c0c8175c33f7e"
+  },
+  "digest_equal": true,
+  "end_log": 64416,
+  "end_log_sha256": "4590d8b124e4047a20537cece28fe8fe4525be43762a62b4ac4c0c8175c33f7e",
+  "tail_unobtainable": null,
+  "adapter": "host/b4q_evidence_log.py",
+  "adapter_sha256": "03dbc58ed924f48b7cff6cf314d2c24479e31c6ee18ff99b09f9c028efaa3255",
+  "derived": [
+   "trace.jsonl",
+   "pcap_log.jsonl",
+   "accesses.jsonl"
+  ],
+  "host_marks": [
+   {
+    "i": 8,
+    "mark": "transaction_begin"
+   },
+   {
+    "i": 8,
+    "mark": "P6_sealed"
+   },
+   {
+    "i": 8,
+    "mark": "transaction_end"
+   },
+   {
+    "i": 93,
+    "mark": "transaction_begin"
+   },
+   {
+    "i": 93,
+    "mark": "P6_sealed"
+   },
+   {
+    "i": 93,
+    "mark": "transaction_end"
+   }
+  ],
+  "pull_stats": {
+   "pulls": 4,
+   "chunks": 85,
+   "bad_chunks": 0
+  }
+ },
+ "instrument": {
+  "variant": "42340001",
+  "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "image_sha256": "07d5555f3051bcf9dedaa23110e68bd58ffdfe8bed82f4ceaba770775f8af011"
+ },
+ "executing_side": {
+  "binary": "build/b4q_firmware/b4q_apphost",
+  "sha256": "07d5555f3051bcf9dedaa23110e68bd58ffdfe8bed82f4ceaba770775f8af011",
+  "build": {
+   "compiler": "/usr/bin/cc",
+   "version": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+   "flags": "-std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion",
+   "binaries": {
+    "b4q_host": "6109cd86b797140407f4c2bb4c3a4e932d8634ed01aed7ea89c2391416dbd424",
+    "b4q_derive_twin": "15da92797a3bd25c5f6499600c04b5610e936442bc297b690679fff64da48906"
+   }
+  }
+ },
+ "loaded_frames_reference_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+ "base_readback_reference_sha256": "ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7",
+ "write_set": {
+  "bitstream": "builds/b4/b4.bit",
+  "bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "build_record": "builds/b4/b4_build.json",
+  "idcode": "0x03722093",
+  "carrier_manifest": "builds/b4/b4_carrier_manifest.json",
+  "carrier_manifest_bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "carrier_manifest_file_digest_matches": true,
+  "carrier_manifest_column_frames_differing": [],
+  "envelopes": [
+   {
+    "far_set": "0x00400a00",
+    "targets": [
+     "0x00400a00",
+     "0x00400a01",
+     "0x00400a02",
+     "0x00400a03"
+    ],
+    "flush": "0x00400a04"
+   },
+   {
+    "far_set": "0x00400a1c",
+    "targets": [
+     "0x00400a1c",
+     "0x00400a1d",
+     "0x00400a1e",
+     "0x00400a1f"
+    ],
+    "flush": "0x00400a20"
+   }
+  ],
+  "target_fars": [
+   "0x00400a00",
+   "0x00400a01",
+   "0x00400a02",
+   "0x00400a03",
+   "0x00400a1c",
+   "0x00400a1d",
+   "0x00400a1e",
+   "0x00400a1f"
+  ],
+  "flush_fars": [
+   "0x00400a04",
+   "0x00400a20"
+  ],
+  "whitelist": [
+   {
+    "bit": 0,
+    "far": "0x00400a00",
+    "word": 52,
+    "bit_in_word": 16
+   },
+   {
+    "bit": 1,
+    "far": "0x00400a01",
+    "word": 51,
+    "bit_in_word": 7
+   },
+   {
+    "bit": 2,
+    "far": "0x00400a01",
+    "word": 51,
+    "bit_in_word": 19
+   },
+   {
+    "bit": 3,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 3
+   },
+   {
+    "bit": 4,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 7
+   },
+   {
+    "bit": 5,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 15
+   },
+   {
+    "bit": 6,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 19
+   },
+   {
+    "bit": 7,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 23
+   },
+   {
+    "bit": 8,
+    "far": "0x00400a1e",
+    "word": 51,
+    "bit_in_word": 12
+   },
+   {
+    "bit": 9,
+    "far": "0x00400a1e",
+    "word": 51,
+    "bit_in_word": 30
+   },
+   {
+    "bit": 10,
+    "far": "0x00400a1e",
+    "word": 52,
+    "bit_in_word": 0
+   },
+   {
+    "bit": 11,
+    "far": "0x00400a1e",
+    "word": 52,
+    "bit_in_word": 1
+   },
+   {
+    "bit": 12,
+    "far": "0x00400a1e",
+    "word": 52,
+    "bit_in_word": 18
+   },
+   {
+    "bit": 13,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 3
+   },
+   {
+    "bit": 14,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 6
+   },
+   {
+    "bit": 15,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 22
+   },
+   {
+    "bit": 16,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 28
+   },
+   {
+    "bit": 17,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 1
+   },
+   {
+    "bit": 18,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 9
+   },
+   {
+    "bit": 19,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 19
+   },
+   {
+    "bit": 20,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 26
+   }
+  ],
+  "base_frame_sha256": {
+   "0x00400a00": "83ea11e246f4beb9ceb66684eb64408088e3a1fafaeb0cda3c21f5446d3b5859",
+   "0x00400a01": "2d705f7fbb987efe04cd5bd23195d9b0de7b55ca4a2caecaaeacffa5e692ae28",
+   "0x00400a02": "0dff7b369a72b99746a29eed6537b9ae18d90903050de9cc7f0d71876b63cc03",
+   "0x00400a03": "72ed9a71c4070863a17688ff7ccab7029494a8e499720cb6aa72ba9877f6527e",
+   "0x00400a1c": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "0x00400a1d": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "0x00400a1e": "1746621f0f6e2a2a9e4ff88f9a055c1aabebe9a20dd1cd2a27ed47dcc79fb280",
+   "0x00400a1f": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "0x00400a04": "d6e51aae5cb3e4aab20921655785af00ae1bc68f4094b9a753d90b9716ac3b00",
+   "0x00400a20": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+  },
+  "base_genome_of_loaded_image": 24,
+  "loaded_image_target_frames_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+  "note": "the loaded image is the natural build (CEUSEDMUX = SRUSEDMUX = 1); the signed base genome 0 differs from it in exactly those two bits and their frames' ECC",
+  "header_sha256": "2e296151a14dd083383393cad40b1ed1e4c8ae2089ebab3d67c8d9b6ea2e644e",
+  "generator": "host/b4q_gen_data.py"
+ },
+ "timing": {
+  "assert_delay": 8,
+  "release": 16,
+  "sample_offset": 4,
+  "settle": 4,
+  "hold": 4,
+  "pulse": 2
+ },
+ "hypothesis": {
+  "path": "b4/hypothesis/ff_behaviour_v0.3.json",
+  "sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "version": "0.3.0"
+ },
+ "mapping": {
+  "site": "SLICE_X2Y25",
+  "certificate": "gate_runs/run_2026_08_05_ff/certificate.json",
+  "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+ },
+ "notary": {
+  "key_id": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+  "contract": "zero tables, no attestation (fixture key)"
+ },
+ "backend": {
+  "power_on": "init",
+  "nonce_seed": "9e3779b97f4a7c15",
+  "devc_faults": {},
+  "fault_injections": {
+   "refuse_writes": [],
+   "corrupt_frame_reads": [],
+   "refuse_reads": [],
+   "refuse_mem_reads": [],
+   "note": "the bench's declared fault injections \u2014 a SIMULATION, never evidence that hardware refused or corrupted anything"
+  },
+  "role": "MMIO answered on this process's pipe (the surrogate device): its trace / PCAP log are NOT read for any record \u2014 declared knobs only"
+ },
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    8,
+    93
+   ],
+   "pcap_range": [
+    48,
+    200
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    93,
+    248
+   ],
+   "pcap_range": [
+    200,
+    352
+   ]
+  }
+ ],
+ "open_trace_range": [
+  0,
+  8
+ ],
+ "open_pcap_range": [
+  0,
+  48
+ ],
+ "halted": null,
+ "qualification_plan": {
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
+ "notary_deny": [],
+ "interrupted": null,
+ "chain_findings": [],
+ "accesses": 41186,
+ "trace_events": 248,
+ "transport": {
+  "kind": "console-emulated",
+  "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
+  "protocol": "b4q-v2",
+  "token": "0f71af9ed1c6460f6c4ed0a9257497b1",
+  "page_words": [
+   "42345149",
+   "00000001",
+   "0f71af9e",
+   "d1c6460f",
+   "6c4ed0a9",
+   "257497b1",
+   "6553f100",
+   "07d5555f",
+   "4e406f12",
+   "80d3cf5c",
+   "abf43d00",
+   "1278ef3b",
+   "807a9ce4",
+   "a7d03644",
+   "5122f563",
+   "6e3d18a9",
+   "7f4a7c15",
+   "9e3779b9",
+   "00000000",
+   "00000002",
+   "00000000",
+   "00000000",
+   "00000000",
+   "39e86b2f"
+  ],
+  "page_flags": 2,
+  "time_origin": "console entries' `t`: this host's wall clock (time.time()) at the line's receipt / send \u2014 a host timestamp, never a device time",
+  "knobs": {
+   "corrupt_replies": 0,
+   "drop_replies": 0,
+   "bad_page": null,
+   "garbage_before_tx": 0,
+   "watchdog_fail": false,
+   "wrong_token_lines": 1,
+   "stale_reply_first": 0,
+   "seq_gap": 0,
+   "replay_tx": 0
+  },
+  "stats": {
+   "hb": 4,
+   "nack": 1,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 1,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 111,
+   "hb": 4,
+   "nacks": 1,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 111,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64416,
+   "log_overflow": 0,
+   "log_records": 4026,
+   "log_sha256": "4590d8b124e4047a20537cece28fe8fe4525be43762a62b4ac4c0c8175c33f7e"
+  },
+  "ident": {
+   "protocol": "b4q-v2",
+   "token": "0f71af9ed1c6460f6c4ed0a9257497b1",
+   "uboot_epoch": 1700000000,
+   "app_image_sha_lo32": 131421535,
+   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+   "flags": 2,
+   "page_nonce_seen": "9e3779b97f4a7c15",
+   "page_status_seen": 0,
+   "nonce_echo_equal": 1,
+   "watchdog": "armed",
+   "log": 6816,
+   "log_capacity": 16777216,
+   "open": {
+    "status": 0,
+    "reason": "opened",
+    "idcode": 326246547,
+    "variant": 1110704129,
+    "timing": 1141116936,
+    "witness": 131584,
+    "status_word": 6400,
+    "heartbeat": 44,
+    "nonce": "9e3779b97f4a7c15",
+    "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
+   }
+  },
+  "console_lines": 209,
+  "findings": [],
+  "host_seq_last": 95,
+  "board_seq_last": 112,
+  "refused_commands": [],
+  "evidence_log": {
+   "pulled_bytes": 64416,
+   "pulls": [
+    {
+     "used": 6816,
+     "capacity": 16777216,
+     "overflow": 0,
+     "sha256": "eddc478a71c1d43a7ccf2a24f23ec7ac8f9e59f4064652307769a2f798b07dfc",
+     "pulled_sha256": "eddc478a71c1d43a7ccf2a24f23ec7ac8f9e59f4064652307769a2f798b07dfc",
+     "digest_equal": true,
+     "upto": 6816
+    },
+    {
+     "used": 35104,
+     "capacity": 16777216,
+     "overflow": 0,
+     "sha256": "38acca7f2916bca2a0687c0974369160e431d452f5b1fea8ed38c89691f08d6d",
+     "pulled_sha256": "38acca7f2916bca2a0687c0974369160e431d452f5b1fea8ed38c89691f08d6d",
+     "digest_equal": true,
+     "upto": 35104
+    },
+    {
+     "used": 64416,
+     "capacity": 16777216,
+     "overflow": 0,
+     "sha256": "4590d8b124e4047a20537cece28fe8fe4525be43762a62b4ac4c0c8175c33f7e",
+     "pulled_sha256": "4590d8b124e4047a20537cece28fe8fe4525be43762a62b4ac4c0c8175c33f7e",
+     "digest_equal": true,
+     "upto": 64416
+    },
+    {
+     "used": 64416,
+     "capacity": 16777216,
+     "overflow": 0,
+     "sha256": "4590d8b124e4047a20537cece28fe8fe4525be43762a62b4ac4c0c8175c33f7e",
+     "pulled_sha256": "4590d8b124e4047a20537cece28fe8fe4525be43762a62b4ac4c0c8175c33f7e",
+     "digest_equal": true,
+     "upto": 64416
+    }
+   ],
+   "stats": {
+    "pulls": 4,
+    "chunks": 85,
+    "bad_chunks": 0
+   }
+  }
+ }
+}

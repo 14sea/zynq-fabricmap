@@ -1,4 +1,4 @@
-# B4Q — the PS image (host-only preparation, v0.4, **engineering accepted — the owner's PASS on `2c2c0de`, 2026-10-28**; v0.1 held by the owner's review of `ba18e3c`, R1–R5 repaired — §7; v0.2 held by the review of `0606758`, C1–C4 repaired — §8; v0.3 held by the review of `d4ff43e`, R1–R2 repaired — §9): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
+# B4Q — the PS image (host-only preparation, v0.5 — §11: the v2 image of the runner unit, `b4q_app_v2`, protocol `b4q-v2`; v0.4 **engineering accepted — the owner's PASS on `2c2c0de`, 2026-10-28**; v0.1 held by the owner's review of `ba18e3c`, R1–R5 repaired — §7; v0.2 held by the review of `0606758`, C1–C4 repaired — §8; v0.3 held by the review of `d4ff43e`, R1–R2 repaired — §9): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
 
 > **Authorisation.** The owner's PASS on `a41f573` (archived in `evidence/b4/unit_b4q_integration_2026_10_27/owner_review_a41f573_PASS/`,
 > its section 4): one complete B4Q PS-image preparation unit, host-only — "the actual PS board-image preparation", to satisfy the
@@ -145,3 +145,21 @@ limit; the seqcut twin built by the test setup and the assembly). The verifier's
 observer-position annotations (`i` / `pcap_n`) are not independently validated by it, and verifier agreement is never a proof of
 quiescence or a device fact — the no-new-write / no-new-DMA evidence is the HAL's gate plus the drained fixtures (§4 stays: UART, DMA /
 PCAP, the watchdog's clock, aborts and timing are the device's). P2 of `docs/b4q_plan.md` §8 remains NOT met as a board prerequisite.
+
+## 11. The v2 image (the runner unit, 2026-10-28 — host-only; `docs/b4q_source_audit.md`, `docs/b4q_bringup_plan.md`; **the unit engineering accepted and closed — the owner's conditional PASS on `315f6935`, its approved follow-up applied as `bd7cef03`; the image `4d989ee8…` unchanged through the four reviews**)
+
+The owner's disposition on `c84b8bd5` (section 3) found that the v1 image exported no MMIO / PCAP trace: a board run of it could
+not have produced the records truthfully. The runner unit therefore changed the image — a **new identity**, `build/b4q_image/b4q_app_v2.bin`
+(the build evidence of the runner unit pins its sha256; the v1 image `010f6a05…` is history and is not called unchanged), protocol
+`b4q-v2` — in these ways, every one compiled into the host harness and the twins from the same sources:
+
+| change | where | what it does |
+|---|---|---|
+| the evidence log | `target/b4q_ring.{h,c}` (pure); the board HAL and the host HAL log every access through `b4q_app_log_access` | append-only 16-byte records of every window / DevC / buffer access (refused ones flagged), the marks (`open`, `transaction_begin`, `P6_sealed`, `transaction_end`, `transaction_interrupted`), polls and sentinel runs compressed into counted records; 16 MiB at `0x10800000` on the board (strongly-ordered, 16 more MMU sections), a 16 MiB buffer in the harness; never overwritten; a full log is a named stop |
+| the export | `b4q_app.c`: `answer_export` (RINGINFO → RING, PULL → CHUNK), the `log` field on IDENT / SIGNREQ / RESULT / END | the host pulls the log through the console after every result; the digest is the PS's own, over the bytes it exports |
+| the export epilogue | `b4q_app.c`: `export_epilogue` after `run_session` | after a non-terminal END the log of the stopped session is still pulled (exports and QUIT admitted; anything else NACKed `ended: export only`); after the terminal END nothing — a named limitation |
+| the overflow stop | `wait_command` | a TX after the log filled is NACKed `halted: the evidence log is full` |
+| the host | `host/b4q_console_session.py` (`source="ps-evidence-log-v1"`, `PsEvidence`), `host/b4q_evidence_log.py`, `host/b4q_verify.py` (`verify_source`, the v2 replay) + `host/b4q_verify_runner.py` (the runner archive contract), `host/b4q_runner.py` (the execution context: the pinned image, the permitted board, the carrier's variant word at 0x43C02034; the stages control-plane / open / transaction), `host/b4q_ymodem.py`, `host/b4q_device_surrogate.py` (the 4203 and 4205 fixture profiles), `host/b4q_device_fixture.py` (synthetic device-format fixtures), `host/b4q_runner_e2e.py` | the records from the PS's log (§3 of the audit); the physical runner over a serial endpoint that constructs no backend; the device surrogate on a PTY; 38 runner scenarios |
+
+The 19 console scenarios of §5 run unchanged under both sources (`host/b4q_console_e2e.py` and `--source ps-evidence-log-v1`); the
+harness's bounds are the same build flags. What a device must still show is §4 plus the measurements of `docs/b4q_bringup_plan.md`.

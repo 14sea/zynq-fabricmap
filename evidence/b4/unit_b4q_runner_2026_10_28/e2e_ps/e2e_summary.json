@@ -1,0 +1,1932 @@
+[
+ {
+  "name": "valid",
+  "wall_s": 4.155,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   },
+   {
+    "seq": 3,
+    "dir": "tx_003",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     248,
+     403
+    ],
+    "pcap_range": [
+     352,
+     504
+    ]
+   },
+   {
+    "seq": 4,
+    "dir": "tx_004",
+    "kind": "normal",
+    "genome_hex": "02011d",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     403,
+     558
+    ],
+    "pcap_range": [
+     504,
+     656
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 77794,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 212,
+   "hb": 9,
+   "nacks": 0,
+   "sign_requests": 4,
+   "sign_replies": 4,
+   "transactions": 4,
+   "kicks": 212,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 123344,
+   "log_overflow": 0,
+   "log_records": 7709,
+   "log_sha256": "84480a8f514aa934d185d74f2bb289e13e05099d9a82b0981469d1048ee1d0b2"
+  },
+  "stats": {
+   "hb": 9,
+   "nack": 0,
+   "signreq": 4,
+   "signreply": 4,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 394,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 214,
+  "ident": {
+   "protocol": "b4q-v2",
+   "token": "91a8c4b8910c4e5f8f1644e5889be79d",
+   "uboot_epoch": 1700000000,
+   "app_image_sha_lo32": 131421535,
+   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+   "flags": 2,
+   "page_nonce_seen": "9e3779b97f4a7c15",
+   "page_status_seen": 0,
+   "nonce_echo_equal": 1,
+   "watchdog": "armed",
+   "log": 6816,
+   "log_capacity": 16777216,
+   "open": {
+    "status": 0,
+    "reason": "opened",
+    "idcode": 326246547,
+    "variant": 1110704129,
+    "timing": 1141116936,
+    "witness": 131584,
+    "status_word": 6400,
+    "heartbeat": 44,
+    "nonce": "9e3779b97f4a7c15",
+    "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
+   }
+  },
+  "log": {
+   "used": 123344,
+   "capacity": 16777216,
+   "overflow": 0,
+   "digest_equal": true
+  },
+  "pull_stats": {
+   "pulls": 6,
+   "chunks": 163,
+   "bad_chunks": 0
+  }
+ },
+ {
+  "name": "a5",
+  "wall_s": 4.766,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   },
+   {
+    "seq": 3,
+    "dir": "tx_003",
+    "kind": "inject",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "injection_open",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     248,
+     330
+    ],
+    "pcap_range": [
+     352,
+     452
+    ]
+   },
+   {
+    "seq": 4,
+    "dir": "tx_004",
+    "kind": "a5",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     330,
+     485
+    ],
+    "pcap_range": [
+     452,
+     604
+    ]
+   },
+   {
+    "seq": 5,
+    "dir": "tx_005",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     485,
+     640
+    ],
+    "pcap_range": [
+     604,
+     756
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 89257,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 243,
+   "hb": 9,
+   "nacks": 0,
+   "sign_requests": 5,
+   "sign_replies": 5,
+   "transactions": 5,
+   "kicks": 243,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 140864,
+   "log_overflow": 0,
+   "log_records": 8804,
+   "log_sha256": "a8c1400573fb8c61d5e8d434788c4f442d1aa6881c626fd6e40250d0d48ad8d4"
+  },
+  "stats": {
+   "hb": 9,
+   "nack": 0,
+   "signreq": 5,
+   "signreply": 5,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 451,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 245,
+  "a5": "pass"
+ },
+ {
+  "name": "notary_refuses",
+  "wall_s": 2.182,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     93,
+     97
+    ],
+    "pcap_range": [
+     200,
+     200
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 22884,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 67,
+   "hb": 2,
+   "nacks": 0,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 67,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "STOP_SIGN: the notary refused the candidate",
+   "log": 35168,
+   "log_overflow": 0,
+   "log_records": 2198,
+   "log_sha256": "4b5a976d97ba4dcaaf3545620e4f72f423c5a3f44f04078ab8f6009fa823ea78"
+  },
+  "stats": {
+   "hb": 2,
+   "nack": 0,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 126,
+  "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
+  "open_findings": [],
+  "platform_kicks": 69,
+  "tx": {
+   "status": 1,
+   "reason": "STOP_SIGN: the notary refused the candidate",
+   "phase": "P1",
+   "o": false,
+   "x": null,
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ]
+  },
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate) \u2014 nothing further is signed without a ruling",
+  "sign_events": [
+   "EV sign: refused: 61 the bench notary refuses this genome (a configured refusal)"
+  ]
+ },
+ {
+  "name": "reply_corrupt",
+  "wall_s": 3.125,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 41186,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 116,
+   "hb": 8,
+   "nacks": 1,
+   "sign_requests": 3,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 116,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64416,
+   "log_overflow": 0,
+   "log_records": 4026,
+   "log_sha256": "489bf9a7de7fc27b1a2f4ea040f4a6b2e63edbb592bd861c166ab024c4946046"
+  },
+  "stats": {
+   "hb": 8,
+   "nack": 1,
+   "signreq": 3,
+   "signreply": 2,
+   "corrupted": 1,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 214,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 118,
+  "tx": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  }
+ },
+ {
+  "name": "reply_dropped_once",
+  "wall_s": 2.81,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 41186,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 115,
+   "hb": 8,
+   "nacks": 0,
+   "sign_requests": 3,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 115,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64416,
+   "log_overflow": 0,
+   "log_records": 4026,
+   "log_sha256": "56c524d183e36896d052e8c81993e6a44b3cc339a3555d0185a1581290a2802e"
+  },
+  "stats": {
+   "hb": 8,
+   "nack": 0,
+   "signreq": 3,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 1,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 213,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 117,
+  "tx": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  }
+ },
+ {
+  "name": "replies_dropped",
+  "wall_s": 1.76,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     93,
+     97
+    ],
+    "pcap_range": [
+     200,
+     200
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 22884,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 81,
+   "hb": 14,
+   "nacks": 0,
+   "sign_requests": 4,
+   "sign_replies": 1,
+   "transactions": 2,
+   "kicks": 81,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "STOP_SIGN: the notary refused the candidate",
+   "log": 35168,
+   "log_overflow": 0,
+   "log_records": 2198,
+   "log_sha256": "aec8efcafd569f087891e54701f932d6e541b8a13b77668437c6dce1ca81512c"
+  },
+  "stats": {
+   "hb": 14,
+   "nack": 0,
+   "signreq": 4,
+   "signreply": 1,
+   "corrupted": 0,
+   "dropped": 3,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 142,
+  "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
+  "open_findings": [],
+  "platform_kicks": 83,
+  "tx": {
+   "status": 1,
+   "reason": "STOP_SIGN: the notary refused the candidate",
+   "phase": "P1",
+   "o": false,
+   "x": null,
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ]
+  },
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate) \u2014 nothing further is signed without a ruling",
+  "sign_events": [
+   "EV sign: no valid SIGNREPLY after 3 attempts: no SIGNREPLY within the attempt's budget"
+  ]
+ },
+ {
+  "name": "silent_host",
+  "wall_s": 1.382,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 22882,
+  "end": {
+   "kind": "STOPPED",
+   "reason": "no host command within the idle bound",
+   "lines": 66,
+   "hb": 8,
+   "nacks": 0,
+   "sign_requests": 1,
+   "sign_replies": 1,
+   "transactions": 1,
+   "kicks": 66,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 35104,
+   "log_overflow": 0,
+   "log_records": 2194,
+   "log_sha256": "0ee0f0aaf55434978740296bbd2d1d5d6c6010e897caa67e4b8cbd86626d3aa8"
+  },
+  "stats": {
+   "hb": 8,
+   "nack": 0,
+   "signreq": 1,
+   "signreply": 1,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 118,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 67,
+  "served": 6
+ },
+ {
+  "name": "garbage_command",
+  "wall_s": 2.52,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 41186,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 112,
+   "hb": 5,
+   "nacks": 1,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 112,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64416,
+   "log_overflow": 0,
+   "log_records": 4026,
+   "log_sha256": "a9cf4cf50be3899b755f2eb874b1b56f256e8979f1ef0fb8a151ba500872d416"
+  },
+  "stats": {
+   "hb": 5,
+   "nack": 1,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 1,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 210,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 114,
+  "tx": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  }
+ },
+ {
+  "name": "wrong_token",
+  "wall_s": 2.597,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 41186,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 111,
+   "hb": 4,
+   "nacks": 1,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 111,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64416,
+   "log_overflow": 0,
+   "log_records": 4026,
+   "log_sha256": "4590d8b124e4047a20537cece28fe8fe4525be43762a62b4ac4c0c8175c33f7e"
+  },
+  "stats": {
+   "hb": 4,
+   "nack": 1,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 1,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 209,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 113,
+  "tx": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  },
+  "nacks": [
+   "NACK wrong token"
+  ]
+ },
+ {
+  "name": "stale_reply",
+  "wall_s": 2.796,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 41186,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 110,
+   "hb": 4,
+   "nacks": 0,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 110,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64416,
+   "log_overflow": 0,
+   "log_records": 4026,
+   "log_sha256": "6dc604089e00f365532026bf11967607588d680d322298ba812146c39706a9c0"
+  },
+  "stats": {
+   "hb": 4,
+   "nack": 0,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 1,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 208,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 112,
+  "tx": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  }
+ },
+ {
+  "name": "duplicate_tx",
+  "wall_s": 2.228,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 41186,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 112,
+   "hb": 4,
+   "nacks": 1,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 112,
+   "flushed": 0,
+   "stale_frames": 1,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64400,
+   "log_overflow": 0,
+   "log_records": 4025,
+   "log_sha256": "38d0df3e80b4bef1af0be42eeb692b249b11a60f3c0cbf3597228571eaa78647"
+  },
+  "stats": {
+   "hb": 4,
+   "nack": 1,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 1
+  },
+  "console_lines": 211,
+  "halted": "transaction 3: no observation sealed (the application refused the command: stale sequence)",
+  "open_findings": [],
+  "platform_kicks": 114,
+  "first": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  },
+  "second": {
+   "status": 7,
+   "reason": "the application refused the command: stale sequence",
+   "phase": "?",
+   "o": false,
+   "x": null,
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ]
+  },
+  "new_signreqs": 0,
+  "new_trace_events": 0
+ },
+ {
+  "name": "after_stop_tx",
+  "wall_s": 1.612,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     93,
+     97
+    ],
+    "pcap_range": [
+     200,
+     200
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 22884,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 68,
+   "hb": 2,
+   "nacks": 1,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 68,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 1,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "STOP_SIGN: the notary refused the candidate",
+   "log": 35168,
+   "log_overflow": 0,
+   "log_records": 2198,
+   "log_sha256": "7f6e0f3de62b81738c714dcdb5762dd38085c4c87844a438276a1b78e5d7e419"
+  },
+  "stats": {
+   "hb": 2,
+   "nack": 1,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 128,
+  "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
+  "open_findings": [],
+  "platform_kicks": 70,
+  "failed": {
+   "status": 1,
+   "reason": "STOP_SIGN: the notary refused the candidate",
+   "phase": "P1",
+   "o": false,
+   "x": null,
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ]
+  },
+  "api_refused": true,
+  "raw_next": {
+   "status": 7,
+   "reason": "the application refused the command: halted: STOP_SIGN: the notary refused the candidate: nothing further is signed without a ruling"
+  },
+  "new_signreqs": 0,
+  "new_trace_events": 0
+ },
+ {
+  "name": "malformed_tx",
+  "wall_s": 2.33,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 41186,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 116,
+   "hb": 4,
+   "nacks": 6,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 116,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64400,
+   "log_overflow": 0,
+   "log_records": 4025,
+   "log_sha256": "3ebeb2e464150f3510a93e7590ab929abb8ed5972887b73c1dd651b094198658"
+  },
+  "stats": {
+   "hb": 4,
+   "nack": 6,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 219,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 118,
+  "malformed": [
+   {
+    "cmd": "TX mystery 00000000 0",
+    "status": 7,
+    "reason": "the application refused the command: malformed TX",
+    "new_signreqs": 0,
+    "new_trace_events": 0,
+    "new_submits": 0
+   },
+   {
+    "cmd": "TX normal 100000000 0",
+    "status": 7,
+    "reason": "the application refused the command: malformed TX",
+    "new_signreqs": 0,
+    "new_trace_events": 0,
+    "new_submits": 0
+   },
+   {
+    "cmd": "TX normal 00000000 1 2000000",
+    "status": 7,
+    "reason": "the application refused the command: malformed TX",
+    "new_signreqs": 0,
+    "new_trace_events": 0,
+    "new_submits": 0
+   },
+   {
+    "cmd": "TX normal 00000000 0 GARBAGE",
+    "status": 7,
+    "reason": "the application refused the command: malformed TX",
+    "new_signreqs": 0,
+    "new_trace_events": 0,
+    "new_submits": 0
+   },
+   {
+    "cmd": "TX normal 00000000 0 TASK aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 2 1 0 0 1",
+    "status": 7,
+    "reason": "the application refused the command: malformed TX",
+    "new_signreqs": 0,
+    "new_trace_events": 0,
+    "new_submits": 0
+   },
+   {
+    "cmd": "TX normal 00000000 1 0000001 TASK aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1 257 256 256 65537",
+    "status": 7,
+    "reason": "the application refused the command: malformed TX",
+    "new_signreqs": 0,
+    "new_trace_events": 0,
+    "new_submits": 0
+   }
+  ],
+  "then": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  }
+ },
+ {
+  "name": "host_seq_gap",
+  "wall_s": 2.391,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 41186,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 111,
+   "hb": 5,
+   "nacks": 0,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 111,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64416,
+   "log_overflow": 0,
+   "log_records": 4026,
+   "log_sha256": "fa6830cf61f89e0b59b43d8d9d79414e5faf318655cb5b4e5362c6eb02ad3ea5"
+  },
+  "stats": {
+   "hb": 5,
+   "nack": 0,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 208,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 113,
+  "tx": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  },
+  "host_seq_last": 302
+ },
+ {
+  "name": "sequence_cut",
+  "wall_s": 1.329,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 6,
+    "phase": "?",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     8,
+     8
+    ],
+    "pcap_range": [
+     48,
+     48
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 4648,
+  "end": {
+   "kind": "PROTOCOL",
+   "reason": "this side's line sequence is exhausted",
+   "lines": 16,
+   "hb": 0,
+   "nacks": 0,
+   "sign_requests": 1,
+   "sign_replies": 1,
+   "transactions": 1,
+   "kicks": 16,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 24464,
+   "log_overflow": 0,
+   "log_records": 1529,
+   "log_sha256": "568c7d1a0be78046c909f54ec818428b8ee2807a34ea3edb22257eff1647c626"
+  },
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 1,
+   "signreply": 1,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 29,
+  "halted": "transaction 1: no observation sealed (the session ended: PROTOCOL: this side's line sequence is exhausted)",
+  "open_findings": [],
+  "platform_kicks": 17,
+  "tx": {
+   "status": 6,
+   "reason": "the session ended: PROTOCOL: this side's line sequence is exhausted",
+   "o": false
+  },
+  "end_trace_index": 8,
+  "writes_after_end": 0,
+  "reads_after_end": 0,
+  "submits_after_end": 0,
+  "trace_events_in_tx": 0,
+  "mmio_after_end": 1
+ },
+ {
+  "name": "bad_page",
+  "wall_s": 0.008,
+  "records": [],
+  "chain_findings": [
+   "session_open.startup_readback_sha256: bad value ''",
+   "chain: the session-opening record is malformed; no transaction can be bound to it"
+  ],
+  "accesses": 24,
+  "end": {
+   "kind": "STOPPED",
+   "reason": "the identity page does not parse (magic / layout / checksum / reserved)",
+   "lines": 0,
+   "hb": 0,
+   "nacks": 0,
+   "sign_requests": 0,
+   "sign_replies": 0,
+   "transactions": 0,
+   "kicks": 0,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 0,
+   "opened": 0,
+   "halted": "",
+   "log": 368,
+   "log_overflow": 0,
+   "log_records": 23,
+   "log_sha256": "262c94745dd07b46dcd27d6afcdacb6963e99178794e0fcbc4a1c1928d13a9e4"
+  },
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 6,
+  "halted": "the session did not open: session_open: session_open.startup_readback_sha256: bad value ''; session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'; session_open: no startup readback group in the PCAP log before the first record; session_open: the executing side refused to open: the session ended: STOPPED: the identity page does not parse (magic / layout / checksum / reserved)",
+  "open_findings": [
+   "session_open: session_open.startup_readback_sha256: bad value ''",
+   "session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'",
+   "session_open: no startup readback group in the PCAP log before the first record",
+   "session_open: the executing side refused to open: the session ended: STOPPED: the identity page does not parse (magic / layout / checksum / reserved)"
+  ],
+  "platform_kicks": 0,
+  "open_status": "refused",
+  "root_refused": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
+  "signatures": 0,
+  "ident": null
+ },
+ {
+  "name": "watchdog_fail",
+  "wall_s": 0.009,
+  "records": [],
+  "chain_findings": [
+   "session_open.startup_readback_sha256: bad value ''",
+   "chain: the session-opening record is malformed; no transaction can be bound to it"
+  ],
+  "accesses": 24,
+  "end": {
+   "kind": "STOPPED",
+   "reason": "the watchdog could not be armed",
+   "lines": 0,
+   "hb": 0,
+   "nacks": 0,
+   "sign_requests": 0,
+   "sign_replies": 0,
+   "transactions": 0,
+   "kicks": 0,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 0,
+   "opened": 0,
+   "halted": "",
+   "log": 368,
+   "log_overflow": 0,
+   "log_records": 23,
+   "log_sha256": "fe0d41a162065a0ac3b3885805300f75ee621faecc40670301985f4886d5d868"
+  },
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 6,
+  "halted": "the session did not open: session_open: session_open.startup_readback_sha256: bad value ''; session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'; session_open: no startup readback group in the PCAP log before the first record; session_open: the executing side refused to open: the session ended: STOPPED: the watchdog could not be armed",
+  "open_findings": [
+   "session_open: session_open.startup_readback_sha256: bad value ''",
+   "session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'",
+   "session_open: no startup readback group in the PCAP log before the first record",
+   "session_open: the executing side refused to open: the session ended: STOPPED: the watchdog could not be armed"
+  ],
+  "platform_kicks": 3,
+  "open_status": "refused",
+  "root_refused": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
+  "signatures": 0,
+  "ident": null
+ },
+ {
+  "name": "pre_event_corrupt",
+  "wall_s": 1.721,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P2",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     93,
+     146
+    ],
+    "pcap_range": [
+     200,
+     252
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 29701,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 80,
+   "hb": 2,
+   "nacks": 0,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 80,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)",
+   "log": 46208,
+   "log_overflow": 0,
+   "log_records": 2888,
+   "log_sha256": "d2de6db28896bb97bda29ad6cb81014a927f964db2d021eb96e5e4867188e2f7"
+  },
+  "stats": {
+   "hb": 2,
+   "nack": 0,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 153,
+  "halted": "transaction 2: no observation sealed (STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it))",
+  "open_findings": [],
+  "platform_kicks": 82,
+  "tx": {
+   "status": 1,
+   "reason": "STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)",
+   "phase": "P2",
+   "o": false,
+   "x": null,
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ]
+  },
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)) \u2014 nothing further is signed without a ruling"
+ },
+ {
+  "name": "interrupt",
+  "wall_s": 1.739,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 5,
+    "phase": "?",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     93,
+     93
+    ],
+    "pcap_range": [
+     200,
+     200
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 22882,
+  "end": null,
+  "stats": {
+   "hb": 3,
+   "nack": 0,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 115,
+  "halted": "transaction 2: no observation sealed (interrupted: the transport closed mid-transaction)",
+  "open_findings": [],
+  "platform_kicks": null,
+  "tx": {
+   "status": 5,
+   "reason": "interrupted: the transport closed mid-transaction",
+   "phase": "?",
+   "o": false,
+   "x": null,
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ]
+  }
+ }
+]

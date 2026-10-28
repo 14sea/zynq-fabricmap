@@ -1,0 +1,307 @@
+{
+ "schema": "b4q_runner_uboot",
+ "schema_version": 2,
+ "port": "/tmp/b4q-runner-e2e-946397-wrong_variant",
+ "port_real": "/dev/pts/15",
+ "kind": "console-pty-surrogate",
+ "phase": "stopped",
+ "context": {
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+  "image_path": "/home/test/zynq_fabricmap/build/b4q_image/b4q_app_v2.bin",
+  "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+  "board_models": [
+   "Ebang EBAZ4203"
+  ],
+  "dram_min_mib": 512,
+  "variant_word": 1110704129,
+  "fclk0_ctrl_expected": null,
+  "load_addr": 33554432,
+  "purpose": "bringup-rehearsal",
+  "expected_boardid": "F8B3",
+  "allowed_roles": [
+   "verify",
+   "sacrificial"
+  ],
+  "fclk0_mhz": 50.0,
+  "ps_clk_mhz": 33.333333,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  }
+ },
+ "image": "build/b4q_image/b4q_app_v2.bin",
+ "image_sha256_file": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+ "load_addr": 33554432,
+ "stops": [
+  {
+   "t": 1793211856.844,
+   "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access",
+   "kind": "AdmissionStop"
+  }
+ ],
+ "silence_s": 20.0,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true,
+   "bytes": 98324
+  },
+  "board": {
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": true
+  },
+  "identity": {
+   "boardid": "F8B3",
+   "role": "verify",
+   "expected_boardid": "F8B3",
+   "allowed_roles": [
+    "verify",
+    "sacrificial"
+   ],
+   "policy_floor": [
+    "verify",
+    "sacrificial"
+   ],
+   "boardid_ok": true,
+   "role_ok": true,
+   "purpose": "bringup-rehearsal"
+  },
+  "clock": {
+   "inputs": {
+    "fpga0": {
+     "addr": "0xf8000170",
+     "word": "00200a00"
+    },
+    "arm": {
+     "addr": "0xf8000100",
+     "word": "0001a000"
+    },
+    "ddr": {
+     "addr": "0xf8000104",
+     "word": "00020000"
+    },
+    "io": {
+     "addr": "0xf8000108",
+     "word": "0001e000"
+    },
+    "status": {
+     "addr": "0xf800010c",
+     "word": "0000003f"
+    },
+    "boot_mode": {
+     "addr": "0xf800025c",
+     "word": "00000005"
+    }
+   },
+   "eligibility": {
+    "eligible": true,
+    "why": [],
+    "missing": [],
+    "srcsel": 0,
+    "pll": "io",
+    "state": {
+     "pll": "io",
+     "ctrl": "0001e000",
+     "reset": false,
+     "pwrdwn": false,
+     "bypass_force": false,
+     "bypass_qual": false,
+     "boot_pll_bypass": false,
+     "bypassed": false,
+     "locked": true,
+     "stable": true,
+     "eligible": true,
+     "why": []
+    },
+    "nominal": {
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "mhz": 50.0
+    },
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "ps_clk_mhz": 33.333333
+   },
+   "expected_mhz": 50.0,
+   "expected_ctrl": null,
+   "ok": true,
+   "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
+  },
+  "carrier": {
+   "variant_addr": "0x43c02034",
+   "variant": "42340002",
+   "expected": "42340001",
+   "equal": false
+  },
+  "ok": false
+ },
+ "load_witness": null,
+ "page_witness": null,
+ "go": null,
+ "uboot_steps": [
+  {
+   "what": "prompt",
+   "t": 1793211856.325,
+   "rx_at": 0,
+   "tx_at": 0,
+   "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
+   "banner_seen": true,
+   "ok": true,
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "rx_end": 345,
+   "tx_end": 2
+  },
+  {
+   "what": "printenv",
+   "t": 1793211856.831,
+   "rx_at": 345,
+   "tx_at": 2,
+   "sent": "printenv boardid",
+   "reply": "boardid=F8B3\r\n",
+   "ok": true,
+   "rx_end": 383,
+   "tx_end": 19,
+   "value": "F8B3"
+  },
+  {
+   "what": "printenv",
+   "t": 1793211856.832,
+   "rx_at": 383,
+   "tx_at": 19,
+   "sent": "printenv role",
+   "reply": "role=verify\r\n",
+   "ok": true,
+   "rx_end": 417,
+   "tx_end": 33,
+   "value": "verify"
+  },
+  {
+   "what": "md.l",
+   "t": 1793211856.834,
+   "rx_at": 417,
+   "tx_at": 33,
+   "sent": "md.l f8000170 1",
+   "reply": "f8000170: 00200a00    .. .\r\n",
+   "ok": true,
+   "rx_end": 468,
+   "tx_end": 49,
+   "words": [
+    "00200a00"
+   ]
+  },
+  {
+   "what": "md.l",
+   "t": 1793211856.835,
+   "rx_at": 468,
+   "tx_at": 49,
+   "sent": "md.l f8000100 1",
+   "reply": "f8000100: 0001a000    ....\r\n",
+   "ok": true,
+   "rx_end": 519,
+   "tx_end": 65,
+   "words": [
+    "0001a000"
+   ]
+  },
+  {
+   "what": "md.l",
+   "t": 1793211856.836,
+   "rx_at": 519,
+   "tx_at": 65,
+   "sent": "md.l f8000104 1",
+   "reply": "f8000104: 00020000    ....\r\n",
+   "ok": true,
+   "rx_end": 570,
+   "tx_end": 81,
+   "words": [
+    "00020000"
+   ]
+  },
+  {
+   "what": "md.l",
+   "t": 1793211856.837,
+   "rx_at": 570,
+   "tx_at": 81,
+   "sent": "md.l f8000108 1",
+   "reply": "f8000108: 0001e000    ....\r\n",
+   "ok": true,
+   "rx_end": 621,
+   "tx_end": 97,
+   "words": [
+    "0001e000"
+   ]
+  },
+  {
+   "what": "md.l",
+   "t": 1793211856.838,
+   "rx_at": 621,
+   "tx_at": 97,
+   "sent": "md.l f800010c 1",
+   "reply": "f800010c: 0000003f    ?...\r\n",
+   "ok": true,
+   "rx_end": 672,
+   "tx_end": 113,
+   "words": [
+    "0000003f"
+   ]
+  },
+  {
+   "what": "md.l",
+   "t": 1793211856.84,
+   "rx_at": 672,
+   "tx_at": 113,
+   "sent": "md.l f800025c 1",
+   "reply": "f800025c: 00000005    ....\r\n",
+   "ok": true,
+   "rx_end": 723,
+   "tx_end": 129,
+   "words": [
+    "00000005"
+   ]
+  },
+  {
+   "what": "md.l",
+   "t": 1793211856.842,
+   "rx_at": 723,
+   "tx_at": 129,
+   "sent": "md.l 43c02034 1",
+   "reply": "43c02034: 42340002    ..4B\r\n",
+   "ok": true,
+   "rx_end": 774,
+   "tx_end": 145,
+   "words": [
+    "42340002"
+   ]
+  }
+ ],
+ "raw": {
+  "console_bin_sha256": "6546a39e107d882c0e145fb6971b1ed80e7e7e7304388aebc633dce9a95c0eed",
+  "console_bin_bytes": 774,
+  "console_tx_bin_sha256": "dbb634cfd3ef82389780b2a38895f89acdf687ac75c798bb759fc30880c4cf8e",
+  "console_tx_bin_bytes": 145,
+  "incomplete_writes": []
+ },
+ "break_s": 20.0,
+ "phase_at_stop": "prompt"
+}

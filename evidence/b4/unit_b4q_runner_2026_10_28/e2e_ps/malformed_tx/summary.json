@@ -1,0 +1,147 @@
+{
+ "name": "malformed_tx",
+ "wall_s": 2.33,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    8,
+    93
+   ],
+   "pcap_range": [
+    48,
+    200
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000000",
+   "o": true,
+   "f": true,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    93,
+    248
+   ],
+   "pcap_range": [
+    200,
+    352
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 41186,
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 116,
+  "hb": 4,
+  "nacks": 6,
+  "sign_requests": 2,
+  "sign_replies": 2,
+  "transactions": 2,
+  "kicks": 116,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "",
+  "log": 64400,
+  "log_overflow": 0,
+  "log_records": 4025,
+  "log_sha256": "3ebeb2e464150f3510a93e7590ab929abb8ed5972887b73c1dd651b094198658"
+ },
+ "stats": {
+  "hb": 4,
+  "nack": 6,
+  "signreq": 2,
+  "signreply": 2,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 219,
+ "halted": null,
+ "open_findings": [],
+ "platform_kicks": 118,
+ "malformed": [
+  {
+   "cmd": "TX mystery 00000000 0",
+   "status": 7,
+   "reason": "the application refused the command: malformed TX",
+   "new_signreqs": 0,
+   "new_trace_events": 0,
+   "new_submits": 0
+  },
+  {
+   "cmd": "TX normal 100000000 0",
+   "status": 7,
+   "reason": "the application refused the command: malformed TX",
+   "new_signreqs": 0,
+   "new_trace_events": 0,
+   "new_submits": 0
+  },
+  {
+   "cmd": "TX normal 00000000 1 2000000",
+   "status": 7,
+   "reason": "the application refused the command: malformed TX",
+   "new_signreqs": 0,
+   "new_trace_events": 0,
+   "new_submits": 0
+  },
+  {
+   "cmd": "TX normal 00000000 0 GARBAGE",
+   "status": 7,
+   "reason": "the application refused the command: malformed TX",
+   "new_signreqs": 0,
+   "new_trace_events": 0,
+   "new_submits": 0
+  },
+  {
+   "cmd": "TX normal 00000000 0 TASK aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 2 1 0 0 1",
+   "status": 7,
+   "reason": "the application refused the command: malformed TX",
+   "new_signreqs": 0,
+   "new_trace_events": 0,
+   "new_submits": 0
+  },
+  {
+   "cmd": "TX normal 00000000 1 0000001 TASK aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1 257 256 256 65537",
+   "status": 7,
+   "reason": "the application refused the command: malformed TX",
+   "new_signreqs": 0,
+   "new_trace_events": 0,
+   "new_submits": 0
+  }
+ ],
+ "then": {
+  "status": 0,
+  "reason": "closed",
+  "phase": "",
+  "o": true,
+  "x": "closed",
+  "findings": []
+ }
+}

@@ -22,7 +22,7 @@ WD=${EMBEDDEDSW_SCUWDT:-/home/test/Xilinx/2025.2/data/embeddedsw/XilinxProcessor
 FW=$REPO/firmware/b4q
 BSP=$FW/bsp
 OUT=${OUT:-$REPO/build/b4q_image}
-IMAGE=${IMAGE:-b4q_app}
+IMAGE=${IMAGE:-b4q_app_v2}            # v2: the evidence log and its pull (protocol b4q-v2); the v1 image 010f6a05... is history
 for need in "$CC" "$SA/common/xil_io.h" "$WD/xscuwdt.h"; do
   [ -e "$need" ] || { echo "build input missing: $need (the pinned toolchain / embeddedsw sources are not available here: no image is produced)" >&2; exit 2; }
 done
@@ -49,7 +49,7 @@ SYS_SRCS="arm/common/gcc/sbrk.c arm/common/gcc/_sbrk.c arm/common/gcc/write.c \
           arm/common/gcc/getpid.c arm/common/gcc/kill.c arm/common/gcc/errno.c \
           arm/common/gcc/abort.c"
 WDT_SRCS="xscuwdt.c xscuwdt_g.c xscuwdt_sinit.c"
-APP_SRCS="target/b4q_board_main.c target/b4q_board_hal.c target/b4q_board_console.c target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c b4q_tx.c b4q_cmd.c b4q_derive.c"
+APP_SRCS="target/b4q_board_main.c target/b4q_board_hal.c target/b4q_board_console.c target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c target/b4q_ring.c b4q_tx.c b4q_cmd.c b4q_derive.c"
 
 OBJS=()
 for s in $ASM_SRCS; do o="$OUT/$(echo "$s" | tr / _).o"; "$CC" $BSP_CFLAGS -c "$SA/$s" -o "$o"; OBJS+=("$o"); done

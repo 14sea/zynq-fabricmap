@@ -1,0 +1,23 @@
+{
+ "seq": 1,
+ "kind": "root",
+ "genome": 0,
+ "genome_hex": "000000",
+ "findings": [
+  "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet",
+  "the executing side reports a closed transaction but no observation was sealed",
+  "the executing side reports success but the records do not show a sealed complete O with a closed / injection_open X"
+ ],
+ "trace_range": [
+  8,
+  60
+ ],
+ "pcap_range": [
+  48,
+  85
+ ],
+ "emulation": {
+  "unmodelled_cells": 0
+ },
+ "interrupted": null
+}

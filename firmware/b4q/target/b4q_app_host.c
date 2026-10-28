@@ -8,6 +8,7 @@
 #include "b4q_platform.h"
 #include "b4q_hal.h"
 #include "b4q_psmap.h"
+#include "b4q_ring.h"
 
 #include <poll.h>
 #include <stdio.h>
@@ -32,13 +33,23 @@ static const char *reply(void)
     return g_line;
 }
 
+static uint8_t kind_of(uint32_t addr)
+{
+    if (addr >= B4Q_PSMAP_AXI_BASE && addr < B4Q_PSMAP_AXI_BASE + B4Q_PSMAP_AXI_SIZE) return B4Q_RING_KIND_WIN;
+    if (addr >= B4Q_PSMAP_DEVCFG_BASE && addr < B4Q_PSMAP_DEVCFG_BASE + 0x100u) return B4Q_RING_KIND_DEVC;
+    return B4Q_RING_KIND_BUF;
+}
+
+static uint32_t addr_of(uint32_t addr) { return kind_of(addr) == B4Q_RING_KIND_WIN ? addr - B4Q_PSMAP_AXI_BASE : addr; }
+
 uint32_t b4q_rd32(uint32_t addr, uint32_t *resp)
 {
     unsigned long long d = 0, r = 0;
-    if (!b4q_psmap_readable(addr)) { *resp = B4Q_RESP_SLVERR; return 0; }   /* the HAL's allowlist: never issued (the board's rule) */
+    if (!b4q_psmap_readable(addr)) { *resp = B4Q_RESP_SLVERR; b4q_app_log_access(kind_of(addr), B4Q_RING_OP_RD, addr_of(addr), 0u, 1); return 0; }   /* the HAL's allowlist: never issued (the board's rule) */
     printf("R %08x\n", (unsigned)addr); fflush(stdout);
     if (sscanf(reply(), "%llx %llu", &d, &r) != 2) { fprintf(stderr, "bad read reply: %s\n", g_line); exit(3); }
     *resp = (uint32_t)r;
+    b4q_app_log_access(kind_of(addr), B4Q_RING_OP_RD, addr_of(addr), (uint32_t)d, r != 0);
     return (uint32_t)d;
 }
 
@@ -46,9 +57,10 @@ uint32_t b4q_wr32(uint32_t addr, uint32_t value)
 {
     unsigned long long r = 0;
     if (b4q_app_terminal()) return B4Q_RESP_SLVERR;     /* the terminal END went out: no write is issued after it (R2) */
-    if (!b4q_psmap_writable(addr)) return B4Q_RESP_SLVERR;
+    if (!b4q_psmap_writable(addr)) { b4q_app_log_access(kind_of(addr), B4Q_RING_OP_WR, addr_of(addr), value, 1); return B4Q_RESP_SLVERR; }
     printf("W %08x %08x\n", (unsigned)addr, (unsigned)value); fflush(stdout);
     if (sscanf(reply(), "%llu", &r) != 1) { fprintf(stderr, "bad write reply: %s\n", g_line); exit(3); }
+    b4q_app_log_access(kind_of(addr), B4Q_RING_OP_WR, addr_of(addr), value, r != 0);
     return (uint32_t)r;
 }
 
@@ -90,6 +102,18 @@ int b4q_con_rx_flush(void)
 }
 
 int b4q_plat_watchdog_start(void) { g_armed = 1; return getenv("B4Q_APP_HOST_WDT_FAIL") ? -1 : 0; }
+
+static uint8_t *g_ring;
+static uint32_t g_tick;
+uint8_t *b4q_plat_ring_base(uint32_t *capacity)
+{
+    const char *e = getenv("B4Q_APP_HOST_RING_BYTES");      /* a bench knob: a small log to reach the overflow stop */
+    uint32_t cap = e ? (uint32_t)strtoul(e, NULL, 10) : 16u * 1024u * 1024u;
+    if (!g_ring) g_ring = (uint8_t *)malloc(cap);
+    *capacity = g_ring ? cap : 0u;
+    return g_ring;
+}
+uint32_t b4q_plat_tick(void) { return ++g_tick; }
 void b4q_plat_kick(void) { if (g_armed) g_kicks++; }
 void b4q_plat_halt(void)
 {
