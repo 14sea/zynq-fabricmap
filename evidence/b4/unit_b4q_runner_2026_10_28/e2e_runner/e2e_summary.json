@@ -1,7 +1,7 @@
 [
  {
   "label": "B4Q-runner-control_plane_only",
-  "wall_s": 1.423,
+  "wall_s": 1.458,
   "stop": null,
   "opened": false,
   "phase": "pre-go",
@@ -30,7 +30,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -46,18 +47,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -76,7 +105,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.217
+    "seconds": 0.223
    }
   },
   "page_witness": {
@@ -91,6 +120,7 @@
   "phase_at_stop": null,
   "go_in_tx": false,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "control_plane_only",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -109,7 +139,7 @@
  },
  {
   "label": "B4Q-runner-image_not_pinned",
-  "wall_s": 1.079,
+  "wall_s": 1.067,
   "stop": {
    "kind": "AdmissionStop",
    "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded"
@@ -141,11 +171,13 @@
     "file_sha256": "62676b5f6c0debe856b18f110bb20e122496bc2be38be8beae77ba3d4ebdbedd",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": false
+    "equal": false,
+    "bytes": 98324
    },
    "board": null,
+   "identity": null,
+   "clock": null,
    "carrier": null,
-   "fclk0": null,
    "ok": false
   },
   "load_witness": null,
@@ -153,7 +185,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204408.72,
+    "t": 1793208121.962,
     "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",
     "kind": "AdmissionStop"
    }
@@ -163,6 +195,7 @@
   "phase_at_stop": "prompt",
   "go_in_tx": false,
   "loady_in_tx": false,
+  "pl_read_in_tx": false,
   "name": "image_not_pinned",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -179,7 +212,7 @@
  },
  {
   "label": "B4Q-runner-board_not_permitted",
-  "wall_s": 1.064,
+  "wall_s": 1.048,
   "stop": {
    "kind": "AdmissionStop",
    "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)"
@@ -211,7 +244,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4205 (surrogate)",
@@ -227,8 +261,9 @@
     "model_ok": false,
     "dram_ok": false
    },
+   "identity": null,
+   "clock": null,
    "carrier": null,
-   "fclk0": null,
    "ok": false
   },
   "load_witness": null,
@@ -236,7 +271,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204410.098,
+    "t": 1793208123.322,
     "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)",
     "kind": "AdmissionStop"
    }
@@ -246,6 +281,7 @@
   "phase_at_stop": "prompt",
   "go_in_tx": false,
   "loady_in_tx": false,
+  "pl_read_in_tx": false,
   "name": "board_not_permitted",
   "surrogate_args": [
    "--board=4205"
@@ -264,7 +300,7 @@
  },
  {
   "label": "B4Q-runner-board_dram_short",
-  "wall_s": 1.07,
+  "wall_s": 1.066,
   "stop": {
    "kind": "AdmissionStop",
    "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)"
@@ -296,7 +332,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4205 (surrogate)",
@@ -312,8 +349,9 @@
     "model_ok": true,
     "dram_ok": false
    },
+   "identity": null,
+   "clock": null,
    "carrier": null,
-   "fclk0": null,
    "ok": false
   },
   "load_witness": null,
@@ -321,7 +359,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204411.466,
+    "t": 1793208124.693,
     "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",
     "kind": "AdmissionStop"
    }
@@ -331,6 +369,7 @@
   "phase_at_stop": "prompt",
   "go_in_tx": false,
   "loady_in_tx": false,
+  "pl_read_in_tx": false,
   "name": "board_dram_short",
   "surrogate_args": [
    "--board=4205"
@@ -349,7 +388,7 @@
  },
  {
   "label": "B4Q-runner-wrong_variant",
-  "wall_s": 1.079,
+  "wall_s": 1.059,
   "stop": {
    "kind": "AdmissionStop",
    "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access"
@@ -381,7 +420,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -397,13 +437,47 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340002",
     "expected": "42340001",
     "equal": false
    },
-   "fclk0": null,
    "ok": false
   },
   "load_witness": null,
@@ -411,7 +485,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204412.84,
+    "t": 1793208126.049,
     "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access",
     "kind": "AdmissionStop"
    }
@@ -421,6 +495,7 @@
   "phase_at_stop": "prompt",
   "go_in_tx": false,
   "loady_in_tx": false,
+  "pl_read_in_tx": true,
   "name": "wrong_variant",
   "surrogate_args": [
    "--fault=wrong-variant"
@@ -439,7 +514,7 @@
  },
  {
   "label": "B4Q-runner-fclk0_mismatch",
-  "wall_s": 1.075,
+  "wall_s": 1.083,
   "stop": {
    "kind": "AdmissionStop",
    "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00"
@@ -471,7 +546,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -487,19 +563,42 @@
     "model_ok": true,
     "dram_ok": true
    },
-   "carrier": {
-    "variant_addr": "0x43c02034",
-    "variant": "42340001",
-    "expected": "42340001",
-    "equal": true
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
    },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": "00100a00",
-    "held": true,
-    "equal": false
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": "00100a00",
+    "ok": false
    },
+   "carrier": null,
    "ok": false
   },
   "load_witness": null,
@@ -507,7 +606,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204414.227,
+    "t": 1793208127.438,
     "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00",
     "kind": "AdmissionStop"
    }
@@ -517,6 +616,7 @@
   "phase_at_stop": "prompt",
   "go_in_tx": false,
   "loady_in_tx": false,
+  "pl_read_in_tx": false,
   "name": "fclk0_mismatch",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -532,8 +632,552 @@
   "expect_failures": []
  },
  {
+  "label": "B4Q-runner-clock_gated",
+  "wall_s": 1.073,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e001"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e001",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": true,
+     "pll_bypass": false,
+     "mhz": null
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": false
+   },
+   "carrier": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793208128.817,
+    "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "clock_gated",
+  "surrogate_args": [
+   "--fault=clock-gated"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "clock: FPGA0_CLK_CTRL",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true,
+   "no_pl_read": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-clock_slow",
+  "wall_s": 1.078,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "clock: FCLK0 derives to 25.0 MHz, not the pinned 50.0 MHz: no PL access"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00201400",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 20,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 25.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": false
+   },
+   "carrier": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793208130.196,
+    "why": "clock: FCLK0 derives to 25.0 MHz, not the pinned 50.0 MHz: no PL access",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "clock_slow",
+  "surrogate_args": [
+   "--fault=clock-slow"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "clock: FCLK0 derives to",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true,
+   "no_pl_read": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-no_role",
+  "wall_s": 1.078,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": null,
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": false,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": null,
+   "carrier": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793208131.578,
+    "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "no_role",
+  "surrogate_args": [
+   "--fault=no-role"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "identity: the board's role",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true,
+   "no_pl_read": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-wrong_boardid",
+  "wall_s": 1.087,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "17A6",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": false,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": null,
+   "carrier": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793208132.949,
+    "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "wrong_boardid",
+  "surrogate_args": [
+   "--fault=wrong-boardid"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "identity: the board's boardid",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true,
+   "no_pl_read": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-role_reference",
+  "wall_s": 1.069,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "identity: the board's role 'reference' is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "reference",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": false,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": null,
+   "carrier": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793208134.328,
+    "why": "identity: the board's role 'reference' is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "role_reference",
+  "surrogate_args": [
+   "--role=reference"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "identity: the board's role",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true,
+   "no_pl_read": true
+  },
+  "expect_failures": []
+ },
+ {
   "label": "B4Q-runner-miner_uboot_break",
-  "wall_s": 4.031,
+  "wall_s": 4.025,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -586,13 +1230,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 111,
-   "hb": 5,
+   "lines": 112,
+   "hb": 6,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 111,
+   "kicks": 112,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -602,10 +1246,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "e86b77fafd4996b9b0f9c643f003f1ca3646636ce08fd45cf19f5acb200d6174"
+   "log_sha256": "896e373810aaed8c451ec098b24c7f471853c0d3065558442a0f28563bdcd88e"
   },
   "stats": {
-   "hb": 5,
+   "hb": 6,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -618,14 +1262,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 208,
+  "console_lines": 209,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4205 (surrogate)",
@@ -641,18 +1286,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -671,7 +1344,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.23
+    "seconds": 0.216
    }
   },
   "page_witness": {
@@ -701,6 +1374,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "miner_uboot_break",
   "surrogate_args": [
    "--board=4205"
@@ -717,7 +1391,7 @@
  },
  {
   "label": "B4Q-runner-valid",
-  "wall_s": 6.085,
+  "wall_s": 6.184,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -812,13 +1486,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 212,
-   "hb": 9,
+   "lines": 213,
+   "hb": 10,
    "nacks": 0,
    "sign_requests": 4,
    "sign_replies": 4,
    "transactions": 4,
-   "kicks": 212,
+   "kicks": 213,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -828,10 +1502,10 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "519b3f46dae81985b3ba035f4dd5d44429ee45c46766b0a220890e47ff08d882"
+   "log_sha256": "3b0e34621618003f93e0bc08901b44c4590943bfb905e4cbfbd7787672ba98c6"
   },
   "stats": {
-   "hb": 9,
+   "hb": 10,
    "nack": 0,
    "signreq": 4,
    "signreply": 4,
@@ -844,14 +1518,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 394,
+  "console_lines": 395,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -867,18 +1542,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -897,7 +1600,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.237
+    "seconds": 0.233
    }
   },
   "page_witness": {
@@ -912,7 +1615,7 @@
   "transport_stops": [],
   "ident": {
    "protocol": "b4q-v2",
-   "token": "db8a268da909593f3f30d55b2531c2f1",
+   "token": "ac48a42e414885b8ee2ccbf990edb3c3",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 1301847784,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -956,6 +1659,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "valid",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -973,7 +1677,7 @@
  },
  {
   "label": "B4Q-runner-a5",
-  "wall_s": 6.769,
+  "wall_s": 6.567,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1105,7 +1809,7 @@
    "log": 140864,
    "log_overflow": 0,
    "log_records": 8804,
-   "log_sha256": "40425fd3621c6a74bfc5ea69d8da2f3eb289cbedff936eacb07d44ec16731c6c"
+   "log_sha256": "fa409d4d225f2e861b0f06a015660882a56f0676e00ee8b0d096734723063211"
   },
   "stats": {
    "hb": 9,
@@ -1128,7 +1832,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -1144,18 +1849,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -1174,7 +1907,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.228
+    "seconds": 0.225
    }
   },
   "page_witness": {
@@ -1197,6 +1930,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "a5",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1211,7 +1945,7 @@
  },
  {
   "label": "B4Q-runner-notary_refuses",
-  "wall_s": 2.982,
+  "wall_s": 3.028,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1282,7 +2016,7 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "fc686ef9977e913ae13b4c83121cab375291a78186b3aa9838e664c6d54e8d59"
+   "log_sha256": "5fbb2863173ad6eb10575dccd0a4eeaafca2131f3cd4a0f7a41ab8f42219108f"
   },
   "stats": {
    "hb": 2,
@@ -1305,7 +2039,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -1321,18 +2056,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -1351,7 +2114,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.211
+    "seconds": 0.221
    }
   },
   "page_witness": {
@@ -1387,6 +2150,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "notary_refuses",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1401,7 +2165,7 @@
  },
  {
   "label": "B4Q-runner-reply_corrupt",
-  "wall_s": 4.025,
+  "wall_s": 4.084,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1454,13 +2218,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 115,
-   "hb": 7,
+   "lines": 116,
+   "hb": 8,
    "nacks": 1,
    "sign_requests": 3,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 115,
+   "kicks": 116,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -1470,10 +2234,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "502c2e471cf80e727d55b1e1ec147f249ac5e11b4ead2b34cd8f28e48fbe9aa6"
+   "log_sha256": "ce32e83b517b3c4f3f76aaba5721811e54c144c303e3674024f92068434ee437"
   },
   "stats": {
-   "hb": 7,
+   "hb": 8,
    "nack": 1,
    "signreq": 3,
    "signreply": 2,
@@ -1486,14 +2250,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 213,
+  "console_lines": 214,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -1509,18 +2274,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -1539,7 +2332,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.217
+    "seconds": 0.225
    }
   },
   "page_witness": {
@@ -1569,6 +2362,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "reply_corrupt",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1583,7 +2377,7 @@
  },
  {
   "label": "B4Q-runner-reply_dropped_once",
-  "wall_s": 4.112,
+  "wall_s": 4.031,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1652,7 +2446,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "5f757d56cf114458b952f3f6057b1d271d2d6f4544124def857e4ea8abb0d8ca"
+   "log_sha256": "fbcb096acba18081f74ad5a0a9e3d5374e9ef76218e6e546dbef660b11b092df"
   },
   "stats": {
    "hb": 8,
@@ -1675,7 +2469,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -1691,18 +2486,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -1721,7 +2544,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.227
+    "seconds": 0.217
    }
   },
   "page_witness": {
@@ -1751,6 +2574,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "reply_dropped_once",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1765,7 +2589,7 @@
  },
  {
   "label": "B4Q-runner-replies_dropped",
-  "wall_s": 3.184,
+  "wall_s": 3.245,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1836,7 +2660,7 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "296dc6e9d71bd2fd2be875836ddba4f72be5410ede12b225813da3c2313533b3"
+   "log_sha256": "679d2eb3c8d5979ff3493349ec7eb708d16e68c84a57ef0c6c794cd805977c1b"
   },
   "stats": {
    "hb": 14,
@@ -1859,7 +2683,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -1875,18 +2700,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -1905,7 +2758,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.235
+    "seconds": 0.224
    }
   },
   "page_witness": {
@@ -1941,6 +2794,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "replies_dropped",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -1955,7 +2809,7 @@
  },
  {
   "label": "B4Q-runner-silent_host",
-  "wall_s": 3.103,
+  "wall_s": 3.192,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2003,7 +2857,7 @@
    "log": 35104,
    "log_overflow": 0,
    "log_records": 2194,
-   "log_sha256": "a39b172707418d38aea641a23d87a10e725afc28310d47bad6a319041a70fdb5"
+   "log_sha256": "bd109729c7cef5f9e857a46903495fa9206829a23f6165466246c7a10e50deda"
   },
   "stats": {
    "hb": 9,
@@ -2026,7 +2880,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -2042,18 +2897,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -2095,6 +2978,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "silent_host",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -2109,7 +2993,7 @@
  },
  {
   "label": "B4Q-runner-garbage_command",
-  "wall_s": 4.285,
+  "wall_s": 4.486,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2178,7 +3062,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "ae85aba9e19cd4462470916bd717c10980585fc6e51fc17a9067760519080c35"
+   "log_sha256": "5de7b2f2371f546e678a54eab5240b90f3c6271dc67ce0d08934e8b59d8a82e2"
   },
   "stats": {
    "hb": 4,
@@ -2201,7 +3085,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -2217,18 +3102,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -2247,7 +3160,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.23
+    "seconds": 0.22
    }
   },
   "page_witness": {
@@ -2277,6 +3190,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "garbage_command",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -2291,7 +3205,7 @@
  },
  {
   "label": "B4Q-runner-wrong_token",
-  "wall_s": 3.784,
+  "wall_s": 4.031,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2344,13 +3258,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 111,
-   "hb": 4,
+   "lines": 112,
+   "hb": 5,
    "nacks": 1,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 111,
+   "kicks": 112,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -2360,10 +3274,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "601837dd127e1d53a1a32bb5cac2c97efb04d32939c86eb4442f6009b03e685c"
+   "log_sha256": "2589d24c6b8c0ccc92a46b3ceb49ae505975e9a6f8e8fe4e9d74eba9ee561175"
   },
   "stats": {
-   "hb": 4,
+   "hb": 5,
    "nack": 1,
    "signreq": 2,
    "signreply": 2,
@@ -2376,14 +3290,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 209,
+  "console_lines": 210,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -2399,18 +3314,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -2429,7 +3372,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.226
+    "seconds": 0.22
    }
   },
   "page_witness": {
@@ -2462,6 +3405,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "wrong_token",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -2476,7 +3420,7 @@
  },
  {
   "label": "B4Q-runner-stale_reply",
-  "wall_s": 3.855,
+  "wall_s": 3.877,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2545,7 +3489,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "9c8097da8b716c830df477fd3a662ec98ec5b43f3657709882bd81c728f8c649"
+   "log_sha256": "8a5e535be2ff17fdbe7a9e4e5dd0908b2f64584dc40c2000554140c99cab6bb7"
   },
   "stats": {
    "hb": 4,
@@ -2568,7 +3512,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -2584,18 +3529,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -2614,7 +3587,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.226
+    "seconds": 0.219
    }
   },
   "page_witness": {
@@ -2644,6 +3617,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "stale_reply",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -2658,7 +3632,7 @@
  },
  {
   "label": "B4Q-runner-duplicate_tx",
-  "wall_s": 3.928,
+  "wall_s": 4.219,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2727,7 +3701,7 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "758efaa7e3a4ccdc04aaec0ed515c13f1c77a6aa3a57b3a4b0c48b2532df5e00"
+   "log_sha256": "15f08a8661e2a83bcb4bfccbcae87b6b8dc91414568233efc57c1f5eb8a72103"
   },
   "stats": {
    "hb": 4,
@@ -2750,7 +3724,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -2766,18 +3741,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -2796,7 +3799,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.23
+    "seconds": 0.219
    }
   },
   "page_witness": {
@@ -2838,6 +3841,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "duplicate_tx",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -2852,7 +3856,7 @@
  },
  {
   "label": "B4Q-runner-after_stop_tx",
-  "wall_s": 3.452,
+  "wall_s": 2.803,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2923,7 +3927,7 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "b6eb9076870877b50455ddc8ff98cac7595ce48b817caef010a581b10b065818"
+   "log_sha256": "678bf8f0dd1813566f89b411c4efd5808fa3c4dcdafc28b60aa9379014e6d465"
   },
   "stats": {
    "hb": 2,
@@ -2946,7 +3950,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -2962,18 +3967,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -2992,7 +4025,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.227
+    "seconds": 0.21
    }
   },
   "page_witness": {
@@ -3031,6 +4064,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "after_stop_tx",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -3045,7 +4079,7 @@
  },
  {
   "label": "B4Q-runner-malformed_tx",
-  "wall_s": 4.057,
+  "wall_s": 4.104,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3098,13 +4132,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 116,
-   "hb": 4,
+   "lines": 117,
+   "hb": 5,
    "nacks": 6,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 116,
+   "kicks": 117,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -3114,10 +4148,10 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "5fa5876ea700281b7d600326be02052ca9e1398a62f7878d18b07150d0cdbdd1"
+   "log_sha256": "02b4a64dec8e86914935d29a3ea08a2555479b4817b66858a955452a3c96e7bd"
   },
   "stats": {
-   "hb": 4,
+   "hb": 5,
    "nack": 6,
    "signreq": 2,
    "signreply": 2,
@@ -3130,14 +4164,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 219,
+  "console_lines": 220,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -3153,18 +4188,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -3183,7 +4246,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.213
+    "seconds": 0.22
    }
   },
   "page_witness": {
@@ -3263,6 +4326,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "malformed_tx",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -3277,7 +4341,7 @@
  },
  {
   "label": "B4Q-runner-host_seq_gap",
-  "wall_s": 3.96,
+  "wall_s": 4.038,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3330,13 +4394,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 110,
-   "hb": 4,
+   "lines": 111,
+   "hb": 5,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 110,
+   "kicks": 111,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -3346,10 +4410,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "caf6a4a0fa402f2075daf5a2f429c8e96739c51412129e1551f7d433c55eacf0"
+   "log_sha256": "383cc1cf9460573c92ba32bb16f925b2850dcd235a92f9beb93cd6c0c8d98461"
   },
   "stats": {
-   "hb": 4,
+   "hb": 5,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -3362,14 +4426,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 207,
+  "console_lines": 208,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -3385,18 +4450,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -3415,7 +4508,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.233
+    "seconds": 0.222
    }
   },
   "page_witness": {
@@ -3446,6 +4539,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "host_seq_gap",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -3460,7 +4554,7 @@
  },
  {
   "label": "B4Q-runner-bad_page",
-  "wall_s": 1.417,
+  "wall_s": 1.445,
   "stop": null,
   "opened": false,
   "phase": "ended",
@@ -3489,7 +4583,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "f5de06df4a94d046468b646ab982443269c94ca87bc6a35cdc66b76113d1e703"
+   "log_sha256": "3f561682882e6c8c058a032e2dbe173cef8dcf345626ff1063842e86c2645977"
   },
   "stats": {
    "hb": 0,
@@ -3512,7 +4606,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -3528,18 +4623,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -3558,7 +4681,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.216
+    "seconds": 0.219
    }
   },
   "page_witness": {
@@ -3584,6 +4707,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "bad_page",
   "surrogate_args": [],
   "verify_rc": 0,
@@ -3604,7 +4728,7 @@
  },
  {
   "label": "B4Q-runner-sequence_cut",
-  "wall_s": 2.454,
+  "wall_s": 2.562,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3654,7 +4778,7 @@
    "log": 24464,
    "log_overflow": 0,
    "log_records": 1529,
-   "log_sha256": "3c2023719533336459aec971e56faf22bd18248602a87ce5bd022c6dff9cfe8c"
+   "log_sha256": "2d9fb5952d6e87c859199f56e7f0eb22234db87d199daa90fdf51f0cd3738279"
   },
   "stats": {
    "hb": 0,
@@ -3677,7 +4801,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -3693,18 +4818,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -3723,7 +4876,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.225
+    "seconds": 0.218
    }
   },
   "page_witness": {
@@ -3760,6 +4913,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "sequence_cut",
   "surrogate_args": [
    "--image-table=4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b=/home/test/zynq_fabricmap/build/b4q_firmware/b4q_seqcut_twin"
@@ -3780,7 +4934,7 @@
  },
  {
   "label": "B4Q-runner-watchdog_fail",
-  "wall_s": 1.424,
+  "wall_s": 1.454,
   "stop": null,
   "opened": false,
   "phase": "ended",
@@ -3809,7 +4963,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "d3d62c5552a6234a995e87bd35ebd9eba56470e47f89474bc59677eb1fc33a04"
+   "log_sha256": "58dec1f2b52193d893731265e4609a166c9be69ff3d3dc8c1c8f466055607b1b"
   },
   "stats": {
    "hb": 0,
@@ -3832,7 +4986,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -3848,18 +5003,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -3878,7 +5061,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.232
+    "seconds": 0.227
    }
   },
   "page_witness": {
@@ -3904,6 +5087,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "watchdog_fail",
   "surrogate_args": [
    "--fault=wdt-fail"
@@ -3926,7 +5110,7 @@
  },
  {
   "label": "B4Q-runner-pre_event_corrupt",
-  "wall_s": 3.633,
+  "wall_s": 3.222,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3981,13 +5165,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 81,
-   "hb": 3,
+   "lines": 80,
+   "hb": 2,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 81,
+   "kicks": 80,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -3997,10 +5181,10 @@
    "log": 46208,
    "log_overflow": 0,
    "log_records": 2888,
-   "log_sha256": "60ed32a3b788dfed254699a683e34c9a4f9833093f5a0ef7b374e36fc7bc6acd"
+   "log_sha256": "43210c595ee3c6ecd5a7ad4808ede25022584daee46224a3ceec57090bf3a737"
   },
   "stats": {
-   "hb": 3,
+   "hb": 2,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -4013,14 +5197,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 154,
+  "console_lines": 153,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -4036,18 +5221,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -4066,7 +5279,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.228
+    "seconds": 0.227
    }
   },
   "page_witness": {
@@ -4099,6 +5312,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "pre_event_corrupt",
   "surrogate_args": [
    "--corrupt-frame-read=33"
@@ -4116,7 +5330,7 @@
  },
  {
   "label": "B4Q-runner-interrupted_load",
-  "wall_s": 1.147,
+  "wall_s": 1.14,
   "stop": {
    "kind": "TransportStop",
    "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20"
@@ -4148,7 +5362,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -4164,18 +5379,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -4184,7 +5427,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204491.931,
+    "t": 1793208212.022,
     "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20",
     "kind": "TransportStop"
    }
@@ -4194,6 +5437,7 @@
   "phase_at_stop": "admitted",
   "go_in_tx": false,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "interrupted_load",
   "surrogate_args": [
    "--fault=interrupted-load=20"
@@ -4210,7 +5454,7 @@
  },
  {
   "label": "B4Q-runner-wrong_crc",
-  "wall_s": 1.404,
+  "wall_s": 1.368,
   "stop": {
    "kind": "TransportStop",
    "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)"
@@ -4242,7 +5486,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -4258,18 +5503,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -4288,14 +5561,14 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.23
+    "seconds": 0.22
    }
   },
   "page_witness": {},
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204493.598,
+    "t": 1793208213.654,
     "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)",
     "kind": "TransportStop"
    }
@@ -4305,6 +5578,7 @@
   "phase_at_stop": "admitted",
   "go_in_tx": false,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "wrong_crc",
   "surrogate_args": [
    "--fault=wrong-crc"
@@ -4321,10 +5595,10 @@
  },
  {
   "label": "B4Q-runner-md_garbage",
-  "wall_s": 1.071,
+  "wall_s": 1.081,
   "stop": {
    "kind": "TransportStop",
-   "why": "md.l 0x43c02034 1: 0 words parsed, not 1"
+   "why": "md.l 0xf8000170 1: 0 words parsed, not 1"
   },
   "opened": false,
   "phase": "stopped",
@@ -4353,7 +5627,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -4369,8 +5644,20 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": null,
    "carrier": null,
-   "fclk0": null,
    "ok": false
   },
   "load_witness": null,
@@ -4378,8 +5665,8 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204495.031,
-    "why": "md.l 0x43c02034 1: 0 words parsed, not 1",
+    "t": 1793208215.093,
+    "why": "md.l 0xf8000170 1: 0 words parsed, not 1",
     "kind": "TransportStop"
    }
   ],
@@ -4388,6 +5675,7 @@
   "phase_at_stop": "prompt",
   "go_in_tx": false,
   "loady_in_tx": false,
+  "pl_read_in_tx": false,
   "name": "md_garbage",
   "surrogate_args": [
    "--fault=md-garbage"
@@ -4404,7 +5692,7 @@
  },
  {
   "label": "B4Q-runner-corrupt_page",
-  "wall_s": 1.436,
+  "wall_s": 1.434,
   "stop": {
    "kind": "SessionRefusal",
    "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)"
@@ -4436,7 +5724,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "6b87bde854d3c994786ebeefb628285df63b340c5ccf58e2771b31cb3760b633"
+   "log_sha256": "d7986dcd0c499636f2d78b87edecd7580329183725c6b606f07f07bf1c5a5923"
   },
   "stats": {
    "hb": 0,
@@ -4459,7 +5747,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -4475,18 +5764,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -4505,7 +5822,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.233
+    "seconds": 0.229
    }
   },
   "page_witness": {
@@ -4519,7 +5836,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793204496.697,
+    "t": 1793208216.747,
     "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
     "kind": "SessionRefusal"
    }
@@ -4533,6 +5850,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "corrupt_page",
   "surrogate_args": [
    "--fault=corrupt-page"
@@ -4556,7 +5874,7 @@
  },
  {
   "label": "B4Q-runner-page_witness_fails",
-  "wall_s": 1.395,
+  "wall_s": 1.417,
   "stop": {
    "kind": "TransportStop",
    "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)"
@@ -4588,7 +5906,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -4604,18 +5923,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -4634,7 +5981,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.218
+    "seconds": 0.217
    }
   },
   "page_witness": {
@@ -4644,7 +5991,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204498.405,
+    "t": 1793208218.491,
     "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)",
     "kind": "TransportStop"
    }
@@ -4654,6 +6001,7 @@
   "phase_at_stop": "loaded",
   "go_in_tx": false,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "page_witness_fails",
   "surrogate_args": [
    "--fault=corrupt-mw"
@@ -4670,64 +6018,6 @@
  },
  {
   "label": "B4Q-runner-missed_autoboot",
-  "wall_s": 5.096,
-  "stop": {
-   "kind": "TransportStop",
-   "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
-  },
-  "opened": false,
-  "phase": "stopped",
-  "records": [],
-  "chain_findings": null,
-  "halted": null,
-  "end": null,
-  "stats": {
-   "hb": 0,
-   "nack": 0,
-   "signreq": 0,
-   "signreply": 0,
-   "corrupted": 0,
-   "dropped": 0,
-   "garbage": 0,
-   "wrong_token": 0,
-   "stale": 0,
-   "stale_board": 0,
-   "refused_halted": 0,
-   "replayed": 0
-  },
-  "console_lines": 0,
-  "admission": null,
-  "load_witness": null,
-  "page_witness": {},
-  "source": null,
-  "transport_stops": [
-   {
-    "t": 1793204503.853,
-    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
-    "kind": "TransportStop"
-   }
-  ],
-  "stats_pull": null,
-  "tail_unobtainable": null,
-  "phase_at_stop": "init",
-  "go_in_tx": false,
-  "loady_in_tx": false,
-  "name": "missed_autoboot",
-  "surrogate_args": [
-   "--fault=missed-autoboot"
-  ],
-  "verify_rc": 0,
-  "verify_agree": true,
-  "verify_session": [],
-  "verify_limitations": null,
-  "expect": {
-   "stop_prefix": "no U-Boot prompt: a boot banner was seen",
-   "opened": false
-  },
-  "expect_failures": []
- },
- {
-  "label": "B4Q-runner-no_prompt",
   "wall_s": 5.097,
   "stop": {
    "kind": "TransportStop",
@@ -4760,7 +6050,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204509.251,
+    "t": 1793208223.934,
     "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
     "kind": "TransportStop"
    }
@@ -4770,6 +6060,66 @@
   "phase_at_stop": "init",
   "go_in_tx": false,
   "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "missed_autoboot",
+  "surrogate_args": [
+   "--fault=missed-autoboot"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "no U-Boot prompt: a boot banner was seen",
+   "opened": false
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-no_prompt",
+  "wall_s": 5.1,
+  "stop": {
+   "kind": "TransportStop",
+   "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": null,
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793208229.342,
+    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
+    "kind": "TransportStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "init",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
   "name": "no_prompt",
   "surrogate_args": [
    "--fault=no-prompt"
@@ -4786,7 +6136,7 @@
  },
  {
   "label": "B4Q-runner-unknown_image",
-  "wall_s": 4.413,
+  "wall_s": 4.438,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the console was silent for 3.0 s while awaiting IDENT"
@@ -4818,7 +6168,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -4834,18 +6185,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -4864,7 +6243,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.228
+    "seconds": 0.223
    }
   },
   "page_witness": {
@@ -4874,7 +6253,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793204513.925,
+    "t": 1793208234.025,
     "why": "the console was silent for 3.0 s while awaiting IDENT",
     "awaiting": "IDENT",
     "kind": "TransportStop"
@@ -4885,6 +6264,7 @@
   "phase_at_stop": "application",
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "unknown_image",
   "surrogate_args": [
    "--fault=unknown-image"
@@ -4902,7 +6282,7 @@
  },
  {
   "label": "B4Q-runner-silence_mid_session",
-  "wall_s": 5.825,
+  "wall_s": 6.035,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling"
@@ -4960,7 +6340,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -4976,18 +6357,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -5006,7 +6415,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.233
+    "seconds": 0.219
    }
   },
   "page_witness": {
@@ -5020,13 +6429,13 @@
   },
   "transport_stops": [
    {
-    "t": 1793204519.952,
+    "t": 1793208240.256,
     "why": "the console was silent for 3.0 s while awaiting CHUNK",
     "awaiting": "CHUNK",
     "kind": "TransportStop"
    },
    {
-    "t": 1793204519.968,
+    "t": 1793208240.274,
     "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -5040,6 +6449,7 @@
   "phase_at_stop": "application",
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "silence_mid_session",
   "surrogate_args": [
    "--fault=silence-after=40"
@@ -5059,7 +6469,7 @@
  },
  {
   "label": "B4Q-runner-reset_mid_session",
-  "wall_s": 3.466,
+  "wall_s": 2.972,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling"
@@ -5117,7 +6527,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -5133,18 +6544,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -5163,7 +6602,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.226
+    "seconds": 0.219
    }
   },
   "page_witness": {
@@ -5177,13 +6616,13 @@
   },
   "transport_stops": [
    {
-    "t": 1793204523.708,
+    "t": 1793208243.554,
     "why": "a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
     "awaiting": "CHUNK",
     "kind": "TransportStop"
    },
    {
-    "t": 1793204523.726,
+    "t": 1793208243.564,
     "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -5197,6 +6636,7 @@
   "phase_at_stop": "application",
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "reset_mid_session",
   "surrogate_args": [
    "--fault=reset-after-lines=40"
@@ -5216,7 +6656,7 @@
  },
  {
   "label": "B4Q-runner-corrupt_chunk",
-  "wall_s": 6.064,
+  "wall_s": 6.049,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -5311,13 +6751,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 214,
-   "hb": 10,
+   "lines": 213,
+   "hb": 9,
    "nacks": 0,
    "sign_requests": 4,
    "sign_replies": 4,
    "transactions": 4,
-   "kicks": 214,
+   "kicks": 213,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -5327,10 +6767,10 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "4adb3af0aa1baf959ac385c3515a48a15e07f4e1ffbf60e212539a37660fb19f"
+   "log_sha256": "673fb3b25e3d11864f841dbe8f2df1b15528f0f7786ebb90243e03a8ba6fe323"
   },
   "stats": {
-   "hb": 10,
+   "hb": 9,
    "nack": 0,
    "signreq": 4,
    "signreply": 4,
@@ -5343,14 +6783,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 397,
+  "console_lines": 396,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -5366,18 +6807,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -5411,7 +6880,7 @@
   "transport_stops": [],
   "ident": {
    "protocol": "b4q-v2",
-   "token": "4a37adad51a5eedb52d5fca626ab3989",
+   "token": "825050bbdcb9aa4d5ae835547845c6aa",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 1301847784,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -5455,6 +6924,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "corrupt_chunk",
   "surrogate_args": [
    "--fault=corrupt-chunk=2"
@@ -5475,7 +6945,7 @@
  },
  {
   "label": "B4Q-runner-log_overflow",
-  "wall_s": 2.902,
+  "wall_s": 2.999,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling"
@@ -5530,7 +7000,7 @@
    "log": 16384,
    "log_overflow": 1,
    "log_records": 1024,
-   "log_sha256": "0559d5fd87f55be50bee94da5601d2f5190bc43093ee85c48388de9f3d2f5b0e"
+   "log_sha256": "c11aa8289f068bbae06a0181d91bdcbbd1c6f7230c099ab31879406ac1a43fc8"
   },
   "stats": {
    "hb": 0,
@@ -5553,7 +7023,8 @@
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -5569,18 +7040,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -5599,7 +7098,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.223
+    "seconds": 0.227
    }
   },
   "page_witness": {
@@ -5613,7 +7112,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793204533.333,
+    "t": 1793208253.236,
     "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -5627,6 +7126,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "log_overflow",
   "surrogate_args": [
    "--fault=ring-bytes=16384"
@@ -5646,7 +7146,7 @@
  },
  {
   "label": "B4Q-runner-devc_never",
-  "wall_s": 7.454,
+  "wall_s": 7.512,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling"
@@ -5683,13 +7183,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 29,
-   "hb": 5,
+   "lines": 30,
+   "hb": 6,
    "nacks": 0,
    "sign_requests": 1,
    "sign_replies": 1,
    "transactions": 1,
-   "kicks": 29,
+   "kicks": 30,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -5699,10 +7199,10 @@
    "log": 11536,
    "log_overflow": 0,
    "log_records": 721,
-   "log_sha256": "fd694c90be8ce8ff7eba3db3c0a379aa9cacab601463dec859503151daadffb3"
+   "log_sha256": "1c37cd4822935961e4e21ad00236aeee70a5be6ad524825c90c8fd369e412ffc"
   },
   "stats": {
-   "hb": 5,
+   "hb": 6,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -5715,14 +7215,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 54,
+  "console_lines": 55,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-    "equal": true
+    "equal": true,
+    "bytes": 98324
    },
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
@@ -5738,18 +7239,46 @@
     "model_ok": true,
     "dram_ok": true
    },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "fpga0_ctrl_addr": "0xf8000170",
+    "fpga0_ctrl": "00200a00",
+    "pll_ctrl": {
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000"
+    },
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": true
+   },
    "carrier": {
     "variant_addr": "0x43c02034",
     "variant": "42340001",
     "expected": "42340001",
     "equal": true
-   },
-   "fclk0": {
-    "addr": "0xf8000170",
-    "ctrl": "00200a00",
-    "expected": null,
-    "held": false,
-    "equal": null
    },
    "ok": true
   },
@@ -5768,7 +7297,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.226
+    "seconds": 0.216
    }
   },
   "page_witness": {
@@ -5782,7 +7311,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793204540.652,
+    "t": 1793208260.607,
     "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -5796,6 +7325,7 @@
   "phase_at_stop": null,
   "go_in_tx": true,
   "loady_in_tx": true,
+  "pl_read_in_tx": true,
   "name": "devc_never",
   "surrogate_args": [
    "--devc-fault=env:1:never"

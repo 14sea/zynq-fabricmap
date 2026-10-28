@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-no_prompt",
- "wall_s": 5.097,
+ "wall_s": 5.1,
  "stop": {
   "kind": "TransportStop",
   "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
@@ -32,7 +32,7 @@
  "source": null,
  "transport_stops": [
   {
-   "t": 1793204509.251,
+   "t": 1793208229.342,
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
    "kind": "TransportStop"
   }
@@ -42,6 +42,7 @@
  "phase_at_stop": "init",
  "go_in_tx": false,
  "loady_in_tx": false,
+ "pl_read_in_tx": false,
  "name": "no_prompt",
  "surrogate_args": [
   "--fault=no-prompt"

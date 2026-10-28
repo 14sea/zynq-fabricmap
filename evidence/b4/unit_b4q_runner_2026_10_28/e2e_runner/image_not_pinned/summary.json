@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-image_not_pinned",
- "wall_s": 1.079,
+ "wall_s": 1.067,
  "stop": {
   "kind": "AdmissionStop",
   "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded"
@@ -32,11 +32,13 @@
    "file_sha256": "62676b5f6c0debe856b18f110bb20e122496bc2be38be8beae77ba3d4ebdbedd",
    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-   "equal": false
+   "equal": false,
+   "bytes": 98324
   },
   "board": null,
+  "identity": null,
+  "clock": null,
   "carrier": null,
-  "fclk0": null,
   "ok": false
  },
  "load_witness": null,
@@ -44,7 +46,7 @@
  "source": null,
  "transport_stops": [
   {
-   "t": 1793204408.72,
+   "t": 1793208121.962,
    "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",
    "kind": "AdmissionStop"
   }
@@ -54,6 +56,7 @@
  "phase_at_stop": "prompt",
  "go_in_tx": false,
  "loady_in_tx": false,
+ "pl_read_in_tx": false,
  "name": "image_not_pinned",
  "surrogate_args": [],
  "verify_rc": 0,

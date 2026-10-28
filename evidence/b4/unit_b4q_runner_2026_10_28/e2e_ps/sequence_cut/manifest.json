@@ -2,29 +2,25 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-sequence_cut",
- "generated_utc": "2026-10-28T16:20:01Z",
+ "generated_utc": "2026-10-28T17:21:54Z",
  "emulated": true,
  "standing": "the records built from the PS's OWN evidence log (b4q_ring, pulled through the console, held to the board's digest): the carrier-window events, the DMA tuples, the staged words and the frames the PS read back are what the executing side did and received; a device effect (a frame store, a bus response beyond the PS's own abort flag) is not witnessed; the MMIO was answered by an emulation on this host \u2014 not silicon, not a physical link",
  "source": {
   "kind": "ps-evidence-log-v1",
   "raw": "raw/evidence_log.bin",
   "bytes": 6816,
-  "sha256": "cf826f4630b9914990b9e4d1b90a4d409ed0bc294532974a21d461156963bdaf",
+  "sha256": "f5803c879cd51425debd28f448a2830ffcc84fadc77c7c91c0f977c18c6e2d70",
   "records": 426,
   "board": {
    "used": 6816,
    "capacity": 16777216,
    "overflow": 0,
-   "sha256": "cf826f4630b9914990b9e4d1b90a4d409ed0bc294532974a21d461156963bdaf"
+   "sha256": "f5803c879cd51425debd28f448a2830ffcc84fadc77c7c91c0f977c18c6e2d70"
   },
   "digest_equal": true,
   "end_log": 24464,
-  "end_log_sha256": "8be90e320fd092c22cf93ec54ae49a0429c0c34bd08fda1699a22ffbe525062a",
-  "tail_unobtainable": {
-   "why": "the terminal END (the executing side's sequence is exhausted): no export epilogue exists after it",
-   "end_log": 24464,
-   "pulled": 6816
-  },
+  "end_log_sha256": "eb832b462ac54110e58035fa286adb8bc456677f6ed657d88c629622f074b0cc",
+  "tail_unobtainable": null,
   "adapter": "host/b4q_evidence_log.py",
   "adapter_sha256": "03dbc58ed924f48b7cff6cf314d2c24479e31c6ee18ff99b09f9c028efaa3255",
   "derived": [
@@ -338,14 +334,14 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v2",
-  "token": "35acbd62f677a8dfcd4ecdb8d0d3a30c",
+  "token": "040abb97d94d432a1e0c41d86209159a",
   "page_words": [
    "42345149",
    "00000001",
-   "35acbd62",
-   "f677a8df",
-   "cd4ecdb8",
-   "d0d3a30c",
+   "040abb97",
+   "d94d432a",
+   "1e0c41d8",
+   "6209159a",
    "6553f100",
    "902cc781",
    "4e406f12",
@@ -363,9 +359,10 @@
    "00000000",
    "00000000",
    "00000000",
-   "e7da2c71"
+   "98defb87"
   ],
   "page_flags": 2,
+  "time_origin": "console entries' `t`: this host's wall clock (time.time()) at the line's receipt / send \u2014 a host timestamp, never a device time",
   "knobs": {
    "corrupt_replies": 0,
    "drop_replies": 0,
@@ -378,7 +375,7 @@
    "replay_tx": 0
   },
   "stats": {
-   "hb": 0,
+   "hb": 1,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -394,13 +391,13 @@
   "end": {
    "kind": "PROTOCOL",
    "reason": "this side's line sequence is exhausted",
-   "lines": 16,
-   "hb": 0,
+   "lines": 17,
+   "hb": 1,
    "nacks": 0,
    "sign_requests": 1,
    "sign_replies": 1,
    "transactions": 1,
-   "kicks": 16,
+   "kicks": 17,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -410,11 +407,11 @@
    "log": 24464,
    "log_overflow": 0,
    "log_records": 1529,
-   "log_sha256": "8be90e320fd092c22cf93ec54ae49a0429c0c34bd08fda1699a22ffbe525062a"
+   "log_sha256": "eb832b462ac54110e58035fa286adb8bc456677f6ed657d88c629622f074b0cc"
   },
   "ident": {
    "protocol": "b4q-v2",
-   "token": "35acbd62f677a8dfcd4ecdb8d0d3a30c",
+   "token": "040abb97d94d432a1e0c41d86209159a",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 2418853761,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -438,7 +435,7 @@
     "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
    }
   },
-  "console_lines": 29,
+  "console_lines": 30,
   "findings": [],
   "host_seq_last": 12,
   "board_seq_last": 4294967280,
@@ -450,8 +447,8 @@
      "used": 6816,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "cf826f4630b9914990b9e4d1b90a4d409ed0bc294532974a21d461156963bdaf",
-     "pulled_sha256": "cf826f4630b9914990b9e4d1b90a4d409ed0bc294532974a21d461156963bdaf",
+     "sha256": "f5803c879cd51425debd28f448a2830ffcc84fadc77c7c91c0f977c18c6e2d70",
+     "pulled_sha256": "f5803c879cd51425debd28f448a2830ffcc84fadc77c7c91c0f977c18c6e2d70",
      "digest_equal": true,
      "upto": 6816
     }

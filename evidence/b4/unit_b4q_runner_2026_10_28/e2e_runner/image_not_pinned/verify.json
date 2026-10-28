@@ -27,8 +27,22 @@
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
     "dram_mib": 512,
-    "prompt_seen": true
-   }
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": null,
+    "role": null,
+    "boardid_ok": false,
+    "role_ok": false
+   },
+   "clock": {
+    "fpga0_ctrl": null,
+    "derived": null,
+    "ok": false
+   },
+   "variant": null
   },
   "stop": {
    "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",

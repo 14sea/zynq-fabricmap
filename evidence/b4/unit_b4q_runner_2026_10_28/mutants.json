@@ -14,7 +14,7 @@
    "file": "firmware/b4q/target/b4q_ring.c",
    "what": "the digest over all but the last record (the board's digest is not of the bytes it exports)",
    "verdict": "KILLED",
-   "note": "the scenario aborted on the guard: \u2026sion is halted: the pulled evidence log does not hash to the board's digest (e26cd03771dc vs 11e5c8c47329) \u2014 nothing further is signed without a ruling | ",
+   "note": "the scenario aborted on the guard: \u2026sion is halted: the pulled evidence log does not hash to the board's digest (cc45bd016375 vs 083bae68c20c) \u2014 nothing further is signed without a ruling | ",
    "probe": "the PS-source valid scenario halts on 'does not hash to the board's digest'",
    "seconds": 0.9
   },
@@ -32,9 +32,9 @@
    "file": "firmware/b4q/target/b4q_app.c",
    "what": "RING under-reports the log by one record (its digest still covers the whole: the host's digest check fires first)",
    "verdict": "KILLED",
-   "note": "halted: the pulled evidence log does not hash to the board's digest (c35e0c7ba698 vs 79c95a847453)",
+   "note": "halted: the pulled evidence log does not hash to the board's digest (e16c5360fad0 vs 4d286078d02a)",
    "probe": "the PS-source opening halts on 'does not hash to the board's digest'",
-   "seconds": 0.5
+   "seconds": 0.4
   },
   {
    "id": "A2",
@@ -43,7 +43,7 @@
    "verdict": "KILLED",
    "note": "verify: console: the words of request 13 were never staged into PAYLOAD / TAG after the reply",
    "probe": "the PS-source valid archive's verification finds 'never staged'",
-   "seconds": 5.0
+   "seconds": 5.3
   },
   {
    "id": "A3",
@@ -52,16 +52,16 @@
    "verdict": "KILLED",
    "note": "halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks",
    "probe": "the PS-source opening halts on 'too many bad chunks'",
-   "seconds": 0.7
+   "seconds": 0.5
   },
   {
    "id": "A3b",
    "file": "firmware/b4q/target/b4q_app.c",
    "what": "PULL returns the first bytes whatever the offset (the chunk lines keep their offsets: the digest is the guard)",
    "verdict": "KILLED",
-   "note": "halted: the pulled evidence log does not hash to the board's digest (6c0762a7b616 vs d980cc65002e)",
+   "note": "halted: the pulled evidence log does not hash to the board's digest (7be9d25ffb71 vs dc05e7f9b562)",
    "probe": "the PS-source opening halts on 'does not hash to the board's digest'",
-   "seconds": 0.5
+   "seconds": 0.7
   },
   {
    "id": "A4",
@@ -88,7 +88,7 @@
    "verdict": "KILLED",
    "note": "the TX after the overflow answered with status 0 (closed)",
    "probe": "after the log overflows the application NACKs the next TX 'the evidence log is full' (the emulated-source host does not pull, so it sends one)",
-   "seconds": 2.2
+   "seconds": 2.7
   },
   {
    "id": "E1",
@@ -140,7 +140,7 @@
    "file": "host/b4q_verify.py",
    "what": "a raw log that is not the declared bytes accepted",
    "verdict": "KILLED",
-   "note": "not refused by name: refused=None findings=[\"source: the raw log (123344 bytes, 9ba6dacccb8b) is not the log the board's last RING reported (123344 bytes, d8e9acd7eaea)\", \"source: the raw log is not the log the END reports (its digest differs at the END's position)\"]",
+   "note": "not refused by name: refused=None findings=[\"source: the raw log (123344 bytes, 30c1d986c754) is not the log the board's last RING reported (123344 bytes, eb42a8fcd6e1)\", \"source: the raw log is not the log the END reports (its digest differs at the END's position)\"]",
    "probe": "the mutated valid archive is refused: 'not the bytes the manifest's source declares'",
    "seconds": 0.5
   },
@@ -151,7 +151,7 @@
    "verdict": "KILLED",
    "note": "not found: agree=True findings=[]",
    "probe": "a PTY archive rewritten into the device format but keeping the surrogate's banner is found by the provenance check",
-   "seconds": 6.8
+   "seconds": 7.0
   },
   {
    "id": "V4",
@@ -205,7 +205,7 @@
    "verdict": "KILLED",
    "note": "stop '' (expected 'load witness:'); opened=True",
    "probe": "the runner scenario wrong_crc: stop 'load witness:' / opened False",
-   "seconds": 4.3
+   "seconds": 4.5
   },
   {
    "id": "N2",
@@ -221,7 +221,7 @@
    "file": "host/b4q_runner.py",
    "what": "a boot banner mid-session no longer named as the cut",
    "verdict": "KILLED",
-   "note": "expectations: ['verify rc 1 (expected 0): [\"source: the raw log (21408 bytes, 04948914064b) is not the log the board\\'s last RING reported (35104 bytes, d0db5d11f116)\", \"source: the manifest\\'s source declares 1338 records / digest_equal=False; the raw log holds 1338 records\", \\'console: no END line and the session was not interrupted\\']', \"transport stop 'a boot banner on the console mid-session' not among ['the session is halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks \u2014 nothing further is signed without a ruling']\"]",
+   "note": "expectations: ['verify rc 1 (expected 0): [\"runner: console accounting: the received stream after `go` holds 51 line(s), the retained console 50 board line(s); they differ at line 50: stream b\\'Hit any key to stop autoboot:  2 \\\\\\\\x08\\\\\\\\x08\\\\\\\\x08\\'\", \"source: the raw log (21408 bytes, dd82fc4ed52b) is not the log the board\\'s last RING reported (35104 bytes, b48e92c4603d)\", \"source: the manifest\\'s source declares 1338 records / digest_equal=False; the raw log holds 1338 records\", \\'console: no END line and the session was not interrupted\\']', \"transport stop 'a boot banner on the console mid-session' not among ['the session is halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks \u2014 nothing further is signed without a ruling']\"]",
    "probe": "the runner scenario reset_mid_session: stop None / opened None",
    "seconds": 3.4
   },
@@ -239,7 +239,7 @@
    "file": "host/b4q_verify_runner.py",
    "what": "the transferred bytes no longer held to the executing-side image",
    "verdict": "KILLED",
-   "note": "not found: agree=False refused=None findings=[\"runner: load: the transferred bytes are not the context's pinned image\", \"runner: admission.image: the recorded pin / verdict are not the context's\"]",
+   "note": "not found: agree=False refused=None findings=[\"runner: load: the transferred bytes are not the context's pinned image\", 'runner: state: `go` was issued although the load witness is not a complete, equal transfer of the pinned image (execution after a failed or missing prerequisite)']",
    "probe": "the mutated runner valid archive is found: 'transferred bytes are not the archive's executing-side image'",
    "seconds": 0.5
   },
@@ -264,10 +264,10 @@
   {
    "id": "V12",
    "file": "host/b4q_verify_runner.py",
-   "what": "a retained console line no longer held to the received stream",
+   "what": "the sent frames no longer held to the retained host lines",
    "verdict": "KILLED",
-   "note": "not found: agree=False refused=None findings=['console: board line at line 109: bad crc', 'console: END.hb is 10, the lines say 9']",
-   "probe": "the mutated runner valid archive is found: 'console linkage'",
+   "note": "not found: agree=False refused=None findings=['console: host line at line 22: bad crc', 'console: board SIGNREQ at line 24: outside an admitted transaction']",
+   "probe": "the mutated runner valid archive is found: 'console accounting: the sent stream'",
    "seconds": 0.4
   },
   {
@@ -293,7 +293,7 @@
    "file": "host/b4q_ymodem.py",
    "what": "the inner ACK loop's own deadline check removed \u2014 EXPECTED TO SURVIVE alone: the per-read clock bound (_read_byte) and the junk limit are sibling guards that still end the loop; Y1+Y2 is the kill",
    "verdict": "SURVIVED",
-   "note": "ended at 3.34 s (the deadline)",
+   "note": "ended at 3.35 s (the deadline)",
    "probe": "a receiver flooding junk (slowly): the transfer ends at its deadline (2 s), not after the retries' worth of junk (a hang observed in a subprocess)",
    "seconds": 3.5
   },
@@ -302,7 +302,7 @@
    "file": "host/b4q_ymodem.py",
    "what": "the junk limit per block removed \u2014 EXPECTED TO SURVIVE alone: the deadline (the clock on every read) still ends the transfer; Y1+Y2 is the kill",
    "verdict": "SURVIVED",
-   "note": "ended at 2.0 s (the deadline)",
+   "note": "ended at 2.01 s (the deadline)",
    "probe": "a receiver flooding junk (slowly): the transfer ends at its deadline (2 s), not after the retries' worth of junk (a hang observed in a subprocess)",
    "seconds": 2.2
   },
@@ -322,43 +322,169 @@
    "verdict": "KILLED",
    "note": "a crc for another range accepted",
    "probe": "the runner against a scripted U-Boot: crc_range",
-   "seconds": 0.0
+   "seconds": 0.1
   },
   {
    "id": "N7",
    "file": "host/b4q_runner.py",
-   "what": "a file that is not the pinned image loaded anyway",
-   "verdict": "KILLED",
-   "note": "proceeded: stop={'kind': 'TransportStop', 'why': 'loady: U-Boot did not announce the ymodem download'} loady_sent=True",
+   "what": "the admission's image pin check removed \u2014 EXPECTED TO SURVIVE alone: the load's check of the held bytes against the pin is the sibling guard; N7+N7b is the kill",
+   "verdict": "SURVIVED",
+   "note": "refused before any load",
    "probe": "the runner against a scripted U-Boot: pin",
-   "seconds": 5.3
+   "seconds": 0.3
+  },
+  {
+   "id": "N7b",
+   "file": "host/b4q_runner.py",
+   "what": "the load's check of the held bytes against the pin removed \u2014 EXPECTED TO SURVIVE alone: the admission's pin check is the sibling guard; N7+N7b is the kill",
+   "verdict": "SURVIVED",
+   "note": "refused before any load",
+   "probe": "the runner against a scripted U-Boot: pin",
+   "seconds": 0.3
   },
   {
    "id": "N8",
    "file": "host/b4q_runner.py",
    "what": "a board whose DRAM cannot hold the map admitted",
    "verdict": "KILLED",
-   "note": "proceeded: stop={'kind': 'TransportStop', 'why': 'loady: U-Boot did not announce the ymodem download'} loady_sent=True",
+   "note": "proceeded: stop=None loady_sent=True",
    "probe": "the runner against a scripted U-Boot: dram",
-   "seconds": 5.3
+   "seconds": 0.4
   },
   {
    "id": "N9",
    "file": "host/b4q_runner.py",
    "what": "another carrier's variant word admitted",
    "verdict": "KILLED",
-   "note": "proceeded: stop={'kind': 'TransportStop', 'why': 'loady: U-Boot did not announce the ymodem download'} loady_sent=True",
+   "note": "proceeded: stop=None loady_sent=True",
    "probe": "the runner against a scripted U-Boot: variant",
-   "seconds": 5.3
+   "seconds": 0.4
   },
   {
    "id": "N10",
    "file": "host/b4q_runner.py",
    "what": "the execution phase persisted only after `go` returns (a failed command leaves a pre-go record with `go` in the stream)",
    "verdict": "KILLED",
-   "note": "the phase on disk says 'admitted' although `go` is in the sent stream",
+   "note": "the phase on disk says 'pre-go' although `go` is in the sent stream",
    "probe": "the runner against a scripted U-Boot: phase_before_go",
-   "seconds": 5.3
+   "seconds": 0.4
+  },
+  {
+   "id": "V13",
+   "file": "host/b4q_verify_runner.py",
+   "what": "an executed session no longer held to its prerequisites (a failed crc with executed transactions passes)",
+   "verdict": "KILLED",
+   "note": "not found: agree=True refused=None findings=[]",
+   "probe": "the mutated runner valid archive is found: 'state: `go` was issued although'",
+   "seconds": 0.4
+  },
+  {
+   "id": "V14",
+   "file": "host/b4q_verify_runner.py",
+   "what": "the load / crc / go addresses no longer bound to one address",
+   "verdict": "KILLED",
+   "note": "not found: agree=True refused=None findings=[]",
+   "probe": "the mutated runner valid archive is found: 'not one address'",
+   "seconds": 0.4
+  },
+  {
+   "id": "V15",
+   "file": "host/b4q_verify_runner.py",
+   "what": "the received stream no longer accounted line by line against the retained console (an extra END disappears)",
+   "verdict": "KILLED",
+   "note": "not found: agree=True refused=None findings=[]",
+   "probe": "the mutated runner valid archive is found: 'console accounting'",
+   "seconds": 0.4
+  },
+  {
+   "id": "V16",
+   "file": "host/b4q_verify_runner.py",
+   "what": "an unknown stop class accepted as demonstrated",
+   "verdict": "KILLED",
+   "note": "accepted: agree=True findings=[]",
+   "probe": "an unknown stop class on a control-plane archive is reported unverified (a finding), never accepted",
+   "seconds": 1.9
+  },
+  {
+   "id": "V17",
+   "file": "host/b4q_verify_runner.py",
+   "what": "a PL read before the clock words no longer found",
+   "verdict": "KILLED",
+   "note": "not found: agree=True refused=None findings=[]",
+   "probe": "the mutated runner valid archive is found: 'a PL read was issued before'",
+   "seconds": 0.4
+  },
+  {
+   "id": "V18",
+   "file": "host/b4q_verify.py",
+   "what": "a runner archive without its source declaration verified under the emulated contract",
+   "verdict": "KILLED",
+   "note": "not refused: refused=None source=emulated agree=True",
+   "probe": "a runner archive without manifest.source is refused, never downgraded to the emulated contract",
+   "seconds": 0.4
+  },
+  {
+   "id": "N11",
+   "file": "host/b4q_runner.py",
+   "what": "the `_guard` barrier made diagnostic \u2014 EXPECTED TO SURVIVE alone: `_set_phase`'s required persist is the sibling barrier; N11+N11b is the kill",
+   "verdict": "SURVIVED",
+   "note": "no go after a failed publication",
+   "probe": "the runner's own barrier: persist_barrier",
+   "seconds": 30.4
+  },
+  {
+   "id": "N11b",
+   "file": "host/b4q_runner.py",
+   "what": "the phase write made diagnostic \u2014 EXPECTED TO SURVIVE alone: `_guard` is the sibling barrier; N11+N11b is the kill",
+   "verdict": "SURVIVED",
+   "note": "no go after a failed publication",
+   "probe": "the runner's own barrier: persist_barrier",
+   "seconds": 0.4
+  },
+  {
+   "id": "N12",
+   "file": "host/b4q_runner.py",
+   "what": "the sent-byte log commits the whole command on the first partial write",
+   "verdict": "KILLED",
+   "note": "tx_log holds b'go 02000000\\r' although the OS accepted 2 bytes",
+   "probe": "the runner's own barrier: tx_commit",
+   "seconds": 0.1
+  },
+  {
+   "id": "N13",
+   "file": "host/b4q_runner.py",
+   "what": "a board without a permitted role admitted",
+   "verdict": "KILLED",
+   "note": "proceeded: stop=None pl_read=True loady=True",
+   "probe": "the runner's own barrier: role",
+   "seconds": 0.4
+  },
+  {
+   "id": "N14",
+   "file": "host/b4q_runner.py",
+   "what": "another board's boardid admitted",
+   "verdict": "KILLED",
+   "note": "proceeded: stop=None pl_read=True loady=True",
+   "probe": "the runner's own barrier: boardid",
+   "seconds": 0.4
+  },
+  {
+   "id": "N15",
+   "file": "host/b4q_runner.py",
+   "what": "a PLL in reset (no running FCLK0) no longer refused before the PL read",
+   "verdict": "KILLED",
+   "note": "proceeded: stop=None pl_read=True loady=True",
+   "probe": "the runner's own barrier: clock",
+   "seconds": 0.4
+  },
+  {
+   "id": "N17",
+   "file": "host/b4q_runner.py",
+   "what": "the image re-read from the file at the transfer (a file replaced after its hash check reaches the wire)",
+   "verdict": "KILLED",
+   "note": "the wire carried 82fcfd521517 (not the admitted image)",
+   "probe": "the runner's own barrier: image_swap",
+   "seconds": 0.3
   },
   {
    "id": "S2",
@@ -367,7 +493,7 @@
    "verdict": "KILLED",
    "note": "expectations: [\"verify rc 1 (expected 0): ['source: the board reports its log overflowed and the session did not halt on it']\"]",
    "probe": "the runner scenario log_overflow: stop None / opened None",
-   "seconds": 3.3
+   "seconds": 3.4
   },
   {
    "id": "A3+S1",
@@ -389,13 +515,33 @@
     "Y2",
     "Y3"
    ]
+  },
+  {
+   "id": "N11+N11b",
+   "verdict": "KILLED",
+   "what": "both publication barriers made diagnostic: `go` is issued after the evidence could not be written",
+   "note": "`go` issued after the publication failed",
+   "combined": [
+    "N11",
+    "N11b"
+   ]
+  },
+  {
+   "id": "N7+N7b",
+   "verdict": "KILLED",
+   "what": "both image pin checks removed: a file that is not the pinned image is loaded",
+   "note": "proceeded: stop=None loady_sent=True",
+   "combined": [
+    "N7",
+    "N7b"
+   ]
   }
  ],
  "counts": {
-  "KILLED": 41,
-  "SURVIVED": 2,
+  "KILLED": 53,
+  "SURVIVED": 6,
   "EDIT-MISS": 0,
   "PROBE-ERROR": 0
  },
- "at": "2026-10-28T16:07:41Z"
+ "at": "2026-10-28T17:19:49Z"
 }

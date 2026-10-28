@@ -101,10 +101,32 @@
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
     "dram_mib": 512,
-    "prompt_seen": true
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "boardid_ok": true,
+    "role_ok": true
+   },
+   "clock": {
+    "fpga0_ctrl": "00200a00",
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "ok": true
    },
    "variant": "42340001",
-   "fclk0_ctrl": "00200a00",
    "image": {
     "transferred_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "bytes": 98324,
@@ -113,7 +135,7 @@
      "name": "b4q_app_v2.bin",
      "size": 98324,
      "blocks": 97,
-     "end": 99995
+     "end": 100074
     },
     "total": 98324,
     "device_crc": {
@@ -129,10 +151,10 @@
     "written": [
      "42345149",
      "00000001",
-     "46fbb720",
-     "6434c2b8",
-     "25874ced",
-     "6057e430",
+     "f4065c48",
+     "d71c7405",
+     "cd667493",
+     "cab5ab60",
      "6553f100",
      "4d989ee8",
      "4e406f12",
@@ -150,15 +172,15 @@
      "00000000",
      "00000000",
      "00000000",
-     "8337d354"
+     "c0e1f9af"
     ],
     "read_back": [
      "42345149",
      "00000001",
-     "46fbb720",
-     "6434c2b8",
-     "25874ced",
-     "6057e430",
+     "f4065c48",
+     "d71c7405",
+     "cd667493",
+     "cab5ab60",
      "6553f100",
      "4d989ee8",
      "4e406f12",
@@ -176,9 +198,16 @@
      "00000000",
      "00000000",
      "00000000",
-     "8337d354"
+     "c0e1f9af"
     ],
     "equal": true
+   },
+   "addresses": {
+    "context": "0x02000000",
+    "go": "0x02000000",
+    "loady": "0x02000000",
+    "crc_start": "0x02000000",
+    "started_at": "0x02000000"
    }
   },
   "stop": null

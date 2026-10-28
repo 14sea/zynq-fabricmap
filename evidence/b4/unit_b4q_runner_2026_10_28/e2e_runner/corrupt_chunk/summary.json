@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-corrupt_chunk",
- "wall_s": 6.064,
+ "wall_s": 6.049,
  "stop": null,
  "opened": true,
  "phase": "ended",
@@ -95,13 +95,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 214,
-  "hb": 10,
+  "lines": 213,
+  "hb": 9,
   "nacks": 0,
   "sign_requests": 4,
   "sign_replies": 4,
   "transactions": 4,
-  "kicks": 214,
+  "kicks": 213,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -111,10 +111,10 @@
   "log": 123344,
   "log_overflow": 0,
   "log_records": 7709,
-  "log_sha256": "4adb3af0aa1baf959ac385c3515a48a15e07f4e1ffbf60e212539a37660fb19f"
+  "log_sha256": "673fb3b25e3d11864f841dbe8f2df1b15528f0f7786ebb90243e03a8ba6fe323"
  },
  "stats": {
-  "hb": 10,
+  "hb": 9,
   "nack": 0,
   "signreq": 4,
   "signreply": 4,
@@ -127,14 +127,15 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 397,
+ "console_lines": 396,
  "admission": {
   "image": {
    "file": "build/b4q_image/b4q_app_v2.bin",
    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-   "equal": true
+   "equal": true,
+   "bytes": 98324
   },
   "board": {
    "model": "Ebang EBAZ4203 (surrogate)",
@@ -150,18 +151,46 @@
    "model_ok": true,
    "dram_ok": true
   },
+  "identity": {
+   "boardid": "F8B3",
+   "role": "verify",
+   "expected_boardid": "F8B3",
+   "allowed_roles": [
+    "verify",
+    "sacrificial"
+   ],
+   "boardid_ok": true,
+   "role_ok": true,
+   "purpose": "bringup-rehearsal"
+  },
+  "clock": {
+   "fpga0_ctrl_addr": "0xf8000170",
+   "fpga0_ctrl": "00200a00",
+   "pll_ctrl": {
+    "arm": "0001a000",
+    "ddr": "00020000",
+    "io": "0001e000"
+   },
+   "derived": {
+    "srcsel": 0,
+    "pll": "io",
+    "pll_ctrl": "0001e000",
+    "fdiv": 30,
+    "div0": 10,
+    "div1": 2,
+    "pll_reset": false,
+    "pll_bypass": false,
+    "mhz": 50.0
+   },
+   "expected_mhz": 50.0,
+   "expected_ctrl": null,
+   "ok": true
+  },
   "carrier": {
    "variant_addr": "0x43c02034",
    "variant": "42340001",
    "expected": "42340001",
    "equal": true
-  },
-  "fclk0": {
-   "addr": "0xf8000170",
-   "ctrl": "00200a00",
-   "expected": null,
-   "held": false,
-   "equal": null
   },
   "ok": true
  },
@@ -195,7 +224,7 @@
  "transport_stops": [],
  "ident": {
   "protocol": "b4q-v2",
-  "token": "4a37adad51a5eedb52d5fca626ab3989",
+  "token": "825050bbdcb9aa4d5ae835547845c6aa",
   "uboot_epoch": 1700000000,
   "app_image_sha_lo32": 1301847784,
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -239,6 +268,7 @@
  "phase_at_stop": null,
  "go_in_tx": true,
  "loady_in_tx": true,
+ "pl_read_in_tx": true,
  "name": "corrupt_chunk",
  "surrogate_args": [
   "--fault=corrupt-chunk=2"

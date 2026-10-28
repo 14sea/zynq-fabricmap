@@ -1,0 +1,75 @@
+{
+ "dir": "/home/test/zynq_fabricmap/build/b4q_runner_evidence/wrong_boardid",
+ "session": [],
+ "transactions": [],
+ "a7": {
+  "findings": []
+ },
+ "agree": true,
+ "refused": null,
+ "runner": {
+  "findings": [],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "stopped",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "17A6",
+    "role": "verify",
+    "boardid_ok": false,
+    "role_ok": true
+   },
+   "clock": {
+    "fpga0_ctrl": null,
+    "derived": null,
+    "ok": false
+   },
+   "variant": null
+  },
+  "stop": {
+   "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board",
+   "demonstrated": true
+  }
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
+ "chain": [],
+ "qualification": {
+  "findings": []
+ },
+ "control_plane": {
+  "phase": "stopped",
+  "stop": {
+   "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board",
+   "demonstrated": true
+  }
+ },
+ "clean": false
+}

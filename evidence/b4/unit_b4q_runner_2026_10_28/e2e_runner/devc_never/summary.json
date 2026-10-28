@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-devc_never",
- "wall_s": 7.454,
+ "wall_s": 7.512,
  "stop": {
   "kind": "SessionRefusal",
   "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling"
@@ -37,13 +37,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 29,
-  "hb": 5,
+  "lines": 30,
+  "hb": 6,
   "nacks": 0,
   "sign_requests": 1,
   "sign_replies": 1,
   "transactions": 1,
-  "kicks": 29,
+  "kicks": 30,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -53,10 +53,10 @@
   "log": 11536,
   "log_overflow": 0,
   "log_records": 721,
-  "log_sha256": "fd694c90be8ce8ff7eba3db3c0a379aa9cacab601463dec859503151daadffb3"
+  "log_sha256": "1c37cd4822935961e4e21ad00236aeee70a5be6ad524825c90c8fd369e412ffc"
  },
  "stats": {
-  "hb": 5,
+  "hb": 6,
   "nack": 0,
   "signreq": 1,
   "signreply": 1,
@@ -69,14 +69,15 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 54,
+ "console_lines": 55,
  "admission": {
   "image": {
    "file": "build/b4q_image/b4q_app_v2.bin",
    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-   "equal": true
+   "equal": true,
+   "bytes": 98324
   },
   "board": {
    "model": "Ebang EBAZ4203 (surrogate)",
@@ -92,18 +93,46 @@
    "model_ok": true,
    "dram_ok": true
   },
+  "identity": {
+   "boardid": "F8B3",
+   "role": "verify",
+   "expected_boardid": "F8B3",
+   "allowed_roles": [
+    "verify",
+    "sacrificial"
+   ],
+   "boardid_ok": true,
+   "role_ok": true,
+   "purpose": "bringup-rehearsal"
+  },
+  "clock": {
+   "fpga0_ctrl_addr": "0xf8000170",
+   "fpga0_ctrl": "00200a00",
+   "pll_ctrl": {
+    "arm": "0001a000",
+    "ddr": "00020000",
+    "io": "0001e000"
+   },
+   "derived": {
+    "srcsel": 0,
+    "pll": "io",
+    "pll_ctrl": "0001e000",
+    "fdiv": 30,
+    "div0": 10,
+    "div1": 2,
+    "pll_reset": false,
+    "pll_bypass": false,
+    "mhz": 50.0
+   },
+   "expected_mhz": 50.0,
+   "expected_ctrl": null,
+   "ok": true
+  },
   "carrier": {
    "variant_addr": "0x43c02034",
    "variant": "42340001",
    "expected": "42340001",
    "equal": true
-  },
-  "fclk0": {
-   "addr": "0xf8000170",
-   "ctrl": "00200a00",
-   "expected": null,
-   "held": false,
-   "equal": null
   },
   "ok": true
  },
@@ -122,7 +151,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.226
+   "seconds": 0.216
   }
  },
  "page_witness": {
@@ -136,7 +165,7 @@
  },
  "transport_stops": [
   {
-   "t": 1793204540.652,
+   "t": 1793208260.607,
    "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling",
    "kind": "SessionRefusal"
   }
@@ -150,6 +179,7 @@
  "phase_at_stop": null,
  "go_in_tx": true,
  "loady_in_tx": true,
+ "pl_read_in_tx": true,
  "name": "devc_never",
  "surrogate_args": [
   "--devc-fault=env:1:never"

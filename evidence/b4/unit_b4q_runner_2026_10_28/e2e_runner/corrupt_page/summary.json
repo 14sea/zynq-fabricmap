@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-corrupt_page",
- "wall_s": 1.436,
+ "wall_s": 1.434,
  "stop": {
   "kind": "SessionRefusal",
   "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)"
@@ -32,7 +32,7 @@
   "log": 368,
   "log_overflow": 0,
   "log_records": 23,
-  "log_sha256": "6b87bde854d3c994786ebeefb628285df63b340c5ccf58e2771b31cb3760b633"
+  "log_sha256": "d7986dcd0c499636f2d78b87edecd7580329183725c6b606f07f07bf1c5a5923"
  },
  "stats": {
   "hb": 0,
@@ -55,7 +55,8 @@
    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-   "equal": true
+   "equal": true,
+   "bytes": 98324
   },
   "board": {
    "model": "Ebang EBAZ4203 (surrogate)",
@@ -71,18 +72,46 @@
    "model_ok": true,
    "dram_ok": true
   },
+  "identity": {
+   "boardid": "F8B3",
+   "role": "verify",
+   "expected_boardid": "F8B3",
+   "allowed_roles": [
+    "verify",
+    "sacrificial"
+   ],
+   "boardid_ok": true,
+   "role_ok": true,
+   "purpose": "bringup-rehearsal"
+  },
+  "clock": {
+   "fpga0_ctrl_addr": "0xf8000170",
+   "fpga0_ctrl": "00200a00",
+   "pll_ctrl": {
+    "arm": "0001a000",
+    "ddr": "00020000",
+    "io": "0001e000"
+   },
+   "derived": {
+    "srcsel": 0,
+    "pll": "io",
+    "pll_ctrl": "0001e000",
+    "fdiv": 30,
+    "div0": 10,
+    "div1": 2,
+    "pll_reset": false,
+    "pll_bypass": false,
+    "mhz": 50.0
+   },
+   "expected_mhz": 50.0,
+   "expected_ctrl": null,
+   "ok": true
+  },
   "carrier": {
    "variant_addr": "0x43c02034",
    "variant": "42340001",
    "expected": "42340001",
    "equal": true
-  },
-  "fclk0": {
-   "addr": "0xf8000170",
-   "ctrl": "00200a00",
-   "expected": null,
-   "held": false,
-   "equal": null
   },
   "ok": true
  },
@@ -101,7 +130,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.233
+   "seconds": 0.229
   }
  },
  "page_witness": {
@@ -115,7 +144,7 @@
  },
  "transport_stops": [
   {
-   "t": 1793204496.697,
+   "t": 1793208216.747,
    "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
    "kind": "SessionRefusal"
   }
@@ -129,6 +158,7 @@
  "phase_at_stop": null,
  "go_in_tx": true,
  "loady_in_tx": true,
+ "pl_read_in_tx": true,
  "name": "corrupt_page",
  "surrogate_args": [
   "--fault=corrupt-page"

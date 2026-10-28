@@ -2,7 +2,7 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-pre_event_corrupt",
- "generated_utc": "2026-10-28T16:19:20Z",
+ "generated_utc": "2026-10-28T17:21:12Z",
  "emulated": true,
  "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
  "source": null,
@@ -323,14 +323,14 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v2",
-  "token": "7baa645567ea9bfa0676240c2ed0a502",
+  "token": "b734425ea7f4c02fc6c94aff1f5c70ce",
   "page_words": [
    "42345149",
    "00000001",
-   "7baa6455",
-   "67ea9bfa",
-   "0676240c",
-   "2ed0a502",
+   "b734425e",
+   "a7f4c02f",
+   "c6c94aff",
+   "1f5c70ce",
    "6553f100",
    "07d5555f",
    "4e406f12",
@@ -348,9 +348,10 @@
    "00000000",
    "00000000",
    "00000000",
-   "9a83bb07"
+   "67307de6"
   ],
   "page_flags": 2,
+  "time_origin": "console entries' `t`: this host's wall clock (time.time()) at the line's receipt / send \u2014 a host timestamp, never a device time",
   "knobs": {
    "corrupt_replies": 0,
    "drop_replies": 0,
@@ -395,11 +396,11 @@
    "log": 46208,
    "log_overflow": 0,
    "log_records": 2888,
-   "log_sha256": "0b7599b8b90732c90e21eb242b6e1132e783abf33fbcf3455f923ad883372bb6"
+   "log_sha256": "9a8bb3cf79e332aacb6df123c652936882de9122cafc92fb04ec2de8fe12b245"
   },
   "ident": {
    "protocol": "b4q-v2",
-   "token": "7baa645567ea9bfa0676240c2ed0a502",
+   "token": "b734425ea7f4c02fc6c94aff1f5c70ce",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 131421535,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",

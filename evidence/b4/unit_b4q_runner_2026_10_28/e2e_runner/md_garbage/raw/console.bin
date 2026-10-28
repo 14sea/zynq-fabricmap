@@ -13,6 +13,10 @@ In:    serial@e0001000
 Out:   serial@e0001000
 Err:   serial@e0001000
 Hit any key to stop autoboot:  2 
-Zynq> md.l 43c02034 1
+Zynq> printenv boardid
+boardid=F8B3
+Zynq> printenv role
+role=verify
+Zynq> md.l f8000170 1
 md.l: garbage
 Zynq> 

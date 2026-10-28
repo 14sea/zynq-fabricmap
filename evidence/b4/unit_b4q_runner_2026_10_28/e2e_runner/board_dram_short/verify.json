@@ -27,8 +27,22 @@
    "board": {
     "model": "Ebang EBAZ4205 (surrogate)",
     "dram_mib": 256,
-    "prompt_seen": true
-   }
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": false
+   },
+   "identity": {
+    "boardid": null,
+    "role": null,
+    "boardid_ok": false,
+    "role_ok": false
+   },
+   "clock": {
+    "fpga0_ctrl": null,
+    "derived": null,
+    "ok": false
+   },
+   "variant": null
   },
   "stop": {
    "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",

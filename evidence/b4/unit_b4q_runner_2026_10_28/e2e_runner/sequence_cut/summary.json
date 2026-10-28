@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-sequence_cut",
- "wall_s": 2.454,
+ "wall_s": 2.562,
  "stop": null,
  "opened": true,
  "phase": "ended",
@@ -50,7 +50,7 @@
   "log": 24464,
   "log_overflow": 0,
   "log_records": 1529,
-  "log_sha256": "3c2023719533336459aec971e56faf22bd18248602a87ce5bd022c6dff9cfe8c"
+  "log_sha256": "2d9fb5952d6e87c859199f56e7f0eb22234db87d199daa90fdf51f0cd3738279"
  },
  "stats": {
   "hb": 0,
@@ -73,7 +73,8 @@
    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-   "equal": true
+   "equal": true,
+   "bytes": 98324
   },
   "board": {
    "model": "Ebang EBAZ4203 (surrogate)",
@@ -89,18 +90,46 @@
    "model_ok": true,
    "dram_ok": true
   },
+  "identity": {
+   "boardid": "F8B3",
+   "role": "verify",
+   "expected_boardid": "F8B3",
+   "allowed_roles": [
+    "verify",
+    "sacrificial"
+   ],
+   "boardid_ok": true,
+   "role_ok": true,
+   "purpose": "bringup-rehearsal"
+  },
+  "clock": {
+   "fpga0_ctrl_addr": "0xf8000170",
+   "fpga0_ctrl": "00200a00",
+   "pll_ctrl": {
+    "arm": "0001a000",
+    "ddr": "00020000",
+    "io": "0001e000"
+   },
+   "derived": {
+    "srcsel": 0,
+    "pll": "io",
+    "pll_ctrl": "0001e000",
+    "fdiv": 30,
+    "div0": 10,
+    "div1": 2,
+    "pll_reset": false,
+    "pll_bypass": false,
+    "mhz": 50.0
+   },
+   "expected_mhz": 50.0,
+   "expected_ctrl": null,
+   "ok": true
+  },
   "carrier": {
    "variant_addr": "0x43c02034",
    "variant": "42340001",
    "expected": "42340001",
    "equal": true
-  },
-  "fclk0": {
-   "addr": "0xf8000170",
-   "ctrl": "00200a00",
-   "expected": null,
-   "held": false,
-   "equal": null
   },
   "ok": true
  },
@@ -119,7 +148,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.225
+   "seconds": 0.218
   }
  },
  "page_witness": {
@@ -156,6 +185,7 @@
  "phase_at_stop": null,
  "go_in_tx": true,
  "loady_in_tx": true,
+ "pl_read_in_tx": true,
  "name": "sequence_cut",
  "surrogate_args": [
   "--image-table=4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b=/home/test/zynq_fabricmap/build/b4q_firmware/b4q_seqcut_twin"

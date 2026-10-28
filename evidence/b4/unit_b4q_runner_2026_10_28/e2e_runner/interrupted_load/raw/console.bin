@@ -13,10 +13,20 @@ In:    serial@e0001000
 Out:   serial@e0001000
 Err:   serial@e0001000
 Hit any key to stop autoboot:  2 
-Zynq> md.l 43c02034 1
-43c02034: 42340001    ..4B
+Zynq> printenv boardid
+boardid=F8B3
+Zynq> printenv role
+role=verify
 Zynq> md.l f8000170 1
 f8000170: 00200a00    .. .
+Zynq> md.l f8000100 1
+f8000100: 0001a000    ....
+Zynq> md.l f8000104 1
+f8000104: 00020000    ....
+Zynq> md.l f8000108 1
+f8000108: 0001e000    ....
+Zynq> md.l 43c02034 1
+43c02034: 42340001    ..4B
 Zynq> loady 02000000
 ## Ready for binary (ymodem) download to 0x02000000 at 115200 bps...
 CCxyzModem - CRC mode, 0(SOH)/0(STX)/2(CAN) packets, 0 retries

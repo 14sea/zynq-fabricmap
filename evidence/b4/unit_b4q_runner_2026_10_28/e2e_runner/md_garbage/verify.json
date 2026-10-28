@@ -27,11 +27,25 @@
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
     "dram_mib": 512,
-    "prompt_seen": true
-   }
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "boardid_ok": true,
+    "role_ok": true
+   },
+   "clock": {
+    "fpga0_ctrl": null,
+    "derived": null,
+    "ok": false
+   },
+   "variant": null
   },
   "stop": {
-   "why": "md.l 0x43c02034 1: 0 words parsed, not 1",
+   "why": "md.l 0xf8000170 1: 0 words parsed, not 1",
    "demonstrated": true
   }
  },
@@ -53,7 +67,7 @@
  "control_plane": {
   "phase": "stopped",
   "stop": {
-   "why": "md.l 0x43c02034 1: 0 words parsed, not 1",
+   "why": "md.l 0xf8000170 1: 0 words parsed, not 1",
    "demonstrated": true
   }
  },

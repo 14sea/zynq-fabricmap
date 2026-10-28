@@ -1,0 +1,100 @@
+{
+ "label": "B4Q-runner-wrong_boardid",
+ "wall_s": 1.087,
+ "stop": {
+  "kind": "AdmissionStop",
+  "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board"
+ },
+ "opened": false,
+ "phase": "stopped",
+ "records": [],
+ "chain_findings": null,
+ "halted": null,
+ "end": null,
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 0,
+  "signreply": 0,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 0,
+ "admission": {
+  "image": {
+   "file": "build/b4q_image/b4q_app_v2.bin",
+   "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+   "equal": true,
+   "bytes": 98324
+  },
+  "board": {
+   "model": "Ebang EBAZ4203 (surrogate)",
+   "dram_mib": 512,
+   "permitted_models": [
+    "Ebang EBAZ4203"
+   ],
+   "dram_min_mib": 512,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "model_ok": true,
+   "dram_ok": true
+  },
+  "identity": {
+   "boardid": "17A6",
+   "role": "verify",
+   "expected_boardid": "F8B3",
+   "allowed_roles": [
+    "verify",
+    "sacrificial"
+   ],
+   "boardid_ok": false,
+   "role_ok": true,
+   "purpose": "bringup-rehearsal"
+  },
+  "clock": null,
+  "carrier": null,
+  "ok": false
+ },
+ "load_witness": null,
+ "page_witness": {},
+ "source": null,
+ "transport_stops": [
+  {
+   "t": 1793208132.949,
+   "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board",
+   "kind": "AdmissionStop"
+  }
+ ],
+ "stats_pull": null,
+ "tail_unobtainable": null,
+ "phase_at_stop": "prompt",
+ "go_in_tx": false,
+ "loady_in_tx": false,
+ "pl_read_in_tx": false,
+ "name": "wrong_boardid",
+ "surrogate_args": [
+  "--fault=wrong-boardid"
+ ],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": null,
+ "expect": {
+  "stop_prefix": "identity: the board's boardid",
+  "opened": false,
+  "phase_at_stop": "prompt",
+  "no_loady": true,
+  "no_pl_read": true
+ },
+ "expect_failures": []
+}

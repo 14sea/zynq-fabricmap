@@ -476,6 +476,12 @@ def _m_crc_range(d: Path):
     _runner_edit(d, fix)
 
 
+def _m_console_host_line(d: Path):
+    lines = (d / "console.jsonl").read_text().splitlines()
+    k = next(i for i, l in enumerate(lines) if json.loads(l).get("dir") == "host" and (json.loads(l).get("line") or "").startswith("B4Q1 TX "))
+    e = json.loads(lines[k]); e["line"] = e["line"][:-8] + "00000000"; lines[k] = json.dumps(e); (d / "console.jsonl").write_text("\n".join(lines) + "\n")
+
+
 def _m_console_line(d: Path):
     lines = (d / "console.jsonl").read_text().splitlines()
     k = next(i for i, l in enumerate(lines) if json.loads(l).get("type") == "HB")
@@ -521,11 +527,11 @@ def probe_fake(kind: str):
         if kind in ("pin", "dram", "variant"):
             if kind == "pin":
                 f = fresh() / "x.bin"; f.write_bytes(b"\x00" * 56)
-                ctx, script = rn.ExecutionContext(image_sha256=pin, image_path=str(f)), T.scripted_uboot()
+                ctx, script = rn.ExecutionContext(image_sha256=pin, image_path=str(f), expected_boardid="F8B3"), T.scripted_uboot()
             elif kind == "dram":
-                ctx, script = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), board_models=("Ebang EBAZ4205",)), T.scripted_uboot(model=b"Ebang EBAZ4205 (fixture)", dram=256)
+                ctx, script = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), board_models=("Ebang EBAZ4205",), expected_boardid="F8B3"), T.scripted_uboot(model=b"Ebang EBAZ4205 (fixture)", dram=256)
             else:
-                ctx, script = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE)), T.scripted_uboot(variant=0x42340002)
+                ctx, script = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), expected_boardid="F8B3"), T.scripted_uboot(variant=0x42340002)
             port = T.FakePort(script)
             s = rn.run("fake", fresh() / "run", rn.body_control_plane, context=ctx, port=port)
             if (s.get("stop") or {}).get("kind") == "AdmissionStop" and b"loady" not in port.tx_log:
@@ -541,7 +547,7 @@ def probe_fake(kind: str):
             port = P(T.scripted_uboot())
             out = fresh() / "run"
             try:
-                rn.run("fake", out, rn.body_open, context=rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE)), port=port)
+                rn.run("fake", out, rn.body_open, context=rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), expected_boardid="F8B3"), port=port)
             except OSError:
                 pass
             u = json.loads((out / "uboot.json").read_text())
@@ -604,6 +610,158 @@ except ym.YModemError as e:
         secs = float(out.split()[1])
         return (False, f"ended at {secs} s (the deadline)") if secs < 5 else (True, f"ended only after {secs} s")
     return True, f"no error raised: {out[-120:] or p.stderr[-120:]}"
+
+
+# ---------------------------------------------------------------- the second review's guards (the owner's C1–C4 on 30c5ccba)
+def _m_crc_false_executed(d: Path):
+    import b4q_verify_runner as vr
+    rx = bytearray((d / "raw/console.bin").read_bytes()); m = vr.CRC_RE.search(bytes(rx)); v = int(m.group(3), 16) ^ 1
+    rx[m.start(3):m.end(3)] = f"{v:08x}".encode(); (d / "raw/console.bin").write_bytes(bytes(rx))
+    def fix(u, mf):
+        u["raw"]["console_bin_sha256"] = hashlib.sha256(bytes(rx)).hexdigest()
+        u["load_witness"].update({"uboot_crc32": f"{v:08x}", "equal": False})
+        for s in u["uboot_steps"]:
+            if s["what"] == "crc32":
+                s["crc32"] = f"{v:08x}"
+    _runner_edit(d, fix)
+
+
+def _m_load_elsewhere(d: Path):
+    import b4q_verify_runner as vr
+    tx = (d / "raw/console_tx.bin").read_bytes().replace(b"loady 02000000\r", b"loady 04000000\r", 1).replace(b"crc32 02000000 ", b"crc32 04000000 ", 1)
+    rx = bytearray((d / "raw/console.bin").read_bytes()); m = vr.CRC_RE.search(bytes(rx)); length = int(m.group(2), 16) - int(m.group(1), 16)
+    rx[m.start(1):m.end(2)] = f"04000000 ... {0x04000000 + length:08x}".encode()
+    (d / "raw/console_tx.bin").write_bytes(tx); (d / "raw/console.bin").write_bytes(bytes(rx))
+    def fix(u, mf):
+        u["raw"].update({"console_bin_sha256": hashlib.sha256(bytes(rx)).hexdigest(), "console_tx_bin_sha256": hashlib.sha256(tx).hexdigest()})
+        u["load_witness"]["range"] = ["04000000", f"{0x04000000 + length:08x}"]
+        for s in u["uboot_steps"]:
+            if s["what"] == "crc32":
+                s["sent"] = s["sent"].replace("02000000", "04000000"); s["range"] = ["04000000", f"{0x04000000 + length:08x}"]
+            if s["what"] == "loady":
+                s["sent"] = "loady 04000000"
+    _runner_edit(d, fix)
+
+
+def _m_extra_end(d: Path):
+    rx = (d / "raw/console.bin").read_bytes(); k = rx.find(b"B4Q1 IDENT ")
+    end_line = next(json.loads(l)["line"] for l in (d / "console.jsonl").read_text().splitlines() if json.loads(l).get("type") == "END")
+    rx2 = rx[:k] + end_line.encode() + b"\n" + rx[k:]
+    (d / "raw/console.bin").write_bytes(rx2)
+    _runner_edit(d, lambda u, mf: u["raw"].update({"console_bin_sha256": hashlib.sha256(rx2).hexdigest(), "console_bin_bytes": len(rx2)}))
+
+
+def _m_pl_before_clock(d: Path):
+    tx = (d / "raw/console_tx.bin").read_bytes()
+    a, b = b"md.l f8000170 1\r", b"md.l 43c02034 1\r"
+    i, j = tx.find(a), tx.find(b)
+    assert 0 <= i < j
+    tx2 = tx[:i] + b + tx[i + len(a):j] + a + tx[j + len(b):]                # the PL read moved before the clock word's read
+    (d / "raw/console_tx.bin").write_bytes(tx2)
+    _runner_edit(d, lambda u, mf: u["raw"].update({"console_tx_bin_sha256": hashlib.sha256(tx2).hexdigest(), "console_tx_bin_bytes": len(tx2)}))
+
+
+def probe_cp_unknown_stop(root):
+    """an unknown stop class on a control-plane archive is reported unverified (a finding), never accepted"""
+    import importlib
+    import b4q_verify as vf
+    importlib.reload(sys.modules["b4q_verify_runner"]) if "b4q_verify_runner" in sys.modules else None
+    importlib.reload(vf)
+    base = valid_runner_archive().parent
+    s = runner_e2e(base, "control_plane_only")
+    if "control_plane_only" not in s:
+        raise RuntimeError(str(s)[:200])
+    d = base / "control_plane_only"
+    _runner_edit(d, lambda u, mf: u.update({"phase": "stopped", "phase_at_stop": "prompt", "stops": [{"why": "a stop of a class nobody declared", "kind": "TransportStop"}]}))
+    rep = vf.verify(d)
+    if any("unverified" in x for x in rep.get("session", [])):
+        return False, "found by name"
+    return True, f"accepted: agree={rep.get('agree')} findings={rep.get('session', [])[:2]}"
+
+
+def probe_source_required(root):
+    """a runner archive without manifest.source is refused, never downgraded to the emulated contract"""
+    import importlib
+    import b4q_verify as vf
+    importlib.reload(vf)
+    d = valid_runner_archive()
+    m = json.loads((d / "manifest.json").read_text()); m.pop("source", None); (d / "manifest.json").write_text(json.dumps(m, indent=1) + "\n")
+    rep = vf.verify(d)
+    if rep.get("refused") and "manifest.source: absent" in rep["refused"]:
+        return False, "refused by name"
+    return True, f"not refused: refused={rep.get('refused')!r} source={rep.get('source', {}).get('kind')} agree={rep.get('agree')}"
+
+
+def probe_producer(kind: str):
+    """the runner against the tests' scripted U-Boot and fakes: the C2 / C3 guards observed directly"""
+    def probe(root):
+        T = _tests()
+        rn = T.rn
+        pin = hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest()
+        if kind == "persist_barrier":
+            from unittest import mock
+            port = T.FakePort(T.scripted_uboot()); out = fresh() / "run"
+            ctx = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), expected_boardid="F8B3")
+            real = Path.write_text; state = {"fail": False}
+
+            def failing(self_, data, *a, **k):
+                if state["fail"] and self_.name == "uboot.json":
+                    raise OSError(28, "injected full filesystem")
+                return real(self_, data, *a, **k)
+
+            def body(s):
+                s.control_plane(); state["fail"] = True; s.start()
+            with mock.patch.object(Path, "write_text", failing):
+                try:
+                    rn.run("fake", out, body, context=ctx, port=port)
+                except Exception:
+                    pass
+            return (True, "`go` issued after the publication failed") if b"go " in port.tx_log else (False, "no go after a failed publication")
+        if kind == "tx_commit":
+            import pty
+            from unittest import mock
+            m_, s_ = pty.openpty(); port = rn.Port(os.ttyname(s_)); real_write = os.write; calls = []
+
+            def short(fd, data):
+                if fd == port.fd and data.startswith(b"go "):
+                    calls.append(1); real_write(fd, data[:2]); return 2
+                if fd == port.fd and calls and data == b" 02000000\r":
+                    raise OSError(5, "injected short write")
+                return real_write(fd, data)
+            with mock.patch("os.write", short):
+                try:
+                    port.write(b"go 02000000\r")
+                except OSError:
+                    pass
+            committed = bytes(port.tx_log); port.close(); os.close(m_)
+            return (False, "only the accepted prefix committed") if committed == b"go" else (True, f"tx_log holds {committed!r} although the OS accepted 2 bytes")
+        if kind in ("role", "boardid", "clock"):
+            script = {"role": T.scripted_uboot(role=None), "boardid": T.scripted_uboot(boardid="17A6"), "clock": T.scripted_uboot(io_pll=0x0001E001)}[kind]
+            port = T.FakePort(script)
+            s = rn.run("fake", fresh() / "run", rn.body_control_plane, context=rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), expected_boardid="F8B3"), port=port)
+            if (s.get("stop") or {}).get("kind") == "AdmissionStop" and b"md.l 43c" not in port.tx_log and b"loady" not in port.tx_log:
+                return False, "refused before any PL read"
+            return True, f"proceeded: stop={s.get('stop')} pl_read={b'md.l 43c' in port.tx_log} loady={b'loady' in port.tx_log}"
+        if kind == "image_swap":
+            f = fresh() / "b4q_app_v2.bin"; f.write_bytes(rn.IMAGE.read_bytes())
+            ctx = rn.ExecutionContext(image_sha256=pin, image_path=str(f), expected_boardid="F8B3")
+            port = T.FakePort(T.scripted_uboot())
+
+            def body(s):
+                s.uboot.get_prompt(break_s=1.0) if not any(x["what"] == "prompt" for x in s.uboot.steps) else None
+                s._set_phase("prompt"); s.admit(); f.write_bytes(b"\x00" * 70); s.load_image()
+            try:
+                rn.run("fake", fresh() / "run", body, context=ctx, port=port)
+            except Exception:
+                pass
+            import b4q_verify_runner as vr
+            payload, info = vr.ymodem_payload(bytes(port.tx_log), port.tx_log.find(b"loady")) if b"loady" in port.tx_log else (None, {})
+            if payload is not None and hashlib.sha256(payload).hexdigest() == pin:
+                return False, "the admitted bytes went out"
+            return True, f"the wire carried {'nothing' if payload is None else hashlib.sha256(payload).hexdigest()[:12]} (not the admitted image)"
+        raise RuntimeError(kind)
+    probe.__doc__ = f"the runner's own barrier: {kind}"
+    return probe
 
 
 MUTANTS = [
@@ -684,9 +842,7 @@ MUTANTS = [
                 F.append("no session: the streams show `go` / the application's start — not a control-plane-only archive")''', '''            pass''', "an invented pre-go stop no longer refuted by the `go` in the streams", probe_runner_archive(_m_invented_stop, "streams show `go`")),
     ("V11", VRUNNER, '''                if (start, end) != (addr, addr + len(payload) - 1):
                     F.append(f"load: the device's crc32 is over {start:08x}..{end:08x}, not the loaded range {addr:08x}..{addr + len(payload) - 1:08x}")''', '''                pass''', "the device's crc32 no longer held to exactly the loaded range", probe_runner_archive(_m_crc_range, "not the loaded range")),
-    ("V12", VRUNNER, '''            if k < 0:
-                F.append(f"console linkage: board line {e.get('i')} ({e['line'][:30]}…) is not in the received stream after `go` in order"); break''', '''            if k < 0:
-                break''', "a retained console line no longer held to the received stream", probe_runner_archive(_m_console_line, "console linkage")),
+    ("V12", VRUNNER, '''        if tx_frames != sent:''', '''        if False:''', "the sent frames no longer held to the retained host lines", probe_runner_archive(_m_console_host_line, "console accounting: the sent stream")),
     # the transport (R2)
     ("P1", RUNNER, '''                out = bytes(self.port.buf[:end])
                 del self.port.buf[:end]''', '''                out = bytes(self.port.buf[:end])
@@ -715,14 +871,45 @@ MUTANTS = [
     ("N5", RUNNER, '''                if a != addr + 4 * len(words):''', '''                if False:''', "md.l no longer held to the asked address", probe_fake("md_addr")),
     ("N6", RUNNER, '''        if (start, end) != (addr, addr + length - 1):''', '''        if False:''', "crc32 no longer held to the asked range", probe_fake("crc_range")),
     # the admission (R3)
-    ("N7", RUNNER, '''        if not adm["image"]["equal"]:''', '''        if False:''', "a file that is not the pinned image loaded anyway", probe_fake("pin")),
+    ("N7", RUNNER, '''        if not adm["image"]["equal"]:''', '''        if False:''', "the admission's image pin check removed — EXPECTED TO SURVIVE alone: the load's check of the held bytes against the pin is the sibling guard; N7+N7b is the kill", probe_fake("pin")),
+    ("N7b", RUNNER, '''        if self.image_bytes is None or hashlib.sha256(self.image_bytes).hexdigest() != self.context.image_sha256:''', '''        if self.image_bytes is None:''', "the load's check of the held bytes against the pin removed — EXPECTED TO SURVIVE alone: the admission's pin check is the sibling guard; N7+N7b is the kill", probe_fake("pin")),
     ("N8", RUNNER, '''        if not adm["board"]["dram_ok"]:''', '''        if False:''', "a board whose DRAM cannot hold the map admitted", probe_fake("dram")),
     ("N9", RUNNER, '''        if v != c.variant_word:''', '''        if False:''', "another carrier's variant word admitted", probe_fake("variant")),
-    ("N10", RUNNER, '''        self._set_phase("go-issued")                                          # written before the command leaves this host
+    ("N10", RUNNER, '''        self._set_phase("go-issued")                                          # written before the command leaves this host; a failed write here is a PersistStop and no `go` is issued
         self.runner["go"]["issued"] = True
         self.uboot.go(self.context.load_addr)''', '''        self.runner["go"]["issued"] = True
         self.uboot.go(self.context.load_addr)
         self._set_phase("go-issued")''', "the execution phase persisted only after `go` returns (a failed command leaves a pre-go record with `go` in the stream)", probe_fake("phase_before_go")),
+    # the state machine and the accounting (C1), the source selection (C4)
+    ("V13", VRUNNER, '''        if missing:
+            F.append("state: `go` was issued although " + "; ".join(missing) + " (execution after a failed or missing prerequisite)")''', '''        pass''', "an executed session no longer held to its prerequisites (a failed crc with executed transactions passes)", probe_runner_archive(_m_crc_false_executed, "state: `go` was issued although")),
+    ("V14", VRUNNER, '''        if len(set(addrs.values())) != 1:''', '''        if False:''', "the load / crc / go addresses no longer bound to one address", probe_runner_archive(_m_load_elsewhere, "not one address")),
+    ("V15", VRUNNER, '''        if rx_lines != retained:''', '''        if False:''', "the received stream no longer accounted line by line against the retained console (an extra END disappears)", probe_runner_archive(_m_extra_end, "console accounting")),
+    ("V16", VRUNNER, '''                elif rep["stop"]["demonstrated"] is None:
+                    F.append(f"no session: the named stop ({why[:60]}…) is of a class this verifier cannot demonstrate from the streams: unverified")''', '''                elif False:
+                    pass''', "an unknown stop class accepted as demonstrated", probe_cp_unknown_stop),
+    ("V17", VRUNNER, '''        if clk_cmd < 0 or clk_cmd > first_pl.start() or env_cmd < 0 or env_cmd > first_pl.start():''', '''        if False:''', "a PL read before the clock words no longer found", probe_runner_archive(_m_pl_before_clock, "a PL read was issued before")),
+    ("V18", VERIFY, '''    if source is None and isinstance(tr, dict) and tr.get("kind") in vr.RUNNER_KINDS:''', '''    if False:''', "a runner archive without its source declaration verified under the emulated contract", probe_source_required),
+    # the runner's barriers (C2 / C3)
+    ("N11", RUNNER, '''        if self.persist_failed is not None:
+            raise PersistStop(f"{what} refused: {self.persist_failed}")
+        self.persist(required=True)''', '''        self.persist(required=False)''', "the `_guard` barrier made diagnostic — EXPECTED TO SURVIVE alone: `_set_phase`'s required persist is the sibling barrier; N11+N11b is the kill", probe_producer("persist_barrier")),
+    ("N11b", RUNNER, '''        self.phase = phase; self.runner["phase"] = phase
+        self.persist(required=True)''', '''        self.phase = phase; self.runner["phase"] = phase
+        self.persist(required=False)''', "the phase write made diagnostic — EXPECTED TO SURVIVE alone: `_guard` is the sibling barrier; N11+N11b is the kill", probe_producer("persist_barrier")),
+    ("N12", RUNNER, '''                self.tx_log += data[off:off + n]
+                off += n''', '''                self.tx_log += data[off:]
+                off += n''', "the sent-byte log commits the whole command on the first partial write", probe_producer("tx_commit")),
+    ("N13", RUNNER, '''        if not adm["identity"]["role_ok"]:''', '''        if False:''', "a board without a permitted role admitted", probe_producer("role")),
+    ("N14", RUNNER, '''        if not adm["identity"]["boardid_ok"]:''', '''        if False:''', "another board's boardid admitted", probe_producer("boardid")),
+    ("N15", RUNNER, '''        if d["mhz"] is None:
+            raise AdmissionStop(f"clock: FPGA0_CLK_CTRL {f:#010x} with {d['pll']} PLL {d['pll_ctrl']} gives no running clock (reset={d['pll_reset']}, bypass={d['pll_bypass']}, divisors {d['div0']}/{d['div1']}): no PL access")
+        if c.fclk0_mhz is not None and abs(d["mhz"] - c.fclk0_mhz) >= 0.5:''', '''        if False:
+            pass
+        if c.fclk0_mhz is not None and d["mhz"] is not None and abs(d["mhz"] - c.fclk0_mhz) >= 0.5:''', "a PLL in reset (no running FCLK0) no longer refused before the PL read", probe_producer("clock")),
+    ("N17", RUNNER, '''        data = self.image_bytes
+        self._guard("the load")''', '''        data = self.binary.read_bytes()
+        self._guard("the load")''', "the image re-read from the file at the transfer (a file replaced after its hash check reaches the wire)", probe_producer("image_swap")),
     ("S2", SESSION, '''        elif info["overflow"]:
             self.halt("the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed")   # named; the application NACKs the next TX too''', '''        pass''', "the host no longer halts on the board's overflow flag", probe_runner("log_overflow")),
 ]
@@ -739,6 +926,8 @@ def probe_open_hangs(root):
 COMBINED = [
     ("A3+S1", [("A3", APP), ("S1", SESSION)], "every CHUNK claims offset 0 AND the host's bad-chunk bound is removed: the pull re-asks forever (the bound IS the guard; observed as a hang)", probe_open_hangs),
     ("Y1+Y2+Y3", [("Y1", YMODEM), ("Y2", YMODEM), ("Y3", YMODEM)], "the inner deadline check, the junk limit AND the per-read clock bound removed: a junk-flooding receiver holds the transfer forever (observed as a hang in a subprocess)", probe_junk_deadline),
+    ("N11+N11b", [("N11", RUNNER), ("N11b", RUNNER)], "both publication barriers made diagnostic: `go` is issued after the evidence could not be written", probe_producer("persist_barrier")),
+    ("N7+N7b", [("N7", RUNNER), ("N7b", RUNNER)], "both image pin checks removed: a file that is not the pinned image is loaded", probe_fake("pin")),
 ]
 
 

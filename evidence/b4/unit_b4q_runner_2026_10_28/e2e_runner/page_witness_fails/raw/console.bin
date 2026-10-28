@@ -13,10 +13,20 @@ In:    serial@e0001000
 Out:   serial@e0001000
 Err:   serial@e0001000
 Hit any key to stop autoboot:  2 
-Zynq> md.l 43c02034 1
-43c02034: 42340001    ..4B
+Zynq> printenv boardid
+boardid=F8B3
+Zynq> printenv role
+role=verify
 Zynq> md.l f8000170 1
 f8000170: 00200a00    .. .
+Zynq> md.l f8000100 1
+f8000100: 0001a000    ....
+Zynq> md.l f8000104 1
+f8000104: 00020000    ....
+Zynq> md.l f8000108 1
+f8000108: 0001e000    ....
+Zynq> md.l 43c02034 1
+43c02034: 42340001    ..4B
 Zynq> loady 02000000
 ## Ready for binary (ymodem) download to 0x02000000 at 115200 bps...
 CCCxyzModem - CRC mode, 0(SOH)/97(STX)/0(CAN) packets, 0 retries
@@ -29,10 +39,10 @@ Zynq> md.l 43c02030 1
 43c02030: 9e3779b9    .y7.
 Zynq> mw.l 10440000 42345149 1
 Zynq> mw.l 10440004 00000001 1
-Zynq> mw.l 10440008 f399bc84 1
-Zynq> mw.l 1044000c f9fb8e02 1
-Zynq> mw.l 10440010 5d537d06 1
-Zynq> mw.l 10440014 61ff1513 1
+Zynq> mw.l 10440008 c2bda712 1
+Zynq> mw.l 1044000c d62dd734 1
+Zynq> mw.l 10440010 27e10867 1
+Zynq> mw.l 10440014 81ee990d 1
 Zynq> mw.l 10440018 6553f100 1
 Zynq> mw.l 1044001c 4d989ee8 1
 Zynq> mw.l 10440020 4e406f12 1
@@ -50,12 +60,12 @@ Zynq> mw.l 1044004c 00000002 1
 Zynq> mw.l 10440050 00000000 1
 Zynq> mw.l 10440054 00000000 1
 Zynq> mw.l 10440058 00000000 1
-Zynq> mw.l 1044005c d2e65482 1
+Zynq> mw.l 1044005c 56b7ef5d 1
 Zynq> md.l 10440000 18
-10440000: 42345149 00000001 f399bc84 f9fb8e02    IQ4B............
-10440010: 5d537d06 61ff1512 6553f100 4d989ee8    .}S]...a..Se...M
+10440000: 42345149 00000001 c2bda712 d62dd734    IQ4B........4.-.
+10440010: 27e10867 81ee990c 6553f100 4d989ee8    g..'......Se...M
 10440020: 4e406f12 80d3cf5c abf43d00 1278ef3b    .o@N\....=..;.x.
 10440030: 807a9ce4 a7d03644 5122f563 6e3d18a9    ..z.D6..c."Q..=n
 10440040: 7f4a7c15 9e3779b9 00000000 00000002    .|J..y7.........
-10440050: 00000000 00000000 00000000 d2e65482    .............T..
+10440050: 00000000 00000000 00000000 56b7ef5d    ............]..V
 Zynq> 

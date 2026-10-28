@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-missed_autoboot",
- "wall_s": 5.096,
+ "wall_s": 5.097,
  "stop": {
   "kind": "TransportStop",
   "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
@@ -32,7 +32,7 @@
  "source": null,
  "transport_stops": [
   {
-   "t": 1793204503.853,
+   "t": 1793208223.934,
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
    "kind": "TransportStop"
   }
@@ -42,6 +42,7 @@
  "phase_at_stop": "init",
  "go_in_tx": false,
  "loady_in_tx": false,
+ "pl_read_in_tx": false,
  "name": "missed_autoboot",
  "surrogate_args": [
   "--fault=missed-autoboot"

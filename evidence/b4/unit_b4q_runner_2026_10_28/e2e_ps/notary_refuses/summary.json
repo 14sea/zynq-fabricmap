@@ -1,6 +1,6 @@
 {
  "name": "notary_refuses",
- "wall_s": 1.23,
+ "wall_s": 1.584,
  "records": [
   {
    "seq": 1,
@@ -52,13 +52,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 67,
-  "hb": 2,
+  "lines": 68,
+  "hb": 3,
   "nacks": 0,
   "sign_requests": 2,
   "sign_replies": 2,
   "transactions": 2,
-  "kicks": 67,
+  "kicks": 68,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -68,10 +68,10 @@
   "log": 35168,
   "log_overflow": 0,
   "log_records": 2198,
-  "log_sha256": "1698251653939504c0f4b4bb7ee2844137e6c27f0d2eb6ba6f8793a7eb16dd43"
+  "log_sha256": "a2313a7c7c62fdb7c7a8460040d62fb78cca2dd62826db1fef659fdc9c58962e"
  },
  "stats": {
-  "hb": 2,
+  "hb": 3,
   "nack": 0,
   "signreq": 2,
   "signreply": 2,
@@ -84,10 +84,10 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 126,
+ "console_lines": 127,
  "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
  "open_findings": [],
- "platform_kicks": 69,
+ "platform_kicks": 70,
  "tx": {
   "status": 1,
   "reason": "STOP_SIGN: the notary refused the candidate",
@@ -100,6 +100,6 @@
  },
  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate) \u2014 nothing further is signed without a ruling",
  "sign_events": [
-  "EV sign: refused: 61 the bench notary refuses this genome (a configured refusal)"
+  "EV sign: refused: 62 the bench notary refuses this genome (a configured refusal)"
  ]
 }

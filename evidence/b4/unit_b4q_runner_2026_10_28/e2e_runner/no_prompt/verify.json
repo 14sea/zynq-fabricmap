@@ -27,8 +27,22 @@
    "board": {
     "model": "Ebang EBAZ4203 (surrogate)",
     "dram_mib": 512,
-    "prompt_seen": false
-   }
+    "prompt_seen": false,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": null,
+    "role": null,
+    "boardid_ok": false,
+    "role_ok": false
+   },
+   "clock": {
+    "fpga0_ctrl": null,
+    "derived": null,
+    "ok": false
+   },
+   "variant": null
   },
   "stop": {
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",

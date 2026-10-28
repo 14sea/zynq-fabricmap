@@ -2,7 +2,7 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-valid",
- "generated_utc": "2026-10-28T16:18:43Z",
+ "generated_utc": "2026-10-28T17:20:35Z",
  "emulated": true,
  "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
  "source": null,
@@ -360,14 +360,14 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v2",
-  "token": "b1b5486ec71ff650cd3c89c554803c68",
+  "token": "c6da46d3f75cfb62d34c3ad52d588e49",
   "page_words": [
    "42345149",
    "00000001",
-   "b1b5486e",
-   "c71ff650",
-   "cd3c89c5",
-   "54803c68",
+   "c6da46d3",
+   "f75cfb62",
+   "d34c3ad5",
+   "2d588e49",
    "6553f100",
    "07d5555f",
    "4e406f12",
@@ -385,9 +385,10 @@
    "00000000",
    "00000000",
    "00000000",
-   "4173ce35"
+   "61f7cc8b"
   ],
   "page_flags": 2,
+  "time_origin": "console entries' `t`: this host's wall clock (time.time()) at the line's receipt / send \u2014 a host timestamp, never a device time",
   "knobs": {
    "corrupt_replies": 0,
    "drop_replies": 0,
@@ -432,11 +433,11 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "176d4decbc6e301da3bc91a2c2ff214468def991871dd5b892186917e7f92b7d"
+   "log_sha256": "abc596805631048aad5c098d2ed26ecf2dce2163a1b1fad7ca8b09f353c0e31d"
   },
   "ident": {
    "protocol": "b4q-v2",
-   "token": "b1b5486ec71ff650cd3c89c554803c68",
+   "token": "c6da46d3f75cfb62d34c3ad52d588e49",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 131421535,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -472,8 +473,8 @@
      "used": 123344,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "176d4decbc6e301da3bc91a2c2ff214468def991871dd5b892186917e7f92b7d",
-     "pulled_sha256": "176d4decbc6e301da3bc91a2c2ff214468def991871dd5b892186917e7f92b7d",
+     "sha256": "abc596805631048aad5c098d2ed26ecf2dce2163a1b1fad7ca8b09f353c0e31d",
+     "pulled_sha256": "abc596805631048aad5c098d2ed26ecf2dce2163a1b1fad7ca8b09f353c0e31d",
      "digest_equal": true
     }
    ],

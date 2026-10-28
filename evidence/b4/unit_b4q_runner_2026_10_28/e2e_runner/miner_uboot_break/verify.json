@@ -146,10 +146,32 @@
    "board": {
     "model": "Ebang EBAZ4205 (surrogate)",
     "dram_mib": 256,
-    "prompt_seen": true
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "boardid_ok": true,
+    "role_ok": true
+   },
+   "clock": {
+    "fpga0_ctrl": "00200a00",
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "ok": true
    },
    "variant": "42340001",
-   "fclk0_ctrl": "00200a00",
    "image": {
     "transferred_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
     "bytes": 98324,
@@ -158,7 +180,7 @@
      "name": "b4q_app_v2.bin",
      "size": 98324,
      "blocks": 97,
-     "end": 99995
+     "end": 100074
     },
     "total": 98324,
     "device_crc": {
@@ -174,10 +196,10 @@
     "written": [
      "42345149",
      "00000001",
-     "c8f27ce7",
-     "2ecb2712",
-     "897b610d",
-     "e82b9734",
+     "50cfdbc0",
+     "56b5b4c7",
+     "4edcf974",
+     "1049f211",
      "6553f100",
      "4d989ee8",
      "4e406f12",
@@ -195,15 +217,15 @@
      "00000000",
      "00000000",
      "00000000",
-     "6341a3dd"
+     "bcc76a73"
     ],
     "read_back": [
      "42345149",
      "00000001",
-     "c8f27ce7",
-     "2ecb2712",
-     "897b610d",
-     "e82b9734",
+     "50cfdbc0",
+     "56b5b4c7",
+     "4edcf974",
+     "1049f211",
      "6553f100",
      "4d989ee8",
      "4e406f12",
@@ -221,9 +243,16 @@
      "00000000",
      "00000000",
      "00000000",
-     "6341a3dd"
+     "bcc76a73"
     ],
     "equal": true
+   },
+   "addresses": {
+    "context": "0x02000000",
+    "go": "0x02000000",
+    "loady": "0x02000000",
+    "crc_start": "0x02000000",
+    "started_at": "0x02000000"
    }
   },
   "stop": null
@@ -254,7 +283,7 @@
  },
  "console": {
   "findings": [],
-  "board_lines": 113,
+  "board_lines": 114,
   "host_lines": 95,
   "noted": {
    "corrupted": 0,

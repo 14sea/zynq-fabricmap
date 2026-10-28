@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-valid",
- "wall_s": 6.085,
+ "wall_s": 6.184,
  "stop": null,
  "opened": true,
  "phase": "ended",
@@ -95,13 +95,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 212,
-  "hb": 9,
+  "lines": 213,
+  "hb": 10,
   "nacks": 0,
   "sign_requests": 4,
   "sign_replies": 4,
   "transactions": 4,
-  "kicks": 212,
+  "kicks": 213,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -111,10 +111,10 @@
   "log": 123344,
   "log_overflow": 0,
   "log_records": 7709,
-  "log_sha256": "519b3f46dae81985b3ba035f4dd5d44429ee45c46766b0a220890e47ff08d882"
+  "log_sha256": "3b0e34621618003f93e0bc08901b44c4590943bfb905e4cbfbd7787672ba98c6"
  },
  "stats": {
-  "hb": 9,
+  "hb": 10,
   "nack": 0,
   "signreq": 4,
   "signreply": 4,
@@ -127,14 +127,15 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 394,
+ "console_lines": 395,
  "admission": {
   "image": {
    "file": "build/b4q_image/b4q_app_v2.bin",
    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-   "equal": true
+   "equal": true,
+   "bytes": 98324
   },
   "board": {
    "model": "Ebang EBAZ4203 (surrogate)",
@@ -150,18 +151,46 @@
    "model_ok": true,
    "dram_ok": true
   },
+  "identity": {
+   "boardid": "F8B3",
+   "role": "verify",
+   "expected_boardid": "F8B3",
+   "allowed_roles": [
+    "verify",
+    "sacrificial"
+   ],
+   "boardid_ok": true,
+   "role_ok": true,
+   "purpose": "bringup-rehearsal"
+  },
+  "clock": {
+   "fpga0_ctrl_addr": "0xf8000170",
+   "fpga0_ctrl": "00200a00",
+   "pll_ctrl": {
+    "arm": "0001a000",
+    "ddr": "00020000",
+    "io": "0001e000"
+   },
+   "derived": {
+    "srcsel": 0,
+    "pll": "io",
+    "pll_ctrl": "0001e000",
+    "fdiv": 30,
+    "div0": 10,
+    "div1": 2,
+    "pll_reset": false,
+    "pll_bypass": false,
+    "mhz": 50.0
+   },
+   "expected_mhz": 50.0,
+   "expected_ctrl": null,
+   "ok": true
+  },
   "carrier": {
    "variant_addr": "0x43c02034",
    "variant": "42340001",
    "expected": "42340001",
    "equal": true
-  },
-  "fclk0": {
-   "addr": "0xf8000170",
-   "ctrl": "00200a00",
-   "expected": null,
-   "held": false,
-   "equal": null
   },
   "ok": true
  },
@@ -180,7 +209,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.237
+   "seconds": 0.233
   }
  },
  "page_witness": {
@@ -195,7 +224,7 @@
  "transport_stops": [],
  "ident": {
   "protocol": "b4q-v2",
-  "token": "db8a268da909593f3f30d55b2531c2f1",
+  "token": "ac48a42e414885b8ee2ccbf990edb3c3",
   "uboot_epoch": 1700000000,
   "app_image_sha_lo32": 1301847784,
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -239,6 +268,7 @@
  "phase_at_stop": null,
  "go_in_tx": true,
  "loady_in_tx": true,
+ "pl_read_in_tx": true,
  "name": "valid",
  "surrogate_args": [],
  "verify_rc": 0,

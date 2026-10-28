@@ -1,7 +1,7 @@
 [
  {
   "name": "valid",
-  "wall_s": 4.072,
+  "wall_s": 4.276,
   "records": [
    {
     "seq": 1,
@@ -93,13 +93,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 212,
-   "hb": 9,
+   "lines": 213,
+   "hb": 10,
    "nacks": 0,
    "sign_requests": 4,
    "sign_replies": 4,
    "transactions": 4,
-   "kicks": 212,
+   "kicks": 213,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -109,10 +109,10 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "71d303a3a908dba3f59b10672001d13da8f9b445e0fd07e828f08a2a2c3a604d"
+   "log_sha256": "5a25587b861b24de61102061838467fbaf2bae8045bfcd884663e3a7793eb0c1"
   },
   "stats": {
-   "hb": 9,
+   "hb": 10,
    "nack": 0,
    "signreq": 4,
    "signreply": 4,
@@ -125,13 +125,13 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 394,
+  "console_lines": 395,
   "halted": null,
   "open_findings": [],
-  "platform_kicks": 214,
+  "platform_kicks": 215,
   "ident": {
    "protocol": "b4q-v2",
-   "token": "17f4a097181aaa671209aa3d986e3f5c",
+   "token": "627bf55a93ebff8909ad322a44b03d03",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 131421535,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -169,7 +169,7 @@
  },
  {
   "name": "a5",
-  "wall_s": 5.034,
+  "wall_s": 4.678,
   "records": [
    {
     "seq": 1,
@@ -282,13 +282,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 243,
-   "hb": 9,
+   "lines": 244,
+   "hb": 10,
    "nacks": 0,
    "sign_requests": 5,
    "sign_replies": 5,
    "transactions": 5,
-   "kicks": 243,
+   "kicks": 244,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -298,10 +298,10 @@
    "log": 140864,
    "log_overflow": 0,
    "log_records": 8804,
-   "log_sha256": "d135f4f98e8f0c83d75592c18f400be2410380736dbe1ccd20b4689a4fce6618"
+   "log_sha256": "2740c5da07729715a81adf7be6c3a69ebddfcd5bdf326f55a4664bdd24582464"
   },
   "stats": {
-   "hb": 9,
+   "hb": 10,
    "nack": 0,
    "signreq": 5,
    "signreply": 5,
@@ -314,15 +314,15 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 451,
+  "console_lines": 452,
   "halted": null,
   "open_findings": [],
-  "platform_kicks": 245,
+  "platform_kicks": 246,
   "a5": "pass"
  },
  {
   "name": "notary_refuses",
-  "wall_s": 1.23,
+  "wall_s": 1.584,
   "records": [
    {
     "seq": 1,
@@ -374,13 +374,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 67,
-   "hb": 2,
+   "lines": 68,
+   "hb": 3,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 67,
+   "kicks": 68,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -390,10 +390,10 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "1698251653939504c0f4b4bb7ee2844137e6c27f0d2eb6ba6f8793a7eb16dd43"
+   "log_sha256": "a2313a7c7c62fdb7c7a8460040d62fb78cca2dd62826db1fef659fdc9c58962e"
   },
   "stats": {
-   "hb": 2,
+   "hb": 3,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -406,10 +406,10 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 126,
+  "console_lines": 127,
   "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
   "open_findings": [],
-  "platform_kicks": 69,
+  "platform_kicks": 70,
   "tx": {
    "status": 1,
    "reason": "STOP_SIGN: the notary refused the candidate",
@@ -422,12 +422,12 @@
   },
   "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate) \u2014 nothing further is signed without a ruling",
   "sign_events": [
-   "EV sign: refused: 61 the bench notary refuses this genome (a configured refusal)"
+   "EV sign: refused: 62 the bench notary refuses this genome (a configured refusal)"
   ]
  },
  {
   "name": "reply_corrupt",
-  "wall_s": 2.45,
+  "wall_s": 2.519,
   "records": [
    {
     "seq": 1,
@@ -493,7 +493,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "204b175d6ab37c1d759457dca35757102e3126ebdda2ece46ea579d218aaa67f"
+   "log_sha256": "0fb0b0cab88d7358dda64512bc96754263b10d1bd2297f4fead3f4ba2c9597a3"
   },
   "stats": {
    "hb": 8,
@@ -524,7 +524,7 @@
  },
  {
   "name": "reply_dropped_once",
-  "wall_s": 2.594,
+  "wall_s": 2.42,
   "records": [
    {
     "seq": 1,
@@ -590,7 +590,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "01dab966c3261eab82e660273381e5095a52f689fee1446322c955b8820b7d3c"
+   "log_sha256": "b90dcd8247d314314cfce2b9ffeb0075a8eeb2063affa9ee99b7903876c85d59"
   },
   "stats": {
    "hb": 8,
@@ -621,7 +621,7 @@
  },
  {
   "name": "replies_dropped",
-  "wall_s": 1.955,
+  "wall_s": 1.559,
   "records": [
    {
     "seq": 1,
@@ -689,7 +689,7 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "f8813d014f3f785ddf3fef1dd5594ba08ade87aeb71c705f7e219e316646321c"
+   "log_sha256": "9347f9237703fd897c6261a1a62a2e75350d9d27289c6053ec8d476d630c5b05"
   },
   "stats": {
    "hb": 14,
@@ -726,7 +726,7 @@
  },
  {
   "name": "silent_host",
-  "wall_s": 1.396,
+  "wall_s": 1.303,
   "records": [
    {
     "seq": 1,
@@ -771,7 +771,7 @@
    "log": 35104,
    "log_overflow": 0,
    "log_records": 2194,
-   "log_sha256": "e1bc4aeb0e995d1dd1e99b5df698e22e405d7670364e33847c5e66fec65325d2"
+   "log_sha256": "eee363180a6e7c0b13e2fdd1180a2e7d21c1880e1818522a410d54d05b9e743e"
   },
   "stats": {
    "hb": 8,
@@ -795,104 +795,7 @@
  },
  {
   "name": "garbage_command",
-  "wall_s": 2.392,
-  "records": [
-   {
-    "seq": 1,
-    "dir": "tx_001",
-    "kind": "root",
-    "genome_hex": "000000",
-    "o": true,
-    "f": false,
-    "x": "closed",
-    "o_status": "complete",
-    "executing_side_status": 0,
-    "phase": "",
-    "findings": [],
-    "trace_range": [
-     8,
-     93
-    ],
-    "pcap_range": [
-     48,
-     200
-    ]
-   },
-   {
-    "seq": 2,
-    "dir": "tx_002",
-    "kind": "normal",
-    "genome_hex": "000018",
-    "o": true,
-    "f": false,
-    "x": "closed",
-    "o_status": "complete",
-    "executing_side_status": 0,
-    "phase": "",
-    "findings": [],
-    "trace_range": [
-     93,
-     248
-    ],
-    "pcap_range": [
-     200,
-     352
-    ]
-   }
-  ],
-  "chain_findings": [],
-  "accesses": 41186,
-  "end": {
-   "kind": "COMPLETED",
-   "reason": "the host closed the session",
-   "lines": 112,
-   "hb": 5,
-   "nacks": 1,
-   "sign_requests": 2,
-   "sign_replies": 2,
-   "transactions": 2,
-   "kicks": 112,
-   "flushed": 0,
-   "stale_frames": 0,
-   "refused_tx": 0,
-   "watchdog_armed": 1,
-   "opened": 1,
-   "halted": "",
-   "log": 64416,
-   "log_overflow": 0,
-   "log_records": 4026,
-   "log_sha256": "df30db8090a4e4941020454c44fbd94293bb8433fd8ab192e84e7e2a2486ac5b"
-  },
-  "stats": {
-   "hb": 5,
-   "nack": 1,
-   "signreq": 2,
-   "signreply": 2,
-   "corrupted": 0,
-   "dropped": 0,
-   "garbage": 1,
-   "wrong_token": 0,
-   "stale": 0,
-   "stale_board": 0,
-   "refused_halted": 0,
-   "replayed": 0
-  },
-  "console_lines": 210,
-  "halted": null,
-  "open_findings": [],
-  "platform_kicks": 114,
-  "tx": {
-   "status": 0,
-   "reason": "closed",
-   "phase": "",
-   "o": true,
-   "x": "closed",
-   "findings": []
-  }
- },
- {
-  "name": "wrong_token",
-  "wall_s": 2.408,
+  "wall_s": 2.247,
   "records": [
    {
     "seq": 1,
@@ -958,7 +861,104 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "d337cdd3cd5b47eb5939eaa1e8438c8cbf7c7d39222ea90769b8e18a4715bfba"
+   "log_sha256": "ad9d8f1441941c24a0a36c82d2b0ec56744828d46ee17719c295c938b4e1e4ff"
+  },
+  "stats": {
+   "hb": 4,
+   "nack": 1,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 1,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 209,
+  "halted": null,
+  "open_findings": [],
+  "platform_kicks": 113,
+  "tx": {
+   "status": 0,
+   "reason": "closed",
+   "phase": "",
+   "o": true,
+   "x": "closed",
+   "findings": []
+  }
+ },
+ {
+  "name": "wrong_token",
+  "wall_s": 2.386,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     8,
+     93
+    ],
+    "pcap_range": [
+     48,
+     200
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     93,
+     248
+    ],
+    "pcap_range": [
+     200,
+     352
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 41186,
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 111,
+   "hb": 4,
+   "nacks": 1,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 111,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": "",
+   "log": 64416,
+   "log_overflow": 0,
+   "log_records": 4026,
+   "log_sha256": "1475f267242eae8dcff83c9e8b52c501c528a2cb00b42120234554ad92acf87e"
   },
   "stats": {
    "hb": 4,
@@ -992,7 +992,7 @@
  },
  {
   "name": "stale_reply",
-  "wall_s": 2.33,
+  "wall_s": 2.343,
   "records": [
    {
     "seq": 1,
@@ -1058,7 +1058,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "4a77a59f3394e47ccd78280cfceb9053ee8a41dfd66a2985fb887cb18e16d569"
+   "log_sha256": "66269fbe79dd72f3927a8e640df0c4634c234c4721af5c949bd3a8228dc81f51"
   },
   "stats": {
    "hb": 5,
@@ -1089,7 +1089,7 @@
  },
  {
   "name": "duplicate_tx",
-  "wall_s": 2.456,
+  "wall_s": 2.51,
   "records": [
    {
     "seq": 1,
@@ -1155,7 +1155,7 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "3f98a37185def6154b36a90d3350e84b0027c2c63f7ea584fa423c4671420f78"
+   "log_sha256": "1a589080966103fecf8765d7b04aa090ffff47ed994df1375f6c6189aa12a905"
   },
   "stats": {
    "hb": 4,
@@ -1198,7 +1198,7 @@
  },
  {
   "name": "after_stop_tx",
-  "wall_s": 1.263,
+  "wall_s": 1.242,
   "records": [
    {
     "seq": 1,
@@ -1250,13 +1250,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 69,
-   "hb": 3,
+   "lines": 68,
+   "hb": 2,
    "nacks": 1,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 69,
+   "kicks": 68,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 1,
@@ -1266,10 +1266,10 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "6c81e28db960fa275c53b6735327a188f713e967b62267af895785a717e9422b"
+   "log_sha256": "dce9fb10457666967941f9990058edb06b01c50443882e535aac0318e766e13d"
   },
   "stats": {
-   "hb": 3,
+   "hb": 2,
    "nack": 1,
    "signreq": 2,
    "signreply": 2,
@@ -1282,10 +1282,10 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 129,
+  "console_lines": 128,
   "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
   "open_findings": [],
-  "platform_kicks": 71,
+  "platform_kicks": 70,
   "failed": {
    "status": 1,
    "reason": "STOP_SIGN: the notary refused the candidate",
@@ -1306,7 +1306,7 @@
  },
  {
   "name": "malformed_tx",
-  "wall_s": 2.542,
+  "wall_s": 2.506,
   "records": [
    {
     "seq": 1,
@@ -1356,13 +1356,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 116,
-   "hb": 4,
+   "lines": 117,
+   "hb": 5,
    "nacks": 6,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 116,
+   "kicks": 117,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -1372,10 +1372,10 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "d1431bdcf935a3ceac3eb12c4077ff2023467aec4ddffd0d62faa8ee40855453"
+   "log_sha256": "97e39775bc7d08a84d4ab3bedc5e71a2a893dbbb28b3f8867d5c0cab7d22e5e9"
   },
   "stats": {
-   "hb": 4,
+   "hb": 5,
    "nack": 6,
    "signreq": 2,
    "signreply": 2,
@@ -1388,10 +1388,10 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 219,
+  "console_lines": 220,
   "halted": null,
   "open_findings": [],
-  "platform_kicks": 118,
+  "platform_kicks": 119,
   "malformed": [
    {
     "cmd": "TX mystery 00000000 0",
@@ -1453,7 +1453,7 @@
  },
  {
   "name": "host_seq_gap",
-  "wall_s": 2.179,
+  "wall_s": 2.566,
   "records": [
    {
     "seq": 1,
@@ -1519,7 +1519,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "6a115b7857db11f0beb8ed5b692855e3481244ba599a02561e290ef5c0dced6b"
+   "log_sha256": "90ea752cb9725d8b279014c72c4455da67295c8a963ba20788fb3b3a6d4d0dea"
   },
   "stats": {
    "hb": 4,
@@ -1551,7 +1551,7 @@
  },
  {
   "name": "sequence_cut",
-  "wall_s": 1.148,
+  "wall_s": 1.676,
   "records": [
    {
     "seq": 1,
@@ -1582,13 +1582,13 @@
   "end": {
    "kind": "PROTOCOL",
    "reason": "this side's line sequence is exhausted",
-   "lines": 16,
-   "hb": 0,
+   "lines": 17,
+   "hb": 1,
    "nacks": 0,
    "sign_requests": 1,
    "sign_replies": 1,
    "transactions": 1,
-   "kicks": 16,
+   "kicks": 17,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -1598,10 +1598,10 @@
    "log": 24464,
    "log_overflow": 0,
    "log_records": 1529,
-   "log_sha256": "8be90e320fd092c22cf93ec54ae49a0429c0c34bd08fda1699a22ffbe525062a"
+   "log_sha256": "eb832b462ac54110e58035fa286adb8bc456677f6ed657d88c629622f074b0cc"
   },
   "stats": {
-   "hb": 0,
+   "hb": 1,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -1614,10 +1614,10 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 29,
+  "console_lines": 30,
   "halted": "transaction 1: no observation sealed (the session ended: PROTOCOL: this side's line sequence is exhausted)",
   "open_findings": [],
-  "platform_kicks": 17,
+  "platform_kicks": 18,
   "tx": {
    "status": 6,
    "reason": "the session ended: PROTOCOL: this side's line sequence is exhausted",
@@ -1658,7 +1658,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "582a2fc976e9cb7438528a43f5af332f9fede51f79dd518fa5bb49b77ecedb51"
+   "log_sha256": "1d6d3251c99c1f7e53d0e78cf325456bf176c34b77c0cf462181307c26131d96"
   },
   "stats": {
    "hb": 0,
@@ -1690,7 +1690,7 @@
  },
  {
   "name": "watchdog_fail",
-  "wall_s": 0.011,
+  "wall_s": 0.007,
   "records": [],
   "chain_findings": [
    "session_open.startup_readback_sha256: bad value ''",
@@ -1716,7 +1716,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "60bf8a16e0e2a9c7bd84d47b01ee0207afc731b3d3291125334f862f333e4cbf"
+   "log_sha256": "c91646aa3bcd9022b3b386a15bb59752b1dd87572be6b6334d6109fe31b72f11"
   },
   "stats": {
    "hb": 0,
@@ -1748,7 +1748,7 @@
  },
  {
   "name": "pre_event_corrupt",
-  "wall_s": 1.929,
+  "wall_s": 1.993,
   "records": [
    {
     "seq": 1,
@@ -1816,7 +1816,7 @@
    "log": 46208,
    "log_overflow": 0,
    "log_records": 2888,
-   "log_sha256": "48e3dd2d8dd6828c7683a84a0aff0121d811011a18b0185214419fe7a512dd6b"
+   "log_sha256": "e137fa72a95504d24797a53e67b7f0031ff6ef7b0cc2682abb3070cefc4c42e5"
   },
   "stats": {
    "hb": 2,
@@ -1850,7 +1850,7 @@
  },
  {
   "name": "interrupt",
-  "wall_s": 1.758,
+  "wall_s": 1.789,
   "records": [
    {
     "seq": 1,
@@ -1901,7 +1901,7 @@
   "accesses": 22882,
   "end": null,
   "stats": {
-   "hb": 3,
+   "hb": 2,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -1914,7 +1914,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 115,
+  "console_lines": 114,
   "halted": "transaction 2: no observation sealed (interrupted: the transport closed mid-transaction)",
   "open_findings": [],
   "platform_kicks": null,

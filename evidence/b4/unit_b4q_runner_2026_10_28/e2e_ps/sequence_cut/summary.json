@@ -1,6 +1,6 @@
 {
  "name": "sequence_cut",
- "wall_s": 1.148,
+ "wall_s": 1.676,
  "records": [
   {
    "seq": 1,
@@ -31,13 +31,13 @@
  "end": {
   "kind": "PROTOCOL",
   "reason": "this side's line sequence is exhausted",
-  "lines": 16,
-  "hb": 0,
+  "lines": 17,
+  "hb": 1,
   "nacks": 0,
   "sign_requests": 1,
   "sign_replies": 1,
   "transactions": 1,
-  "kicks": 16,
+  "kicks": 17,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -47,10 +47,10 @@
   "log": 24464,
   "log_overflow": 0,
   "log_records": 1529,
-  "log_sha256": "8be90e320fd092c22cf93ec54ae49a0429c0c34bd08fda1699a22ffbe525062a"
+  "log_sha256": "eb832b462ac54110e58035fa286adb8bc456677f6ed657d88c629622f074b0cc"
  },
  "stats": {
-  "hb": 0,
+  "hb": 1,
   "nack": 0,
   "signreq": 1,
   "signreply": 1,
@@ -63,10 +63,10 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 29,
+ "console_lines": 30,
  "halted": "transaction 1: no observation sealed (the session ended: PROTOCOL: this side's line sequence is exhausted)",
  "open_findings": [],
- "platform_kicks": 17,
+ "platform_kicks": 18,
  "tx": {
   "status": 6,
   "reason": "the session ended: PROTOCOL: this side's line sequence is exhausted",

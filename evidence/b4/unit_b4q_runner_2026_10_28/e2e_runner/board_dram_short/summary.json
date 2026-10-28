@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-board_dram_short",
- "wall_s": 1.07,
+ "wall_s": 1.066,
  "stop": {
   "kind": "AdmissionStop",
   "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)"
@@ -32,7 +32,8 @@
    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-   "equal": true
+   "equal": true,
+   "bytes": 98324
   },
   "board": {
    "model": "Ebang EBAZ4205 (surrogate)",
@@ -48,8 +49,9 @@
    "model_ok": true,
    "dram_ok": false
   },
+  "identity": null,
+  "clock": null,
   "carrier": null,
-  "fclk0": null,
   "ok": false
  },
  "load_witness": null,
@@ -57,7 +59,7 @@
  "source": null,
  "transport_stops": [
   {
-   "t": 1793204411.466,
+   "t": 1793208124.693,
    "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",
    "kind": "AdmissionStop"
   }
@@ -67,6 +69,7 @@
  "phase_at_stop": "prompt",
  "go_in_tx": false,
  "loady_in_tx": false,
+ "pl_read_in_tx": false,
  "name": "board_dram_short",
  "surrogate_args": [
   "--board=4205"

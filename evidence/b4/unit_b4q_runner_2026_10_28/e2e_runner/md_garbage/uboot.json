@@ -1,8 +1,8 @@
 {
  "schema": "b4q_runner_uboot",
  "schema_version": 2,
- "port": "/tmp/b4q-runner-e2e-916123-md_garbage",
- "port_real": "/dev/pts/12",
+ "port": "/tmp/b4q-runner-e2e-930354-md_garbage",
+ "port_real": "/dev/pts/14",
  "kind": "console-pty-surrogate",
  "phase": "stopped",
  "context": {
@@ -16,7 +16,14 @@
   "variant_word": 1110704129,
   "fclk0_ctrl_expected": null,
   "load_addr": 33554432,
-  "role": "bringup-rehearsal",
+  "purpose": "bringup-rehearsal",
+  "expected_boardid": "F8B3",
+  "allowed_roles": [
+   "verify",
+   "sacrificial"
+  ],
+  "fclk0_mhz": 50.0,
+  "ps_clk_mhz": 33.333333,
   "fixture": {
    "profile": "pty-surrogate",
    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
@@ -27,8 +34,8 @@
  "load_addr": 33554432,
  "stops": [
   {
-   "t": 1793204495.031,
-   "why": "md.l 0x43c02034 1: 0 words parsed, not 1",
+   "t": 1793208215.093,
+   "why": "md.l 0xf8000170 1: 0 words parsed, not 1",
    "kind": "TransportStop"
   }
  ],
@@ -39,7 +46,8 @@
    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
-   "equal": true
+   "equal": true,
+   "bytes": 98324
   },
   "board": {
    "model": "Ebang EBAZ4203 (surrogate)",
@@ -55,8 +63,20 @@
    "model_ok": true,
    "dram_ok": true
   },
+  "identity": {
+   "boardid": "F8B3",
+   "role": "verify",
+   "expected_boardid": "F8B3",
+   "allowed_roles": [
+    "verify",
+    "sacrificial"
+   ],
+   "boardid_ok": true,
+   "role_ok": true,
+   "purpose": "bringup-rehearsal"
+  },
+  "clock": null,
   "carrier": null,
-  "fclk0": null,
   "ok": false
  },
  "load_witness": null,
@@ -65,7 +85,7 @@
  "uboot_steps": [
   {
    "what": "prompt",
-   "t": 1793204494.523,
+   "t": 1793208214.58,
    "rx_at": 0,
    "tx_at": 0,
    "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
@@ -77,23 +97,48 @@
    "tx_end": 2
   },
   {
-   "what": "md.l",
-   "t": 1793204495.029,
+   "what": "printenv",
+   "t": 1793208215.088,
    "rx_at": 345,
    "tx_at": 2,
-   "sent": "md.l 43c02034 1",
-   "reply": "md.l: garbage\r\n",
+   "sent": "printenv boardid",
+   "reply": "boardid=F8B3\r\n",
    "ok": true,
    "rx_end": 383,
-   "tx_end": 18,
+   "tx_end": 19,
+   "value": "F8B3"
+  },
+  {
+   "what": "printenv",
+   "t": 1793208215.09,
+   "rx_at": 383,
+   "tx_at": 19,
+   "sent": "printenv role",
+   "reply": "role=verify\r\n",
+   "ok": true,
+   "rx_end": 417,
+   "tx_end": 33,
+   "value": "verify"
+  },
+  {
+   "what": "md.l",
+   "t": 1793208215.092,
+   "rx_at": 417,
+   "tx_at": 33,
+   "sent": "md.l f8000170 1",
+   "reply": "md.l: garbage\r\n",
+   "ok": true,
+   "rx_end": 455,
+   "tx_end": 49,
    "words": []
   }
  ],
  "raw": {
-  "console_bin_sha256": "1277bb2627186a9f20218dba8bdfab98079cb4de1dc3821749e7081d365601b8",
-  "console_bin_bytes": 383,
-  "console_tx_bin_sha256": "81aace0bd71d42a3416d939e51337f55696aeca03903aef9eb829f1780cc3e00",
-  "console_tx_bin_bytes": 18
+  "console_bin_sha256": "c362421631fa9dd20568ec827ebb10b3867781078700a24b802a5d542be2eae3",
+  "console_bin_bytes": 455,
+  "console_tx_bin_sha256": "d802d105914f7d665108bda59de92dfcc1b9da2b2a7320d5a1c77d102a7c61cf",
+  "console_tx_bin_bytes": 49,
+  "incomplete_writes": []
  },
  "break_s": 20.0,
  "phase_at_stop": "prompt"

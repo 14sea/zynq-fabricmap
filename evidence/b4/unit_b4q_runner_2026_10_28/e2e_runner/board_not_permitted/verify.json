@@ -27,8 +27,22 @@
    "board": {
     "model": "Ebang EBAZ4205 (surrogate)",
     "dram_mib": 256,
-    "prompt_seen": true
-   }
+    "prompt_seen": true,
+    "model_ok": false,
+    "dram_ok": false
+   },
+   "identity": {
+    "boardid": null,
+    "role": null,
+    "boardid_ok": false,
+    "role_ok": false
+   },
+   "clock": {
+    "fpga0_ctrl": null,
+    "derived": null,
+    "ok": false
+   },
+   "variant": null
   },
   "stop": {
    "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)",
