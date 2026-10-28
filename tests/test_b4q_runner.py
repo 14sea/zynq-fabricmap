@@ -1032,3 +1032,24 @@ class StateMachineRound3(unittest.TestCase):
         _runner_edit(d, lambda u, mf: None)
         rep = self._verify(d)
         self.assertFalse(rep["agree"]); self.assertTrue(any("command echoes" in x for x in rep["session"]), rep["session"])
+
+    def test_identity_and_clock_replies_must_precede_the_pl_command_echo(self):
+        # Command order alone is insufficient: prerequisites cannot arrive while the PL command is already being handled.
+        for pattern in (rb"^f8000108: [^\n]*\n", rb"^role=[^\n]*\n"):
+            with self.subTest(pattern=pattern):
+                d = self._copy()
+                rx = (d / "raw/console.bin").read_bytes()
+                reply = re.search(pattern, rx, re.M)
+                self.assertIsNotNone(reply)
+                line = reply.group(0)
+                rx = rx[:reply.start()] + rx[reply.end():]
+                pl_echo = re.search(rb"md\.l 43c02034 1\r?\n", rx)
+                self.assertIsNotNone(pl_echo)
+                rx = rx[:pl_echo.end()] + line + rx[pl_echo.end():]
+                (d / "raw/console.bin").write_bytes(rx)
+                _runner_edit(d, lambda u, mf: None)
+                rep = self._verify(d)
+                self.assertFalse(rep["agree"], rep["session"])
+                self.assertTrue(any("state: `go` was issued although" in x for x in rep["session"]), rep["session"])
+        rep = self._verify(self._copy())
+        self.assertTrue(rep["clean"], rep["session"])

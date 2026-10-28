@@ -57,12 +57,13 @@ fclk0_from_words = zc.fclk0_from_words                                   # the a
 
 
 def first_pl_reply_offset(rx: bytes) -> int | None:
-    """The offset in the received stream of the first md.l line of the carrier window (0x43C0xxxx): the first PL access's reply. Every
-    identity / clock input of the admission must lie BEFORE it."""
-    for off, a, words in md_dumps(rx):
-        if bk.AXI_BASE <= a < bk.AXI_BASE + 0x10000:
-            return off
-    return None
+    """The earliest receive-side boundary of a PL access: its command echo or data reply. Admission inputs must precede the
+    command being handled, not merely its eventual data reply. The existing helper name is retained for compatibility."""
+    offsets = [off for off, a, _ in md_dumps(rx) if bk.AXI_BASE <= a < bk.AXI_BASE + 0x10000]
+    echo = PL_READ_RE.search(rx)
+    if echo is not None:
+        offsets.append(echo.start())
+    return min(offsets) if offsets else None
 PROMPT_RE = re.compile(rb"(?:zynq-uboot|Zynq)> ")
 MODEL_RE = re.compile(rb"^Model: (.+?)\r?$", re.M)
 DRAM_RE = re.compile(rb"^DRAM: +(?:ECC [a-z]+ )?(\d+) MiB", re.M)
@@ -267,7 +268,7 @@ def verify_runner(d: Path, manifest: dict, console: list | None, no_session: boo
             F.append("admission.board: the recorded verdicts are not what the stream and the context give")
     # ---- the board's own identity and role (printenv in the streams), held to the context
     pl_off = first_pl_reply_offset(rx)
-    prefix_end = pl_off if pl_off is not None else (go_rx_off if go_rx_off is not None else len(rx))   # the admission's inputs must come from before the first PL reply
+    prefix_end = pl_off if pl_off is not None else (go_rx_off if go_rx_off is not None else len(rx))   # admission inputs precede the first PL command echo or reply
     env = {}
     for m in ENV_RE.finditer(rx[:prefix_end]):
         env[m.group(1).decode()] = m.group(2).decode("utf-8", "replace").strip()
