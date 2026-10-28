@@ -354,18 +354,19 @@ class ConsoleSession(ss.Session):
         the application answers RINGINFO / PULL after its END, export-only), hold the bytes to the board's digest, re-derive."""
         if not self.ps:
             return r
+        e = r.get("end") if isinstance(r.get("end"), dict) else None
+        if e is not None and e.get("kind") == "PROTOCOL" and "sequence is exhausted" in (e.get("reason") or ""):
+            # the terminal END: nothing is framed after it (the emitter's last usable sequence), so the log beyond the last pull is unobtainable —
+            # named FIRST, before any question of the transport (the program exits right after it: whether it has already is a race, not a fact)
+            self.tail_unobtainable = {"why": "the terminal END (the executing side's sequence is exhausted): no export epilogue exists after it", "end_log": e.get("log"), "pulled": len(self.log_bytes)}
+            return r
         if r.get("status") == 5 or not self._transport_alive():
             return r                                                           # the transport is cut: nothing more can be pulled; the records are built from what was pulled
         pos = r.get("log")
         if pos is None and isinstance(r.get("ident"), dict):
             pos = r["ident"].get("log")
-        if pos is None and isinstance(r.get("end"), dict):
-            pos = r["end"].get("log")
-            e = r["end"]
-            if e.get("kind") == "PROTOCOL" and "sequence is exhausted" in (e.get("reason") or ""):
-                # the terminal END: nothing is framed after it (the emitter's last usable sequence), so the log beyond the last pull is unobtainable — named, never asked for
-                self.tail_unobtainable = {"why": "the terminal END (the executing side's sequence is exhausted): no export epilogue exists after it", "end_log": pos, "pulled": len(self.log_bytes)}
-                return r
+        if pos is None and e is not None:
+            pos = e.get("log")
         try:
             info = self.pull_log(upto=pos)
         except ss.SessionRefusal as e:
