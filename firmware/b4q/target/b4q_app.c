@@ -16,7 +16,8 @@ static struct {
     char token[B4Q_WIRE_TOKEN_HEX + 1];
     b4q_page page;
     uint32_t seq;                    /* this side's line sequence */
-    uint32_t last_host_seq;
+    uint32_t last_host_seq;          /* the last host sequence accepted; valid when have_host_seq */
+    int have_host_seq;
     const char *sign_why;            /* why the last b4q_sign returned -1 (reported on the EV line) */
 } S;
 
@@ -24,6 +25,17 @@ static char g_out[12288];            /* one outbound framed line */
 static char g_in[8192];              /* one inbound line */
 static char g_plain[6144];           /* one decoded payload */
 static char g_json[8192];            /* one result */
+
+/* ---------------------------------------------------------------- the receive budget (R1) ----- */
+typedef struct { uint32_t left, spent; } b4q_budget;
+
+/* one readiness poll charged to the budget; -1 when the budget is spent, else the console's answer */
+static int poll_rx(b4q_budget *b)
+{
+    if (b->left == 0) return -1;
+    b->left--; b->spent++;
+    return b4q_con_rx_ready();
+}
 
 /* ---------------------------------------------------------------- emitting ----- */
 static void emit_raw(const char *type, const uint8_t *plain, size_t n)
@@ -43,24 +55,27 @@ static void emit_text(const char *type, const char *text) { emit_raw(type, (cons
 static void emit_end(b4q_end_kind kind, const char *reason)
 {
     static const char *const NAME[] = {"NONE", "COMPLETED", "STOPPED", "PROTOCOL", "ABORT"};
-    char buf[512];
+    char buf[640];
     if (S.sum.end == B4Q_END_NONE) { S.sum.end = kind; S.sum.reason = reason; }   /* the first cause is the one recorded */
     snprintf(buf, sizeof buf, "{\"kind\": \"%s\", \"reason\": \"%s\", \"lines\": %lu, \"hb\": %lu, \"nacks\": %lu, \"sign_requests\": %lu, \"sign_replies\": %lu, "
-             "\"transactions\": %lu, \"kicks\": %lu, \"watchdog_armed\": %d, \"opened\": %d}",
+             "\"transactions\": %lu, \"kicks\": %lu, \"flushed\": %lu, \"stale_frames\": %lu, \"refused_tx\": %lu, \"watchdog_armed\": %d, \"opened\": %d, \"halted\": \"%s\"}",
              NAME[S.sum.end], S.sum.reason ? S.sum.reason : "", (unsigned long)S.sum.lines, (unsigned long)S.sum.hb, (unsigned long)S.sum.nacks,
              (unsigned long)S.sum.sign_requests, (unsigned long)S.sum.sign_replies, (unsigned long)S.sum.transactions, (unsigned long)S.sum.kicks_requested,
-             S.sum.watchdog_armed, S.sum.opened);
+             (unsigned long)S.sum.flushed, (unsigned long)S.sum.stale_frames, (unsigned long)S.sum.refused_tx, S.sum.watchdog_armed, S.sum.opened, S.sum.halted ? S.sum.halted : "");
     emit_text("END", buf);
 }
 
-/* ---------------------------------------------------------------- receiving (bounded) ----- */
-/* one line into g_in within `polls` console polls, a heartbeat every B4Q_APP_HB_EVERY; 1 a line, 0 the bound ran out, -1 a line too long (discarded) */
-static int read_line(uint32_t polls)
+/* ---------------------------------------------------------------- receiving (one budget per wait) ----- */
+/* one line into g_in: 1 a line; 0 the budget is spent (whatever was read is dropped); -1 an oversize line discarded (the budget
+ * charged for every byte); a heartbeat every B4Q_APP_HB_EVERY polls of the wait */
+static int read_line(b4q_budget *b)
 {
     size_t n = 0;
-    uint32_t i, since_hb = 0;
-    for (i = 0; i < polls; i++) {
-        if (!b4q_con_rx_ready()) {
+    uint32_t since_hb = 0;
+    for (;;) {
+        int ready = poll_rx(b);
+        if (ready < 0) return 0;
+        if (!ready) {
             if (++since_hb >= B4Q_APP_HB_EVERY) { since_hb = 0; S.sum.hb++; emit_text("HB", ""); }
             continue;
         }
@@ -70,20 +85,26 @@ static int read_line(uint32_t polls)
                 if (n == 0) continue;                    /* an empty line: nothing */
                 g_in[n] = 0; return 1;
             }
-            if (n + 1 >= sizeof g_in) { n = 0; while (b4q_con_rx_ready() && b4q_con_getc() != '\n') { } return -1; }
+            if (n + 1 >= sizeof g_in) {                  /* oversize: discard to the end of the line, every byte charged */
+                for (;;) {
+                    ready = poll_rx(b);
+                    if (ready < 0) return 0;
+                    if (ready && b4q_con_getc() == '\n') break;
+                }
+                return -1;
+            }
             g_in[n++] = c;
         }
     }
-    return 0;
 }
 
-/* the next well-formed host frame within `polls`; 1 with the frame and its payload decoded into g_plain; 0 the bound ran out;
- * -1 the session must end PROTOCOL (too many malformed lines) */
-static int recv_frame(uint32_t polls, b4q_wire_frame_t *f)
+/* the next well-formed, FRESH host frame within the wait's budget; 1 with the frame and its payload decoded into g_plain; 0 the
+ * budget is spent; -1 the session must end PROTOCOL (too many malformed lines in one wait) */
+static int recv_frame(b4q_budget *b, b4q_wire_frame_t *f)
 {
     uint32_t nacks = 0;
     for (;;) {
-        int r = read_line(polls);
+        int r = read_line(b);
         if (r == 0) return 0;
         if (r < 0) { emit_text("NACK", "line too long"); S.sum.nacks++; if (++nacks > B4Q_APP_MAX_NACKS) return -1; continue; }
         r = b4q_wire_parse(g_in, S.token, f);
@@ -92,56 +113,78 @@ static int recv_frame(uint32_t polls, b4q_wire_frame_t *f)
             if (++nacks > B4Q_APP_MAX_NACKS) return -1;
             continue;
         }
+        if (S.have_host_seq && f->seq <= S.last_host_seq) {     /* R2: a duplicate or decreasing host sequence has no effect */
+            emit_text("NACK", "stale sequence"); S.sum.nacks++; S.sum.stale_frames++;
+            if (++nacks > B4Q_APP_MAX_NACKS) return -1;
+            continue;
+        }
         if (b4q_wire_payload(f, g_plain, sizeof g_plain) == (size_t)-1) {
             emit_text("NACK", "bad payload"); S.sum.nacks++;
             if (++nacks > B4Q_APP_MAX_NACKS) return -1;
             continue;
         }
-        S.last_host_seq = f->seq;
+        S.last_host_seq = f->seq; S.have_host_seq = 1;
         return 1;
     }
 }
 
 /* ---------------------------------------------------------------- the HAL's notary and events ----- */
+/* "OK <req> <24 words>" / "REFUSED <req> <why>" parsed exactly (R5): 1 OK with the words, 2 REFUSED, 0 another request's reply
+ * (ignored), -1 malformed (NACKed) */
+static int parse_signreply(const char *s, uint32_t req_seq, uint32_t words[24])
+{
+    const char *p;
+    unsigned long long v;
+    int i;
+    if (strncmp(s, "OK ", 3) == 0) p = s + 3;
+    else if (strncmp(s, "REFUSED ", 8) == 0) p = s + 8;
+    else return -1;
+    if (b4q_cmd_u32(&p, 10, 0xFFFFFFFFull, &v) != 0) return -1;
+    if ((uint32_t)v != req_seq) return 0;
+    if (s[0] == 'R') return 2;                           /* the refusal's reason is free text */
+    for (i = 0; i < 24; i++) {
+        if (*p != ' ') return -1;
+        while (*p == ' ') p++;
+        if (b4q_cmd_u32(&p, 16, 0xFFFFFFFFull, &v) != 0) return -1;
+        words[i] = (uint32_t)v;
+    }
+    while (*p == ' ') p++;
+    return *p == 0 ? 1 : -1;                             /* exactly 24 words, nothing after */
+}
+
 int b4q_sign(const char *genome_hex, const char *nonce_hex, uint32_t words[24])
 {
     char req[128];
     uint32_t req_seq = S.seq;
     int attempt;
-    snprintf(req, sizeof req, "{\"genome\": \"%s\", \"nonce\": \"%s\", \"req\": %lu}", genome_hex, nonce_hex, (unsigned long)req_seq);
     S.sign_why = NULL;
+    if (S.sum.halted) {                                  /* R3: a halted session requests no signature */
+        snprintf(g_json, sizeof g_json, "EV sign: refused by this side: the session is halted (%s)", S.sum.halted);
+        emit_text("EV", g_json);
+        return -1;
+    }
+    snprintf(req, sizeof req, "{\"genome\": \"%s\", \"nonce\": \"%s\", \"req\": %lu}", genome_hex, nonce_hex, (unsigned long)req_seq);
     for (attempt = 0; attempt < B4Q_APP_SIGN_ATTEMPTS; attempt++) {
         b4q_wire_frame_t f;
-        uint32_t polls = B4Q_APP_REPLY_POLLS;
-        b4q_con_rx_flush();                              /* whatever waits is stale by construction (B1's rec-v3 rule) */
+        b4q_budget b = {B4Q_APP_REPLY_POLLS, 0};         /* one budget for the whole attempt: every poll, every line, every byte */
+        S.sum.flushed += (uint32_t)b4q_con_rx_flush();   /* whatever waits is stale by construction (B1's rec-v3 rule); bounded by the primitive */
         emit_text("SIGNREQ", req); S.sum.sign_requests++;
         for (;;) {
-            int r = recv_frame(polls, &f);
-            unsigned long got_req = 0;
-            if (r == 0) { S.sign_why = "no SIGNREPLY within the bound"; break; }
+            int r = recv_frame(&b, &f);
+            if (r == 0) { S.sign_why = "no SIGNREPLY within the attempt's budget"; break; }
             if (r < 0) { S.sign_why = "the console produced only malformed lines"; emit_text("EV", "EV sign: the console produced only malformed lines"); return -1; }
-            if (strcmp(f.type, "SIGNREPLY") != 0) { continue; }      /* another frame during the wait: not this reply */
-            if (strncmp(g_plain, "OK ", 3) == 0 && sscanf(g_plain + 3, "%lu", &got_req) == 1 && got_req == req_seq) {
-                const char *p = strchr(g_plain + 3, ' ');
-                int i;
-                if (!p) { S.sign_why = "a SIGNREPLY without words"; break; }
-                for (i = 0; i < 24; i++) {
-                    unsigned long w; int n = 0;
-                    if (sscanf(p, " %lx%n", &w, &n) != 1) { S.sign_why = "a SIGNREPLY with too few words"; break; }
-                    words[i] = (uint32_t)w; p += n;
-                }
-                if (i < 24) break;
-                S.sum.sign_replies++;
-                return 0;
-            }
-            if (strncmp(g_plain, "REFUSED ", 8) == 0 && sscanf(g_plain + 8, "%lu", &got_req) == 1 && got_req == req_seq) {
+            if (strcmp(f.type, "SIGNREPLY") != 0) continue;       /* another frame during the wait: charged, not this reply */
+            r = parse_signreply(g_plain, req_seq, words);
+            if (r == 1) { S.sum.sign_replies++; return 0; }
+            if (r == 2) {
                 S.sum.sign_replies++;
                 S.sign_why = "the notary refused";
                 snprintf(g_json, sizeof g_json, "EV sign: refused: %s", g_plain + 8);
                 emit_text("EV", g_json);
                 return -1;                                /* a refusal is final: no re-request */
             }
-            /* a reply to another request (stale) or an unparsable one: keep waiting on the same bound */
+            if (r < 0) { emit_text("NACK", "bad SIGNREPLY"); S.sum.nacks++; }
+            /* r == 0: a reply to another request (stale): charged, ignored, the wait continues on the same budget */
         }
     }
     snprintf(g_json, sizeof g_json, "EV sign: no valid SIGNREPLY after %d attempts: %s", B4Q_APP_SIGN_ATTEMPTS, S.sign_why ? S.sign_why : "");
@@ -176,9 +219,32 @@ static void ident(const b4q_open_result *o)
     emit_text("IDENT", g_json);
 }
 
+static b4q_tx_command g_cmd;
+
+/* the wait for the next command on ONE budget: a frame that is not a command (another type, a malformed TX, a TX on a halted
+ * session) is NACKed by name and the wait continues on the same budget; at most B4Q_APP_MAX_NACKS such refusals per wait.
+ * 1 a TX parsed into g_cmd on a session that may run it; 2 QUIT; 0 the budget is spent; -1 the session must end PROTOCOL */
+static int wait_command(b4q_budget *b, b4q_wire_frame_t *f)
+{
+    uint32_t refusals = 0;
+    for (;;) {
+        int rc = recv_frame(b, f);
+        if (rc <= 0) return rc;
+        if (strcmp(f->type, "QUIT") == 0) return 2;
+        if (strcmp(f->type, "TX") == 0) {
+            if (S.sum.halted) {                          /* R3: nothing further is run or signed after a transaction that did not close */
+                snprintf(g_json, sizeof g_json, "halted: %s: nothing further is signed without a ruling", S.sum.halted);
+                emit_text("NACK", g_json); S.sum.nacks++; S.sum.refused_tx++;
+            } else if (b4q_parse_tx(g_plain, &g_cmd) != 0) {
+                emit_text("NACK", "malformed TX"); S.sum.nacks++;
+            } else return 1;
+        } else { emit_text("NACK", "unknown command"); S.sum.nacks++; }
+        if (++refusals > B4Q_APP_MAX_NACKS) return -1;
+    }
+}
+
 void b4q_app_run(void)
 {
-    static b4q_tx_command c;
     static b4q_tx_result r;
     b4q_open_result o;
     memset(&S, 0, sizeof S);
@@ -197,19 +263,19 @@ void b4q_app_run(void)
     if (o.status != 0) { emit_end(B4Q_END_STOPPED, "the opening was refused: nothing is signed"); return; }
     for (;;) {
         b4q_wire_frame_t f;
-        int rc = recv_frame(B4Q_APP_IDLE_POLLS, &f);
+        b4q_budget b = {B4Q_APP_IDLE_POLLS, 0};          /* one budget per wait for the next command: renewed only after a transaction ran */
+        int rc;
+        if (S.seq >= B4Q_APP_SEQ_LIMIT) { emit_end(B4Q_END_PROTOCOL, "this side's line sequence is exhausted"); return; }
+        rc = wait_command(&b, &f);
         if (rc == 0) { emit_end(B4Q_END_STOPPED, "no host command within the idle bound"); return; }
-        if (rc < 0) { emit_end(B4Q_END_PROTOCOL, "the console produced only malformed lines"); return; }
-        if (strcmp(f.type, "QUIT") == 0) { emit_end(B4Q_END_COMPLETED, "the host closed the session"); return; }
-        if (strcmp(f.type, "TX") == 0) {
-            if (b4q_parse_tx(g_plain, &c) != 0) { emit_text("NACK", "malformed TX"); S.sum.nacks++; continue; }
-            S.sum.transactions++;
-            b4q_transaction(c.genome, c.steps, c.n_steps, c.kind, c.task.n ? &c.task : NULL, &r);
-            if (b4q_tx_json(&r, g_json, sizeof g_json) == 0) { emit_end(B4Q_END_PROTOCOL, "a RESULT did not fit its line"); return; }
-            emit_text("RESULT", g_json);
-            continue;
-        }
-        emit_text("NACK", "unknown command"); S.sum.nacks++;
+        if (rc < 0) { emit_end(B4Q_END_PROTOCOL, "the console produced only malformed or unknown lines"); return; }
+        if (rc == 2) { emit_end(B4Q_END_COMPLETED, "the host closed the session"); return; }
+        /* rc == 1: a TX that parsed, on a session that may run it */
+        S.sum.transactions++;
+        b4q_transaction(g_cmd.genome, g_cmd.steps, g_cmd.n_steps, g_cmd.kind, g_cmd.task.n ? &g_cmd.task : NULL, &r);
+        if (r.status != 0) S.sum.halted = r.reason ? r.reason : "the transaction did not close";
+        if (b4q_tx_json(&r, g_json, sizeof g_json) == 0) { emit_end(B4Q_END_PROTOCOL, "a RESULT did not fit its line"); return; }
+        emit_text("RESULT", g_json);
     }
 }
 

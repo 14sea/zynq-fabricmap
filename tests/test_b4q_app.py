@@ -19,6 +19,7 @@ R = Path(__file__).resolve().parent.parent
 for p in (R / "host", R / "b4/host"):
     sys.path.insert(0, str(p))
 import b4q_wire as w  # noqa: E402
+import b4q_verify as vf  # noqa: E402
 import b4q_a7 as a7  # noqa: E402
 import b4carrier_regmap as rm  # noqa: E402
 import b4q_backend as bk  # noqa: E402
@@ -29,7 +30,7 @@ TC = Path("/home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1
 
 
 def setUpModule():
-    for target in ("host", "apphost", "wiretwin"):
+    for target in ("host", "apphost", "wiretwin", "waittwin"):
         p = subprocess.run(["make", "-C", str(R / "firmware/b4q"), f"BUILD={R / 'build/b4q_firmware'}", target], capture_output=True, text=True)
         if p.returncode != 0:
             raise AssertionError(p.stdout[-2000:] + p.stderr[-2000:])
@@ -75,7 +76,7 @@ class ConsoleScenarios(unittest.TestCase):
             self.assertEqual(rep["a7"]["findings"], [], name)        # the program's actual accesses, the identity page's reads included
 
     def test_valid_paths_clean_and_every_console_line_is_the_twins(self):
-        for name in ("valid", "a5", "reply_corrupt", "reply_dropped_once", "garbage_command", "silent_host"):
+        for name in ("valid", "a5", "reply_corrupt", "reply_dropped_once", "garbage_command", "silent_host", "wrong_token", "stale_reply", "host_seq_gap", "malformed_tx", "duplicate_tx"):
             rep = _S["verify"][name][1]
             self.assertTrue(rep["clean"], (name, rep["session"], [t["findings"] for t in rep["transactions"]]))
             m = json.loads((_S["root"] / name / "manifest.json").read_text())
@@ -110,6 +111,7 @@ class ConsoleScenarios(unittest.TestCase):
         s = self.summary("reply_corrupt")
         self.assertEqual((s["tx"]["status"], s["tx"]["x"]), (0, "closed")); self.assertEqual((s["stats"]["corrupted"], s["end"]["nacks"]), (1, 1))
         self.assertEqual(s["end"]["sign_requests"], 1 + 2)            # the corrupted reply refused (NACK bad crc), the request re-sent once
+        self.assertEqual(s["tx"]["status"], 0)
         self.assertTrue(any(e.get("type") == "NACK" for e in console_lines("reply_corrupt")))
         s = self.summary("reply_dropped_once")
         self.assertEqual((s["tx"]["status"], s["stats"]["dropped"], s["end"]["sign_requests"]), (0, 1, 1 + 2))
@@ -132,6 +134,138 @@ class ConsoleScenarios(unittest.TestCase):
             self.assertFalse(any(e.get("type") == "IDENT" for e in console_lines(name)), name)
             rep = _S["verify"][name][1]
             self.assertTrue(any("refused to open" in x for x in rep["session"]), rep["session"])
+
+    def test_r1_the_receive_budget_is_one_per_wait_and_never_replenished(self):
+        """the owner's R1 (2026-10-28): the application's own b4q_sign / command wait under injected console fixtures (the budget twin,
+        built with REPLY_POLLS 10 000 / IDLE_POLLS 20 000 / HB 2 000): a silent peer, a flood of stale replies, an endless overlong line and
+        a flood of malformed lines each end within the budget — every poll charged, nothing replenished; the fixture caps at 50x so that a
+        missing bound is an OVER_BUDGET exit, never a hang"""
+        tw = R / "build/b4q_firmware/b4q_wait_twin"
+        out = {}
+        for mode in range(7):
+            p = subprocess.run([str(tw), str(mode)], capture_output=True, text=True, timeout=120)
+            self.assertEqual(p.returncode, 0, (mode, p.stdout, p.stderr))
+            out[mode] = dict(kv.split("=") for kv in p.stdout.split())
+        self.assertEqual((out[0]["ret"], out[0]["polls"], out[0]["requests"]), ("-1", "30000", "3"))          # three attempts x 10 000, exactly
+        self.assertEqual((out[1]["ret"], out[1]["polls"], out[1]["requests"]), ("-1", "30000", "3"))          # a flood of stale replies charged, not replenished
+        self.assertGreater(int(out[1]["frames"]), 100)
+        self.assertEqual((out[2]["ret"], out[2]["polls"], out[2]["requests"]), ("-1", "30000", "3"))          # an endless overlong line charged byte by byte
+        self.assertEqual(out[3]["ret"], "-1"); self.assertLessEqual(int(out[3]["polls"]), 30000)              # malformed flood: the per-wait NACK cap ends it earlier
+        self.assertEqual(out[4]["ret"], "-1"); self.assertLessEqual(int(out[4]["polls"]), 20000)              # non-command flood on the command wait: one budget, the NACK cap
+        self.assertEqual((out[5]["ret"], out[5]["polls"], out[5]["spent"]), ("0", "20000", "20000"))         # a silent host: the idle budget, exactly
+        self.assertEqual((out[6]["ret"], out[6]["polls"], out[6]["requests"]), ("-1", "30000", "3"))          # a flood of fresh frames of another type: charged, never a reply
+        self.assertGreater(int(out[5]["hb"]), 0)
+
+    def test_r2_freshness_in_both_directions(self):
+        """the owner's R2: a replayed TX (the same host sequence) is NACKed 'stale sequence' — nothing signed, nothing run, the session
+        halted on the named non-success and no record made; a gap is legitimate; the host refuses duplicate / decreasing board frames"""
+        s = self.summary("duplicate_tx")
+        self.assertEqual((s["first"]["status"], s["second"]["status"], s["new_signreqs"], s["new_trace_events"]), (0, 7, 0, 0))
+        self.assertIn("stale sequence", s["second"]["reason"]); self.assertIn("stale sequence", s["halted"] or "")
+        self.assertEqual(s["end"]["stale_frames"], 1); self.assertEqual(len(s["records"]), 2)     # the root and the first candidate; the replay made no record
+        s = self.summary("host_seq_gap")
+        self.assertEqual((s["tx"]["status"], s["tx"]["x"]), (0, "closed")); self.assertGreater(s["host_seq_last"], 10)
+        import b4q_console_session as cs
+        sess = cs.ConsoleSession(_S["root"] / "unit_board_seq", label="unit")
+        sess._fds = {"c2h_r": -1}
+        sess._con_buf = (w.frame("HB", 7, sess.token) + w.frame("HB", 7, sess.token) + w.frame("HB", 6, sess.token) + w.frame("HB", 9, sess.token)).encode()
+        for _ in range(4):
+            sess._console_line()
+        self.assertEqual((sess.stats["hb"], sess.stats["stale_board"]), (2, 2))                   # 7 accepted; 7 and 6 refused (the session halted on the first); 9 is fresh and still counted
+        self.assertIsNotNone(sess.halted); self.assertTrue(any("not fresh" in m for m in sess.findings))
+
+    def test_r3_nothing_is_signed_after_a_transaction_that_did_not_close(self):
+        """the owner's R3: after a failed transaction, a valid TX injected at the console boundary (bypassing the API's latch) is NACKed
+        'halted' by the application — no signature, no trace; the host's notary refuses an unsolicited SIGNREQ while halted"""
+        s = self.summary("after_stop_tx")
+        self.assertEqual((s["failed"]["status"], s["api_refused"], s["raw_next"]["status"], s["new_signreqs"], s["new_trace_events"]), (1, True, 7, 0, 0))
+        self.assertIn("halted", s["raw_next"]["reason"]); self.assertEqual(s["end"]["refused_tx"], 1); self.assertIn("STOP_SIGN", s["end"]["halted"])
+        import b4q_console_session as cs
+        sess = cs.ConsoleSession(_S["root"] / "unit_halted_sign", label="unit")
+        sess._fds = {"h2c_w": -1}
+        written = []
+        sess._console_write = lambda line, note="": written.append(line)
+        sess.halt("a test halt")
+        n = len(sess.notary.log)
+        sess._answer_sign({"payload": json.dumps({"genome": "00000000", "nonce": "0" * 16, "req": 5}).encode(), "seq": 5})
+        self.assertEqual(len(written), 1); self.assertIn("REFUSED 5", w.parse(written[0], sess.token)["payload"].decode())
+        self.assertEqual(len(sess.notary.log), n + 1); self.assertIn("refused", sess.notary.log[-1]); self.assertEqual(sess.stats["refused_halted"], 1)
+
+    def test_r4_the_console_evidence_is_verified_offline(self):
+        """the owner's R4: the console source's retained lines are evidence — dropped, corrupted or edited material is never clean"""
+        import shutil
+        src = _S["root"] / "valid"
+        def copy(name):
+            d = _S["root"] / f"valid_console_{name}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(src, d); return d
+        def edit_line(d, pred, change):
+            lines = [json.loads(l) for l in (d / "console.jsonl").read_text().splitlines() if l.strip()]
+            for e in lines:
+                if e.get("line") and pred(e):
+                    e["line"] = change(e["line"]); break
+            else:
+                raise AssertionError("no line matched")
+            (d / "console.jsonl").write_text("".join(json.dumps(e) + "\n" for e in lines))
+        def reframe(line, edit_payload):
+            f = w.parse(line + "\n"); return w.frame(f["type"], f["seq"], f["token"], edit_payload(f["payload"].decode())).rstrip("\n")
+        d = copy("dropped"); (d / "console.jsonl").unlink()
+        rep = vf.verify(d); self.assertIn("console.jsonl: missing", rep["refused"] or "")
+        cases = [("ident_crc", lambda e: e["dir"] == "board" and " IDENT " in e["line"], lambda l: l[:-1] + ("0" if l[-1] != "0" else "1"), "bad crc"),
+                 ("result_fitness", lambda e: e["dir"] == "board" and " RESULT " in e["line"] and '"has_fitness": 1' in w.parse(e["line"] + "\n")["payload"].decode(),
+                  lambda l: reframe(l, lambda p: p.replace('"has_fitness": 1, "fitness": ', '"has_fitness": 1, "fitness": 999, "fitness_was": ')), "not the retained transaction result"),
+                 ("ident_token", lambda e: e["dir"] == "board" and " IDENT " in e["line"], lambda l: reframe(l, lambda p: p.replace('"token": "', '"token": "ff')[:len(p)] if False else __import__("re").sub(r'"token": "[0-9a-f]{32}"', '"token": "' + "f" * 32 + '"', p)), "token"),
+                 ("end_transactions", lambda e: e["dir"] == "board" and " END " in e["line"], lambda l: reframe(l, lambda p: __import__("re").sub(r'"transactions": \d+', '"transactions": 999', p)), "END.transactions"),
+                 ("result_dropped", lambda e: e["dir"] == "board" and " RESULT " in e["line"], lambda l: w.frame("HB", w.parse(l + "\n")["seq"], w.parse(l + "\n")["token"]).rstrip("\n"), "RESULT lines for"),
+                 ("signreply_words", lambda e: e["dir"] == "host" and " SIGNREPLY " in e["line"] and not e.get("note"), lambda l: reframe(l, lambda p: p[:-8] + ("00000000" if p[-8:] != "00000000" else "00000001")), "not the notary's"),
+                 ("board_seq_dup", lambda e: e["dir"] == "board" and " HB " in e["line"] or (e["dir"] == "board" and " EV " in e["line"] and "MARK transaction_begin" in w.parse(e["line"] + "\n")["payload"].decode()),
+                  lambda l: w.frame(w.parse(l + "\n")["type"], 0, w.parse(l + "\n")["token"], w.parse(l + "\n")["payload"]).rstrip("\n"), "not fresh")]
+        for name, pred, change, needle in cases:
+            d = copy(name); edit_line(d, pred, change)
+            rep = vf.verify(d)
+            self.assertIsNone(rep["refused"], name); self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name)
+            self.assertTrue(any(needle in m for m in rep["session"]), (name, rep["session"]))
+        for name, pred, change, edit_tr, needle in (("coord_ident_token", lambda e: e["dir"] == "board" and " IDENT " in e["line"],
+                                                      lambda l: reframe(l, lambda p: __import__("re").sub(r'"token": "[0-9a-f]{32}"', '"token": "' + "f" * 32 + '"', p)), lambda tr: tr["ident"].update({"token": "f" * 32}), "IDENT's token is not the page's"),
+                                                     ("coord_end_transactions", lambda e: e["dir"] == "board" and " END " in e["line"],
+                                                      lambda l: reframe(l, lambda p: __import__("re").sub(r'"transactions": \d+', '"transactions": 999', p)), lambda tr: tr["end"].update({"transactions": 999}), "END.transactions")):
+            d = copy(name); edit_line(d, pred, change)
+            m = json.loads((d / "manifest.json").read_text()); edit_tr(m["transport"]); (d / "manifest.json").write_text(json.dumps(m))
+            rep = vf.verify(d)
+            self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name); self.assertTrue(any(needle in x for x in rep["session"]), (name, rep["session"]))
+        for name, edit, needle in (("cached_ident", lambda tr: tr["ident"].update({"token": "f" * 32}), "cached IDENT"), ("cached_end", lambda tr: tr["end"].update({"transactions": 999}), "cached END"),
+                                   ("page_magic", lambda tr: tr["page_words"].__setitem__(0, "00000000"), "page"), ("stats", lambda tr: tr["stats"].update({"signreq": 99}), "stats.signreq"),
+                                   ("lines", lambda tr: tr.update({"console_lines": 1}), "console lines")):
+            d = copy("m_" + name)
+            m = json.loads((d / "manifest.json").read_text()); edit(m["transport"]); (d / "manifest.json").write_text(json.dumps(m))
+            rep = vf.verify(d)
+            self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name); self.assertTrue(any(needle in x for x in rep["session"]), (name, rep["session"]))
+        for name in ("valid", "a5", "reply_corrupt", "stale_reply", "duplicate_tx", "after_stop_tx", "malformed_tx"):   # the untouched archives: the console contract agrees
+            rep = _S["verify"][name][1]
+            self.assertTrue(rep["agree"], (name, rep["session"])); self.assertEqual(rep["console"]["findings"], [], name)
+
+    def test_r5_the_command_grammar_is_checked_before_anything_runs(self):
+        """the owner's R5: the six reproduced malformed commands and the width / count / index boundaries are refused whole by the
+        parser twin; through the console they are NACKed 'malformed TX' with no signature, no trace and no DMA; legitimate commands parse"""
+        tw = _S["tw"]
+        def tx(cmd):
+            tw.stdin.write(cmd + "\n"); tw.stdin.flush(); return tw.stdout.readline().rstrip("\n")
+        D = "a" * 64
+        for cmd in ("TX mystery 0 0", "TX normal 100000000 0", "TX normal 0 1 100000000", "TX normal 0 0 GARBAGE", f"TX normal 0 0 TASK {D} 2 1 0 0 1", f"TX normal 0 0 TASK {D} 1 257 256 256 65537",
+                    "TX normal 00200000 0", "TX normal 0 1 2000000", "TX normal 0 29 " + " ".join(["0"] * 29), "TX root 0 1 0", "TX normal 0 0 TASK " + "a" * 63 + " 0", f"TX normal 0 1 0 TASK {D} 1 2 0 0 1",
+                    f"TX normal 0 1 0 TASK {D} 1 1 8 0 1", f"TX normal 0 1 0 TASK {D} 1 1 0 2 1", f"TX normal 0 1 0 TASK {D} 1 1 0 0 65536", f"TX normal 0 1 0 TASK {D} 257 " + " ".join(["1 0 0 1"] * 257),
+                    "TX normal -1 0", "TX normal 0x18 0", "TX NORMAL 0 0", "TX normal 0 0 TASK", "TXnormal 0 0", "TX normal 0 1", "TX normal 0 0 1", "TX normal 0 00000000001 0", "TX normal 000000001 0", f"TX normal 0 1 0 TASK {D} 2 1 0 0 1"):
+            self.assertEqual(tx(cmd), "REFUSED", cmd)
+        self.assertEqual(tx("TX root 00000000 0"), "OK kind=1 genome=00000000 n=0 steps= task=0 -")
+        self.assertEqual(tx("TX normal 001fffff 2 1ffffff 0   "), "OK kind=0 genome=001fffff n=2 steps=1ffffff,0000000 task=0 -")
+        self.assertEqual(tx(f"TX a5 18 1 1000001 TASK {D} 2 1 0 0 1 1 7 1 65535"), f"OK kind=3 genome=00000018 n=1 steps=1000001 task=2 {D} 1/0/0/1 1/7/1/65535")
+        self.assertEqual(tx(f"TX inject 18 1 1000001 TASK {D} 0"), f"OK kind=2 genome=00000018 n=1 steps=1000001 task=0 -")
+        for e in console_lines("valid"):                                                   # every TX the host-only path ever framed parses
+            if e["dir"] == "host" and e.get("line") and " TX " in e["line"] and not e.get("note"):
+                self.assertTrue(tx(w.parse(e["line"] + "\n")["payload"].decode()).startswith("OK "), e["line"][:60])
+        s = self.summary("malformed_tx")
+        self.assertEqual(len(s["malformed"]), 6)
+        for c in s["malformed"]:
+            self.assertEqual((c["status"], c["new_signreqs"], c["new_trace_events"], c["new_submits"]), (7, 0, 0, 0), c["cmd"]); self.assertIn("malformed TX", c["reason"])
+        self.assertEqual((s["then"]["status"], s["then"]["x"]), (0, "closed")); self.assertEqual(s["end"]["nacks"], 6)
 
     def test_the_executing_sides_own_stop_reaches_the_host_through_the_console(self):
         s = self.summary("pre_event_corrupt")

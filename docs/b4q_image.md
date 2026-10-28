@@ -1,4 +1,4 @@
-# B4Q — the PS image (host-only preparation, v0.1, 2026-10-28): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
+# B4Q — the PS image (host-only preparation, v0.2, 2026-10-28; v0.1 held by the owner's review of `ba18e3c`, R1–R5 repaired — §7): the standalone application that runs the accepted executing side on the board, its BSP, its console notary, its bounds, its build evidence — COMPILED, NEVER BOARD-RUN
 
 > **Authorisation.** The owner's PASS on `a41f573` (archived in `evidence/b4/unit_b4q_integration_2026_10_27/owner_review_a41f573_PASS/`,
 > its section 4): one complete B4Q PS-image preparation unit, host-only — "the actual PS board-image preparation", to satisfy the
@@ -41,9 +41,24 @@ object), `HB`, `SIGNREQ` (JSON: genome, nonce, req), `EV` (the executing side's 
 (`OK <req> <24 words>` / `REFUSED <req> <why>`). Sequence numbers are each side's own, strictly increasing. A line that does not fit
 is never truncated: a NACK names it. A reply to another request is ignored and the wait continues on the same bound.
 
-**The bounds are counts of console polls, never a clock the application measures:** `B4Q_APP_IDLE_POLLS` (50 000 000 on the board)
-for the next host command, `B4Q_APP_REPLY_POLLS` (50 000 000) per SIGNREQ attempt, three attempts, a heartbeat every
-`B4Q_APP_HB_EVERY` (5 000 000) polls; the harness compiles with small counts (400 000 / 200 000 / 50 000). What a poll takes on the
+**The bounds are counts of console polls, never a clock the application measures — one cumulative budget per declared wait:**
+`B4Q_APP_IDLE_POLLS` (50 000 000 on the board) for the wait for the next command, `B4Q_APP_REPLY_POLLS` (50 000 000) per SIGNREQ
+attempt, three attempts, a heartbeat every `B4Q_APP_HB_EVERY` (5 000 000) polls of the wait. The budget is spent by every readiness
+poll and every byte read, whatever the line turns out to be (well-formed, malformed, stale, another frame type, an oversize line's
+discarded bytes); nothing replenishes it — not a heartbeat, a NACK or a kick; at most eight refused lines per wait end the session
+PROTOCOL; the command wait's budget renews only after a transaction ran. The flush before a SIGNREQ is bounded by the console
+primitive's own cap (4096 bytes) and counted apart (`END.flushed`). The harness compiles with small counts (400 000 / 200 000 /
+50 000); the budget twin with 20 000 / 10 000 / 2 000.
+
+**Freshness:** each side's line sequence starts at 0 (the board) / 1 (the host) and is strictly increasing; a host frame whose
+sequence is not greater than the last accepted one is refused by name (NACK `stale sequence`) before any effect — a gap is accepted (a
+dropped frame); the host refuses a duplicate / decreasing board frame the same way (noted in the console log, a console finding, the
+session halted); the request id binds a SIGNREPLY to its SIGNREQ in addition. Neither side wraps: the application ends the session
+PROTOCOL and the host refuses to frame before 0xFFFFFFF0.
+
+**The session latch:** after a transaction that did not close (any status but 0 — the A5 `injection_open` close is status 0 and no
+stop), the application NACKs every further TX by name (`halted: <the first failure>`) and `b4q_sign` refuses without a request;
+the host's notary answers `REFUSED` once its own halt latch is set, whatever the application asks; QUIT still closes the session. What a poll takes on the
 board (one strongly-ordered UART status read, B1 measured ~100–200 ns) is a bring-up measurement; the watchdog (30.0 s under B1's
 PERIPHCLK pin) is the last resort for a stall inside a line, as in B1.
 
@@ -67,9 +82,13 @@ harness counts the platform's restarts and the tests hold them to the lines emit
 | the load | the raw `.bin` at 0x02000000 (lscript.ld), `go 0x2000000` (the instrument's L5 recipe); the page at 0x10440000 written by `mw.l` before `go`; the image's digest echoed by the IDENT (`app_image_sha_lo32`) against the build evidence's pin | the bring-up's control plane under its ruling |
 | the OKAY of an access | "completed without an abort" (the AXI response is not observable from the A9; an SLVERR is the abort) | — (a design fact, stated, not a measurement) |
 
-## 5. The scenarios of record (`host/b4q_console_e2e.py`, 14; every archive fresh-verified, every one agreeing)
+## 5. The scenarios of record (`host/b4q_console_e2e.py`, 18; every archive fresh-verified under the console contract, every one agreeing)
 
 `valid` (open / root / three candidates with tasks / QUIT → END COMPLETED, clean), `a5` (J1 / J2 / J3 through the console: pass),
+`duplicate_tx` (the previous TX line replayed byte for byte: NACK stale sequence, nothing signed or run, no record, halted), `after_stop_tx`
+(a valid TX at the console boundary after a failed transaction: NACK halted, nothing signed or run), `malformed_tx` (six commands outside the
+grammar: NACK malformed TX, no signature, no trace, no DMA; a legitimate one then closes), `host_seq_gap` (a gap in the host's sequence:
+closed, clean),
 `notary_refuses` (REFUSED → STOP_SIGN at P1, no O, the next candidate refused), `reply_corrupt` (NACK bad crc, re-request, closed),
 `reply_dropped_once` (re-request, closed), `replies_dropped` (three attempts, the bound, STOP_SIGN, halted), `wrong_token` (NACK wrong
 token, then the command), `stale_reply` (another request's garbage words ignored, the right reply used, closed), `silent_host` (the
@@ -85,3 +104,17 @@ measured timing (§2, §4). No production key: the fixture key only; provisionin
 change to the carrier bitstream, the register map, the hypothesis / model / task, the protocol, the no-go results. B1–B3's files
 are read-only inputs (the BSP copied, B1's build script re-pointed; nothing of theirs edited). The qualification claim, N / B\* /
 prediction / session sizes and the freeze of 2c are not touched (`docs/b4q_plan.md`).
+
+## 7. The repair after the owner's HOLD on `ba18e3c` (2026-10-28)
+
+| item | what was wrong | what changed | held by |
+|---|---|---|---|
+| R1 the receive budget | the full poll budget was handed back after a stale or foreign frame and after a malformed line; the oversize discard had no bound | `b4q_budget`: one cumulative budget per declared wait (per SIGNREQ attempt, per command wait), charged by every poll and every byte, never replenished (§2); the command wait renews only after a transaction ran | the budget twin `target/b4q_wait_twin.c` (the unmodified application under injected fixtures, every poll counted); `tests/test_b4q_app.py::test_r1_*`; mutants R1a–c, B1 |
+| R2 freshness | the host sequence was assigned without a check; the host accepted duplicate / decreasing board frames | both receiving boundaries refuse a non-fresh frame by name before any effect; gaps accepted; request-id binding kept; no wrap (§2) | `duplicate_tx`, `host_seq_gap`, the host's unit case; `test_r2_*`; mutants R2a / R2b |
+| R3 the session latch | the application's loop ran the next TX after a failed one; the host's notary answered while halted | the application's `S.sum.halted` (a TX NACKed `halted`, `b4q_sign` refusing without a request) and the host's `_answer_sign` refusing once `self.halted`; the per-call rule of `b4q_tx.c` untouched | `after_stop_tx`, the host's unit case; `test_r3_*`; mutants R3a / R3b |
+| R4 the console evidence | written, never verified | `b4q_verify.verify_console`: the console archive contract (the unit README §7's row: the log required and shaped, every line re-parsed, the IDENT / RESULT / SIGNREQ–SIGNREPLY / END derived and bound to the page, the image, the retained opening and transaction results, the notary log; the cached summaries held to the derived; the latch on the lines; the session's console findings compared) | `test_r4_*` (a dropped log refused; twelve tampers never clean); the 18 archives agreeing; mutants R4a–e |
+| R5 the grammar | the host driver's parser normalised, truncated and defaulted at the wire boundary | `b4q_cmd.h`'s grammar checked whole before anything runs (kind, widths, counts, ranges, trailing text); the SIGNREPLY parsed exactly (§2) | the parser twin; `malformed_tx`; `test_r5_*`; mutants R5a–d |
+| P3 | the reproducibility boolean's scope unstated | `reproducibility.covers`: the raw `.bin` only; ELF / map hashes are provenance | `build_evidence.json` |
+
+A command the application refused by name is a named host non-success that ran nothing: no transaction record, the console log and the
+transport summary carry it, the session halts on it (`docs/b4q_plan.md` §4.2). The notary's log now carries the 24 words it handed out.

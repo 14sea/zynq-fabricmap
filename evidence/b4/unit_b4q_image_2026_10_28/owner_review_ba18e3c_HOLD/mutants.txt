@@ -1,0 +1,18 @@
+B4Q PS-image mutant battery — 2026-10-27T23:33:44Z HEAD ba18e3c
+BASELINE kicks: green
+BASELINE page_and_watchdog: green
+BASELINE framing: green
+BASELINE bounds: green
+BASELINE allowlist: green
+K1 KILLED — the watchdog kick removed (the application still CLAIMS the kicks): platform kicks 0 / end kicks 34 / lines 34
+P1 KILLED — the page checksum no longer checked: bad_page: ident True signatures 1 end COMPLETED
+P2 KILLED — the reserved page words no longer held to zero: page with a reserved word set accepted: ['OK 00000000000000000000000000000000 0 0 0000000000000000000000000000000000000000000000000000000000000000 0000000000000
+W1 KILLED — a watchdog that cannot be armed no longer ends the session: watchdog_fail: ident True signatures 1 end COMPLETED
+F1 KILLED — the CRC no longer checked: reply_corrupt: status 0 nacks 0 sign_requests 2
+F2 KILLED — the token no longer refused (the comparison kept so that the build accepts the mutant: a kill must come from the probe): wrong_token: status 0 nacks []
+F3 KILLED — a SIGNREPLY to another request accepted (the stale reply's garbage words staged): stale_reply: status 1 x None
+B1 KILLED — the reply bound no longer ends the wait: the run did not end within 240 s: a bound is not enforced
+B2 KILLED — the idle bound no longer ends the session: the run did not end within 240 s: a bound is not enforced
+A1 KILLED — the key window writable: allowlist ['r=0 w=1', 'r=0 w=1', 'r=1 w=0', 'r=0 w=0', 'r=1 w=0'] (want ['r=0 w=0', 'r=0 w=0', 'r=1 w=0', 'r=0 w=0', 'r=1 w=0'])
+A2 KILLED — the identity page writable by the program: allowlist ['r=0 w=0', 'r=0 w=0', 'r=1 w=1', 'r=0 w=0', 'r=1 w=0'] (want ['r=0 w=0', 'r=0 w=0', 'r=1 w=0', 'r=0 w=0', 'r=1 w=0'])
+TOTAL killed 11 survived 0 edit-miss 0 of 11

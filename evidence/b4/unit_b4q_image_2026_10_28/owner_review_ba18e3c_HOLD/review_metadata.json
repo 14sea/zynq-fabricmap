@@ -1,0 +1,60 @@
+{
+  "reviewed_tip": "ba18e3ca8c7260450a40daa2d7651cbc19c1f707",
+  "implementation": "c4f9613ee97746855d4ef6df4b262f928dec9da5",
+  "review_completed_utc": "2026-10-27T23:43:49.206863+00:00",
+  "decision": "HOLD",
+  "findings": {
+    "R1": {
+      "priority": "P1",
+      "contract": "cumulative receive poll budget"
+    },
+    "R2": {
+      "priority": "P1",
+      "contract": "per-direction frame freshness"
+    },
+    "R3": {
+      "priority": "P1",
+      "contract": "session stop at actual admission/signing boundaries"
+    },
+    "R4": {
+      "priority": "P1",
+      "contract": "console archive fresh verification"
+    },
+    "R5": {
+      "priority": "P2",
+      "contract": "exact wire-command grammar and numeric ranges"
+    },
+    "P3": {
+      "priority": "P3",
+      "contract": "raw .bin reproducibility wording"
+    }
+  },
+  "independent_checks": {
+    "tests": 90,
+    "tests_exit": 0,
+    "focused_mutants": {
+      "killed": 11,
+      "survived": 0,
+      "edit_miss": 0
+    },
+    "submitted_archive_verifiers": 14,
+    "regenerated_archive_verifiers": 14,
+    "archive_verifiers_all_exit_0_agree_true": true,
+    "bad_console_archives_wrongly_clean": 6,
+    "raw_image_equal_to_submission": true,
+    "raw_image_sha256": "048f9ab9499db86496128c1893497ef0f7127332528c0437b014e136c292fb1b",
+    "a7_findings": [],
+    "final_xcheck_exit": 0
+  },
+  "canonical_status_final": "",
+  "canonical_main": "dd8a7b9b0bea5acc37e55ef92513303af2b0fcec",
+  "snapshot_status_after_mutant_restore": "",
+  "tracked_changes_by_reviewer": false,
+  "new_seed_derivation": false,
+  "board_connection": false,
+  "image_load": false,
+  "push_or_merge": false,
+  "review_files_location": "ignored build/wip only",
+  "netlist": "copied existing ignored dependency, not resynthesized",
+  "limits": "Host-only internal consistency and listed counterexamples. No general totality proof, silicon witness or measurement."
+}

@@ -8,17 +8,17 @@
    "kind": "new",
    "note": "host builds only (twin, host, xcheck) into the top-level ignored build/; no image.",
    "role": "build",
-   "sha256": "f6766c75e7a1d353d474aec256d1c7e938bdc771b7e4287616b9ff13d166f2bf"
+   "sha256": "f3501a5012547ba2399b3db6f9e7aecf5a345f36ff01b1153da4274a70afa2f6"
   },
   "firmware/b4q/b4q_cmd.c": {
    "kind": "new",
    "role": "the executing side's command parser and RESULT writers, one pure unit shared by the host driver and the board application (the PS-image unit, 2026-10-28)",
-   "sha256": "f1d3db430504b5d2d56ac9773a0cfec6a523c05ffdd98422073ba7e6317c7af4"
+   "sha256": "1972db994677a2e5963be44f09a27ff0fd10a30528301873d39adb21bbfd6ea4"
   },
   "firmware/b4q/b4q_cmd.h": {
    "kind": "new",
    "role": "b4q_cmd.c's interface",
-   "sha256": "ffee9310783c82e6749ad3a19b08a8c722239df1f63bb63d86387915f56247ec"
+   "sha256": "686c2305b58e1728c6684aa0370ab5cd9b3f1e1d65ff4be1f4b658a70d237df6"
   },
   "firmware/b4q/b4q_data.h": {
    "generator": "host/b4q_gen_data.py",
@@ -133,12 +133,12 @@
   "firmware/b4q/target/b4q_app.c": {
    "kind": "new",
    "role": "the board application's session over the console / platform / HAL interfaces (pure: runs on the host harness and on the board)",
-   "sha256": "ff1a1af01b5770bb156b5298f8b4bf9470d87b6df9d4cef2b1bbd7243cfa7c71"
+   "sha256": "8712cb3e4797fe959f154e47ea7ab47599100a84877f1da68fbf5fae4f0c7e15"
   },
   "firmware/b4q/target/b4q_app.h": {
    "kind": "new",
    "role": "b4q_app.c's interface and bounds",
-   "sha256": "7678ae31a52be0d7dd3356f16deb5ef7bfe4de209c3828d14ae2a36993ee640b"
+   "sha256": "6a18791b2651364b512b75ad1365e1afc5f6cc9c45002f7f989f055ffe129a7e"
   },
   "firmware/b4q/target/b4q_app_host.c": {
    "kind": "new",
@@ -180,6 +180,11 @@
    "role": "b4q_psmap.c's interface and the PS addresses",
    "sha256": "842676811f7c41a7874f5e3ec4cc8a5804aa15bd989b8eea97f7186a552abc29"
   },
+  "firmware/b4q/target/b4q_wait_twin.c": {
+   "kind": "new",
+   "role": "the receive-budget twin: the application's own waits under injected console fixtures (tests/test_b4q_app.py::test_r1)",
+   "sha256": "63ea1f121c949069d93114d7f5dc6206c4aa08cf0fe71b4844ff483e491417b3"
+  },
   "firmware/b4q/target/b4q_wire.c": {
    "base": "firmware/b1/p3_derive.c",
    "base_sha256": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
@@ -195,7 +200,7 @@
   "firmware/b4q/target/b4q_wire_twin.c": {
    "kind": "new",
    "role": "the stdin / stdout driver of the wire and allowlist units for the tests",
-   "sha256": "b72ed2e430a135c2bc614364be40b6d04df0111022612ba43ba11770015eb9c6"
+   "sha256": "0656b4d2df434fa626fc5b654325ef9ba8187d0b56c834c45d205d39c6b91f74"
   }
  },
  "schema": "b4q_firmware_import",

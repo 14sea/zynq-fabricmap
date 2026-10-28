@@ -309,7 +309,7 @@ class Session:
         else:
             self.prev_x = None                                              # a faulted close, or none: nothing follows until a ruling
         if o is None:
-            self.halt(f"transaction {seq}: no observation sealed ({r.get('reason')})")
+            self.halt(f"transaction {seq}: no observation sealed ({r.get('reason')})")   # a NACK from the application (status 7) is such a non-success: it ran nothing
         elif x is None or x["status"] not in ("closed", "injection_open"):
             self.halt(f"transaction {seq}: not closed ({(x or {}).get('status', 'no X')}; {r.get('reason')})")
         elif any(m.startswith("link:") or m.startswith("F:") or m.startswith("O:") or m.startswith("bound:") for m in findings):

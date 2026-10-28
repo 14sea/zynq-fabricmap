@@ -130,6 +130,56 @@ def scenario_stale_reply(s):
     return {"tx": _tx(s, "normal", G_CESR, FIX1)}
 
 
+def scenario_duplicate_tx(s):
+    """the previous TX frame re-sent byte for byte (the same host sequence): NACK stale sequence, nothing signed, nothing run"""
+    s.open(); s.transaction("root", 0, stim([]))
+    first = _tx(s, "normal", G_BASE, FIX0)
+    s.knobs["replay_tx"] = 1                                   # the next TX goes out as the previous TX line, byte for byte
+    signs, trace = s.stats["signreq"], len(s.backend.trace)
+    second = _tx(s, "normal", G_BASE, FIX0)
+    return {"first": first, "second": second, "new_signreqs": s.stats["signreq"] - signs, "new_trace_events": len(s.backend.trace) - trace, "halted": s.halted}
+
+
+def scenario_after_stop_tx(s):
+    """after a transaction that did not close (the notary refused), a valid TX injected at the console boundary — bypassing the
+    high-level API's latch — must be NACKed by the application: nothing signed, nothing run (the host's own refusal of an
+    unsolicited SIGNREQ while halted is tests/test_b4q_app.py's unit case: the application never sends one)"""
+    s.open(); s.transaction("root", 0, stim([]))
+    failed = _tx(s, "normal", G_CESR, FIX1)
+    try:
+        s.transaction("normal", G_BASE, stim(FIX0)); api_refused = False
+    except ss.SessionRefusal:
+        api_refused = True
+    signs, trace = s.stats["signreq"], len(s.backend.trace)
+    words = [ss.step_word(x) for x in stim(FIX0)[1:]]
+    s._send(f"TX normal {G_BASE:08x} {len(words)} " + " ".join(f"{w:07x}" for w in words))
+    r = s.serve()
+    return {"failed": failed, "api_refused": api_refused, "raw_next": {k: r.get(k) for k in ("status", "reason")}, "new_signreqs": s.stats["signreq"] - signs,
+            "new_trace_events": len(s.backend.trace) - trace, "halted": s.halted}
+
+
+def scenario_malformed_tx(s):
+    """TX lines that do not match the grammar: NACK malformed TX, no SIGNREQ, no DMA, no RESULT for another transaction"""
+    s.open(); s.transaction("root", 0, stim([]))
+    out = []
+    for cmd in ("TX mystery 00000000 0", "TX normal 100000000 0", "TX normal 00000000 1 2000000", "TX normal 00000000 0 GARBAGE",
+                "TX normal 00000000 0 TASK " + "a" * 64 + " 2 1 0 0 1", "TX normal 00000000 1 0000001 TASK " + "a" * 64 + " 1 257 256 256 65537"):
+        signs, trace, submits = s.stats["signreq"], len(s.backend.trace), sum(1 for e in s.backend.pcap_log if e.get("pcap") == "submit")
+        s._send(cmd)
+        r = s.serve()
+        out.append({"cmd": cmd, "status": r.get("status"), "reason": r.get("reason"), "new_signreqs": s.stats["signreq"] - signs, "new_trace_events": len(s.backend.trace) - trace,
+                    "new_submits": sum(1 for e in s.backend.pcap_log if e.get("pcap") == "submit") - submits})
+    ok = _tx(s, "normal", G_BASE, FIX0, task_for(7, "fix0"))               # a legitimate one still runs
+    return {"malformed": out, "then": ok}
+
+
+def scenario_host_seq_gap(s):
+    """a gap in the host's sequence (a dropped frame) is legitimate: strict increase, not contiguity"""
+    s.open(); s.transaction("root", 0, stim([]))
+    s.knobs["seq_gap"] = 5
+    return {"tx": _tx(s, "normal", G_CESR, FIX1), "host_seq_last": s.host_seq}
+
+
 def scenario_bad_page(s):
     so = s.open()
     try:
@@ -175,6 +225,10 @@ SCENARIOS = {
     "garbage_command": (scenario_garbage_command, {}),
     "wrong_token": (scenario_wrong_token, {}),
     "stale_reply": (scenario_stale_reply, {}),
+    "duplicate_tx": (scenario_duplicate_tx, {}),
+    "after_stop_tx": (scenario_after_stop_tx, {"notary_deny": {G_CESR}}),
+    "malformed_tx": (scenario_malformed_tx, {}),
+    "host_seq_gap": (scenario_host_seq_gap, {}),
     "bad_page": (scenario_bad_page, {"bad_page": "checksum"}),
     "watchdog_fail": (scenario_watchdog_fail, {"watchdog_fail": True}),
     "pre_event_corrupt": (scenario_pre_event_corrupt, {}),

@@ -14,11 +14,12 @@ CFLAGS  ?= -std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-protot
 BUILD   ?= $(abspath $(CURDIR)/../../build/b4q_firmware)
 XGCC    ?= /home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1/bin/arm-none-eabi-gcc
 
-.PHONY: twin host apphost wiretwin xcheck clean
+.PHONY: twin host apphost wiretwin waittwin xcheck clean
 twin: $(BUILD)/b4q_derive_twin
 host: $(BUILD)/b4q_host
 apphost: $(BUILD)/b4q_apphost
 wiretwin: $(BUILD)/b4q_wire_twin
+waittwin: $(BUILD)/b4q_wait_twin
 
 APP_SRCS = target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c b4q_tx.c b4q_derive.c b4q_cmd.c
 APP_HDRS = target/b4q_app.h target/b4q_wire.h target/b4q_psmap.h target/b4q_console.h target/b4q_platform.h b4q_tx.h b4q_hal.h b4q_derive.h b4q_data.h b4q_regmap.h b4q_cmd.h
@@ -30,9 +31,9 @@ $(BUILD)/b4q_apphost: target/b4q_app_host.c $(APP_SRCS) $(APP_HDRS)
 	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) -D_POSIX_C_SOURCE=200809L $(APP_HOST_BOUNDS) -I. -Itarget -o $@ target/b4q_app_host.c $(APP_SRCS)
 
-$(BUILD)/b4q_wire_twin: target/b4q_wire_twin.c target/b4q_wire.c target/b4q_wire.h target/b4q_psmap.c target/b4q_psmap.h b4q_regmap.h b4q_derive.h
+$(BUILD)/b4q_wire_twin: target/b4q_wire_twin.c target/b4q_wire.c target/b4q_wire.h target/b4q_psmap.c target/b4q_psmap.h b4q_cmd.c b4q_cmd.h b4q_regmap.h b4q_derive.h
 	@mkdir -p $(BUILD)
-	$(CC) $(CFLAGS) -I. -Itarget -o $@ target/b4q_wire_twin.c target/b4q_wire.c target/b4q_psmap.c
+	$(CC) $(CFLAGS) -I. -Itarget -o $@ target/b4q_wire_twin.c target/b4q_wire.c target/b4q_psmap.c b4q_cmd.c
 
 $(BUILD)/b4q_derive_twin: b4q_derive_twin.c b4q_derive.c b4q_derive.h b4q_data.h
 	@mkdir -p $(BUILD)
@@ -53,3 +54,9 @@ xcheck:
 
 clean:
 	rm -rf $(BUILD)
+
+# the receive-budget twin: the application's own b4q_sign / main-loop wait under injected console fixtures (a silent peer, a flood of
+# stale replies, an overlong line, a flood of malformed lines), counting every readiness poll — tests/test_b4q_app.py::Bounds
+$(BUILD)/b4q_wait_twin: target/b4q_wait_twin.c target/b4q_app.c $(APP_SRCS) $(APP_HDRS)
+	@mkdir -p $(BUILD)
+	$(CC) $(CFLAGS) -Wno-unused-function -DB4Q_APP_IDLE_POLLS=20000u -DB4Q_APP_REPLY_POLLS=10000u -DB4Q_APP_HB_EVERY=2000u -I. -Itarget -o $@ target/b4q_wait_twin.c target/b4q_wire.c target/b4q_psmap.c b4q_tx.c b4q_derive.c b4q_cmd.c

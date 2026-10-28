@@ -4,7 +4,8 @@
     b4q_build_evidence.py [--build] [--out evidence/b4/unit_b4q_image_2026_10_28/build_evidence.json]
 
 With `--build`: two clean builds from scratch (`rm -rf build/b4q_image` between them) through firmware/b4q/bsp/build.sh; the two
-binaries must be byte-identical or the evidence says `reproduced_byte_identical: false` and the exit is non-zero. Always: the
+raw .bin images must be byte-identical or the evidence says `reproduced_byte_identical: false` and the exit is non-zero (that
+boolean covers the raw .bin only; the ELF / map hashes are provenance, path- and debug-dependent). Always: the
 sha256 of the image, the ELF and the map; of every source the image links (this repository's b4q_* files, the target's units,
 the BSP glue — B1's console.c / lscript.ld / headers byte for byte); of the toolchain's compiler binary; and — from the
 compiler's own `-M` dependency output over every translation unit with the flags build.sh uses — every header the build reads
@@ -169,7 +170,8 @@ def build_evidence(do_build: bool) -> dict:
           "image": {"path": str(image.relative_to(REPO_ROOT)), "sha256": sha(image) if image.is_file() else None, "bytes": image.stat().st_size if image.is_file() else None,
                     "elf_sha256": sha(elf) if elf.is_file() else None, "map_sha256": sha(mp) if mp.is_file() else None,
                     "layout": layout(elf) if elf.is_file() and available["toolchain"] else None, "ddr": buffers()},
-          "reproducibility": {"builds": hashes, "reproduced_byte_identical": (len(hashes) == 2 and hashes[0] == hashes[1]) if do_build else None}}
+          "reproducibility": {"builds": hashes, "reproduced_byte_identical": (len(hashes) == 2 and hashes[0] == hashes[1]) if do_build else None,
+                              "covers": "the raw .bin only: two clean builds from scratch produce the same raw image bytes (the digests in `builds`); the ELF and the map are provenance artifacts whose hashes carry debug sections and checkout paths and may differ between checkouts — their layout facts (entry, program headers, symbols) are what the ELF test holds, not their file hashes (the owner's P3 of 2026-10-28)"}}
     return ev
 
 

@@ -29,23 +29,31 @@ import b4q_frames as fr  # noqa: E402
 
 APPHOST = R / "build/b4q_firmware/b4q_apphost"
 END_STATUS = 6                                 # the executing side's session ended (an END line) where a RESULT was expected
+NACK_STATUS = 7                                # the application refused the command by name (a NACK where a RESULT was expected): no transaction ran
+SEQ_LIMIT = 0xFFFFFFF0                         # this host's line sequence never wraps: it refuses to frame beyond this
 
 
 class ConsoleSession(ss.Session):
     def __init__(self, out_dir: Path, label: str = "B4Q-console", binary: Path = APPHOST, token: str | None = None, page_flags: int = wire.PAGE_FLAG_WATCHDOG,
                  corrupt_replies: int = 0, drop_replies: int = 0, bad_page: str | None = None, garbage_before_tx: int = 0, watchdog_fail: bool = False,
-                 wrong_token_lines: int = 0, stale_reply_first: int = 0, uboot_epoch: int = 1700000000, **kw):
+                 wrong_token_lines: int = 0, stale_reply_first: int = 0, seq_gap: int = 0, replay_tx: int = 0, uboot_epoch: int = 1700000000, **kw):
         super().__init__(out_dir, label=label, binary=binary, **kw)
         self.token = token or wire.new_token()
         self.page_flags = page_flags
         self.knobs = {"corrupt_replies": corrupt_replies, "drop_replies": drop_replies, "bad_page": bad_page, "garbage_before_tx": garbage_before_tx, "watchdog_fail": watchdog_fail,
-                      "wrong_token_lines": wrong_token_lines, "stale_reply_first": stale_reply_first}
+                      "wrong_token_lines": wrong_token_lines, "stale_reply_first": stale_reply_first, "seq_gap": seq_gap, "replay_tx": replay_tx}
         self.uboot_epoch = uboot_epoch
         self.host_seq = 0
         self.console = []                      # every console line, both directions, with the trace index: the retained console log
         self.page_words = None
         self.ended = None                      # the END line's payload once seen
-        self.stats = {"hb": 0, "nack": 0, "signreq": 0, "signreply": 0, "corrupted": 0, "dropped": 0, "garbage": 0, "wrong_token": 0, "stale": 0}
+        self.stats = {"hb": 0, "nack": 0, "signreq": 0, "signreply": 0, "corrupted": 0, "dropped": 0, "garbage": 0, "wrong_token": 0, "stale": 0,
+                      "stale_board": 0, "refused_halted": 0, "replayed": 0}
+        self._last_tx_line = None
+        self.board_seq = None                  # the last board sequence accepted (R2: a duplicate or decreasing one is refused by name)
+        self.findings = []                     # this host's console findings (a non-fresh board frame): recomputed by the verifier from console.jsonl
+        self.refused_commands = []             # commands the application NACKed (nothing ran; no record): declared in the transport summary
+        self._expected_nacks = 0               # NACKs this host provoked on purpose (its declared fault knobs); any other NACK while awaiting a RESULT is the application's refusal
         self._fds = None
         self._mmio_buf = b""
         self._con_buf = b""
@@ -85,19 +93,28 @@ class ConsoleSession(ss.Session):
         self.console.append({"i": len(self.backend.trace), "dir": "host", "line": line.rstrip("\n"), "note": note})
 
     def _frame_out(self, kind: str, payload: str = "") -> str:
-        self.host_seq += 1
+        if self.host_seq >= SEQ_LIMIT:
+            raise ss.SessionRefusal("this host's line sequence is exhausted: nothing further is framed")
+        self.host_seq += 1 + self.knobs.get("seq_gap", 0)        # a declared gap (a dropped frame) is legitimate: freshness is strict increase, not contiguity
         return wire.frame(kind, self.host_seq, self.token, payload)
 
     def _send(self, line: str):
         """TX / QUIT go to the console as frames (the board host's lines); MMIO replies go to the program's stdin."""
         if line.startswith("TX ") or line == "QUIT":
             if line.startswith("TX ") and self.stats["garbage"] < self.knobs["garbage_before_tx"]:
-                self.stats["garbage"] += 1
+                self.stats["garbage"] += 1; self._expected_nacks += 1
                 self._console_write("B4Q1 TX 0 " + self.token + " AAAA deadbeef\n", "a malformed host line (bad crc): the bench's fault knob")
             if line.startswith("TX ") and self.stats["wrong_token"] < self.knobs["wrong_token_lines"]:
-                self.stats["wrong_token"] += 1
+                self.stats["wrong_token"] += 1; self._expected_nacks += 1
                 self._console_write(wire.frame("TX", 0, "f" * wire.TOKEN_HEX, line), "a well-formed host line under another session's token: the bench's fault knob")
-            self._console_write(self._frame_out("TX" if line.startswith("TX ") else "QUIT", line if line.startswith("TX ") else ""))
+            if line.startswith("TX ") and self._last_tx_line and self.stats["replayed"] < self.knobs["replay_tx"]:
+                self.stats["replayed"] += 1; self._expected_nacks += 0        # the application's NACK is the result this host must see, not one it discounts
+                self._console_write(self._last_tx_line, "the previous TX line replayed byte for byte (a duplicate host sequence): the bench's fault knob")
+                return
+            out = self._frame_out("TX" if line.startswith("TX ") else "QUIT", line if line.startswith("TX ") else "")
+            if line.startswith("TX "):
+                self._last_tx_line = out
+            self._console_write(out)
         else:
             self.proc.stdin.write((line + "\n").encode("utf-8")); self.proc.stdin.flush()
 
@@ -121,6 +138,11 @@ class ConsoleSession(ss.Session):
         p = json.loads(f["payload"].decode("utf-8"))
         g, n, req = p["genome"], p["nonce"], p["req"]
         self.stats["signreq"] += 1
+        if self.halted is not None:                       # R3: a halted session signs nothing more, whatever the application asks
+            self.stats["refused_halted"] += 1
+            self.notary.log.append({"genome_hex": g, "nonce": n, "refused": "the session is halted: " + self.halted})
+            self._console_write(self._frame_out("SIGNREPLY", f"REFUSED {req} the session is halted: nothing further is signed without a ruling"))
+            return
         if self.stats["dropped"] < self.knobs["drop_replies"]:
             self.stats["dropped"] += 1
             self.console.append({"i": len(self.backend.trace), "dir": "host", "line": None, "note": f"SIGNREQ req={req} left unanswered: the bench's fault knob"})
@@ -135,18 +157,19 @@ class ConsoleSession(ss.Session):
             reply = f"REFUSED {req} {e}"
         if self.stats["stale"] < self.knobs["stale_reply_first"]:
             self.stats["stale"] += 1                                   # a reply to ANOTHER request with other words, before the right one: must be ignored
-            self._console_write(self._frame_out("SIGNREPLY", f"OK {req - 1} " + " ".join("deadbeef" for _ in range(24))), "a stale SIGNREPLY (another request's, garbage words): the bench's fault knob")
+            self._console_write(self._frame_out("SIGNREPLY", f"OK {req - 1} " + " ".join("deadbeef" for _ in range(24))), "a stale SIGNREPLY (another request's, garbage words): the bench's fault knob")   # a fresh host sequence, another request id
         self.stats["signreply"] += 1
         line = self._frame_out("SIGNREPLY", reply)
         if self.stats["corrupted"] < self.knobs["corrupt_replies"]:
-            self.stats["corrupted"] += 1
+            self.stats["corrupted"] += 1; self._expected_nacks += 1
             line = line[:-3] + ("1" if line[-3] != "1" else "2") + "\n"      # one CRC character changed: the line must be refused and re-requested
             self._console_write(line, "the SIGNREPLY corrupted in transit: the bench's fault knob")
             return
         self._console_write(line)
 
-    def serve(self) -> dict:
+    def serve(self, awaiting: str = "RESULT") -> dict:
         """Answer the program's MMIO requests and its console lines until a RESULT (or the IDENT at the opening) — or an END."""
+        self._awaiting = awaiting
         mmio_fd, con_fd = self.proc.stdout.fileno(), self._fds["c2h_r"]
         while True:
             ready_m = b"\n" in self._mmio_buf; ready_c = b"\n" in self._con_buf
@@ -211,12 +234,26 @@ class ConsoleSession(ss.Session):
             except wire.WireError as e:
                 self.console.append({"i": len(self.backend.trace), "dir": "board", "line": line, "note": f"unparsable: {e}"})
                 raise ss.SessionRefusal(f"the console produced a line this host cannot parse ({e}): {line[:80]}")
+            if self.board_seq is not None and f["seq"] <= self.board_seq:        # R2: a duplicate or decreasing board sequence has no effect
+                self.stats["stale_board"] += 1
+                m = f"console: board frame {f['type']} with sequence {f['seq']} after {self.board_seq}: not fresh, refused"
+                self.console.append({"i": len(self.backend.trace), "dir": "board", "line": line, "note": "stale sequence: refused"})
+                if m not in self.findings:
+                    self.findings.append(m)
+                self.halt(m)
+                return None
+            self.board_seq = f["seq"]
             self.console.append({"i": len(self.backend.trace), "dir": "board", "line": line, "type": f["type"], "seq": f["seq"]})
             kind, payload = f["type"], f["payload"].decode("utf-8", "replace")
             if kind == "HB":
                 self.stats["hb"] += 1
             elif kind == "NACK":
                 self.stats["nack"] += 1; self.events.append({"i": len(self.backend.trace), "line": "NACK " + payload})
+                if self._expected_nacks > 0:
+                    self._expected_nacks -= 1                              # the NACK this host provoked on purpose
+                elif self._awaiting == "RESULT":
+                    self.refused_commands.append({"at_console_line": len(self.console) - 1, "reason": payload})
+                    return {"status": NACK_STATUS, "reason": "the application refused the command: " + payload, "phase": "?"}
             elif kind == "EV":
                 if payload.startswith("MARK "):
                     self.backend.mark(payload[5:])
@@ -241,7 +278,7 @@ class ConsoleSession(ss.Session):
             try:
                 if self.ended is None:
                     self._send("QUIT")
-                    r = self.serve()                      # the END COMPLETED (or whatever the program ends with)
+                    r = self.serve("END")                 # the END COMPLETED (or whatever the program ends with)
                     if r.get("status") != END_STATUS:
                         self.events.append({"i": len(self.backend.trace), "line": "?? a RESULT where the END was expected"})
             except (BrokenPipeError, ValueError, OSError, ss.SessionRefusal):
@@ -250,7 +287,12 @@ class ConsoleSession(ss.Session):
                 self.proc.stdin.close()
             except OSError:
                 pass
-            try:                                                   # the harness's last stdout line (HALT kicks=N: the platform's own count) before it exits
+            try:
+                self.proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                self.proc.kill()
+        if self.proc is not None:
+            try:                                                   # the harness's last stdout line (HALT kicks=N: the platform's own count), whether it exited on its own or on QUIT
                 while True:
                     line = self._readline("mmio")
                     if line is None:
@@ -258,10 +300,6 @@ class ConsoleSession(ss.Session):
                     self.events.append({"i": len(self.backend.trace), "line": line if line.startswith("HALT ") else "?? " + line})
             except OSError:
                 pass
-            try:
-                self.proc.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                self.proc.kill()
         for k in ("h2c_w", "c2h_r"):
             if self._fds and self._fds.get(k) is not None:
                 try:
@@ -276,7 +314,7 @@ class ConsoleSession(ss.Session):
             raise ss.SessionRefusal("the session is already opened (or refused): one opening per session")
         if self.proc is None:
             self.start()
-        r = self.serve()
+        r = self.serve("IDENT")
         if r.get("status") == END_STATUS:                 # the program ended before an IDENT (a bad page, a watchdog that could not be armed)
             r = {"status": 1, "reason": r["reason"], "startup_readback": "", "end": r.get("end")}
         self.ident = r.get("ident")
@@ -297,11 +335,22 @@ class ConsoleSession(ss.Session):
                 self.halt("the session did not open: " + "; ".join(findings))
         return so
 
+    def transaction(self, kind: str, genome: int, stimulus: list, task: dict | None = None) -> dict:
+        """As the parent's; a command the application REFUSED by name (a NACK where the RESULT was expected: a stale sequence, a
+        halted session, a malformed command) ran nothing and is not a transaction record — it stays in the console log and the
+        transport summary (and the session halts on it, as on any unsealed outcome); the previous close remains the last one."""
+        prev_x, n_before = self.prev_x, len(self.records)
+        e = super().transaction(kind, genome, stimulus, task)
+        if e["firmware"].get("status") == NACK_STATUS and len(self.records) == n_before + 1:
+            self.records.pop(); self.seq -= 1; self.prev_x = prev_x
+        return e
+
     def write(self) -> dict:
         m = super().write()
         (self.out / "console.jsonl").write_text("".join(json.dumps(e) + "\n" for e in self.console))
         m["transport"] = {"kind": "console-emulated", "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
                           "protocol": "b4q-v1", "token": self.token, "page_words": [f"{w:08x}" for w in (self.page_words or [])], "page_flags": self.page_flags,
-                          "knobs": self.knobs, "stats": self.stats, "end": self.ended, "ident": self.ident, "console_lines": len(self.console)}
+                          "knobs": self.knobs, "stats": self.stats, "end": self.ended, "ident": self.ident, "console_lines": len(self.console),
+                          "findings": list(self.findings), "host_seq_last": self.host_seq, "board_seq_last": self.board_seq, "refused_commands": self.refused_commands}
         (self.out / "manifest.json").write_text(json.dumps(m, indent=1) + "\n")
         return m

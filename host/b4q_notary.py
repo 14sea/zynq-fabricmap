@@ -65,5 +65,6 @@ class Notary:
         payload = self.sg.sign_arm(self.holder, {"writable": True, "candidate_sha256": v["candidate_sha256"]}, commit, ZERO_TABLES, nonce.to_bytes(8, "little"))
         entry = {"genome": genome, "genome_hex": f"{genome:08x}", "nonce": f"{nonce:016x}", "commit": v["candidate_sha256"], "expected_tables": [f"{t:016x}" for t in ZERO_TABLES],
                  "tag": payload.tag.hex(), "key_id": self.holder.key_id, "contract": "b1-nonsemantic-v1 (carried to B4Q: zero tables, no attestation)"}
+        entry["words"] = list(payload.words())                       # the 24 staging words as handed out: the console verifier binds every SIGNREPLY to them
         self.log.append(entry)
         return {"words": payload.words(), **entry}

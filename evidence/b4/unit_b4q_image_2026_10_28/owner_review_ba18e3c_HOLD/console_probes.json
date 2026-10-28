@@ -1,0 +1,31 @@
+{
+  "duplicate": {
+    "exact_replay": true,
+    "replayed_sequence": "3",
+    "first_status": 0,
+    "second_status": 0,
+    "second_x": "closed",
+    "new_signreqs": 1,
+    "new_trace_events": 155,
+    "new_findings": []
+  },
+  "after_stop": {
+    "stopped_status": 1,
+    "stopped_reason": "STOP_SIGN: the notary refused the candidate",
+    "high_level_api_refused": true,
+    "host_halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
+    "raw_next_status": 0,
+    "raw_next_phase": "",
+    "new_signreqs": 1,
+    "new_trace_events": 155
+  },
+  "host_sequence": {
+    "injected_board_sequences": [
+      7,
+      7,
+      6
+    ],
+    "exceptions": [],
+    "accepted_heartbeat_count": 3
+  }
+}

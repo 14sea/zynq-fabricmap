@@ -3,9 +3,11 @@
  *   "PARSE <token|-> <line...>"                  -> "OK <type> <seq> <token> <hex-of-plain>" | "BAD <code>"
  *   "PAGE <24 words hex8>"                       -> "OK <token> <epoch> <sha_lo32> <carrier> <nonce> <status> <flags>" | "REFUSED"
  *   "CRC <hex-of-bytes>"                         -> the crc32
- *   "PSMAP <addr hex>"                           -> "r=<0|1> w=<0|1>" (the pure allowlist) */
+ *   "PSMAP <addr hex>"                           -> "r=<0|1> w=<0|1>" (the pure allowlist)
+ *   "TX ..."                                     -> "OK kind=<k> genome=<hex8> n=<n> steps=<hex..> task=<m> <digest> <cells>" | "REFUSED" (the command grammar) */
 #include "b4q_wire.h"
 #include "b4q_psmap.h"
+#include "b4q_cmd.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +66,17 @@ int main(void)
             int n = unhex(line + 4, bytes, sizeof bytes);
             if (n < 0) { puts("BAD hex"); continue; }
             printf("%08lx\n", (unsigned long)b4q_crc32(bytes, (size_t)n));
+        } else if (strncmp(line, "TX", 2) == 0) {
+            static b4q_tx_command c;
+            if (b4q_parse_tx(line, &c) != 0) puts("REFUSED");
+            else {
+                int i;
+                printf("OK kind=%d genome=%08lx n=%d steps=", (int)c.kind, (unsigned long)c.genome, c.n_steps);
+                for (i = 0; i < c.n_steps; i++) printf("%s%07lx", i ? "," : "", (unsigned long)c.steps[i]);
+                printf(" task=%d %s", c.task.n, c.task.n ? c.task.digest : "-");
+                for (i = 0; i < c.task.n; i++) printf(" %d/%d/%d/%d", c.task.step[i], c.task.elem[i], c.task.target[i], c.task.weight[i]);
+                puts("");
+            }
         } else if (strncmp(line, "PSMAP ", 6) == 0) {
             unsigned long a = strtoul(line + 6, NULL, 16);
             printf("r=%d w=%d\n", b4q_psmap_readable((uint32_t)a), b4q_psmap_writable((uint32_t)a));

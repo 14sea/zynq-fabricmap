@@ -1,43 +1,98 @@
-/* b4q_cmd — see b4q_cmd.h. The parser is the host driver's (b4q_host_main.c at a41f573), moved here unchanged in meaning; the
- * JSON writers produce the byte-identical lines that driver printed, so the records built from them do not change. */
+/* b4q_cmd — see b4q_cmd.h. The parser checks the whole grammar before accepting anything (the owner's R5 of 2026-10-28: the
+ * former host-driver parser normalised, truncated and defaulted); the JSON writers produce the byte-identical lines the host driver
+ * printed at a41f573, so the records built from them do not change. */
 #include "b4q_cmd.h"
 
 #include <stdio.h>
 #include <string.h>
 
+static int hexval(char c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    return -1;                                           /* lower-case hex only: the host's own form */
+}
+
+int b4q_cmd_u32(const char **p, int base, unsigned long long max, unsigned long long *out)
+{
+    const char *s = *p;
+    unsigned long long v = 0;
+    int n = 0;
+    for (;; s++, n++) {
+        int d = (base == 16) ? hexval(*s) : ((*s >= '0' && *s <= '9') ? *s - '0' : -1);
+        if (d < 0) break;
+        if (n >= (base == 16 ? 8 : 10)) return -1;       /* more digits than the width allows: never truncated */
+        v = v * (unsigned long long)base + (unsigned long long)d;
+    }
+    if (n == 0 || v > max) return -1;
+    if (*s != 0 && *s != ' ') return -1;                 /* a field ends at a space or the end, nothing else */
+    *out = v; *p = s;
+    return 0;
+}
+
+static int spaces(const char **p)                        /* one or more spaces; 0 when none */
+{
+    const char *s = *p;
+    if (*s != ' ') return 0;
+    while (*s == ' ') s++;
+    *p = s;
+    return 1;
+}
+
+static int word(const char **p, const char *w)
+{
+    size_t n = strlen(w);
+    if (strncmp(*p, w, n) != 0 || ((*p)[n] != ' ' && (*p)[n] != 0)) return 0;
+    *p += n;
+    return 1;
+}
+
 int b4q_parse_tx(const char *cmd, b4q_tx_command *out)
 {
-    char kindname[16];
-    unsigned long long g;
-    int n = 0, i, pos = 0, k;
-    const char *t;
+    const char *p = cmd;
+    unsigned long long v;
+    int i;
     memset(out, 0, sizeof *out);
-    if (strncmp(cmd, "TX ", 3) != 0) return -1;
-    if (sscanf(cmd + 3, "%15s %llx %d%n", kindname, &g, &n, &pos) != 3) return -1;
-    if (n < 0 || n > B4Q_MAX_STEPS) return -1;
-    out->genome = (uint32_t)g;
-    out->kind = strcmp(kindname, "root") == 0 ? B4Q_KIND_ROOT : strcmp(kindname, "inject") == 0 ? B4Q_KIND_INJECT : strcmp(kindname, "a5") == 0 ? B4Q_KIND_A5 : B4Q_KIND_NORMAL;
-    k = 3 + pos;
-    for (i = 0; i < n; i++) {
-        unsigned long long w; int q = 0;
-        if (sscanf(cmd + k, "%llx%n", &w, &q) != 1) return -1;
-        out->steps[i] = (uint32_t)w; k += q;
+    if (!word(&p, "TX") || !spaces(&p)) return -1;
+    if (word(&p, "normal")) out->kind = B4Q_KIND_NORMAL;
+    else if (word(&p, "root")) out->kind = B4Q_KIND_ROOT;
+    else if (word(&p, "inject")) out->kind = B4Q_KIND_INJECT;
+    else if (word(&p, "a5")) out->kind = B4Q_KIND_A5;
+    else return -1;                                      /* an unknown kind is refused, never defaulted */
+    if (!spaces(&p) || b4q_cmd_u32(&p, 16, 0xFFFFFFFFull, &v) != 0) return -1;
+    if (v & ~(unsigned long long)B4Q_GENOME_MASK) return -1;   /* only the 21 configuration bits may be set */
+    out->genome = (uint32_t)v;
+    if (!spaces(&p) || b4q_cmd_u32(&p, 10, B4Q_MAX_STEPS, &v) != 0) return -1;
+    out->n_steps = (int)v;
+    if (out->kind == B4Q_KIND_ROOT && out->n_steps != 0) return -1;
+    for (i = 0; i < out->n_steps; i++) {
+        if (!spaces(&p) || b4q_cmd_u32(&p, 16, B4Q_STEP_MASK, &v) != 0) return -1;
+        out->steps[i] = (uint32_t)v;
     }
-    out->n_steps = n;
-    t = strstr(cmd, " TASK ");
-    if (t) {
-        int m = 0, q = 0, j;
-        if (sscanf(t + 6, "%64s %d%n", out->task.digest, &m, &q) == 2 && m >= 0 && m <= B4Q_MAX_MASK) {
-            const char *p = t + 6 + q;
-            for (j = 0; j < m; j++) {
-                int s, e, tv, w, qq = 0;
-                if (sscanf(p, "%d %d %d %d%n", &s, &e, &tv, &w, &qq) != 4) break;
-                out->task.step[j] = (uint8_t)s; out->task.elem[j] = (uint8_t)e; out->task.target[j] = (uint8_t)tv; out->task.weight[j] = (uint16_t)w; p += qq;
+    {
+        const char *q = p;
+        if (spaces(&q) && word(&q, "TASK")) {
+            unsigned long long m;
+            int j;
+            p = q;
+            if (!spaces(&p)) return -1;
+            for (j = 0; j < 64; j++) if (hexval(p[j]) < 0) return -1;
+            if (p[64] != ' ') return -1;
+            memcpy(out->task.digest, p, 64); out->task.digest[64] = 0; p += 64;
+            if (!spaces(&p) || b4q_cmd_u32(&p, 10, B4Q_MAX_MASK, &m) != 0) return -1;
+            for (j = 0; j < (int)m; j++) {
+                unsigned long long s, e, tv, w;
+                if (!spaces(&p) || b4q_cmd_u32(&p, 10, (unsigned long long)out->n_steps, &s) != 0 || s == 0) return -1;   /* 1 .. n */
+                if (!spaces(&p) || b4q_cmd_u32(&p, 10, 7, &e) != 0) return -1;
+                if (!spaces(&p) || b4q_cmd_u32(&p, 10, 1, &tv) != 0) return -1;
+                if (!spaces(&p) || b4q_cmd_u32(&p, 10, 65535, &w) != 0) return -1;
+                out->task.step[j] = (uint8_t)s; out->task.elem[j] = (uint8_t)e; out->task.target[j] = (uint8_t)tv; out->task.weight[j] = (uint16_t)w;
             }
-            out->task.n = j;
+            out->task.n = (int)m;
         }
     }
-    return 0;
+    while (*p == ' ') p++;
+    return *p == 0 ? 0 : -1;                             /* nothing but trailing spaces after the grammar */
 }
 
 static size_t put(char *out, size_t max, size_t at, const char *s)
