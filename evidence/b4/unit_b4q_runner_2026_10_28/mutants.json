@@ -1,0 +1,264 @@
+{
+ "results": [
+  {
+   "id": "R1",
+   "file": "firmware/b4q/target/b4q_ring.c",
+   "what": "a compressed poll counted but the record not amended in place (the pulled log says 1 where the program polled many times)",
+   "verdict": "KILLED",
+   "note": "source: the PS log's window events (482) are not the emulation's trace (562) after its provisioning prefix",
+   "probe": "the emulated valid scenario retains the PS log beside the fake's trace: the verifier holds the two witnesses equal",
+   "seconds": 4.9
+  },
+  {
+   "id": "R2",
+   "file": "firmware/b4q/target/b4q_ring.c",
+   "what": "the digest over all but the last record (the board's digest is not of the bytes it exports)",
+   "verdict": "KILLED",
+   "note": "the scenario aborted on the guard: \u2026sion is halted: the pulled evidence log does not hash to the board's digest (0d9fd4709a16 vs c581bc3ac33b) \u2014 nothing further is signed without a ruling | ",
+   "probe": "the PS-source valid scenario halts on 'does not hash to the board's digest'",
+   "seconds": 0.9
+  },
+  {
+   "id": "R3",
+   "file": "firmware/b4q/target/b4q_ring.c",
+   "what": "a full log wraps to the start instead of stopping (silent loss)",
+   "verdict": "KILLED",
+   "note": "the TX after the overflow answered with status 0 (closed)",
+   "probe": "after the log overflows the application NACKs the next TX 'the evidence log is full' (the emulated-source host does not pull, so it sends one)",
+   "seconds": 2.8
+  },
+  {
+   "id": "A1",
+   "file": "firmware/b4q/target/b4q_app.c",
+   "what": "RING under-reports the log by one record (its digest still covers the whole: the host's digest check fires first)",
+   "verdict": "KILLED",
+   "note": "halted: the pulled evidence log does not hash to the board's digest (ae7fe49ef134 vs b102d07da171)",
+   "probe": "the PS-source opening halts on 'does not hash to the board's digest'",
+   "seconds": 0.7
+  },
+  {
+   "id": "A2",
+   "file": "firmware/b4q/target/b4q_app.c",
+   "what": "the RESULT's log position always 0 (the line no longer binds to the log)",
+   "verdict": "KILLED",
+   "note": "verify: console: the words of request 13 were never staged into PAYLOAD / TAG after the reply",
+   "probe": "the PS-source valid archive's verification finds 'never staged'",
+   "seconds": 5.2
+  },
+  {
+   "id": "A3",
+   "file": "firmware/b4q/target/b4q_app.c",
+   "what": "every CHUNK claims offset 0 (the host's offset check refuses it, bounded)",
+   "verdict": "KILLED",
+   "note": "halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks",
+   "probe": "the PS-source opening halts on 'too many bad chunks'",
+   "seconds": 0.5
+  },
+  {
+   "id": "A3b",
+   "file": "firmware/b4q/target/b4q_app.c",
+   "what": "PULL returns the first bytes whatever the offset (the chunk lines keep their offsets: the digest is the guard)",
+   "verdict": "KILLED",
+   "note": "halted: the pulled evidence log does not hash to the board's digest (d9183e057b51 vs 1da51a1140dc)",
+   "probe": "the PS-source opening halts on 'does not hash to the board's digest'",
+   "seconds": 0.5
+  },
+  {
+   "id": "A4",
+   "file": "firmware/b4q/target/b4q_app.c",
+   "what": "no export epilogue after the END (the log of a stopped session cannot be pulled)",
+   "verdict": "KILLED",
+   "note": "pulled 0 of the END's 368 bytes; halted='the session did not open: session_open: session_open.startup_readback_sha256: ba'",
+   "probe": "an END before the IDENT (a bad page) still has its log pulled through the export epilogue: the archive's source holds the END's bytes",
+   "seconds": 0.4
+  },
+  {
+   "id": "A5",
+   "file": "firmware/b4q/target/b4q_app.c",
+   "what": "a command after the END silently ignored instead of NACKed by name",
+   "verdict": "KILLED",
+   "note": "no NACK: the console closed",
+   "probe": "a TX after the END is NACKed 'ended: export only' (the epilogue admits exports and QUIT alone)",
+   "seconds": 0.7
+  },
+  {
+   "id": "A6",
+   "file": "firmware/b4q/target/b4q_app.c",
+   "what": "a TX admitted after the log overflowed (the transaction runs unobserved)",
+   "verdict": "KILLED",
+   "note": "the TX after the overflow answered with status 0 (closed)",
+   "probe": "after the log overflows the application NACKs the next TX 'the evidence log is full' (the emulated-source host does not pull, so it sends one)",
+   "seconds": 2.3
+  },
+  {
+   "id": "E1",
+   "file": "host/b4q_evidence_log.py",
+   "what": "a truncated tail silently dropped instead of refused",
+   "verdict": "KILLED",
+   "note": "a truncated tail parsed",
+   "probe": "the adapter refuses a truncated tail, a run outside the buffers and an unknown mark",
+   "seconds": 0.0
+  },
+  {
+   "id": "E2",
+   "file": "host/b4q_evidence_log.py",
+   "what": "a run record outside the buffers accepted",
+   "verdict": "KILLED",
+   "note": "a run record outside the buffers parsed",
+   "probe": "the adapter refuses a truncated tail, a run outside the buffers and an unknown mark",
+   "seconds": 0.0
+  },
+  {
+   "id": "E3",
+   "file": "host/b4q_evidence_log.py",
+   "what": "a staging followed by a later write into its envelope still reported as the submitted stream",
+   "verdict": "KILLED",
+   "note": "a stale staging reported as the submitted stream",
+   "probe": "a staging followed by another write into the same envelope is NOT the submitted stream (the 'untouched since' rule)",
+   "seconds": 0.0
+  },
+  {
+   "id": "E4",
+   "file": "host/b4q_evidence_log.py",
+   "what": "eight frames in any order hashed as a link-3 group",
+   "verdict": "KILLED",
+   "note": "an out-of-order octet hashed as a group",
+   "probe": "eight frames read back out of the pinned FAR order are not a link-3 group",
+   "seconds": 0.0
+  },
+  {
+   "id": "V1",
+   "file": "host/b4q_verify.py",
+   "what": "trace.jsonl no longer held to the derivation",
+   "verdict": "KILLED",
+   "note": "not found: refused=None agree=True findings=[]",
+   "probe": "the mutated valid archive is found: 'derivation'",
+   "seconds": 0.5
+  },
+  {
+   "id": "V2",
+   "file": "host/b4q_verify.py",
+   "what": "a raw log that is not the declared bytes accepted",
+   "verdict": "KILLED",
+   "note": "not refused by name: refused=None findings=[\"source: the raw log (123344 bytes, 9ec6696eaf14) is not the log the board's last RING reported (123344 bytes, 3f77a0692c43)\", \"source: the raw log is not the log the END reports (its digest differs at the END's position)\"]",
+   "probe": "the mutated valid archive is refused: 'not the bytes the manifest's source declares'",
+   "seconds": 0.5
+  },
+  {
+   "id": "V3",
+   "file": "host/b4q_verify.py",
+   "what": "a board archive verified as a host-only one",
+   "verdict": "KILLED",
+   "note": "not refused by name: refused=None findings=[]",
+   "probe": "the mutated valid archive is refused: 'uart-board'",
+   "seconds": 0.5
+  },
+  {
+   "id": "V4",
+   "file": "host/b4q_verify.py",
+   "what": "the raw log no longer held to the board's last RING",
+   "verdict": "KILLED",
+   "note": "not found: refused=None agree=False findings=[\"source: the raw log is not the log the END reports (its digest differs at the END's position)\", \"the raw log is not the log the END reports (its digest differs at the END's position)\"]",
+   "probe": "the mutated valid archive is found: 'last RING reported'",
+   "seconds": 0.5
+  },
+  {
+   "id": "V5",
+   "file": "host/b4q_verify.py",
+   "what": "the console positions no longer held to the board's log offsets",
+   "verdict": "KILLED",
+   "note": "not found: refused=None agree=True findings=[]",
+   "probe": "the mutated valid archive is found: 'position is not the board's log offset'",
+   "seconds": 0.5
+  },
+  {
+   "id": "V6",
+   "file": "host/b4q_verify.py",
+   "what": "a line noted as a banner trusted without its bytes (R1)",
+   "verdict": "KILLED",
+   "note": "not found: refused=None agree=False findings=['console: board HB at line 110: after the boot banner', 'console: board HB at line 111: after the boot banner']",
+   "probe": "the mutated valid archive is found: 'not one'",
+   "seconds": 0.5
+  },
+  {
+   "id": "V7",
+   "file": "host/b4q_verify.py",
+   "what": "a command after the END no longer owed its NACK (the epilogue's rule dropped)",
+   "verdict": "KILLED",
+   "note": "not found: refused=None agree=False findings=[\"source: 1 console line(s) whose trace / PCAP position is not the board's log offset mapped onto the derivation\", 'console: host line 393: sequence 179 after 4000: not fresh']",
+   "probe": "the mutated valid archive is found: 'never answered by a NACK'",
+   "seconds": 0.5
+  },
+  {
+   "id": "V8",
+   "file": "host/b4q_verify.py",
+   "what": "the manifest's source declaration no longer held to the raw log",
+   "verdict": "KILLED",
+   "note": "not found: refused=None agree=True findings=[]",
+   "probe": "the mutated valid archive is found: 'declares 1 records'",
+   "seconds": 0.5
+  },
+  {
+   "id": "N1",
+   "file": "host/b4q_runner.py",
+   "what": "a load witness mismatch no longer stops before go",
+   "verdict": "KILLED",
+   "note": "stop '' (expected 'load witness:'); opened=True",
+   "probe": "the runner scenario wrong_crc: stop 'load witness:' / opened False",
+   "seconds": 7.5
+  },
+  {
+   "id": "N2",
+   "file": "host/b4q_runner.py",
+   "what": "a page witness mismatch no longer stops before go",
+   "verdict": "KILLED",
+   "note": "stop 'no open session: nothing is signed before the session-opening record is open (co' (expected 'page witness:'); opened=False",
+   "probe": "the runner scenario page_witness_fails: stop 'page witness:' / opened False",
+   "seconds": 4.8
+  },
+  {
+   "id": "N3",
+   "file": "host/b4q_runner.py",
+   "what": "a boot banner mid-session no longer named as the cut",
+   "verdict": "KILLED",
+   "note": "expectations: ['verify rc 1 (expected 0): [\"source: the raw log (20640 bytes, 2ba18a117799) is not the log the board\\'s last RING reported (35104 bytes, e8e33237e970)\", \"source: the manifest\\'s source declares 1290 records / digest_equal=False; the raw log holds 1290 records\", \\'console: no END line and the session was not interrupted\\']', \"transport stop 'a boot banner on the console mid-session' not among ['the session is halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks \u2014 nothing further is signed without a ruling']\"]",
+   "probe": "the runner scenario reset_mid_session: stop None / opened None",
+   "seconds": 6.5
+  },
+  {
+   "id": "N4",
+   "file": "host/b4q_runner.py",
+   "what": "the silence bound removed (the host waits forever)",
+   "verdict": "KILLED",
+   "note": "TIMEOUT after 90 s (a hang: the bound removed IS the guard)",
+   "probe": "the runner scenario silence_mid_session: stop None / opened None",
+   "seconds": 90.1
+  },
+  {
+   "id": "S2",
+   "file": "host/b4q_console_session.py",
+   "what": "the host no longer halts on the board's overflow flag",
+   "verdict": "KILLED",
+   "note": "expectations: [\"verify rc 1 (expected 0): ['source: the board reports its log overflowed and the session did not halt on it']\"]",
+   "probe": "the runner scenario log_overflow: stop None / opened None",
+   "seconds": 3.4
+  },
+  {
+   "id": "A3+S1",
+   "verdict": "KILLED",
+   "what": "every CHUNK claims offset 0 AND the host's bad-chunk bound is removed: the pull re-asks forever (the bound IS the guard; observed as a hang)",
+   "note": "TIMEOUT after 60 s: the pull never ends (the bound removed IS the guard)",
+   "combined": [
+    "A3",
+    "S1"
+   ]
+  }
+ ],
+ "counts": {
+  "KILLED": 28,
+  "SURVIVED": 0,
+  "EDIT-MISS": 0,
+  "PROBE-ERROR": 0
+ },
+ "at": "2026-10-28T11:41:36Z"
+}

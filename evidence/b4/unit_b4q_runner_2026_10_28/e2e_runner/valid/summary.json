@@ -1,0 +1,209 @@
+{
+ "label": "B4Q-runner-valid",
+ "wall_s": 6.007,
+ "stop": null,
+ "opened": true,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    8,
+    93
+   ],
+   "pcap_range": [
+    48,
+    200
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000000",
+   "o": true,
+   "f": true,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    93,
+    248
+   ],
+   "pcap_range": [
+    200,
+    352
+   ]
+  },
+  {
+   "seq": 3,
+   "dir": "tx_003",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": true,
+   "f": true,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    248,
+    403
+   ],
+   "pcap_range": [
+    352,
+    504
+   ]
+  },
+  {
+   "seq": 4,
+   "dir": "tx_004",
+   "kind": "normal",
+   "genome_hex": "02011d",
+   "o": true,
+   "f": true,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    403,
+    558
+   ],
+   "pcap_range": [
+    504,
+    656
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "halted": null,
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 213,
+  "hb": 10,
+  "nacks": 0,
+  "sign_requests": 4,
+  "sign_replies": 4,
+  "transactions": 4,
+  "kicks": 213,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "",
+  "log": 123344,
+  "log_overflow": 0,
+  "log_records": 7709,
+  "log_sha256": "80d884511d0374184fc6420dc90b9b09f0c132d8a6aa1ec1efc787d4d6694b54"
+ },
+ "stats": {
+  "hb": 10,
+  "nack": 0,
+  "signreq": 4,
+  "signreply": 4,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 395,
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd33",
+  "equal": true,
+  "bytes": 98324,
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "seconds": 0.191
+  }
+ },
+ "page_witness": {
+  "nonce_md": "9e3779b97f4a7c15",
+  "equal": true
+ },
+ "source": {
+  "bytes": 123344,
+  "records": 7709,
+  "digest_equal": true
+ },
+ "transport_stops": [],
+ "ident": {
+  "protocol": "b4q-v2",
+  "token": "b7e50ee4b8d8910f80c4460cc9409600",
+  "uboot_epoch": 1700000000,
+  "app_image_sha_lo32": 1301847784,
+  "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "flags": 2,
+  "page_nonce_seen": "9e3779b97f4a7c15",
+  "page_status_seen": 0,
+  "nonce_echo_equal": 1,
+  "watchdog": "armed",
+  "log": 6816,
+  "log_capacity": 16777216,
+  "open": {
+   "status": 0,
+   "reason": "opened",
+   "idcode": 326246547,
+   "variant": 1110704129,
+   "timing": 1141116936,
+   "witness": 131584,
+   "status_word": 6400,
+   "heartbeat": 52,
+   "nonce": "9e3779b97f4a7c15",
+   "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
+  }
+ },
+ "log": {
+  "used": 123344,
+  "capacity": 16777216,
+  "overflow": 0,
+  "digest_equal": true
+ },
+ "pull_stats": {
+  "pulls": 6,
+  "chunks": 163,
+  "bad_chunks": 0
+ },
+ "stats_pull": {
+  "pulls": 7,
+  "chunks": 163,
+  "bad_chunks": 0
+ },
+ "tail_unobtainable": null,
+ "name": "valid",
+ "surrogate_args": [],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": [],
+ "expect": {
+  "opened": true,
+  "records": 4,
+  "closed": 4,
+  "verify": 0,
+  "digest_equal": true
+ },
+ "expect_failures": []
+}

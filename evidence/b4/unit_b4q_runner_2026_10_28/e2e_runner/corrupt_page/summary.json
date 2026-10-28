@@ -1,0 +1,105 @@
+{
+ "label": "B4Q-runner-corrupt_page",
+ "wall_s": 4.307,
+ "stop": {
+  "kind": "SessionRefusal",
+  "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)"
+ },
+ "opened": false,
+ "records": [],
+ "chain_findings": [
+  "session_open.startup_readback_sha256: bad value ''",
+  "chain: the session-opening record is malformed; no transaction can be bound to it"
+ ],
+ "halted": "the session did not open: session_open: session_open.startup_readback_sha256: bad value ''; session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'; session_open: no startup readback group in the PCAP log before the first record; session_open: the executing side refused to open: the session ended: STOPPED: the identity page does not parse (magic / layout / checksum / reserved)",
+ "end": {
+  "kind": "STOPPED",
+  "reason": "the identity page does not parse (magic / layout / checksum / reserved)",
+  "lines": 0,
+  "hb": 0,
+  "nacks": 0,
+  "sign_requests": 0,
+  "sign_replies": 0,
+  "transactions": 0,
+  "kicks": 0,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 0,
+  "opened": 0,
+  "halted": "",
+  "log": 368,
+  "log_overflow": 0,
+  "log_records": 23,
+  "log_sha256": "6f4b25f8d5067e41f01832e63966fd773a6a93813cadb60c3d88949a093c3b27"
+ },
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 0,
+  "signreply": 0,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 6,
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd33",
+  "equal": true,
+  "bytes": 98324,
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "seconds": 3.189
+  }
+ },
+ "page_witness": {
+  "nonce_md": "9e3779b97f4a7c15",
+  "equal": true
+ },
+ "source": {
+  "bytes": 368,
+  "records": 23,
+  "digest_equal": true
+ },
+ "transport_stops": [
+  {
+   "t": 1793191046.399,
+   "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
+   "kind": "SessionRefusal"
+  }
+ ],
+ "stats_pull": {
+  "pulls": 1,
+  "chunks": 1,
+  "bad_chunks": 0
+ },
+ "tail_unobtainable": null,
+ "name": "corrupt_page",
+ "surrogate_args": [
+  "--fault=corrupt-page"
+ ],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [
+  "session_open: session_open.startup_readback_sha256: bad value ''",
+  "session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'",
+  "session_open: no startup readback group in the PCAP log before the first record",
+  "session_open: the executing side refused to open: the session ended: STOPPED: the identity page does not parse (magic / layout / checksum / reserved)"
+ ],
+ "verify_limitations": [],
+ "expect": {
+  "opened": false,
+  "verify": 0,
+  "end_kind": "STOPPED",
+  "page_witness": true
+ },
+ "expect_failures": []
+}

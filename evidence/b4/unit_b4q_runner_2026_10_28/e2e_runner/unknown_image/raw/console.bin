@@ -1,0 +1,58 @@
+
+
+U-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)
+
+I2C:   ready
+Memory: ECC disabled
+DRAM:  256 MiB
+MMC:   zynq_sdhci: 0
+NAND:  128 MiB
+In:    serial
+Out:   serial
+Err:   serial
+Model: Ebang EBAZ4205 (surrogate)
+Net:   Gem.e000b000
+Hit any key to stop autoboot:  2 
+zynq-uboot> loady 02000000
+## Ready for binary (ymodem) download to 0x02000000 at 115200 bps...
+CCCxyzModem - CRC mode, 0(SOH)/97(STX)/0(CAN) packets, 0 retries
+## Total Size = 0x00018014 = 98324 Bytes
+zynq-uboot> crc32 02000000 18014
+crc32 for 02000000 ... 02018013 ==> f5d2dd33
+zynq-uboot> md.l 43c0202c 1
+43c0202c: 7f4a7c15    .|J.
+zynq-uboot> md.l 43c02030 1
+43c02030: 9e3779b9    .y7.
+zynq-uboot> mw.l 10440000 42345149 1
+zynq-uboot> mw.l 10440004 00000001 1
+zynq-uboot> mw.l 10440008 10975101 1
+zynq-uboot> mw.l 1044000c f7adfb5a 1
+zynq-uboot> mw.l 10440010 ff807ce5 1
+zynq-uboot> mw.l 10440014 83472705 1
+zynq-uboot> mw.l 10440018 6553f100 1
+zynq-uboot> mw.l 1044001c 4d989ee8 1
+zynq-uboot> mw.l 10440020 4e406f12 1
+zynq-uboot> mw.l 10440024 80d3cf5c 1
+zynq-uboot> mw.l 10440028 abf43d00 1
+zynq-uboot> mw.l 1044002c 1278ef3b 1
+zynq-uboot> mw.l 10440030 807a9ce4 1
+zynq-uboot> mw.l 10440034 a7d03644 1
+zynq-uboot> mw.l 10440038 5122f563 1
+zynq-uboot> mw.l 1044003c 6e3d18a9 1
+zynq-uboot> mw.l 10440040 7f4a7c15 1
+zynq-uboot> mw.l 10440044 9e3779b9 1
+zynq-uboot> mw.l 10440048 00000000 1
+zynq-uboot> mw.l 1044004c 00000002 1
+zynq-uboot> mw.l 10440050 00000000 1
+zynq-uboot> mw.l 10440054 00000000 1
+zynq-uboot> mw.l 10440058 00000000 1
+zynq-uboot> mw.l 1044005c 7fd5ffaa 1
+zynq-uboot> md.l 10440000 18
+10440000: 42345149 00000001 10975101 f7adfb5a    IQ4B.....Q..Z...
+10440010: ff807ce5 83472705 6553f100 4d989ee8    .|...'G...Se...M
+10440020: 4e406f12 80d3cf5c abf43d00 1278ef3b    .o@N\....=..;.x.
+10440030: 807a9ce4 a7d03644 5122f563 6e3d18a9    ..z.D6..c."Q..=n
+10440040: 7f4a7c15 9e3779b9 00000000 00000002    .|J..y7.........
+10440050: 00000000 00000000 00000000 7fd5ffaa    ................
+zynq-uboot> go 02000000
+## Starting application at 0x02000000 ...

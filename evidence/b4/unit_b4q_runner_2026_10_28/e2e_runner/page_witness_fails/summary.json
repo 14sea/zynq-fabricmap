@@ -1,0 +1,73 @@
+{
+ "label": "B4Q-runner-page_witness_fails",
+ "wall_s": 4.301,
+ "stop": {
+  "kind": "TransportStop",
+  "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)"
+ },
+ "opened": false,
+ "records": [],
+ "chain_findings": [
+  "no session_open record"
+ ],
+ "halted": null,
+ "end": null,
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 0,
+  "signreply": 0,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 3,
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd33",
+  "equal": true,
+  "bytes": 98324,
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "seconds": 3.21
+  }
+ },
+ "page_witness": {
+  "nonce_md": "9e3779b97f4a7c15",
+  "equal": false
+ },
+ "source": {
+  "bytes": 0,
+  "records": 0,
+  "digest_equal": false
+ },
+ "transport_stops": [
+  {
+   "t": 1793191051.031,
+   "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)",
+   "kind": "TransportStop"
+  }
+ ],
+ "stats_pull": null,
+ "tail_unobtainable": null,
+ "name": "page_witness_fails",
+ "surrogate_args": [
+  "--fault=corrupt-mw"
+ ],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": null,
+ "expect": {
+  "stop_prefix": "page witness:",
+  "opened": false
+ },
+ "expect_failures": []
+}

@@ -1,0 +1,81 @@
+{
+ "name": "interrupt",
+ "wall_s": 1.585,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 5,
+   "phase": "?",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    97,
+    150
+   ],
+   "pcap_range": [
+    204,
+    216
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 25882,
+ "end": null,
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 2,
+  "signreply": 2,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 16,
+ "halted": "transaction 2: no observation sealed (interrupted: the transport closed mid-transaction)",
+ "open_findings": [],
+ "platform_kicks": null,
+ "tx": {
+  "status": 5,
+  "reason": "interrupted: the transport closed mid-transaction",
+  "phase": "?",
+  "o": false,
+  "x": null,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ }
+}

@@ -1,0 +1,102 @@
+{
+ "name": "pre_event_corrupt",
+ "wall_s": 1.612,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    8,
+    93
+   ],
+   "pcap_range": [
+    48,
+    200
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 1,
+   "phase": "P2",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    93,
+    146
+   ],
+   "pcap_range": [
+    200,
+    252
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 29701,
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 80,
+  "hb": 2,
+  "nacks": 0,
+  "sign_requests": 2,
+  "sign_replies": 2,
+  "transactions": 2,
+  "kicks": 80,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)",
+  "log": 46208,
+  "log_overflow": 0,
+  "log_records": 2888,
+  "log_sha256": "ec3c3649006b8ffddc0467849ada1f5e33453d8eb92b7ac933ba2fde208ba3ce"
+ },
+ "stats": {
+  "hb": 2,
+  "nack": 0,
+  "signreq": 2,
+  "signreply": 2,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 153,
+ "halted": "transaction 2: no observation sealed (STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it))",
+ "open_findings": [],
+ "platform_kicks": 82,
+ "tx": {
+  "status": 1,
+  "reason": "STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)",
+  "phase": "P2",
+  "o": false,
+  "x": null,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ },
+ "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)) \u2014 nothing further is signed without a ruling"
+}

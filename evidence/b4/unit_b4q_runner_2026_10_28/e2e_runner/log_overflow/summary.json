@@ -1,0 +1,124 @@
+{
+ "label": "B4Q-runner-log_overflow",
+ "wall_s": 6.073,
+ "stop": {
+  "kind": "SessionRefusal",
+  "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling"
+ },
+ "opened": true,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet",
+    "the executing side reports a closed transaction but no observation was sealed",
+    "the executing side reports success but the records do not show a sealed complete O with a closed / injection_open X"
+   ],
+   "trace_range": [
+    8,
+    60
+   ],
+   "pcap_range": [
+    48,
+    85
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "halted": "the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed",
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 34,
+  "hb": 0,
+  "nacks": 0,
+  "sign_requests": 1,
+  "sign_replies": 1,
+  "transactions": 1,
+  "kicks": 34,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "",
+  "log": 16384,
+  "log_overflow": 1,
+  "log_records": 1024,
+  "log_sha256": "0b008bbb3d0e3df9e049c32f613974fa9ce67656ce8863c9f17c18c803dd5e2a"
+ },
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 1,
+  "signreply": 1,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 65,
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd33",
+  "equal": true,
+  "bytes": 98324,
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "seconds": 3.211
+  }
+ },
+ "page_witness": {
+  "nonce_md": "9e3779b97f4a7c15",
+  "equal": true
+ },
+ "source": {
+  "bytes": 16384,
+  "records": 1024,
+  "digest_equal": true
+ },
+ "transport_stops": [
+  {
+   "t": 1793191096.673,
+   "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling",
+   "kind": "SessionRefusal"
+  }
+ ],
+ "stats_pull": {
+  "pulls": 3,
+  "chunks": 22,
+  "bad_chunks": 0
+ },
+ "tail_unobtainable": null,
+ "name": "log_overflow",
+ "surrogate_args": [
+  "--fault=ring-bytes=16384"
+ ],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": [
+  "the board's log overflowed: the session halted on it by name; the records after the overflow are not the session's"
+ ],
+ "expect": {
+  "opened": true,
+  "verify": 0,
+  "halted": true
+ },
+ "expect_failures": []
+}

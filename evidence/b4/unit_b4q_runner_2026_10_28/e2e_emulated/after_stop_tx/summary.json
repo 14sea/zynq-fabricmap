@@ -1,0 +1,108 @@
+{
+ "name": "after_stop_tx",
+ "wall_s": 1.553,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 1,
+   "phase": "P1",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    97,
+    101
+   ],
+   "pcap_range": [
+    204,
+    204
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 22884,
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 16,
+  "hb": 0,
+  "nacks": 1,
+  "sign_requests": 2,
+  "sign_replies": 2,
+  "transactions": 2,
+  "kicks": 16,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 1,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "STOP_SIGN: the notary refused the candidate",
+  "log": 35168,
+  "log_overflow": 0,
+  "log_records": 2198,
+  "log_sha256": "ea0e4b7cfcf23945ad247afa21ca54b531a5f0a5425f124e5ee4e220de2f215f"
+ },
+ "stats": {
+  "hb": 0,
+  "nack": 1,
+  "signreq": 2,
+  "signreply": 2,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 24,
+ "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
+ "open_findings": [],
+ "platform_kicks": 17,
+ "failed": {
+  "status": 1,
+  "reason": "STOP_SIGN: the notary refused the candidate",
+  "phase": "P1",
+  "o": false,
+  "x": null,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ },
+ "api_refused": true,
+ "raw_next": {
+  "status": 7,
+  "reason": "the application refused the command: halted: STOP_SIGN: the notary refused the candidate: nothing further is signed without a ruling"
+ },
+ "new_signreqs": 0,
+ "new_trace_events": 0
+}

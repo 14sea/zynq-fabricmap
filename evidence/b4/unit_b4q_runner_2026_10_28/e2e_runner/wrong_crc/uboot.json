@@ -1,0 +1,60 @@
+{
+ "port": "/tmp/b4q-runner-e2e-887024-wrong_crc",
+ "port_real": "/dev/pts/8",
+ "kind": "console-pty-surrogate",
+ "image": "build/b4q_image/b4q_app_v2.bin",
+ "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+ "load_addr": 33554432,
+ "stops": [
+  {
+   "t": 1793191037.198,
+   "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)",
+   "kind": "TransportStop"
+  }
+ ],
+ "silence_s": 20.0,
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd32",
+  "equal": false,
+  "bytes": 98324,
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "seconds": 3.202
+  }
+ },
+ "uboot_steps": [
+  {
+   "what": "prompt",
+   "t": 1793191033.224,
+   "reply": "\r\n\r\nU-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\nNAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nzynq-uboot> ",
+   "banner_seen": true,
+   "ok": true
+  },
+  {
+   "what": "loady",
+   "t": 1793191033.979,
+   "sent": "loady 02000000",
+   "bytes": 98324,
+   "ymodem": {
+    "blocks": 97,
+    "retries": 0,
+    "naks": 0,
+    "seconds": 3.202
+   },
+   "reply": "xyzModem - CRC mode, 0(SOH)/97(STX)/0(CAN) packets, 0 retries\r\n## Total Size = 0x00018014 = 98324 Bytes\r\nzynq-uboot> ",
+   "total": 98324,
+   "ok": true
+  },
+  {
+   "what": "crc32",
+   "t": 1793191037.182,
+   "sent": "crc32 02000000 18014",
+   "reply": "crc32 for 02000000 ... 02018013 ==> f5d2dd32\r\n",
+   "ok": true,
+   "crc32": "f5d2dd32"
+  }
+ ]
+}

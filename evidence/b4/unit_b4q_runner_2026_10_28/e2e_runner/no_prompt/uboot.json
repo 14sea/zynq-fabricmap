@@ -1,0 +1,17 @@
+{
+ "steps": [
+  {
+   "what": "prompt",
+   "t": 1793191056.692,
+   "reply": "\r\n\r\nU-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\nNAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\nHit any key to stop autoboot:  2 \b\b\b\r\n",
+   "banner_seen": true,
+   "ok": false
+  }
+ ],
+ "stop": {
+  "kind": "TransportStop",
+  "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
+ },
+ "port": "/tmp/b4q-runner-e2e-887024-no_prompt",
+ "kind": "console-pty-surrogate"
+}

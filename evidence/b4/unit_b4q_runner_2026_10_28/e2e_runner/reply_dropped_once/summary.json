@@ -1,0 +1,135 @@
+{
+ "label": "B4Q-runner-reply_dropped_once",
+ "wall_s": 7.5,
+ "stop": null,
+ "opened": true,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    8,
+    93
+   ],
+   "pcap_range": [
+    48,
+    200
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    93,
+    248
+   ],
+   "pcap_range": [
+    200,
+    352
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "halted": null,
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 116,
+  "hb": 9,
+  "nacks": 0,
+  "sign_requests": 3,
+  "sign_replies": 2,
+  "transactions": 2,
+  "kicks": 116,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "",
+  "log": 64416,
+  "log_overflow": 0,
+  "log_records": 4026,
+  "log_sha256": "34f40cb27181ac603ea17077c2024e40f48dc3c543c2dddeed3f7b52d4c8bb7f"
+ },
+ "stats": {
+  "hb": 9,
+  "nack": 0,
+  "signreq": 3,
+  "signreply": 2,
+  "corrupted": 0,
+  "dropped": 1,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 214,
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd33",
+  "equal": true,
+  "bytes": 98324,
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "seconds": 3.202
+  }
+ },
+ "page_witness": {
+  "nonce_md": "9e3779b97f4a7c15",
+  "equal": true
+ },
+ "source": {
+  "bytes": 64416,
+  "records": 4026,
+  "digest_equal": true
+ },
+ "transport_stops": [],
+ "tx": {
+  "status": 0,
+  "reason": "closed",
+  "phase": "",
+  "o": true,
+  "x": "closed",
+  "findings": []
+ },
+ "stats_pull": {
+  "pulls": 4,
+  "chunks": 85,
+  "bad_chunks": 0
+ },
+ "tail_unobtainable": null,
+ "name": "reply_dropped_once",
+ "surrogate_args": [],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": [],
+ "expect": {
+  "opened": true,
+  "verify": 0
+ },
+ "expect_failures": []
+}

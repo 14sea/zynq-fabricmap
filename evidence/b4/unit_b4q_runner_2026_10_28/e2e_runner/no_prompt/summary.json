@@ -1,0 +1,25 @@
+{
+ "label": "B4Q-runner-no_prompt",
+ "wall_s": 4.726,
+ "stop": {
+  "kind": "TransportStop",
+  "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
+ },
+ "opened": false,
+ "records": [],
+ "stats_pull": null,
+ "tail_unobtainable": null,
+ "name": "no_prompt",
+ "surrogate_args": [
+  "--fault=no-prompt"
+ ],
+ "verify_rc": null,
+ "verify_agree": null,
+ "verify_session": null,
+ "verify_limitations": null,
+ "expect": {
+  "stop_prefix": "no U-Boot prompt",
+  "opened": false
+ },
+ "expect_failures": []
+}

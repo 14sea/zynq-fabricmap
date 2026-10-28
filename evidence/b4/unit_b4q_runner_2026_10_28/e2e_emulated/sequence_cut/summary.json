@@ -1,0 +1,83 @@
+{
+ "name": "sequence_cut",
+ "wall_s": 1.121,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": null,
+   "o_status": "complete",
+   "executing_side_status": 6,
+   "phase": "?",
+   "findings": [
+    "no transaction close: no transaction close: the acquisition never reached the P6 seal (open)"
+   ],
+   "trace_range": [
+    12,
+    80
+   ],
+   "pcap_range": [
+    48,
+    150
+   ]
+  }
+ ],
+ "chain_findings": [
+  "chain[0]: no transaction close; the chain ends here"
+ ],
+ "accesses": 16099,
+ "end": {
+  "kind": "PROTOCOL",
+  "reason": "this side's line sequence is exhausted",
+  "lines": 6,
+  "hb": 0,
+  "nacks": 0,
+  "sign_requests": 1,
+  "sign_replies": 1,
+  "transactions": 1,
+  "kicks": 6,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "",
+  "log": 24464,
+  "log_overflow": 0,
+  "log_records": 1529,
+  "log_sha256": "7a88ed4733207a87c41bcbadc7225a41239ec0c585fa92ccc1d35dccb6d08944"
+ },
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 1,
+  "signreply": 1,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 9,
+ "halted": "transaction 1: not closed (no X; the session ended: PROTOCOL: this side's line sequence is exhausted)",
+ "open_findings": [],
+ "platform_kicks": 7,
+ "tx": {
+  "status": 6,
+  "reason": "the session ended: PROTOCOL: this side's line sequence is exhausted",
+  "o": true
+ },
+ "end_trace_index": 80,
+ "writes_after_end": 0,
+ "reads_after_end": 0,
+ "submits_after_end": 0,
+ "trace_events_in_tx": 68,
+ "mmio_after_end": 1
+}

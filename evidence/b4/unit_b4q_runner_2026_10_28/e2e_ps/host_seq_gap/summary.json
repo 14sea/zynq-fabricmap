@@ -1,0 +1,98 @@
+{
+ "name": "host_seq_gap",
+ "wall_s": 2.443,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    8,
+    93
+   ],
+   "pcap_range": [
+    48,
+    200
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    93,
+    248
+   ],
+   "pcap_range": [
+    200,
+    352
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 41186,
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 110,
+  "hb": 4,
+  "nacks": 0,
+  "sign_requests": 2,
+  "sign_replies": 2,
+  "transactions": 2,
+  "kicks": 110,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "",
+  "log": 64416,
+  "log_overflow": 0,
+  "log_records": 4026,
+  "log_sha256": "af85a5a163d9e06d194764e8777ed057a62a9847917623180f2a60b39802168b"
+ },
+ "stats": {
+  "hb": 4,
+  "nack": 0,
+  "signreq": 2,
+  "signreply": 2,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 207,
+ "halted": null,
+ "open_findings": [],
+ "platform_kicks": 112,
+ "tx": {
+  "status": 0,
+  "reason": "closed",
+  "phase": "",
+  "o": true,
+  "x": "closed",
+  "findings": []
+ },
+ "host_seq_last": 302
+}

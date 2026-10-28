@@ -1,0 +1,120 @@
+{
+ "label": "B4Q-runner-devc_never",
+ "wall_s": 10.124,
+ "stop": {
+  "kind": "SessionRefusal",
+  "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling"
+ },
+ "opened": true,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 1,
+   "phase": "P2",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    8,
+    61
+   ],
+   "pcap_range": [
+    48,
+    50
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "halted": "transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted)",
+ "end": {
+  "kind": "COMPLETED",
+  "reason": "the host closed the session",
+  "lines": 29,
+  "hb": 5,
+  "nacks": 0,
+  "sign_requests": 1,
+  "sign_replies": 1,
+  "transactions": 1,
+  "kicks": 29,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "STOP_DMA: DEVCFG D_P_DONE never asserted",
+  "log": 11536,
+  "log_overflow": 0,
+  "log_records": 721,
+  "log_sha256": "9be0f73baeb92b6041c2fd2a274c9187b78b486482f5538bbc6f1716a5bde3ab"
+ },
+ "stats": {
+  "hb": 5,
+  "nack": 0,
+  "signreq": 1,
+  "signreply": 1,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 54,
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd33",
+  "equal": true,
+  "bytes": 98324,
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "seconds": 3.213
+  }
+ },
+ "page_witness": {
+  "nonce_md": "9e3779b97f4a7c15",
+  "equal": true
+ },
+ "source": {
+  "bytes": 11536,
+  "records": 721,
+  "digest_equal": true
+ },
+ "transport_stops": [
+  {
+   "t": 1793191106.672,
+   "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling",
+   "kind": "SessionRefusal"
+  }
+ ],
+ "stats_pull": {
+  "pulls": 3,
+  "chunks": 16,
+  "bad_chunks": 0
+ },
+ "tail_unobtainable": null,
+ "name": "devc_never",
+ "surrogate_args": [
+  "--devc-fault=env:1:never"
+ ],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": [],
+ "expect": {
+  "opened": true,
+  "verify": 0,
+  "halted": true
+ },
+ "expect_failures": []
+}

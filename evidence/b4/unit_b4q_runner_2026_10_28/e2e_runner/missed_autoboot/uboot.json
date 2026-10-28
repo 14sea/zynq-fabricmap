@@ -1,0 +1,17 @@
+{
+ "steps": [
+  {
+   "what": "prompt",
+   "t": 1793191051.667,
+   "reply": " (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\nNAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\nHit any key to stop autoboot:  2 \b\b\b 1 \b\b\b 0 \r\n\r\nNAND read: device 0 offset 0x300000, size 0x500000\r\n 5242880 bytes read: OK\r\n## Booting kernel from Legacy Image at 03000000 ...\r\n   Image Name:   Linux-3.x (surrogate)\r\n   Verifying Checksum ... OK\r\n   Loading Kernel Image ... OK\r\n\r\nStarting kernel ...\r\n\r\n[    0.000000] Booting Linux on physical CPU 0x0 (surrogate)\r\n",
+   "banner_seen": true,
+   "ok": false
+  }
+ ],
+ "stop": {
+  "kind": "TransportStop",
+  "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
+ },
+ "port": "/tmp/b4q-runner-e2e-887024-missed_autoboot",
+ "kind": "console-pty-surrogate"
+}

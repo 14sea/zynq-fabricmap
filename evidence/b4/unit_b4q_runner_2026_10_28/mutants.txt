@@ -1,0 +1,30 @@
+R1 KILLED — a compressed poll counted but the record not amended in place (the pulled log says 1 where the program polled many times): source: the PS log's window events (482) are not the emulation's trace (562) after its provisioning prefix
+R2 KILLED — the digest over all but the last record (the board's digest is not of the bytes it exports): the scenario aborted on the guard: …sion is halted: the pulled evidence log does not hash to the board's digest (0d9fd4709a16 vs c581bc3ac33b) — nothing further
+R3 KILLED — a full log wraps to the start instead of stopping (silent loss): the TX after the overflow answered with status 0 (closed)
+A1 KILLED — RING under-reports the log by one record (its digest still covers the whole: the host's digest check fires first): halted: the pulled evidence log does not hash to the board's digest (ae7fe49ef134 vs b102d07da171)
+A2 KILLED — the RESULT's log position always 0 (the line no longer binds to the log): verify: console: the words of request 13 were never staged into PAYLOAD / TAG after the reply
+A3 KILLED — every CHUNK claims offset 0 (the host's offset check refuses it, bounded): halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks
+A3b KILLED — PULL returns the first bytes whatever the offset (the chunk lines keep their offsets: the digest is the guard): halted: the pulled evidence log does not hash to the board's digest (d9183e057b51 vs 1da51a1140dc)
+A4 KILLED — no export epilogue after the END (the log of a stopped session cannot be pulled): pulled 0 of the END's 368 bytes; halted='the session did not open: session_open: session_open.startup_readback_sha256: ba'
+A5 KILLED — a command after the END silently ignored instead of NACKed by name: no NACK: the console closed
+A6 KILLED — a TX admitted after the log overflowed (the transaction runs unobserved): the TX after the overflow answered with status 0 (closed)
+E1 KILLED — a truncated tail silently dropped instead of refused: a truncated tail parsed
+E2 KILLED — a run record outside the buffers accepted: a run record outside the buffers parsed
+E3 KILLED — a staging followed by a later write into its envelope still reported as the submitted stream: a stale staging reported as the submitted stream
+E4 KILLED — eight frames in any order hashed as a link-3 group: an out-of-order octet hashed as a group
+V1 KILLED — trace.jsonl no longer held to the derivation: not found: refused=None agree=True findings=[]
+V2 KILLED — a raw log that is not the declared bytes accepted: not refused by name: refused=None findings=["source: the raw log (123344 bytes, 9ec6696eaf14) is not the log the board's last RING reported (123344 bytes, 3f77a
+V3 KILLED — a board archive verified as a host-only one: not refused by name: refused=None findings=[]
+V4 KILLED — the raw log no longer held to the board's last RING: not found: refused=None agree=False findings=["source: the raw log is not the log the END reports (its digest differs at the END's position)", "the raw log is n
+V5 KILLED — the console positions no longer held to the board's log offsets: not found: refused=None agree=True findings=[]
+V6 KILLED — a line noted as a banner trusted without its bytes (R1): not found: refused=None agree=False findings=['console: board HB at line 110: after the boot banner', 'console: board HB at line 111: after the boot banner']
+V7 KILLED — a command after the END no longer owed its NACK (the epilogue's rule dropped): not found: refused=None agree=False findings=["source: 1 console line(s) whose trace / PCAP position is not the board's log offset mapped onto the derivation", 
+V8 KILLED — the manifest's source declaration no longer held to the raw log: not found: refused=None agree=True findings=[]
+N1 KILLED — a load witness mismatch no longer stops before go: stop '' (expected 'load witness:'); opened=True
+N2 KILLED — a page witness mismatch no longer stops before go: stop 'no open session: nothing is signed before the session-opening record is open (co' (expected 'page witness:'); opened=False
+N3 KILLED — a boot banner mid-session no longer named as the cut: expectations: ['verify rc 1 (expected 0): ["source: the raw log (20640 bytes, 2ba18a117799) is not the log the board\'s last RING reported (35104 bytes, e8e3323
+N4 KILLED — the silence bound removed (the host waits forever): TIMEOUT after 90 s (a hang: the bound removed IS the guard)
+S2 KILLED — the host no longer halts on the board's overflow flag: expectations: ["verify rc 1 (expected 0): ['source: the board reports its log overflowed and the session did not halt on it']"]
+A3+S1 KILLED — every CHUNK claims offset 0 AND the host's bad-chunk bound is removed: the pull re-asks forever (the bound IS the guard; observed as a hang): TIMEOUT after 60 s: the pull never ends (the bound removed IS the guard)
+TOTAL killed 28 survived 0 edit-miss 0 probe-error 0 of 28
+rc=0

@@ -1,0 +1,338 @@
+{
+ "port": "/tmp/b4q-runner-e2e-887024-silent_host",
+ "port_real": "/dev/pts/8",
+ "kind": "console-pty-surrogate",
+ "image": "build/b4q_image/b4q_app_v2.bin",
+ "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+ "load_addr": 33554432,
+ "stops": [],
+ "silence_s": 20.0,
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd33",
+  "equal": true,
+  "bytes": 98324,
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "seconds": 3.204
+  }
+ },
+ "page_witness": {
+  "nonce_md": "9e3779b97f4a7c15",
+  "written": [
+   "42345149",
+   "00000001",
+   "ac465e7d",
+   "fdb6c4c1",
+   "498ab48a",
+   "36e19deb",
+   "6553f100",
+   "4d989ee8",
+   "4e406f12",
+   "80d3cf5c",
+   "abf43d00",
+   "1278ef3b",
+   "807a9ce4",
+   "a7d03644",
+   "5122f563",
+   "6e3d18a9",
+   "7f4a7c15",
+   "9e3779b9",
+   "00000000",
+   "00000002",
+   "00000000",
+   "00000000",
+   "00000000",
+   "cab3bdcc"
+  ],
+  "read_back": [
+   "42345149",
+   "00000001",
+   "ac465e7d",
+   "fdb6c4c1",
+   "498ab48a",
+   "36e19deb",
+   "6553f100",
+   "4d989ee8",
+   "4e406f12",
+   "80d3cf5c",
+   "abf43d00",
+   "1278ef3b",
+   "807a9ce4",
+   "a7d03644",
+   "5122f563",
+   "6e3d18a9",
+   "7f4a7c15",
+   "9e3779b9",
+   "00000000",
+   "00000002",
+   "00000000",
+   "00000000",
+   "00000000",
+   "cab3bdcc"
+  ],
+  "equal": true
+ },
+ "uboot_steps": [
+  {
+   "what": "prompt",
+   "t": 1793190954.678,
+   "reply": "\r\n\r\nU-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\nNAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nzynq-uboot> ",
+   "banner_seen": true,
+   "ok": true
+  },
+  {
+   "what": "loady",
+   "t": 1793190955.402,
+   "sent": "loady 02000000",
+   "bytes": 98324,
+   "ymodem": {
+    "blocks": 97,
+    "retries": 0,
+    "naks": 0,
+    "seconds": 3.204
+   },
+   "reply": "xyzModem - CRC mode, 0(SOH)/97(STX)/0(CAN) packets, 0 retries\r\n## Total Size = 0x00018014 = 98324 Bytes\r\nzynq-uboot> ",
+   "total": 98324,
+   "ok": true
+  },
+  {
+   "what": "crc32",
+   "t": 1793190958.607,
+   "sent": "crc32 02000000 18014",
+   "reply": "crc32 for 02000000 ... 02018013 ==> f5d2dd33\r\n",
+   "ok": true,
+   "crc32": "f5d2dd33"
+  },
+  {
+   "what": "md.l",
+   "t": 1793190958.621,
+   "sent": "md.l 43c0202c 1",
+   "reply": "43c0202c: 7f4a7c15    .|J.\r\n",
+   "ok": true,
+   "words": [
+    "7f4a7c15"
+   ]
+  },
+  {
+   "what": "md.l",
+   "t": 1793190958.622,
+   "sent": "md.l 43c02030 1",
+   "reply": "43c02030: 9e3779b9    .y7.\r\n",
+   "ok": true,
+   "words": [
+    "9e3779b9"
+   ]
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.622,
+   "sent": "mw.l 10440000 42345149 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.622,
+   "sent": "mw.l 10440004 00000001 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.622,
+   "sent": "mw.l 10440008 ac465e7d 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.623,
+   "sent": "mw.l 1044000c fdb6c4c1 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.623,
+   "sent": "mw.l 10440010 498ab48a 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.623,
+   "sent": "mw.l 10440014 36e19deb 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.623,
+   "sent": "mw.l 10440018 6553f100 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.624,
+   "sent": "mw.l 1044001c 4d989ee8 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.624,
+   "sent": "mw.l 10440020 4e406f12 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.624,
+   "sent": "mw.l 10440024 80d3cf5c 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.624,
+   "sent": "mw.l 10440028 abf43d00 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.625,
+   "sent": "mw.l 1044002c 1278ef3b 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.625,
+   "sent": "mw.l 10440030 807a9ce4 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.626,
+   "sent": "mw.l 10440034 a7d03644 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.626,
+   "sent": "mw.l 10440038 5122f563 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.626,
+   "sent": "mw.l 1044003c 6e3d18a9 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.626,
+   "sent": "mw.l 10440040 7f4a7c15 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.627,
+   "sent": "mw.l 10440044 9e3779b9 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.627,
+   "sent": "mw.l 10440048 00000000 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.627,
+   "sent": "mw.l 1044004c 00000002 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.628,
+   "sent": "mw.l 10440050 00000000 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.629,
+   "sent": "mw.l 10440054 00000000 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.629,
+   "sent": "mw.l 10440058 00000000 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "mw.l",
+   "t": 1793190958.629,
+   "sent": "mw.l 1044005c cab3bdcc 1",
+   "reply": "",
+   "ok": true
+  },
+  {
+   "what": "md.l",
+   "t": 1793190958.63,
+   "sent": "md.l 10440000 18",
+   "reply": "10440000: 42345149 00000001 ac465e7d fdb6c4c1    IQ4B....}^F.....\r\n10440010: 498ab48a 36e19deb 6553f100 4d989ee8    ...I...6..Se...M\r\n10440020: 4e406f12 80d3cf5c abf43d00 1278ef3b    .o@N\\....=..;.x.\r\n10440030: 807a9ce4 a7d03644 5122f563 6e3d18a9    ..z.D6..c.\"Q..=n\r\n10440040: 7f4a7c15 9e3779b9 00000000 00000002    .|J..y7.........\r\n10440050: 00000000 00000000 00000000 cab3bdcc    ................\r\n",
+   "ok": true,
+   "words": [
+    "42345149",
+    "00000001",
+    "ac465e7d",
+    "fdb6c4c1",
+    "498ab48a",
+    "36e19deb",
+    "6553f100",
+    "4d989ee8",
+    "4e406f12",
+    "80d3cf5c",
+    "abf43d00",
+    "1278ef3b",
+    "807a9ce4",
+    "a7d03644",
+    "5122f563",
+    "6e3d18a9",
+    "7f4a7c15",
+    "9e3779b9",
+    "00000000",
+    "00000002",
+    "00000000",
+    "00000000",
+    "00000000",
+    "cab3bdcc"
+   ]
+  },
+  {
+   "what": "go",
+   "t": 1793190958.631,
+   "sent": "go 02000000",
+   "reply": "go 02000000\r\n## Starting application at 0x02000000 ...\r\n",
+   "ok": true
+  }
+ ]
+}

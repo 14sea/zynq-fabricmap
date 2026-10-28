@@ -1,0 +1,129 @@
+{
+ "label": "B4Q-runner-sequence_cut",
+ "wall_s": 5.53,
+ "stop": null,
+ "opened": true,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 6,
+   "phase": "?",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    8,
+    8
+   ],
+   "pcap_range": [
+    48,
+    48
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "halted": "transaction 1: no observation sealed (the session ended: PROTOCOL: this side's line sequence is exhausted)",
+ "end": {
+  "kind": "PROTOCOL",
+  "reason": "this side's line sequence is exhausted",
+  "lines": 16,
+  "hb": 0,
+  "nacks": 0,
+  "sign_requests": 1,
+  "sign_replies": 1,
+  "transactions": 1,
+  "kicks": 16,
+  "flushed": 0,
+  "stale_frames": 0,
+  "refused_tx": 0,
+  "watchdog_armed": 1,
+  "opened": 1,
+  "halted": "",
+  "log": 24464,
+  "log_overflow": 0,
+  "log_records": 1529,
+  "log_sha256": "5cf2317bd3b38b4ed68a48f3e14c07b759a0cdafea78e21b43cdaa5472dc1a5d"
+ },
+ "stats": {
+  "hb": 0,
+  "nack": 0,
+  "signreq": 1,
+  "signreply": 1,
+  "corrupted": 0,
+  "dropped": 0,
+  "garbage": 0,
+  "wrong_token": 0,
+  "stale": 0,
+  "stale_board": 0,
+  "refused_halted": 0,
+  "replayed": 0
+ },
+ "console_lines": 30,
+ "load_witness": {
+  "host_crc32": "f5d2dd33",
+  "uboot_crc32": "f5d2dd33",
+  "equal": true,
+  "bytes": 98324,
+  "ymodem": {
+   "blocks": 97,
+   "retries": 0,
+   "naks": 0,
+   "seconds": 3.211
+  }
+ },
+ "page_witness": {
+  "nonce_md": "9e3779b97f4a7c15",
+  "equal": true
+ },
+ "source": {
+  "bytes": 6816,
+  "records": 426,
+  "digest_equal": true
+ },
+ "transport_stops": [],
+ "tx": {
+  "status": 6,
+  "reason": "the session ended: PROTOCOL: this side's line sequence is exhausted",
+  "o": false
+ },
+ "end_trace_index": 8,
+ "writes_after_end": 0,
+ "reads_after_end": 0,
+ "submits_after_end": 0,
+ "trace_events_in_tx": 0,
+ "mmio_after_end": null,
+ "stats_pull": {
+  "pulls": 1,
+  "chunks": 9,
+  "bad_chunks": 0
+ },
+ "tail_unobtainable": {
+  "why": "the terminal END (the executing side's sequence is exhausted): no export epilogue exists after it",
+  "end_log": 24464,
+  "pulled": 6816
+ },
+ "name": "sequence_cut",
+ "surrogate_args": [
+  "--image-table=4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b=/home/test/zynq_fabricmap/build/b4q_firmware/b4q_seqcut_twin"
+ ],
+ "verify_rc": 0,
+ "verify_agree": true,
+ "verify_session": [],
+ "verify_limitations": [
+  "the terminal END leaves 17648 log bytes unobtainable (no export epilogue after the exhausted sequence): the session's last transaction has no PS evidence"
+ ],
+ "expect": {
+  "opened": true,
+  "verify": 0,
+  "end_kind": "PROTOCOL",
+  "tail_unobtainable": true
+ },
+ "expect_failures": []
+}
