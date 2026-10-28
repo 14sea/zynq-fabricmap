@@ -1,10 +1,10 @@
 {
  "schema": "b4q_build_evidence",
  "schema_version": "1.0.0",
- "at": "2026-10-28T063433Z",
+ "at": "2026-10-28T074800Z",
  "standing": "a host-only build record: the image was COMPILED, never loaded on a board; nothing here is on-target evidence",
  "git": {
-  "head": "c96edce11071aa362e0a5d6f1fca5ca6a6760f5b",
+  "head": "e32e0d1fcf4a8f7cfa043b511b877d3c8c360bb7",
   "worktree_dirty": true
  },
  "inputs_available": {
@@ -22,8 +22,8 @@
   "target/b4q_board_main.c": "efca46089a94091a1e5d3caadb2ec9e375546c26e3ef6a1c5b092b05bdc2b6d5",
   "target/b4q_board_hal.c": "52a41f9de09dbc890a25a76a2fd656a088b3977ded413d30c7a462e272ce20d6",
   "target/b4q_board_console.c": "bf4c2fa1d7276c1c6223656d5681b56b5e6a96ed5db4bd1233b5ee35e01ccb18",
-  "target/b4q_app.c": "8712cb3e4797fe959f154e47ea7ab47599100a84877f1da68fbf5fae4f0c7e15",
-  "target/b4q_app.h": "6a18791b2651364b512b75ad1365e1afc5f6cc9c45002f7f989f055ffe129a7e",
+  "target/b4q_app.c": "af79ac25420e95e2d21411e6de2e65df9eba6a760378e0ce01082cd607a23d2a",
+  "target/b4q_app.h": "1d24d3cde970adc36d7bb7eb7d32b2e3907f011f9c4f63bea9c4f6fd1b4260ff",
   "target/b4q_wire.c": "7d976893da836d47371927cc57d30889b227023e3771df62c385f3399189698b",
   "target/b4q_wire.h": "2b2e88f2c2fc50f67e5d791dd8be645abf5910d2e43bf48d846c7b7159771e26",
   "target/b4q_psmap.c": "8a4f7ad78cf5b187bf7d2ffc683f2e20991dcabf7acb02083932fa4d3a2d0611",
@@ -113,7 +113,7 @@
    "/home/test/zynq_fabricmap/firmware/b4q/b4q_derive.c": "63c2206b8e43b393ac33ca90da429b40c4c2e2bc167248d61012c3ddbd44f4d6",
    "/home/test/zynq_fabricmap/firmware/b4q/b4q_tx.c": "2e7891d4e21b7ad1bb01778b765ed76ddc38b91d8664eb3db73a3b60f2b8156a",
    "/home/test/zynq_fabricmap/firmware/b4q/bsp/src/console.c": "fb9ebd5e22de514d13e85a6b4ef246796da0b2b75b9a0d9c2b87913ca4858b83",
-   "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_app.c": "8712cb3e4797fe959f154e47ea7ab47599100a84877f1da68fbf5fae4f0c7e15",
+   "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_app.c": "af79ac25420e95e2d21411e6de2e65df9eba6a760378e0ce01082cd607a23d2a",
    "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_board_console.c": "bf4c2fa1d7276c1c6223656d5681b56b5e6a96ed5db4bd1233b5ee35e01ccb18",
    "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_board_hal.c": "52a41f9de09dbc890a25a76a2fd656a088b3977ded413d30c7a462e272ce20d6",
    "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_board_main.c": "efca46089a94091a1e5d3caadb2ec9e375546c26e3ef6a1c5b092b05bdc2b6d5",
@@ -156,7 +156,7 @@
    "/home/test/zynq_fabricmap/firmware/b4q/bsp/include/bspconfig.h": "06307d4353e828e6be911e20a5e508fbf8139bf7fb50cf443e832fb82bd91617",
    "/home/test/zynq_fabricmap/firmware/b4q/bsp/include/xmem_config.h": "5c0e0747268b8c7b46258559987659fca77f147f828873aff2e31e38274ba1bc",
    "/home/test/zynq_fabricmap/firmware/b4q/bsp/include/xparameters.h": "04e7da5c306dcb8596da3d20a51472cd33b167d5d197b90de9558bec150ec522",
-   "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_app.h": "6a18791b2651364b512b75ad1365e1afc5f6cc9c45002f7f989f055ffe129a7e",
+   "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_app.h": "1d24d3cde970adc36d7bb7eb7d32b2e3907f011f9c4f63bea9c4f6fd1b4260ff",
    "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_console.h": "a15f3098f3c5b36563eab77e1ea181cf077cafd81a1e040ca7f34520b52c07db",
    "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_platform.h": "a5af2ed223d1e85f026fd00854e5c4f973040f408189d693b636181a435775ac",
    "/home/test/zynq_fabricmap/firmware/b4q/target/b4q_psmap.h": "842676811f7c41a7874f5e3ec4cc8a5804aa15bd989b8eea97f7186a552abc29",
@@ -311,10 +311,10 @@
  },
  "image": {
   "path": "build/b4q_image/b4q_app.bin",
-  "sha256": "f50930a19981c13e16351582a2fc353cab7fdcc2bd3bba2f205e565452ea8c63",
+  "sha256": "ee7076a03d602ad1025fb698d213f98a111449d623012a29c3147e0d7e867770",
   "bytes": 98324,
-  "elf_sha256": "80b1ab935020f2c94cb47764e886360cd945b502050ca4c46afcbcfb75ba231d",
-  "map_sha256": "8ea7b13968deeca57f2d2b32c4d3f1af432560a4011ef67739e3f1b7de5bb9a1",
+  "elf_sha256": "118311036fd2bdc6763729a6a0a3ee89cfa9d70dd719102310fe8ccf1fdfefde",
+  "map_sha256": "d7365b6b1dbbc31e059d4b09cf7933e38718298882cf842da167b88e0c14d510",
   "layout": {
    "entry": "0x20000cc",
    "program_headers": [
@@ -332,8 +332,8 @@
      "offset": "0x001000",
      "vaddr": "0x02000000",
      "paddr": "0x02000000",
-     "filesz": "0x10c24",
-     "memsz": "0x10c24",
+     "filesz": "0x10e94",
+     "memsz": "0x10e94",
      "flags": "RWE"
     },
     {
@@ -342,7 +342,7 @@
      "vaddr": "0x02014000",
      "paddr": "0x02014000",
      "filesz": "0x04014",
-     "memsz": "0x118ee0",
+     "memsz": "0x119170",
      "flags": "RW"
     }
    ],
@@ -351,30 +351,30 @@
      "name": ".text",
      "type": "PROGBITS",
      "addr": "02000000",
-     "size": "00d9bc"
+     "size": "00dc2c"
     },
     {
      "name": ".init",
      "type": "PROGBITS",
-     "addr": "0200d9bc",
+     "addr": "0200dc2c",
      "size": "00000c"
     },
     {
      "name": ".fini",
      "type": "PROGBITS",
-     "addr": "0200d9c8",
+     "addr": "0200dc38",
      "size": "00000c"
     },
     {
      "name": ".rodata",
      "type": "PROGBITS",
-     "addr": "0200d9d8",
+     "addr": "0200dc48",
      "size": "002b30"
     },
     {
      "name": ".data",
      "type": "PROGBITS",
-     "addr": "02010508",
+     "addr": "02010778",
      "size": "00071c"
     },
     {
@@ -405,18 +405,18 @@
      "name": ".bss",
      "type": "NOBITS",
      "addr": "02018018",
-     "size": "00dec8"
+     "size": "00e150"
     },
     {
      "name": ".heap",
      "type": "NOBITS",
-     "addr": "02025ee0",
-     "size": "100000"
+     "addr": "02026168",
+     "size": "100008"
     },
     {
      "name": ".stack",
      "type": "NOBITS",
-     "addr": "02125ee0",
+     "addr": "02126170",
      "size": "007000"
     },
     {
@@ -435,7 +435,7 @@
      "name": ".debug_line",
      "type": "PROGBITS",
      "addr": "00000000",
-     "size": "00a78b"
+     "size": "00abef"
     },
     {
      "name": ".debug_line_str",
@@ -447,13 +447,13 @@
      "name": ".debug_info",
      "type": "PROGBITS",
      "addr": "00000000",
-     "size": "00e6b5"
+     "size": "00eea4"
     },
     {
      "name": ".debug_abbrev",
      "type": "PROGBITS",
      "addr": "00000000",
-     "size": "00309e"
+     "size": "003107"
     },
     {
      "name": ".debug_aranges",
@@ -465,37 +465,37 @@
      "name": ".debug_str",
      "type": "PROGBITS",
      "addr": "00000000",
-     "size": "0022f3"
+     "size": "00230c"
     },
     {
      "name": ".debug_loclists",
      "type": "PROGBITS",
      "addr": "00000000",
-     "size": "006059"
+     "size": "0064de"
     },
     {
      "name": ".debug_rnglists",
      "type": "PROGBITS",
      "addr": "00000000",
-     "size": "001241"
+     "size": "0012d6"
     },
     {
      "name": ".debug_frame",
      "type": "PROGBITS",
      "addr": "00000000",
-     "size": "001030"
+     "size": "00101c"
     },
     {
      "name": ".symtab",
      "type": "SYMTAB",
      "addr": "00000000",
-     "size": "003530"
+     "size": "003560"
     },
     {
      "name": ".strtab",
      "type": "STRTAB",
      "addr": "00000000",
-     "size": "001999"
+     "size": "0019ad"
     },
     {
      "name": ".shstrtab",
@@ -506,7 +506,7 @@
    ],
    "symbols": {
     "__stack": {
-     "addr": "0x02129ee0",
+     "addr": "0x0212a170",
      "kind": "B"
     },
     "_boot": {
@@ -514,15 +514,15 @@
      "kind": "T"
     },
     "_end": {
-     "addr": "0x0212cee0",
+     "addr": "0x0212d170",
      "kind": "B"
     },
     "_heap_end": {
-     "addr": "0x02125ee0",
+     "addr": "0x02126170",
      "kind": "B"
     },
     "_heap_start": {
-     "addr": "0x02025ee0",
+     "addr": "0x02026170",
      "kind": "B"
     },
     "_start": {
@@ -534,7 +534,7 @@
      "kind": "T"
     },
     "b4q_app_run": {
-     "addr": "0x020023b8",
+     "addr": "0x020024b8",
      "kind": "T"
     },
     "b4q_rd32": {
@@ -542,15 +542,15 @@
      "kind": "T"
     },
     "b4q_session_open": {
-     "addr": "0x02003e9c",
+     "addr": "0x0200410c",
      "kind": "T"
     },
     "b4q_sign": {
-     "addr": "0x020020a0",
+     "addr": "0x02002148",
      "kind": "T"
     },
     "b4q_transaction": {
-     "addr": "0x020042e4",
+     "addr": "0x02004554",
      "kind": "T"
     },
     "b4q_wr32": {
@@ -571,10 +571,10 @@
     }
    },
    "size": [
-    "83212",
+    "83836",
     "1832",
-    "1134280",
-    "1219324"
+    "1134936",
+    "1220604"
    ]
   },
   "ddr": {
@@ -607,8 +607,8 @@
  },
  "reproducibility": {
   "builds": [
-   "f50930a19981c13e16351582a2fc353cab7fdcc2bd3bba2f205e565452ea8c63",
-   "f50930a19981c13e16351582a2fc353cab7fdcc2bd3bba2f205e565452ea8c63"
+   "ee7076a03d602ad1025fb698d213f98a111449d623012a29c3147e0d7e867770",
+   "ee7076a03d602ad1025fb698d213f98a111449d623012a29c3147e0d7e867770"
   ],
   "reproduced_byte_identical": true,
   "covers": "the raw .bin only: two clean builds from scratch produce the same raw image bytes (the digests in `builds`); the ELF and the map are provenance artifacts whose hashes carry debug sections and checkout paths and may differ between checkouts \u2014 their layout facts (entry, program headers, symbols) are what the ELF test holds, not their file hashes (the owner's P3 of 2026-10-28)"

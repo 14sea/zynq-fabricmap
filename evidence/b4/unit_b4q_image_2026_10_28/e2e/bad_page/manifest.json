@@ -2,17 +2,17 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-bad_page",
- "generated_utc": "2026-10-28T06:35:15Z",
+ "generated_utc": "2026-10-28T07:48:38Z",
  "emulated": true,
  "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
  "instrument": {
   "variant": "42340001",
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
-  "image_sha256": "aec27efa18b3dafc7e2f612503d1dea7b657107439131ef58edc998c6db0f306"
+  "image_sha256": "415be1f9fda057ff7c12f61edb3bf8497702facdf7162b5ad1b75629f02c3bef"
  },
  "executing_side": {
   "binary": "build/b4q_firmware/b4q_apphost",
-  "sha256": "aec27efa18b3dafc7e2f612503d1dea7b657107439131ef58edc998c6db0f306",
+  "sha256": "415be1f9fda057ff7c12f61edb3bf8497702facdf7162b5ad1b75629f02c3bef",
   "build": {
    "compiler": "/usr/bin/cc",
    "version": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
@@ -277,16 +277,16 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v1",
-  "token": "b3c8a5d18c9c9333217dce5ba4ef86f0",
+  "token": "a18beed28c87c35fb0d1ebb5f3ddf49c",
   "page_words": [
    "42345149",
    "00000001",
-   "b3c8a5d1",
-   "8c9c9333",
-   "217dce5b",
-   "a4ef86f0",
+   "a18beed2",
+   "8c87c35f",
+   "b0d1ebb5",
+   "f3ddf49c",
    "6553f100",
-   "aec27efa",
+   "415be1f9",
    "4e406f12",
    "80d3cf5c",
    "abf43d00",
@@ -302,7 +302,7 @@
    "00000000",
    "00000000",
    "00000000",
-   "bdb4904b"
+   "86eb43a5"
   ],
   "page_flags": 2,
   "knobs": {
