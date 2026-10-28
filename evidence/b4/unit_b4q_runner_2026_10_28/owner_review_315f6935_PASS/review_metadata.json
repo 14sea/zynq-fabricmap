@@ -1,0 +1,42 @@
+{
+  "reviewed_head": "315f69351c528fdaaf628ad9b6e7cd3c938c3539",
+  "implementation": "bcfc6fbf",
+  "verdict": "CONDITIONAL PASS: engineering acceptance on the exact approved two-file follow-up; bare 315f6935 still has one P2",
+  "utc": "2026-10-28T18:43:41.016095+00:00",
+  "tracked_changes_by_reviewer": false,
+  "physical_device_contact": false,
+  "production_seed_derivation": false,
+  "original_suite": {
+    "bench_prerequisite": 1,
+    "tests": 126,
+    "result": "OK",
+    "exit": 0,
+    "seconds": 407.657
+  },
+  "original_fresh_e2e": {
+    "runner_cases": 47,
+    "runner_agree": 47,
+    "runner_expectation_failures": 0,
+    "ps_cases": 19,
+    "ps_agree": 19,
+    "emulated": "valid control and module regression; no independent full 19-case emulated rerun"
+  },
+  "approved_followup_validation": {
+    "focused_tests": 4,
+    "result": "OK",
+    "retained_runner_archives_fresh_verified": 47,
+    "agree": 47,
+    "full_patched_suite_not_rerun": true,
+    "not_claimed": "127 full-suite tests"
+  },
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+  "image_build": "exact reused previously independently reproduced binary; no firmware change/no redundant build",
+  "mutants": "author 67-case record inspected; no independent battery rerun",
+  "approved_patch_files": [
+    "host/b4q_verify_runner.py",
+    "tests/test_b4q_runner.py"
+  ],
+  "canonical_porcelain": "",
+  "final_canonical_porcelain": "",
+  "patch_sha256": "34958c5645015718e46990b97649d39533b1a4526e257370e8dbfcd559cec856"
+}

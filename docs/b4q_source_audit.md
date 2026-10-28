@@ -136,7 +136,10 @@ The clock: the admission reads SIX PS words before any PL access — `FPGA0_CLK_
 = 0, and if `PLL_BYPASS_QUAL` = 1 the `BOOT_MODE` sampled `PLL_BYPASS` pin = 0) and its `PLL_STATUS` lock bit = 1
 (`host/b4q_zynq_clk.py`, one module written against AMD UG585, used by the runner and the verifier alike); only then the nominal
 rate PS_CLK × FDIV / (DIVISOR0 × DIVISOR1) is held to the pinned 50 MHz. The verifier takes every identity / clock input from the
-received prefix BEFORE the first PL reply and requires every such command before the first PL read command; a later good state is
+received prefix before the first PL ACCESS — the earlier of the first PL command's echo and its data reply (`first_pl_reply_offset`;
+the owner's approved follow-up on `315f6935`, applied unchanged as `bd7cef03`: as first delivered in `bcfc6fbf` the cut was at the data
+reply alone, so a reply arriving while the PL command was already being handled still counted as a prior input) — and requires every
+such command before the first PL read command; a later good state is
 no earlier admission. All of this is software register consistency — the configured nominal rate of a source the registers call
 running — never a measured clock (the bring-up's M3). Modes outside this predicate (a stable-but-unlocked PLL, another SRCSEL
 source's unread status, a word not read) are refused as unresolved, not assumed. The nonce of a transaction's links is the one the PS read (`NONCE_LO` / `NONCE_HI` in the log); the timing

@@ -1,0 +1,199 @@
+{
+  "eligibility": [
+    {
+      "name": "normal",
+      "expected": true,
+      "eligible": true,
+      "why": []
+    },
+    {
+      "name": "reset",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "PLL_RESET"
+      ]
+    },
+    {
+      "name": "powerdown",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "PLL_PWRDWN"
+      ]
+    },
+    {
+      "name": "force_bypass",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "PLL_BYPASS_FORCE"
+      ]
+    },
+    {
+      "name": "qualified_bypass",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "PLL_BYPASS_QUAL with the boot pin's PLL_BYPASS sampled"
+      ]
+    },
+    {
+      "name": "qualified_normal",
+      "expected": true,
+      "eligible": true,
+      "why": []
+    },
+    {
+      "name": "strap_ignored_when_not_qualified",
+      "expected": true,
+      "eligible": true,
+      "why": []
+    },
+    {
+      "name": "unlocked",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "IO_PLL_LOCK clear"
+      ]
+    },
+    {
+      "name": "zero_divisor",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "a zero divisor in FPGA0_CLK_CTRL"
+      ]
+    },
+    {
+      "name": "unselected_reset",
+      "expected": true,
+      "eligible": true,
+      "why": []
+    },
+    {
+      "name": "arm_selected_unlocked",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "ARM_PLL_LOCK clear"
+      ]
+    },
+    {
+      "name": "ddr_selected_unlocked",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "DDR_PLL_LOCK clear"
+      ]
+    },
+    {
+      "name": "missing_fpga0",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "word(s) not read: fpga0"
+      ]
+    },
+    {
+      "name": "missing_arm",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "word(s) not read: arm"
+      ]
+    },
+    {
+      "name": "missing_ddr",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "word(s) not read: ddr"
+      ]
+    },
+    {
+      "name": "missing_io",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "word(s) not read: io"
+      ]
+    },
+    {
+      "name": "missing_status",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "word(s) not read: status"
+      ]
+    },
+    {
+      "name": "missing_boot_mode",
+      "expected": false,
+      "eligible": false,
+      "why": [
+        "word(s) not read: boot_mode"
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "requested": [
+        "reference"
+      ],
+      "outcome": "ContextRefusal"
+    },
+    {
+      "requested": [
+        "verify",
+        "reference"
+      ],
+      "outcome": "ContextRefusal"
+    },
+    {
+      "requested": [
+        null
+      ],
+      "outcome": "ContextRefusal"
+    },
+    {
+      "requested": [],
+      "outcome": "ContextRefusal"
+    },
+    {
+      "requested": [
+        "spare"
+      ],
+      "outcome": "ContextRefusal"
+    }
+  ],
+  "admission": [
+    {
+      "name": "verify",
+      "stop": null,
+      "pl_read_issued": true
+    },
+    {
+      "name": "sacrificial",
+      "stop": null,
+      "pl_read_issued": true
+    },
+    {
+      "name": "narrow_verify_refused",
+      "stop": {
+        "kind": "AdmissionStop",
+        "why": "identity: the board's role 'verify' is not one of ['sacrificial'] (no role = reference = refused; docs/board_roles.md)"
+      },
+      "pl_read_issued": false
+    },
+    {
+      "name": "powerdown_refused",
+      "stop": {
+        "kind": "AdmissionStop",
+        "why": "clock: the selected io PLL is not an eligible running source (PLL_PWRDWN): no PL access"
+      },
+      "pl_read_issued": false
+    }
+  ]
+}

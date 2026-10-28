@@ -146,7 +146,7 @@ observer-position annotations (`i` / `pcap_n`) are not independently validated b
 quiescence or a device fact — the no-new-write / no-new-DMA evidence is the HAL's gate plus the drained fixtures (§4 stays: UART, DMA /
 PCAP, the watchdog's clock, aborts and timing are the device's). P2 of `docs/b4q_plan.md` §8 remains NOT met as a board prerequisite.
 
-## 11. The v2 image (the runner unit, 2026-10-28 — host-only; `docs/b4q_source_audit.md`, `docs/b4q_bringup_plan.md`)
+## 11. The v2 image (the runner unit, 2026-10-28 — host-only; `docs/b4q_source_audit.md`, `docs/b4q_bringup_plan.md`; **the unit engineering accepted and closed — the owner's conditional PASS on `315f6935`, its approved follow-up applied as `bd7cef03`; the image `4d989ee8…` unchanged through the four reviews**)
 
 The owner's disposition on `c84b8bd5` (section 3) found that the v1 image exported no MMIO / PCAP trace: a board run of it could
 not have produced the records truthfully. The runner unit therefore changed the image — a **new identity**, `build/b4q_image/b4q_app_v2.bin`

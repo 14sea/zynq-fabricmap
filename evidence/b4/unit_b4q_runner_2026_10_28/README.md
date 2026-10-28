@@ -1,4 +1,4 @@
-# B4 — the B4Q physical-runner and evidence-acquisition preparation unit (host-only, 2026-10-28): the PS evidence source, the runner, the device surrogate, the bring-up execution plan — delivered once, whole, for review; **held by the owner's reviews of `dad9e4de` (R1–R5, P3 — §5), of `30c5ccba` (C1–C4, P3 — §6) and of `6eeacfc2` (R1–R2 — §7), repaired in this unit**
+# B4 — the B4Q physical-runner and evidence-acquisition preparation unit (host-only, 2026-10-28): the PS evidence source, the runner, the device surrogate, the bring-up execution plan — delivered once, whole, for review; **engineering accepted and closed — the owner's conditional PASS on `315f6935` (2026-10-28), its approved two-file follow-up applied unchanged as `bd7cef03` — §8; held before that by the owner's reviews of `dad9e4de` (R1–R5, P3 — §5), of `30c5ccba` (C1–C4, P3 — §6) and of `6eeacfc2` (R1–R2 — §7), repaired in this unit**
 
 **What this unit is.** The one complete host-only unit the owner's disposition on `c84b8bd5` (2026-10-28, archived in
 `owner_ruling_2026_10_28/`, its section 3) authorised: "B4Q physical-runner and evidence-acquisition preparation" with the bring-up
@@ -78,7 +78,7 @@ archive this verifier accepts says anything was observed on a device (`provenanc
 validation result grants execution or a qualification claim. The surrogate's U-Boot is an emulation of its wire behaviour, not U-Boot.
 No board, port, power, key or bitstream was touched; the image is unchanged (`4d989ee8…`, the build evidence reused and re-verified).
 
-## 6. The repair after the owner's HOLD on `30c5ccba` (2026-10-28; the review archived in `owner_review_30c5ccba_HOLD/`, 34 checksums OK)
+## 6. The repair after the owner's HOLD on `30c5ccba` (2026-10-28; the review archived in `owner_review_30c5ccba_HOLD/`, 34 checksums OK — **the directory was omitted from the commits `6eeacfc2` and `315f6935` although this heading named it; committed at the closure (§8), its 34 checksums verified then**)
 
 The owner's four residual groups all held against `972b63c6`. What changed, each with the counterexample that now fails against it:
 
@@ -101,8 +101,43 @@ says `role=verify` is a fixture. No board, port, power, key or bitstream was tou
 | **R1** | the role check was `role in context.allowed_roles` on both sides: a context (`--role reference`, `allowed_roles=(reference,)` / `(None,)`) widened the policy; a coherently refreshed archive with `role=reference` verified clean | the policy is a FIXED floor (`ROLES_CONTENT = {verify, sacrificial}`, `docs/board_roles.md`): `ExecutionContext.__post_init__` refuses any list outside it or empty (`ContextRefusal`), `--role` is validated the same; the admission's verdict is `role ∈ floor and role ∈ context` (the floor first); the verifier recomputes with the floor independently of the context AND finds a context list that widens it | `tests::Binding::test_the_role_policy_cannot_be_widened_by_a_context` (five widenings refused at the context, the CLI exit 2, a narrowing to `sacrificial` refuses a `verify` board and admits a `sacrificial` one), `tests::StateMachineRound3` (the reference archive found twice: the widened context and the state rule); the battery's N21+N22, V19+V19b (each layer named, the pair killed) |
 | **R2a** | `PLL_PWRDWN` (bit 1) was not read: a powered-down PLL with FDIV 30 "derived" 50 MHz and admitted a PL read, on both sides | `host/b4q_zynq_clk.py` — ONE module against AMD UG585 used by the runner and the verifier: the selected PLL is eligible iff `PLL_RESET` = 0, `PLL_PWRDWN` = 0, not bypassed, and its `PLL_STATUS` lock bit = 1; the nominal rate is arithmetic held apart from the eligibility | `tests::Binding::test_the_eligibility_follows_ug585_bit_definitions` (every bit, the ARM-PLL SRCSEL case), `tests::Admission` (power-down, forced bypass, qualified bypass with the pin, unlocked — each refused with no PL read); the runner e2e's `pll_powerdown`, `pll_bypass_force`, `pll_bypass_qual`, `pll_unlocked`; the battery's N18–N20 |
 | **R2b** | the bypass state was unresolved: `PLL_BYPASS_QUAL` with the boot pin's sampled `PLL_BYPASS` was never read; no lock status | the six inputs (`FPGA0_CLK_CTRL`, three PLL `CTRL`s, `PLL_STATUS`, `BOOT_MODE`) read before any PL access; qualified bypass with the sampled pin = bypassed; lock required; a word not read = ineligible by name; the inputs relied on recorded in `admission.clock.inputs`; the surrogate serves `PLL_STATUS` / `BOOT_MODE` and the four faults | as R2a; `docs/b4q_source_audit.md` and the plan's M3 state the exact predicate and that it is register consistency, never a measurement |
-| **R2c** | the verifier took the clock words from anywhere before `go` and checked only two commands' order: a PLL read moved after VARIANT verified clean | every identity / clock input is taken from the received prefix BEFORE the first PL reply (`first_pl_reply_offset`); every identity / clock command must precede the first PL read command; a later good state is no earlier admission | `tests::StateMachineRound3::test_a_pll_read_moved_after_the_first_pl_read_is_found` (both streams and the step order moved; found; the proper-prefix positive clean); the battery's V17, V20+V21 |
+| **R2c** | the verifier took the clock words from anywhere before `go` and checked only two commands' order: a PLL read moved after VARIANT verified clean | every identity / clock input is taken from the received prefix before the first PL access (`first_pl_reply_offset`) — **as delivered in `bcfc6fbf`: before the first PL DATA reply (the owner's remaining P2, §8); since the approved follow-up `bd7cef03`: before the earlier of the first PL command's echo and its data reply**; every identity / clock command must precede the first PL read command; a later good state is no earlier admission | `tests::StateMachineRound3::test_a_pll_read_moved_after_the_first_pl_read_is_found` (both streams and the step order moved; found; the proper-prefix positive clean); the battery's V17, V20+V21 |
 
 **What the repair does not claim.** The clock predicate is software register consistency on the words a board's U-Boot shows;
 the bring-up's M3 measures the physical rate apart. The role floor reads what a board's saved environment says; a fixture that says
 `role=verify` is a fixture. No board, port, power, key or bitstream was touched; the image is unchanged (`4d989ee8…`).
+
+## 8. Closure — the owner's conditional PASS on `315f6935` (2026-10-28; `owner_review_315f6935_PASS/`, 34 checksums OK)
+
+The owner accepted R1 (the fixed role floor) and R2 (the selected-PLL eligibility and the command order) as a **conditional
+engineering PASS** and found one remaining P2 on the bare tip: the verifier's receive-side prefix was cut at the first PL **data
+reply** (`first_pl_reply_offset`), so an identity / clock reply placed after the VARIANT command's echo but before its data still
+counted as a prior input — command order unchanged, the echo-order guard silent (`prefix_probe.py`: two such disposable archives
+verified clean on `315f6935`). The owner implemented the minimal two-file fix itself (`owner_followup.patch`, sha256 `34958c56…`:
+the boundary is now the EARLIER of the first PL command echo and the first PL data reply; one regression method appended to
+`StateMachineRound3` with both delayed-reply negatives and the proper-prefix positive), validated it in a separate disposable root and
+pre-approved it by exact bytes (`approved_file_hashes.json`). Per the ruling, acceptance attaches to those bytes, not to `315f6935`.
+
+**Applied here.** The patch was applied unchanged with `git apply` on the clean tip (the two files' `before` hashes equal the
+package's) and committed alone as `bd7cef03`; the two files' sha256 equal the package's `repaired` hashes
+(`host/b4q_verify_runner.py` `f1ebd9e3…`, `tests/test_b4q_runner.py` `b5082b3d…`). The owner's checks were re-run on this tree and
+retained in `owner_review_315f6935_PASS/local_followup/` (`NOTE.md`): `verify_approved_followup.py` exit 0 (the hashes, IMPORT 59 + 37,
+no other runtime path, whitespace, the image `4d989ee8…` unchanged); the four focused `StateMachineRound3` tests OK; a fresh verifier
+on each of the 47 retained runner archives — 47 / 47 agree.
+
+**The validation actually done, stated as it is.** The runs of record in §2 are the submitted tree's: `bcfc6fbf` — 126 tests OK,
+19 + 19 + 47 archives agreeing, the battery 61 / 67 with 6 named sibling guards (the owner re-ran the 126 and the fresh 47 + 19 on
+`315f6935` independently; the battery was inspected, not re-run). On the approved follow-up: **four focused tests OK plus 47 / 47
+fresh archive agrees** (the owner's and ours). **Not** a full 127-test run, not a repeated battery, no image rebuild, no full
+evidence re-assembly — the ruling asked for none of these for the exact-byte follow-up. The in-code comments of the pinned
+`host/b4q_verify_runner.py` (near `prefix_end`) still read "before the first PL reply / read" in places; the file is held by
+exact bytes and was left as is — this README and the audit / plan carry the corrected wording.
+
+**Also at closure.** `owner_review_30c5ccba_HOLD/` (34 checksums OK) is committed now: §6 named it from the second repair on, but the
+directory was never added to `6eeacfc2` / `315f6935` — an omission of this unit's own archiving, found at closure, stated here.
+
+**What the PASS is and is not (the ruling, verbatim in `RULING.md`).** Host-only engineering acceptance of the runner unit within
+the checked scope. Not a gate result, physical provenance, hardware qualification, satisfaction of P4–P6, or a freeze of 2c. It
+authorises no board / serial / SSH contact, power / provisioning, physical load / go / PCAP, production keys / seeds, scientific-method
+change, push / merge, or another undertaking. The image / firmware (`4d989ee8…`), the carrier, the protected production archives and
+the no-go results are unchanged. The branch `b4-b4q-runner` stays local on top of `main` `e34432ea`.
