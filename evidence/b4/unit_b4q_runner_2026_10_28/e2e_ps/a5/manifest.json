@@ -2,24 +2,24 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-a5",
- "generated_utc": "2026-10-28T17:33:31Z",
+ "generated_utc": "2026-10-28T18:23:33Z",
  "emulated": true,
  "standing": "the records built from the PS's OWN evidence log (b4q_ring, pulled through the console, held to the board's digest): the carrier-window events, the DMA tuples, the staged words and the frames the PS read back are what the executing side did and received; a device effect (a frame store, a bus response beyond the PS's own abort flag) is not witnessed; the MMIO was answered by an emulation on this host \u2014 not silicon, not a physical link",
  "source": {
   "kind": "ps-evidence-log-v1",
   "raw": "raw/evidence_log.bin",
   "bytes": 140864,
-  "sha256": "61c2204d9f972b69446bd4c7b5cac83d2ea9c9e675d0ece11256de63752d48c7",
+  "sha256": "a8c1400573fb8c61d5e8d434788c4f442d1aa6881c626fd6e40250d0d48ad8d4",
   "records": 8804,
   "board": {
    "used": 140864,
    "capacity": 16777216,
    "overflow": 0,
-   "sha256": "61c2204d9f972b69446bd4c7b5cac83d2ea9c9e675d0ece11256de63752d48c7"
+   "sha256": "a8c1400573fb8c61d5e8d434788c4f442d1aa6881c626fd6e40250d0d48ad8d4"
   },
   "digest_equal": true,
   "end_log": 140864,
-  "end_log_sha256": "61c2204d9f972b69446bd4c7b5cac83d2ea9c9e675d0ece11256de63752d48c7",
+  "end_log_sha256": "a8c1400573fb8c61d5e8d434788c4f442d1aa6881c626fd6e40250d0d48ad8d4",
   "tail_unobtainable": null,
   "adapter": "host/b4q_evidence_log.py",
   "adapter_sha256": "03dbc58ed924f48b7cff6cf314d2c24479e31c6ee18ff99b09f9c028efaa3255",
@@ -479,14 +479,14 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v2",
-  "token": "414b45414a3a47b3692016f333be1ada",
+  "token": "57bbd937f945b2c2c0fb36be92746969",
   "page_words": [
    "42345149",
    "00000001",
-   "414b4541",
-   "4a3a47b3",
-   "692016f3",
-   "33be1ada",
+   "57bbd937",
+   "f945b2c2",
+   "c0fb36be",
+   "92746969",
    "6553f100",
    "07d5555f",
    "4e406f12",
@@ -504,7 +504,7 @@
    "00000000",
    "00000000",
    "00000000",
-   "ff8acb7d"
+   "5214f184"
   ],
   "page_flags": 2,
   "time_origin": "console entries' `t`: this host's wall clock (time.time()) at the line's receipt / send \u2014 a host timestamp, never a device time",
@@ -520,7 +520,7 @@
    "replay_tx": 0
   },
   "stats": {
-   "hb": 10,
+   "hb": 9,
    "nack": 0,
    "signreq": 5,
    "signreply": 5,
@@ -536,13 +536,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 244,
-   "hb": 10,
+   "lines": 243,
+   "hb": 9,
    "nacks": 0,
    "sign_requests": 5,
    "sign_replies": 5,
    "transactions": 5,
-   "kicks": 244,
+   "kicks": 243,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -552,11 +552,11 @@
    "log": 140864,
    "log_overflow": 0,
    "log_records": 8804,
-   "log_sha256": "61c2204d9f972b69446bd4c7b5cac83d2ea9c9e675d0ece11256de63752d48c7"
+   "log_sha256": "a8c1400573fb8c61d5e8d434788c4f442d1aa6881c626fd6e40250d0d48ad8d4"
   },
   "ident": {
    "protocol": "b4q-v2",
-   "token": "414b45414a3a47b3692016f333be1ada",
+   "token": "57bbd937f945b2c2c0fb36be92746969",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 131421535,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -580,10 +580,10 @@
     "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
    }
   },
-  "console_lines": 452,
+  "console_lines": 451,
   "findings": [],
   "host_seq_last": 206,
-  "board_seq_last": 245,
+  "board_seq_last": 244,
   "refused_commands": [],
   "evidence_log": {
    "pulled_bytes": 140864,
@@ -592,8 +592,8 @@
      "used": 6816,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "12fef6522e2613467e52fa05fce4f1b679c6a7d548ca2f3312c49731aaf95496",
-     "pulled_sha256": "12fef6522e2613467e52fa05fce4f1b679c6a7d548ca2f3312c49731aaf95496",
+     "sha256": "04812c18bc3de973ed5229f14a5ba4b488e107ddff73f22d166a17e97aff5490",
+     "pulled_sha256": "04812c18bc3de973ed5229f14a5ba4b488e107ddff73f22d166a17e97aff5490",
      "digest_equal": true,
      "upto": 6816
     },
@@ -601,8 +601,8 @@
      "used": 35104,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "982111e21fb0964d9837f65b10e7bf141784b8cb52129b58e8dc62da5b250a08",
-     "pulled_sha256": "982111e21fb0964d9837f65b10e7bf141784b8cb52129b58e8dc62da5b250a08",
+     "sha256": "5235e1dbf86acb0c98c4f19c019977a17be357d367730f507ae0dd3f1904a170",
+     "pulled_sha256": "5235e1dbf86acb0c98c4f19c019977a17be357d367730f507ae0dd3f1904a170",
      "digest_equal": true,
      "upto": 35104
     },
@@ -610,8 +610,8 @@
      "used": 64416,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "af0e088ac9edc16b57e057b31e331cd753f5638a973716dc626a000c23059d14",
-     "pulled_sha256": "af0e088ac9edc16b57e057b31e331cd753f5638a973716dc626a000c23059d14",
+     "sha256": "1b8a46a12d113400ae86c4711ffd5cd0d1fb928ce2e6961cb6fffd43c5fba609",
+     "pulled_sha256": "1b8a46a12d113400ae86c4711ffd5cd0d1fb928ce2e6961cb6fffd43c5fba609",
      "digest_equal": true,
      "upto": 64416
     },
@@ -619,8 +619,8 @@
      "used": 82256,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "80afda9d75c9c2a9f20053865af526ae8408a5f42f1c473fd57b6876655e5146",
-     "pulled_sha256": "80afda9d75c9c2a9f20053865af526ae8408a5f42f1c473fd57b6876655e5146",
+     "sha256": "4b6acf3a20ba19b3dae1a7f60021795e2949eb644793c08fbfa09e44523ea591",
+     "pulled_sha256": "4b6acf3a20ba19b3dae1a7f60021795e2949eb644793c08fbfa09e44523ea591",
      "digest_equal": true,
      "upto": 82256
     },
@@ -628,8 +628,8 @@
      "used": 111568,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "15ffe9863e8d87015cb2fea9bcd54ec6b4b695323576f2d2194fc4055de41724",
-     "pulled_sha256": "15ffe9863e8d87015cb2fea9bcd54ec6b4b695323576f2d2194fc4055de41724",
+     "sha256": "c337cedfaf2417d26672bc6851c1abe9cbf922fd43d3aad5314ace212b58318b",
+     "pulled_sha256": "c337cedfaf2417d26672bc6851c1abe9cbf922fd43d3aad5314ace212b58318b",
      "digest_equal": true,
      "upto": 111568
     },
@@ -637,8 +637,8 @@
      "used": 140864,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "61c2204d9f972b69446bd4c7b5cac83d2ea9c9e675d0ece11256de63752d48c7",
-     "pulled_sha256": "61c2204d9f972b69446bd4c7b5cac83d2ea9c9e675d0ece11256de63752d48c7",
+     "sha256": "a8c1400573fb8c61d5e8d434788c4f442d1aa6881c626fd6e40250d0d48ad8d4",
+     "pulled_sha256": "a8c1400573fb8c61d5e8d434788c4f442d1aa6881c626fd6e40250d0d48ad8d4",
      "digest_equal": true,
      "upto": 140864
     },
@@ -646,8 +646,8 @@
      "used": 140864,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "61c2204d9f972b69446bd4c7b5cac83d2ea9c9e675d0ece11256de63752d48c7",
-     "pulled_sha256": "61c2204d9f972b69446bd4c7b5cac83d2ea9c9e675d0ece11256de63752d48c7",
+     "sha256": "a8c1400573fb8c61d5e8d434788c4f442d1aa6881c626fd6e40250d0d48ad8d4",
+     "pulled_sha256": "a8c1400573fb8c61d5e8d434788c4f442d1aa6881c626fd6e40250d0d48ad8d4",
      "digest_equal": true,
      "upto": 140864
     }

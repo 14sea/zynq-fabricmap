@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-corrupt_chunk",
- "wall_s": 6.277,
+ "wall_s": 5.802,
  "stop": null,
  "opened": true,
  "phase": "ended",
@@ -111,7 +111,7 @@
   "log": 123344,
   "log_overflow": 0,
   "log_records": 7709,
-  "log_sha256": "94ad02cecde5c9914b145c6ec89cf3d58de6033df0d48d388773b0d36258a7d9"
+  "log_sha256": "fc4d7fc6ab01d9d25abd9e2c9d9e6203fe439b63dc66cc852c785ecab02176a7"
  },
  "stats": {
   "hb": 9,
@@ -159,32 +159,81 @@
     "verify",
     "sacrificial"
    ],
+   "policy_floor": [
+    "verify",
+    "sacrificial"
+   ],
    "boardid_ok": true,
    "role_ok": true,
    "purpose": "bringup-rehearsal"
   },
   "clock": {
-   "fpga0_ctrl_addr": "0xf8000170",
-   "fpga0_ctrl": "00200a00",
-   "pll_ctrl": {
-    "arm": "0001a000",
-    "ddr": "00020000",
-    "io": "0001e000"
+   "inputs": {
+    "fpga0": {
+     "addr": "0xf8000170",
+     "word": "00200a00"
+    },
+    "arm": {
+     "addr": "0xf8000100",
+     "word": "0001a000"
+    },
+    "ddr": {
+     "addr": "0xf8000104",
+     "word": "00020000"
+    },
+    "io": {
+     "addr": "0xf8000108",
+     "word": "0001e000"
+    },
+    "status": {
+     "addr": "0xf800010c",
+     "word": "0000003f"
+    },
+    "boot_mode": {
+     "addr": "0xf800025c",
+     "word": "00000005"
+    }
    },
-   "derived": {
+   "eligibility": {
+    "eligible": true,
+    "why": [],
+    "missing": [],
     "srcsel": 0,
     "pll": "io",
-    "pll_ctrl": "0001e000",
-    "fdiv": 30,
-    "div0": 10,
-    "div1": 2,
-    "pll_reset": false,
-    "pll_bypass": false,
-    "mhz": 50.0
+    "state": {
+     "pll": "io",
+     "ctrl": "0001e000",
+     "reset": false,
+     "pwrdwn": false,
+     "bypass_force": false,
+     "bypass_qual": false,
+     "boot_pll_bypass": false,
+     "bypassed": false,
+     "locked": true,
+     "stable": true,
+     "eligible": true,
+     "why": []
+    },
+    "nominal": {
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "mhz": 50.0
+    },
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "ps_clk_mhz": 33.333333
    },
    "expected_mhz": 50.0,
    "expected_ctrl": null,
-   "ok": true
+   "ok": true,
+   "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
   },
   "carrier": {
    "variant_addr": "0x43c02034",
@@ -209,7 +258,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.227
+   "seconds": 0.212
   }
  },
  "page_witness": {
@@ -224,7 +273,7 @@
  "transport_stops": [],
  "ident": {
   "protocol": "b4q-v2",
-  "token": "409811cceed9cafd8c7f826b3c33a006",
+  "token": "e72356a5bcdc7d396096b779b48b4757",
   "uboot_epoch": 1700000000,
   "app_image_sha_lo32": 1301847784,
   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",

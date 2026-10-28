@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-devc_never",
- "wall_s": 7.047,
+ "wall_s": 7.456,
  "stop": {
   "kind": "SessionRefusal",
   "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling"
@@ -37,13 +37,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 29,
-  "hb": 5,
+  "lines": 30,
+  "hb": 6,
   "nacks": 0,
   "sign_requests": 1,
   "sign_replies": 1,
   "transactions": 1,
-  "kicks": 29,
+  "kicks": 30,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -53,10 +53,10 @@
   "log": 11536,
   "log_overflow": 0,
   "log_records": 721,
-  "log_sha256": "5c4fc5ee33ce7ee2d5e67ef4bf05a8518ab998ad44a4a66100e9239a4c5b2ee7"
+  "log_sha256": "82830b24cb77c89b94ba961204e209f6bf52a1cffc771346f52dbd34d336d5b4"
  },
  "stats": {
-  "hb": 5,
+  "hb": 6,
   "nack": 0,
   "signreq": 1,
   "signreply": 1,
@@ -69,7 +69,7 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 54,
+ "console_lines": 55,
  "admission": {
   "image": {
    "file": "build/b4q_image/b4q_app_v2.bin",
@@ -101,32 +101,81 @@
     "verify",
     "sacrificial"
    ],
+   "policy_floor": [
+    "verify",
+    "sacrificial"
+   ],
    "boardid_ok": true,
    "role_ok": true,
    "purpose": "bringup-rehearsal"
   },
   "clock": {
-   "fpga0_ctrl_addr": "0xf8000170",
-   "fpga0_ctrl": "00200a00",
-   "pll_ctrl": {
-    "arm": "0001a000",
-    "ddr": "00020000",
-    "io": "0001e000"
+   "inputs": {
+    "fpga0": {
+     "addr": "0xf8000170",
+     "word": "00200a00"
+    },
+    "arm": {
+     "addr": "0xf8000100",
+     "word": "0001a000"
+    },
+    "ddr": {
+     "addr": "0xf8000104",
+     "word": "00020000"
+    },
+    "io": {
+     "addr": "0xf8000108",
+     "word": "0001e000"
+    },
+    "status": {
+     "addr": "0xf800010c",
+     "word": "0000003f"
+    },
+    "boot_mode": {
+     "addr": "0xf800025c",
+     "word": "00000005"
+    }
    },
-   "derived": {
+   "eligibility": {
+    "eligible": true,
+    "why": [],
+    "missing": [],
     "srcsel": 0,
     "pll": "io",
-    "pll_ctrl": "0001e000",
-    "fdiv": 30,
-    "div0": 10,
-    "div1": 2,
-    "pll_reset": false,
-    "pll_bypass": false,
-    "mhz": 50.0
+    "state": {
+     "pll": "io",
+     "ctrl": "0001e000",
+     "reset": false,
+     "pwrdwn": false,
+     "bypass_force": false,
+     "bypass_qual": false,
+     "boot_pll_bypass": false,
+     "bypassed": false,
+     "locked": true,
+     "stable": true,
+     "eligible": true,
+     "why": []
+    },
+    "nominal": {
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "mhz": 50.0
+    },
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "ps_clk_mhz": 33.333333
    },
    "expected_mhz": 50.0,
    "expected_ctrl": null,
-   "ok": true
+   "ok": true,
+   "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
   },
   "carrier": {
    "variant_addr": "0x43c02034",
@@ -151,7 +200,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.22
+   "seconds": 0.213
   }
  },
  "page_witness": {
@@ -165,7 +214,7 @@
  },
  "transport_stops": [
   {
-   "t": 1793208986.686,
+   "t": 1793211997.64,
    "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling",
    "kind": "SessionRefusal"
   }

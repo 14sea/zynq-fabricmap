@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-page_witness_fails",
- "wall_s": 1.415,
+ "wall_s": 1.429,
  "stop": {
   "kind": "TransportStop",
   "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)"
@@ -57,32 +57,81 @@
     "verify",
     "sacrificial"
    ],
+   "policy_floor": [
+    "verify",
+    "sacrificial"
+   ],
    "boardid_ok": true,
    "role_ok": true,
    "purpose": "bringup-rehearsal"
   },
   "clock": {
-   "fpga0_ctrl_addr": "0xf8000170",
-   "fpga0_ctrl": "00200a00",
-   "pll_ctrl": {
-    "arm": "0001a000",
-    "ddr": "00020000",
-    "io": "0001e000"
+   "inputs": {
+    "fpga0": {
+     "addr": "0xf8000170",
+     "word": "00200a00"
+    },
+    "arm": {
+     "addr": "0xf8000100",
+     "word": "0001a000"
+    },
+    "ddr": {
+     "addr": "0xf8000104",
+     "word": "00020000"
+    },
+    "io": {
+     "addr": "0xf8000108",
+     "word": "0001e000"
+    },
+    "status": {
+     "addr": "0xf800010c",
+     "word": "0000003f"
+    },
+    "boot_mode": {
+     "addr": "0xf800025c",
+     "word": "00000005"
+    }
    },
-   "derived": {
+   "eligibility": {
+    "eligible": true,
+    "why": [],
+    "missing": [],
     "srcsel": 0,
     "pll": "io",
-    "pll_ctrl": "0001e000",
-    "fdiv": 30,
-    "div0": 10,
-    "div1": 2,
-    "pll_reset": false,
-    "pll_bypass": false,
-    "mhz": 50.0
+    "state": {
+     "pll": "io",
+     "ctrl": "0001e000",
+     "reset": false,
+     "pwrdwn": false,
+     "bypass_force": false,
+     "bypass_qual": false,
+     "boot_pll_bypass": false,
+     "bypassed": false,
+     "locked": true,
+     "stable": true,
+     "eligible": true,
+     "why": []
+    },
+    "nominal": {
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "mhz": 50.0
+    },
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "ps_clk_mhz": 33.333333
    },
    "expected_mhz": 50.0,
    "expected_ctrl": null,
-   "ok": true
+   "ok": true,
+   "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
   },
   "carrier": {
    "variant_addr": "0x43c02034",
@@ -107,7 +156,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.227
+   "seconds": 0.213
   }
  },
  "page_witness": {
@@ -117,7 +166,7 @@
  "source": null,
  "transport_stops": [
   {
-   "t": 1793208944.416,
+   "t": 1793211955.756,
    "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)",
    "kind": "TransportStop"
   }

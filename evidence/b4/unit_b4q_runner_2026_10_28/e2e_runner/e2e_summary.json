@@ -1,7 +1,7 @@
 [
  {
   "label": "B4Q-runner-control_plane_only",
-  "wall_s": 1.431,
+  "wall_s": 1.447,
   "stop": null,
   "opened": false,
   "phase": "pre-go",
@@ -55,32 +55,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -105,7 +154,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.214
+    "seconds": 0.215
    }
   },
   "page_witness": {
@@ -139,7 +188,7 @@
  },
  {
   "label": "B4Q-runner-image_not_pinned",
-  "wall_s": 1.074,
+  "wall_s": 1.054,
   "stop": {
    "kind": "AdmissionStop",
    "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded"
@@ -185,7 +234,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208848.268,
+    "t": 1793211852.751,
     "why": "image: the selected file's sha256 62676b5f6c0d\u2026 is not the pinned image's 4d989ee84757\u2026 (build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json): not loaded",
     "kind": "AdmissionStop"
    }
@@ -212,7 +261,7 @@
  },
  {
   "label": "B4Q-runner-board_not_permitted",
-  "wall_s": 1.053,
+  "wall_s": 1.065,
   "stop": {
    "kind": "AdmissionStop",
    "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)"
@@ -271,7 +320,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208849.622,
+    "t": 1793211854.11,
     "why": "board: the model 'Ebang EBAZ4205 (surrogate)' is not a permitted target ['Ebang EBAZ4203'] (the banner is the identity; none seen \u2192 not admitted)",
     "kind": "AdmissionStop"
    }
@@ -300,7 +349,7 @@
  },
  {
   "label": "B4Q-runner-board_dram_short",
-  "wall_s": 1.071,
+  "wall_s": 1.053,
   "stop": {
    "kind": "AdmissionStop",
    "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)"
@@ -359,7 +408,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208850.991,
+    "t": 1793211855.464,
     "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",
     "kind": "AdmissionStop"
    }
@@ -388,7 +437,7 @@
  },
  {
   "label": "B4Q-runner-wrong_variant",
-  "wall_s": 1.091,
+  "wall_s": 1.071,
   "stop": {
    "kind": "AdmissionStop",
    "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access"
@@ -445,32 +494,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -485,7 +583,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208852.394,
+    "t": 1793211856.844,
     "why": "carrier: the VARIANT word 0x42340002 at 0x43c02034 is not the pinned carrier's 0x42340001: no further PL access",
     "kind": "AdmissionStop"
    }
@@ -514,7 +612,7 @@
  },
  {
   "label": "B4Q-runner-fclk0_mismatch",
-  "wall_s": 1.08,
+  "wall_s": 1.085,
   "stop": {
    "kind": "AdmissionStop",
    "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00"
@@ -571,32 +669,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": "00100a00",
-    "ok": false
+    "ok": false,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": null,
    "ok": false
@@ -606,7 +753,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208853.771,
+    "t": 1793211858.231,
     "why": "clock: FPGA0_CLK_CTRL 0x00200a00 is not the expected 0x00100a00",
     "kind": "AdmissionStop"
    }
@@ -633,10 +780,10 @@
  },
  {
   "label": "B4Q-runner-clock_gated",
-  "wall_s": 1.062,
+  "wall_s": 1.074,
   "stop": {
    "kind": "AdmissionStop",
-   "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access"
+   "why": "clock: the selected io PLL is not an eligible running source (PLL_RESET): no PL access"
   },
   "opened": false,
   "phase": "stopped",
@@ -690,32 +837,85 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e001"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e001"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": false,
+     "why": [
+      "PLL_RESET"
+     ],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e001",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": true,
-     "pll_bypass": false,
-     "mhz": null
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e001",
+      "reset": true,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": false,
+      "why": [
+       "PLL_RESET"
+      ]
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e001",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": false
+    "ok": false,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": null,
    "ok": false
@@ -725,8 +925,8 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208855.132,
-    "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access",
+    "t": 1793211859.607,
+    "why": "clock: the selected io PLL is not an eligible running source (PLL_RESET): no PL access",
     "kind": "AdmissionStop"
    }
   ],
@@ -745,7 +945,7 @@
   "verify_session": [],
   "verify_limitations": null,
   "expect": {
-   "stop_prefix": "clock: FPGA0_CLK_CTRL",
+   "stop_prefix": "clock: the selected io PLL is not an eligible",
    "opened": false,
    "phase_at_stop": "prompt",
    "no_loady": true,
@@ -755,10 +955,10 @@
  },
  {
   "label": "B4Q-runner-clock_slow",
-  "wall_s": 1.074,
+  "wall_s": 1.079,
   "stop": {
    "kind": "AdmissionStop",
-   "why": "clock: FCLK0 derives to 25.0 MHz, not the pinned 50.0 MHz: no PL access"
+   "why": "clock: FCLK0's nominal rate is 25.0 MHz, not the pinned 50.0 MHz: no PL access"
   },
   "opened": false,
   "phase": "stopped",
@@ -812,32 +1012,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00201400",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00201400"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 20,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 25.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 20,
+      "div1": 2,
+      "mhz": 25.0
+     },
+     "inputs": {
+      "fpga0": "00201400",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": false
+    "ok": false,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": null,
    "ok": false
@@ -847,8 +1096,8 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208856.508,
-    "why": "clock: FCLK0 derives to 25.0 MHz, not the pinned 50.0 MHz: no PL access",
+    "t": 1793211860.988,
+    "why": "clock: FCLK0's nominal rate is 25.0 MHz, not the pinned 50.0 MHz: no PL access",
     "kind": "AdmissionStop"
    }
   ],
@@ -867,7 +1116,707 @@
   "verify_session": [],
   "verify_limitations": null,
   "expect": {
-   "stop_prefix": "clock: FCLK0 derives to",
+   "stop_prefix": "clock: FCLK0's nominal rate",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true,
+   "no_pl_read": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-pll_powerdown",
+  "wall_s": 1.096,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "clock: the selected io PLL is not an eligible running source (PLL_PWRDWN): no PL access"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e002"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
+    },
+    "eligibility": {
+     "eligible": false,
+     "why": [
+      "PLL_PWRDWN"
+     ],
+     "missing": [],
+     "srcsel": 0,
+     "pll": "io",
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e002",
+      "reset": false,
+      "pwrdwn": true,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": false,
+      "why": [
+       "PLL_PWRDWN"
+      ]
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e002",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": false,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
+   },
+   "carrier": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793211862.373,
+    "why": "clock: the selected io PLL is not an eligible running source (PLL_PWRDWN): no PL access",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "pll_powerdown",
+  "surrogate_args": [
+   "--fault=pll-powerdown"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "clock: the selected io PLL is not an eligible",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true,
+   "no_pl_read": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-pll_bypass_force",
+  "wall_s": 1.06,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_FORCE): no PL access"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e010"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
+    },
+    "eligibility": {
+     "eligible": false,
+     "why": [
+      "PLL_BYPASS_FORCE"
+     ],
+     "missing": [],
+     "srcsel": 0,
+     "pll": "io",
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e010",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": true,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": true,
+      "locked": true,
+      "stable": true,
+      "eligible": false,
+      "why": [
+       "PLL_BYPASS_FORCE"
+      ]
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e010",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": false,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
+   },
+   "carrier": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793211863.744,
+    "why": "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_FORCE): no PL access",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "pll_bypass_force",
+  "surrogate_args": [
+   "--fault=pll-bypass-force"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "clock: the selected io PLL is not an eligible",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true,
+   "no_pl_read": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-pll_bypass_qual",
+  "wall_s": 1.09,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_QUAL with the boot pin's PLL_BYPASS sampled): no PL access"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e008"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000015"
+     }
+    },
+    "eligibility": {
+     "eligible": false,
+     "why": [
+      "PLL_BYPASS_QUAL with the boot pin's PLL_BYPASS sampled"
+     ],
+     "missing": [],
+     "srcsel": 0,
+     "pll": "io",
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e008",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": true,
+      "boot_pll_bypass": true,
+      "bypassed": true,
+      "locked": true,
+      "stable": true,
+      "eligible": false,
+      "why": [
+       "PLL_BYPASS_QUAL with the boot pin's PLL_BYPASS sampled"
+      ]
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e008",
+      "status": "0000003f",
+      "boot_mode": "00000015"
+     },
+     "ps_clk_mhz": 33.333333
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": false,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
+   },
+   "carrier": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793211865.128,
+    "why": "clock: the selected io PLL is not an eligible running source (PLL_BYPASS_QUAL with the boot pin's PLL_BYPASS sampled): no PL access",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "pll_bypass_qual",
+  "surrogate_args": [
+   "--fault=pll-bypass-qual"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "clock: the selected io PLL is not an eligible",
+   "opened": false,
+   "phase_at_stop": "prompt",
+   "no_loady": true,
+   "no_pl_read": true
+  },
+  "expect_failures": []
+ },
+ {
+  "label": "B4Q-runner-pll_unlocked",
+  "wall_s": 1.085,
+  "stop": {
+   "kind": "AdmissionStop",
+   "why": "clock: the selected io PLL is not an eligible running source (IO_PLL_LOCK clear): no PL access"
+  },
+  "opened": false,
+  "phase": "stopped",
+  "records": [],
+  "chain_findings": null,
+  "halted": null,
+  "end": null,
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "admission": {
+   "image": {
+    "file": "build/b4q_image/b4q_app_v2.bin",
+    "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "equal": true,
+    "bytes": 98324
+   },
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "permitted_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    },
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
+    "boardid_ok": true,
+    "role_ok": true,
+    "purpose": "bringup-rehearsal"
+   },
+   "clock": {
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003b"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
+    },
+    "eligibility": {
+     "eligible": false,
+     "why": [
+      "IO_PLL_LOCK clear"
+     ],
+     "missing": [],
+     "srcsel": 0,
+     "pll": "io",
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": false,
+      "stable": true,
+      "eligible": false,
+      "why": [
+       "IO_PLL_LOCK clear"
+      ]
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003b",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
+    },
+    "expected_mhz": 50.0,
+    "expected_ctrl": null,
+    "ok": false,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
+   },
+   "carrier": null,
+   "ok": false
+  },
+  "load_witness": null,
+  "page_witness": {},
+  "source": null,
+  "transport_stops": [
+   {
+    "t": 1793211866.514,
+    "why": "clock: the selected io PLL is not an eligible running source (IO_PLL_LOCK clear): no PL access",
+    "kind": "AdmissionStop"
+   }
+  ],
+  "stats_pull": null,
+  "tail_unobtainable": null,
+  "phase_at_stop": "prompt",
+  "go_in_tx": false,
+  "loady_in_tx": false,
+  "pl_read_in_tx": false,
+  "name": "pll_unlocked",
+  "surrogate_args": [
+   "--fault=pll-unlocked"
+  ],
+  "verify_rc": 0,
+  "verify_agree": true,
+  "verify_session": [],
+  "verify_limitations": null,
+  "expect": {
+   "stop_prefix": "clock: the selected io PLL is not an eligible",
    "opened": false,
    "phase_at_stop": "prompt",
    "no_loady": true,
@@ -877,7 +1826,7 @@
  },
  {
   "label": "B4Q-runner-no_role",
-  "wall_s": 1.093,
+  "wall_s": 1.082,
   "stop": {
    "kind": "AdmissionStop",
    "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"
@@ -934,6 +1883,10 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": false,
     "purpose": "bringup-rehearsal"
@@ -947,7 +1900,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208857.914,
+    "t": 1793211867.897,
     "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)",
     "kind": "AdmissionStop"
    }
@@ -977,7 +1930,7 @@
  },
  {
   "label": "B4Q-runner-wrong_boardid",
-  "wall_s": 1.054,
+  "wall_s": 1.076,
   "stop": {
    "kind": "AdmissionStop",
    "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board"
@@ -1034,6 +1987,10 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": false,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
@@ -1047,7 +2004,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208859.278,
+    "t": 1793211869.271,
     "why": "identity: the board's boardid '17A6' is not the context's 'F8B3': not this board",
     "kind": "AdmissionStop"
    }
@@ -1077,7 +2034,7 @@
  },
  {
   "label": "B4Q-runner-role_reference",
-  "wall_s": 1.101,
+  "wall_s": 1.061,
   "stop": {
    "kind": "AdmissionStop",
    "why": "identity: the board's role 'reference' is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"
@@ -1134,6 +2091,10 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": false,
     "purpose": "bringup-rehearsal"
@@ -1147,7 +2108,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208860.659,
+    "t": 1793211870.646,
     "why": "identity: the board's role 'reference' is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)",
     "kind": "AdmissionStop"
    }
@@ -1177,7 +2138,7 @@
  },
  {
   "label": "B4Q-runner-miner_uboot_break",
-  "wall_s": 3.851,
+  "wall_s": 4.03,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1230,13 +2191,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 111,
-   "hb": 5,
+   "lines": 110,
+   "hb": 4,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 111,
+   "kicks": 110,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -1246,10 +2207,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "7bca26c2bf8552d0c13ec758f1481c085a962ffb0375e3ae8a7f51c8b57869b7"
+   "log_sha256": "99a5cc45f985eb934fc1496e57c7993160ad21c19b31169b7295861d703ddef7"
   },
   "stats": {
-   "hb": 5,
+   "hb": 4,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -1262,7 +2223,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 208,
+  "console_lines": 207,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -1294,32 +2255,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -1344,7 +2354,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.225
+    "seconds": 0.218
    }
   },
   "page_witness": {
@@ -1391,7 +2401,7 @@
  },
  {
   "label": "B4Q-runner-valid",
-  "wall_s": 6.355,
+  "wall_s": 6.238,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1486,13 +2496,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 212,
-   "hb": 9,
+   "lines": 211,
+   "hb": 8,
    "nacks": 0,
    "sign_requests": 4,
    "sign_replies": 4,
    "transactions": 4,
-   "kicks": 212,
+   "kicks": 211,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -1502,10 +2512,10 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "29486a774e824fedfb9e45cfe897b0593a7c5b04d81f0aca1933e4d5f355f9ee"
+   "log_sha256": "6658e9f9fc45a6320823a5001fa1a78defe86360b31189b76e8aa933f62e76d4"
   },
   "stats": {
-   "hb": 9,
+   "hb": 8,
    "nack": 0,
    "signreq": 4,
    "signreply": 4,
@@ -1518,7 +2528,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 394,
+  "console_lines": 393,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -1550,32 +2560,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -1600,7 +2659,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.202
+    "seconds": 0.222
    }
   },
   "page_witness": {
@@ -1615,7 +2674,7 @@
   "transport_stops": [],
   "ident": {
    "protocol": "b4q-v2",
-   "token": "17a53e040209d83a3136520b38ed1912",
+   "token": "e831507626b1f90320e4808b1934d840",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 1301847784,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -1677,7 +2736,7 @@
  },
  {
   "label": "B4Q-runner-a5",
-  "wall_s": 6.725,
+  "wall_s": 6.689,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -1809,7 +2868,7 @@
    "log": 140864,
    "log_overflow": 0,
    "log_records": 8804,
-   "log_sha256": "e3b8eeee7db456e5b86f03ddbf258bd70917fc21913613ad066181aac538cc07"
+   "log_sha256": "5b9a229582755fe631995e1b1589e942ef2860280e03ff501b68bb0975e7afb7"
   },
   "stats": {
    "hb": 10,
@@ -1857,32 +2916,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -1945,7 +3053,7 @@
  },
  {
   "label": "B4Q-runner-notary_refuses",
-  "wall_s": 3.177,
+  "wall_s": 3.138,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2000,13 +3108,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 68,
-   "hb": 3,
+   "lines": 67,
+   "hb": 2,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 68,
+   "kicks": 67,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -2016,10 +3124,10 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "71b852ad83d49fbe0a5a6196d032cbc0f49ab15ae05bb0c3cb9b874f688503ff"
+   "log_sha256": "731436479eac6cc22ec8fe6254ac61b2bd86ca4b2270238fd19b1477acdffe74"
   },
   "stats": {
-   "hb": 3,
+   "hb": 2,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -2032,7 +3140,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 127,
+  "console_lines": 126,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -2064,32 +3172,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -2114,7 +3271,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.215
+    "seconds": 0.214
    }
   },
   "page_witness": {
@@ -2139,7 +3296,7 @@
   },
   "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate) \u2014 nothing further is signed without a ruling",
   "sign_events": [
-   "EV sign: refused: 62 the bench notary refuses this genome (a configured refusal)"
+   "EV sign: refused: 61 the bench notary refuses this genome (a configured refusal)"
   ],
   "stats_pull": {
    "pulls": 4,
@@ -2165,7 +3322,7 @@
  },
  {
   "label": "B4Q-runner-reply_corrupt",
-  "wall_s": 3.865,
+  "wall_s": 4.22,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2234,7 +3391,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "7388d8a8e7036c74b967ec92d73ab7790d6ec3d36ac31d12f4ac372c3d2ad7d2"
+   "log_sha256": "40cbe3a2b6d5fd0b3583503d3039b6ee6b87d4386b14582b32e59b32e4dae126"
   },
   "stats": {
    "hb": 8,
@@ -2282,32 +3439,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -2332,7 +3538,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.221
+    "seconds": 0.228
    }
   },
   "page_witness": {
@@ -2377,7 +3583,7 @@
  },
  {
   "label": "B4Q-runner-reply_dropped_once",
-  "wall_s": 4.401,
+  "wall_s": 4.196,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2446,7 +3652,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "5c8537e1e975a0d482c701f9d2ff4b8442405dc0b89e0c5a30645134912c0341"
+   "log_sha256": "37bb0bc1cdec23a0c979e9f3a8b919a4791ff8e3d3d2ed117054a3a28d736a10"
   },
   "stats": {
    "hb": 8,
@@ -2494,32 +3700,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -2544,7 +3799,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.217
+    "seconds": 0.22
    }
   },
   "page_witness": {
@@ -2589,7 +3844,7 @@
  },
  {
   "label": "B4Q-runner-replies_dropped",
-  "wall_s": 3.048,
+  "wall_s": 3.158,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2644,13 +3899,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 81,
-   "hb": 14,
+   "lines": 82,
+   "hb": 15,
    "nacks": 0,
    "sign_requests": 4,
    "sign_replies": 1,
    "transactions": 2,
-   "kicks": 81,
+   "kicks": 82,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -2660,10 +3915,10 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "7d7d4286f65639f1c709113e2d7181b9e80fa6b6cc3e4fb290081ff147adda19"
+   "log_sha256": "4e67d793fd2e8cda4c3c34b964cb033b0afe4432afa85f067a7ebf33fa10f339"
   },
   "stats": {
-   "hb": 14,
+   "hb": 15,
    "nack": 0,
    "signreq": 4,
    "signreply": 1,
@@ -2676,7 +3931,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 142,
+  "console_lines": 143,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -2708,32 +3963,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -2758,7 +4062,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.216
+    "seconds": 0.218
    }
   },
   "page_witness": {
@@ -2809,7 +4113,7 @@
  },
  {
   "label": "B4Q-runner-silent_host",
-  "wall_s": 2.986,
+  "wall_s": 3.04,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -2857,7 +4161,7 @@
    "log": 35104,
    "log_overflow": 0,
    "log_records": 2194,
-   "log_sha256": "72d57c0814040e03af0837d5e2ea7524ad108bac27c63c153f66417b447597a5"
+   "log_sha256": "1a2a9e682014e6d282212cbd07f1076f029cad4447ce866c7b9490c128885158"
   },
   "stats": {
    "hb": 8,
@@ -2905,32 +4209,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -2955,7 +4308,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.209
+    "seconds": 0.218
    }
   },
   "page_witness": {
@@ -2993,7 +4346,7 @@
  },
  {
   "label": "B4Q-runner-garbage_command",
-  "wall_s": 4.052,
+  "wall_s": 4.674,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3046,13 +4399,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 111,
-   "hb": 4,
+   "lines": 112,
+   "hb": 5,
    "nacks": 1,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 111,
+   "kicks": 112,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -3062,10 +4415,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "abbec0d98b7b701cc7e16cb8a4dfbb823e70e12c2e695a1ab5a5487053cd08ff"
+   "log_sha256": "419156a43df59706b8ca06d89265255b340c7ef29b5dce8cd05084c0239f022b"
   },
   "stats": {
-   "hb": 4,
+   "hb": 5,
    "nack": 1,
    "signreq": 2,
    "signreply": 2,
@@ -3078,7 +4431,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 209,
+  "console_lines": 210,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -3110,32 +4463,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -3160,7 +4562,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.216
+    "seconds": 0.225
    }
   },
   "page_witness": {
@@ -3205,7 +4607,7 @@
  },
  {
   "label": "B4Q-runner-wrong_token",
-  "wall_s": 4.105,
+  "wall_s": 3.893,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3274,7 +4676,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "7b5abe3bac1300a7151294377dc9ba2becd5b8b587110c674cad96f71778e9c4"
+   "log_sha256": "6deec78a2ddb60edf2bbc79b5f22d11b07e6818ee6e8efb118d7872d52f2e910"
   },
   "stats": {
    "hb": 4,
@@ -3322,32 +4724,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -3372,7 +4823,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.226
+    "seconds": 0.211
    }
   },
   "page_witness": {
@@ -3420,7 +4871,7 @@
  },
  {
   "label": "B4Q-runner-stale_reply",
-  "wall_s": 3.852,
+  "wall_s": 4.23,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3473,13 +4924,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 110,
-   "hb": 4,
+   "lines": 111,
+   "hb": 5,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 110,
+   "kicks": 111,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -3489,10 +4940,10 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "229ec910527ce54886ce8ba8fc8621b5c77c369b5934317304a6b5b71cf72e80"
+   "log_sha256": "bde42c891e7f4aa663060c2b9f9269232ab8d639f8bbc1f1ba806e382f98434e"
   },
   "stats": {
-   "hb": 4,
+   "hb": 5,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -3505,7 +4956,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 208,
+  "console_lines": 209,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -3537,32 +4988,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -3587,7 +5087,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.221
+    "seconds": 0.224
    }
   },
   "page_witness": {
@@ -3632,7 +5132,7 @@
  },
  {
   "label": "B4Q-runner-duplicate_tx",
-  "wall_s": 4.07,
+  "wall_s": 3.875,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3701,7 +5201,7 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "f4eddfa04a249b92faf7a8aa23656acd57d9b7f2c45583cba8a839b8fd0aa155"
+   "log_sha256": "428b083bf348c9d403ceb3308d94cf72e533627f8b6168687e5e5de13a498e24"
   },
   "stats": {
    "hb": 4,
@@ -3749,32 +5249,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -3799,7 +5348,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.218
+    "seconds": 0.215
    }
   },
   "page_witness": {
@@ -3856,7 +5405,7 @@
  },
  {
   "label": "B4Q-runner-after_stop_tx",
-  "wall_s": 2.835,
+  "wall_s": 3.203,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -3911,13 +5460,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 69,
-   "hb": 3,
+   "lines": 68,
+   "hb": 2,
    "nacks": 1,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 69,
+   "kicks": 68,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 1,
@@ -3927,10 +5476,10 @@
    "log": 35168,
    "log_overflow": 0,
    "log_records": 2198,
-   "log_sha256": "463f4bc1e04a3c57b1da21aa6bd1369552a5d647e679fa0b0b3543a5bc63e81b"
+   "log_sha256": "3d8cc575949c00322248ed4f22856f21ff8b4e34f8319e29e7930195978204c5"
   },
   "stats": {
-   "hb": 3,
+   "hb": 2,
    "nack": 1,
    "signreq": 2,
    "signreply": 2,
@@ -3943,7 +5492,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 129,
+  "console_lines": 128,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -3975,32 +5524,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -4025,7 +5623,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.223
+    "seconds": 0.224
    }
   },
   "page_witness": {
@@ -4079,7 +5677,7 @@
  },
  {
   "label": "B4Q-runner-malformed_tx",
-  "wall_s": 4.165,
+  "wall_s": 3.897,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -4132,13 +5730,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 116,
-   "hb": 4,
+   "lines": 117,
+   "hb": 5,
    "nacks": 6,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 116,
+   "kicks": 117,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -4148,10 +5746,10 @@
    "log": 64400,
    "log_overflow": 0,
    "log_records": 4025,
-   "log_sha256": "3e98cd9406e17a29b6c50ca195bd07cc08c4c5dee1737301e464f51171281091"
+   "log_sha256": "1f43d18063882229530c9b62532f73337f9b1ede1e6e697ffd4ab3645947c8f4"
   },
   "stats": {
-   "hb": 4,
+   "hb": 5,
    "nack": 6,
    "signreq": 2,
    "signreply": 2,
@@ -4164,7 +5762,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 219,
+  "console_lines": 220,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -4196,32 +5794,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -4246,7 +5893,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.239
+    "seconds": 0.223
    }
   },
   "page_witness": {
@@ -4341,7 +5988,7 @@
  },
  {
   "label": "B4Q-runner-host_seq_gap",
-  "wall_s": 3.844,
+  "wall_s": 4.154,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -4410,7 +6057,7 @@
    "log": 64416,
    "log_overflow": 0,
    "log_records": 4026,
-   "log_sha256": "963097b700c39dabaaa1c86541c5c05a457f5b12e26801cd06085b7df5034f48"
+   "log_sha256": "1c5e413960b74458eb6b5357d90d70ccf6154630813120e6c61e10549d374ff9"
   },
   "stats": {
    "hb": 4,
@@ -4458,32 +6105,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -4508,7 +6204,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.22
+    "seconds": 0.228
    }
   },
   "page_witness": {
@@ -4554,7 +6250,7 @@
  },
  {
   "label": "B4Q-runner-bad_page",
-  "wall_s": 1.437,
+  "wall_s": 1.453,
   "stop": null,
   "opened": false,
   "phase": "ended",
@@ -4583,7 +6279,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "af40900970cdf532da9fbfcd1a009c2aeaf8db974c4c232ed05a44cdf0138649"
+   "log_sha256": "fb5a4c9a67598f6f71ae3ebc9faec7162ed7669d2f9082d98e5ca3e6b6936075"
   },
   "stats": {
    "hb": 0,
@@ -4631,32 +6327,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -4681,7 +6426,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.21
+    "seconds": 0.222
    }
   },
   "page_witness": {
@@ -4728,7 +6473,7 @@
  },
  {
   "label": "B4Q-runner-sequence_cut",
-  "wall_s": 2.69,
+  "wall_s": 2.606,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -4762,13 +6507,13 @@
   "end": {
    "kind": "PROTOCOL",
    "reason": "this side's line sequence is exhausted",
-   "lines": 16,
-   "hb": 0,
+   "lines": 17,
+   "hb": 1,
    "nacks": 0,
    "sign_requests": 1,
    "sign_replies": 1,
    "transactions": 1,
-   "kicks": 16,
+   "kicks": 17,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -4778,10 +6523,10 @@
    "log": 24464,
    "log_overflow": 0,
    "log_records": 1529,
-   "log_sha256": "1c31bf67a63084dc0657348f1d99b0be3b39a13ac2f0477300187310c9da1a61"
+   "log_sha256": "da2d2914804d4dbf8dc3c2644c104782f2d91ed599e6fa99625b466ba07ce39c"
   },
   "stats": {
-   "hb": 0,
+   "hb": 1,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -4794,7 +6539,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 30,
+  "console_lines": 31,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -4826,32 +6571,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -4876,7 +6670,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.228
+    "seconds": 0.214
    }
   },
   "page_witness": {
@@ -4934,7 +6728,7 @@
  },
  {
   "label": "B4Q-runner-watchdog_fail",
-  "wall_s": 1.436,
+  "wall_s": 1.44,
   "stop": null,
   "opened": false,
   "phase": "ended",
@@ -4963,7 +6757,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "c658199eaab2a71fdc7b3ccab8e14c175817a9bf8866f818ba18cc26f6c0fef0"
+   "log_sha256": "3cfdf0d4eedaa550dd717291cd27c4d876bba733ec34dfff9ca535badc66ac40"
   },
   "stats": {
    "hb": 0,
@@ -5011,32 +6805,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -5061,7 +6904,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.22
+    "seconds": 0.225
    }
   },
   "page_witness": {
@@ -5110,7 +6953,7 @@
  },
  {
   "label": "B4Q-runner-pre_event_corrupt",
-  "wall_s": 3.241,
+  "wall_s": 3.396,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -5165,13 +7008,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 80,
-   "hb": 2,
+   "lines": 82,
+   "hb": 4,
    "nacks": 0,
    "sign_requests": 2,
    "sign_replies": 2,
    "transactions": 2,
-   "kicks": 80,
+   "kicks": 82,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -5181,10 +7024,10 @@
    "log": 46208,
    "log_overflow": 0,
    "log_records": 2888,
-   "log_sha256": "3743ed7c66984f1a1eb5f11763cf23f4bb5ad5a83e36911ef85d94c4f5f8898d"
+   "log_sha256": "e1d97dcdb80ee2415a62bd12d0d4fb6fd726f279b4385c93cd6882481e843ad9"
   },
   "stats": {
-   "hb": 2,
+   "hb": 4,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -5197,7 +7040,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 153,
+  "console_lines": 155,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -5229,32 +7072,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -5279,7 +7171,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.215
+    "seconds": 0.223
    }
   },
   "page_witness": {
@@ -5330,7 +7222,7 @@
  },
  {
   "label": "B4Q-runner-interrupted_load",
-  "wall_s": 1.134,
+  "wall_s": 1.137,
   "stop": {
    "kind": "TransportStop",
    "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20"
@@ -5387,32 +7279,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -5427,7 +7368,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208937.968,
+    "t": 1793211949.283,
     "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20",
     "kind": "TransportStop"
    }
@@ -5454,7 +7395,7 @@
  },
  {
   "label": "B4Q-runner-wrong_crc",
-  "wall_s": 1.37,
+  "wall_s": 1.385,
   "stop": {
    "kind": "TransportStop",
    "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)"
@@ -5511,32 +7452,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -5561,14 +7551,14 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.217
+    "seconds": 0.225
    }
   },
   "page_witness": {},
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208939.596,
+    "t": 1793211950.915,
     "why": "load witness: U-Boot's crc32 f5d2dd32 over the loaded range is not the file's f5d2dd33: the image in DDR is not the file (not run)",
     "kind": "TransportStop"
    }
@@ -5595,7 +7585,7 @@
  },
  {
   "label": "B4Q-runner-md_garbage",
-  "wall_s": 1.07,
+  "wall_s": 1.057,
   "stop": {
    "kind": "TransportStop",
    "why": "md.l 0xf8000170 1: 0 words parsed, not 1"
@@ -5652,6 +7642,10 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
@@ -5665,7 +7659,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208941.022,
+    "t": 1793211952.335,
     "why": "md.l 0xf8000170 1: 0 words parsed, not 1",
     "kind": "TransportStop"
    }
@@ -5692,7 +7686,7 @@
  },
  {
   "label": "B4Q-runner-corrupt_page",
-  "wall_s": 1.424,
+  "wall_s": 1.447,
   "stop": {
    "kind": "SessionRefusal",
    "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)"
@@ -5724,7 +7718,7 @@
    "log": 368,
    "log_overflow": 0,
    "log_records": 23,
-   "log_sha256": "b70dcb7c57783a34153996c9893ea7abbcd195c5d5c36693b13c35c9a0d35013"
+   "log_sha256": "7c0cb1606acda5138db9c52c3399450862eb57b42b21cab5965fe28858c49128"
   },
   "stats": {
    "hb": 0,
@@ -5772,32 +7766,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -5822,7 +7865,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.215
+    "seconds": 0.22
    }
   },
   "page_witness": {
@@ -5836,7 +7879,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793208942.678,
+    "t": 1793211954.008,
     "why": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
     "kind": "SessionRefusal"
    }
@@ -5874,7 +7917,7 @@
  },
  {
   "label": "B4Q-runner-page_witness_fails",
-  "wall_s": 1.415,
+  "wall_s": 1.429,
   "stop": {
    "kind": "TransportStop",
    "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)"
@@ -5931,32 +7974,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -5981,7 +8073,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.227
+    "seconds": 0.213
    }
   },
   "page_witness": {
@@ -5991,7 +8083,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208944.416,
+    "t": 1793211955.756,
     "why": "page witness: the page read back with md.l is not the one written with mw.l (not run)",
     "kind": "TransportStop"
    }
@@ -6018,7 +8110,7 @@
  },
  {
   "label": "B4Q-runner-missed_autoboot",
-  "wall_s": 5.094,
+  "wall_s": 5.079,
   "stop": {
    "kind": "TransportStop",
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
@@ -6050,7 +8142,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208949.857,
+    "t": 1793211961.181,
     "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
     "kind": "TransportStop"
    }
@@ -6077,7 +8169,7 @@
  },
  {
   "label": "B4Q-runner-no_prompt",
-  "wall_s": 5.078,
+  "wall_s": 5.092,
   "stop": {
    "kind": "TransportStop",
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken"
@@ -6109,7 +8201,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208955.255,
+    "t": 1793211966.583,
     "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
     "kind": "TransportStop"
    }
@@ -6136,7 +8228,7 @@
  },
  {
   "label": "B4Q-runner-unknown_image",
-  "wall_s": 4.49,
+  "wall_s": 4.448,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the console was silent for 3.0 s while awaiting IDENT"
@@ -6193,32 +8285,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -6243,7 +8384,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.225
+    "seconds": 0.218
    }
   },
   "page_witness": {
@@ -6253,7 +8394,7 @@
   "source": null,
   "transport_stops": [
    {
-    "t": 1793208959.969,
+    "t": 1793211971.275,
     "why": "the console was silent for 3.0 s while awaiting IDENT",
     "awaiting": "IDENT",
     "kind": "TransportStop"
@@ -6282,7 +8423,7 @@
  },
  {
   "label": "B4Q-runner-silence_mid_session",
-  "wall_s": 6.159,
+  "wall_s": 5.775,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling"
@@ -6365,32 +8506,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -6415,7 +8605,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.223
+    "seconds": 0.23
    }
   },
   "page_witness": {
@@ -6429,13 +8619,13 @@
   },
   "transport_stops": [
    {
-    "t": 1793208966.318,
+    "t": 1793211977.241,
     "why": "the console was silent for 3.0 s while awaiting CHUNK",
     "awaiting": "CHUNK",
     "kind": "TransportStop"
    },
    {
-    "t": 1793208966.342,
+    "t": 1793211977.26,
     "why": "the session is halted: transport: the console was silent for 3.0 s while awaiting CHUNK \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -6469,7 +8659,7 @@
  },
  {
   "label": "B4Q-runner-reset_mid_session",
-  "wall_s": 3.155,
+  "wall_s": 3.052,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling"
@@ -6499,7 +8689,7 @@
     ],
     "pcap_range": [
      48,
-     118
+     123
     ]
    }
   ],
@@ -6507,7 +8697,7 @@
   "halted": "transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
   "end": null,
   "stats": {
-   "hb": 1,
+   "hb": 0,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -6520,7 +8710,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 73,
+  "console_lines": 74,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -6552,32 +8742,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -6602,7 +8841,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.213
+    "seconds": 0.215
    }
   },
   "page_witness": {
@@ -6610,26 +8849,26 @@
    "equal": true
   },
   "source": {
-   "bytes": 20640,
-   "records": 1290,
+   "bytes": 21408,
+   "records": 1338,
    "digest_equal": false
   },
   "transport_stops": [
    {
-    "t": 1793208969.796,
+    "t": 1793211980.689,
     "why": "a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
     "awaiting": "CHUNK",
     "kind": "TransportStop"
    },
    {
-    "t": 1793208969.812,
+    "t": 1793211980.707,
     "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
   ],
   "stats_pull": {
    "pulls": 1,
-   "chunks": 27,
+   "chunks": 28,
    "bad_chunks": 0
   },
   "tail_unobtainable": null,
@@ -6645,7 +8884,7 @@
   "verify_agree": true,
   "verify_session": [],
   "verify_limitations": [
-   "the export was cut by the transport (a boot banner on the console mid-session: the PS reset (the session is cut; its ): 20640 of the 35104 bytes the board's last RING reported were pulled; the records after the cut have no PS evidence"
+   "the export was cut by the transport (a boot banner on the console mid-session: the PS reset (the session is cut; its ): 21408 of the 35104 bytes the board's last RING reported were pulled; the records after the cut have no PS evidence"
   ],
   "expect": {
    "opened": true,
@@ -6656,7 +8895,7 @@
  },
  {
   "label": "B4Q-runner-corrupt_chunk",
-  "wall_s": 6.277,
+  "wall_s": 5.802,
   "stop": null,
   "opened": true,
   "phase": "ended",
@@ -6767,7 +9006,7 @@
    "log": 123344,
    "log_overflow": 0,
    "log_records": 7709,
-   "log_sha256": "94ad02cecde5c9914b145c6ec89cf3d58de6033df0d48d388773b0d36258a7d9"
+   "log_sha256": "fc4d7fc6ab01d9d25abd9e2c9d9e6203fe439b63dc66cc852c785ecab02176a7"
   },
   "stats": {
    "hb": 9,
@@ -6815,32 +9054,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -6865,7 +9153,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.227
+    "seconds": 0.212
    }
   },
   "page_witness": {
@@ -6880,7 +9168,7 @@
   "transport_stops": [],
   "ident": {
    "protocol": "b4q-v2",
-   "token": "409811cceed9cafd8c7f826b3c33a006",
+   "token": "e72356a5bcdc7d396096b779b48b4757",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 1301847784,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -6945,7 +9233,7 @@
  },
  {
   "label": "B4Q-runner-log_overflow",
-  "wall_s": 3.044,
+  "wall_s": 3.175,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling"
@@ -6984,13 +9272,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 35,
-   "hb": 1,
+   "lines": 34,
+   "hb": 0,
    "nacks": 0,
    "sign_requests": 1,
    "sign_replies": 1,
    "transactions": 1,
-   "kicks": 35,
+   "kicks": 34,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -7000,10 +9288,10 @@
    "log": 16384,
    "log_overflow": 1,
    "log_records": 1024,
-   "log_sha256": "786df240b6ed769d162f81bfda04a8a28ee7a93996ba79b66060189e88d8f8f3"
+   "log_sha256": "be6d148b93e6ab1e9615189acf6cb8825766fb5a71e9974821b8bec5806c0d7e"
   },
   "stats": {
-   "hb": 1,
+   "hb": 0,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -7016,7 +9304,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 66,
+  "console_lines": 65,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -7048,32 +9336,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -7098,7 +9435,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.215
+    "seconds": 0.222
    }
   },
   "page_witness": {
@@ -7112,7 +9449,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793208979.764,
+    "t": 1793211990.318,
     "why": "the session is halted: the evidence log overflowed on the board: nothing after the overflow is observed; nothing further is signed \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }
@@ -7146,7 +9483,7 @@
  },
  {
   "label": "B4Q-runner-devc_never",
-  "wall_s": 7.047,
+  "wall_s": 7.456,
   "stop": {
    "kind": "SessionRefusal",
    "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling"
@@ -7183,13 +9520,13 @@
   "end": {
    "kind": "COMPLETED",
    "reason": "the host closed the session",
-   "lines": 29,
-   "hb": 5,
+   "lines": 30,
+   "hb": 6,
    "nacks": 0,
    "sign_requests": 1,
    "sign_replies": 1,
    "transactions": 1,
-   "kicks": 29,
+   "kicks": 30,
    "flushed": 0,
    "stale_frames": 0,
    "refused_tx": 0,
@@ -7199,10 +9536,10 @@
    "log": 11536,
    "log_overflow": 0,
    "log_records": 721,
-   "log_sha256": "5c4fc5ee33ce7ee2d5e67ef4bf05a8518ab998ad44a4a66100e9239a4c5b2ee7"
+   "log_sha256": "82830b24cb77c89b94ba961204e209f6bf52a1cffc771346f52dbd34d336d5b4"
   },
   "stats": {
-   "hb": 5,
+   "hb": 6,
    "nack": 0,
    "signreq": 1,
    "signreply": 1,
@@ -7215,7 +9552,7 @@
    "refused_halted": 0,
    "replayed": 0
   },
-  "console_lines": 54,
+  "console_lines": 55,
   "admission": {
    "image": {
     "file": "build/b4q_image/b4q_app_v2.bin",
@@ -7247,32 +9584,81 @@
      "verify",
      "sacrificial"
     ],
+    "policy_floor": [
+     "verify",
+     "sacrificial"
+    ],
     "boardid_ok": true,
     "role_ok": true,
     "purpose": "bringup-rehearsal"
    },
    "clock": {
-    "fpga0_ctrl_addr": "0xf8000170",
-    "fpga0_ctrl": "00200a00",
-    "pll_ctrl": {
-     "arm": "0001a000",
-     "ddr": "00020000",
-     "io": "0001e000"
+    "inputs": {
+     "fpga0": {
+      "addr": "0xf8000170",
+      "word": "00200a00"
+     },
+     "arm": {
+      "addr": "0xf8000100",
+      "word": "0001a000"
+     },
+     "ddr": {
+      "addr": "0xf8000104",
+      "word": "00020000"
+     },
+     "io": {
+      "addr": "0xf8000108",
+      "word": "0001e000"
+     },
+     "status": {
+      "addr": "0xf800010c",
+      "word": "0000003f"
+     },
+     "boot_mode": {
+      "addr": "0xf800025c",
+      "word": "00000005"
+     }
     },
-    "derived": {
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
     "expected_mhz": 50.0,
     "expected_ctrl": null,
-    "ok": true
+    "ok": true,
+    "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
    },
    "carrier": {
     "variant_addr": "0x43c02034",
@@ -7297,7 +9683,7 @@
     "retries": 0,
     "naks": 0,
     "junk": 33,
-    "seconds": 0.22
+    "seconds": 0.213
    }
   },
   "page_witness": {
@@ -7311,7 +9697,7 @@
   },
   "transport_stops": [
    {
-    "t": 1793208986.686,
+    "t": 1793211997.64,
     "why": "the session is halted: transaction 1: no observation sealed (STOP_DMA: DEVCFG D_P_DONE never asserted) \u2014 nothing further is signed without a ruling",
     "kind": "SessionRefusal"
    }

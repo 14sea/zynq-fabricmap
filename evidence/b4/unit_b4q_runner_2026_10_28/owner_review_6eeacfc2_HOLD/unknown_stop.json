@@ -1,0 +1,164 @@
+{
+ "dir": "/tmp/owner_b4q_runner_round3_0lq94x7h/build/owner_coordinated_final/unknown_stop",
+ "session": [
+  "runner: no session: the named stop (OWNER INVENTED STOP WITH NO RAW WITNESS\u2026) is of a class this verifier cannot demonstrate from the streams: unverified"
+ ],
+ "transactions": [],
+ "a7": {
+  "findings": []
+ },
+ "agree": false,
+ "refused": null,
+ "runner": {
+  "findings": [
+   "no session: the named stop (OWNER INVENTED STOP WITH NO RAW WITNESS\u2026) is of a class this verifier cannot demonstrate from the streams: unverified"
+  ],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "stopped",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "boardid_ok": true,
+    "role_ok": true
+   },
+   "clock": {
+    "fpga0_ctrl": "00200a00",
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "ok": true
+   },
+   "variant": "42340001",
+   "image": {
+    "transferred_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "bytes": 98324,
+    "host_crc32": "f5d2dd33",
+    "ymodem": {
+     "name": "b4q_app_v2.bin",
+     "size": 98324,
+     "blocks": 97,
+     "end": 100074
+    },
+    "total": 98324,
+    "device_crc": {
+     "range": [
+      "02000000",
+      "02018013"
+     ],
+     "value": "f5d2dd33"
+    },
+    "equal": true
+   },
+   "page": {
+    "written": [
+     "42345149",
+     "00000001",
+     "d828992f",
+     "13e80b9e",
+     "79655312",
+     "03aeb8bb",
+     "6553f100",
+     "4d989ee8",
+     "4e406f12",
+     "80d3cf5c",
+     "abf43d00",
+     "1278ef3b",
+     "807a9ce4",
+     "a7d03644",
+     "5122f563",
+     "6e3d18a9",
+     "7f4a7c15",
+     "9e3779b9",
+     "00000000",
+     "00000002",
+     "00000000",
+     "00000000",
+     "00000000",
+     "55237709"
+    ],
+    "read_back": [
+     "42345149",
+     "00000001",
+     "d828992f",
+     "13e80b9e",
+     "79655312",
+     "03aeb8bb",
+     "6553f100",
+     "4d989ee8",
+     "4e406f12",
+     "80d3cf5c",
+     "abf43d00",
+     "1278ef3b",
+     "807a9ce4",
+     "a7d03644",
+     "5122f563",
+     "6e3d18a9",
+     "7f4a7c15",
+     "9e3779b9",
+     "00000000",
+     "00000002",
+     "00000000",
+     "00000000",
+     "00000000",
+     "55237709"
+    ],
+    "equal": true
+   }
+  },
+  "stop": {
+   "why": "OWNER INVENTED STOP WITH NO RAW WITNESS",
+   "demonstrated": null
+  }
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
+ "chain": [],
+ "qualification": {
+  "findings": []
+ },
+ "control_plane": {
+  "phase": "stopped",
+  "stop": {
+   "why": "OWNER INVENTED STOP WITH NO RAW WITNESS",
+   "demonstrated": null
+  }
+ },
+ "clean": false
+}

@@ -1,9 +1,9 @@
 {
  "label": "B4Q-runner-clock_gated",
- "wall_s": 1.062,
+ "wall_s": 1.074,
  "stop": {
   "kind": "AdmissionStop",
-  "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access"
+  "why": "clock: the selected io PLL is not an eligible running source (PLL_RESET): no PL access"
  },
  "opened": false,
  "phase": "stopped",
@@ -57,32 +57,85 @@
     "verify",
     "sacrificial"
    ],
+   "policy_floor": [
+    "verify",
+    "sacrificial"
+   ],
    "boardid_ok": true,
    "role_ok": true,
    "purpose": "bringup-rehearsal"
   },
   "clock": {
-   "fpga0_ctrl_addr": "0xf8000170",
-   "fpga0_ctrl": "00200a00",
-   "pll_ctrl": {
-    "arm": "0001a000",
-    "ddr": "00020000",
-    "io": "0001e001"
+   "inputs": {
+    "fpga0": {
+     "addr": "0xf8000170",
+     "word": "00200a00"
+    },
+    "arm": {
+     "addr": "0xf8000100",
+     "word": "0001a000"
+    },
+    "ddr": {
+     "addr": "0xf8000104",
+     "word": "00020000"
+    },
+    "io": {
+     "addr": "0xf8000108",
+     "word": "0001e001"
+    },
+    "status": {
+     "addr": "0xf800010c",
+     "word": "0000003f"
+    },
+    "boot_mode": {
+     "addr": "0xf800025c",
+     "word": "00000005"
+    }
    },
-   "derived": {
+   "eligibility": {
+    "eligible": false,
+    "why": [
+     "PLL_RESET"
+    ],
+    "missing": [],
     "srcsel": 0,
     "pll": "io",
-    "pll_ctrl": "0001e001",
-    "fdiv": 30,
-    "div0": 10,
-    "div1": 2,
-    "pll_reset": true,
-    "pll_bypass": false,
-    "mhz": null
+    "state": {
+     "pll": "io",
+     "ctrl": "0001e001",
+     "reset": true,
+     "pwrdwn": false,
+     "bypass_force": false,
+     "bypass_qual": false,
+     "boot_pll_bypass": false,
+     "bypassed": false,
+     "locked": true,
+     "stable": true,
+     "eligible": false,
+     "why": [
+      "PLL_RESET"
+     ]
+    },
+    "nominal": {
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "mhz": 50.0
+    },
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e001",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "ps_clk_mhz": 33.333333
    },
    "expected_mhz": 50.0,
    "expected_ctrl": null,
-   "ok": false
+   "ok": false,
+   "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
   },
   "carrier": null,
   "ok": false
@@ -92,8 +145,8 @@
  "source": null,
  "transport_stops": [
   {
-   "t": 1793208855.132,
-   "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access",
+   "t": 1793211859.607,
+   "why": "clock: the selected io PLL is not an eligible running source (PLL_RESET): no PL access",
    "kind": "AdmissionStop"
   }
  ],
@@ -112,7 +165,7 @@
  "verify_session": [],
  "verify_limitations": null,
  "expect": {
-  "stop_prefix": "clock: FPGA0_CLK_CTRL",
+  "stop_prefix": "clock: the selected io PLL is not an eligible",
   "opened": false,
   "phase_at_stop": "prompt",
   "no_loady": true,

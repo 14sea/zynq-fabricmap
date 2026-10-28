@@ -1,8 +1,8 @@
 {
  "schema": "b4q_runner_uboot",
  "schema_version": 2,
- "port": "/tmp/b4q-runner-e2e-934550-missed_autoboot",
- "port_real": "/dev/pts/14",
+ "port": "/tmp/b4q-runner-e2e-946397-missed_autoboot",
+ "port_real": "/dev/pts/15",
  "kind": "console-pty-surrogate",
  "phase": "stopped",
  "context": {
@@ -34,7 +34,7 @@
  "load_addr": 33554432,
  "stops": [
   {
-   "t": 1793208949.857,
+   "t": 1793211961.181,
    "why": "no U-Boot prompt: a boot banner was seen but the autoboot was not broken",
    "kind": "TransportStop"
   }
@@ -47,7 +47,7 @@
  "uboot_steps": [
   {
    "what": "prompt",
-   "t": 1793208945.334,
+   "t": 1793211956.657,
    "rx_at": 0,
    "tx_at": 0,
    "reply": "te) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b 1 \b\b\b 0 \r\n\r\nNAND read: device 0 offset 0x300000, size 0x500000\r\n 5242880 bytes read: OK\r\n## Booting kernel from Legacy Image at 03000000 ...\r\n   Image Name:   Linux-3.x (surrogate)\r\n   Verifying Checksum ... OK\r\n   Loading Kernel Image ... OK\r\n\r\nStarting kernel ...\r\n\r\n[    0.000000] Booting Linux on physical CPU 0x0 (surrogate)\r\n",

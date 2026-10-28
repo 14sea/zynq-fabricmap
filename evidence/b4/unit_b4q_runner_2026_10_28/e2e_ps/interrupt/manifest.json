@@ -2,20 +2,20 @@
  "schema": "b4q_session",
  "schema_version": "1.0.0",
  "label": "B4Q-console-interrupt",
- "generated_utc": "2026-10-28T17:34:05Z",
+ "generated_utc": "2026-10-28T18:24:09Z",
  "emulated": true,
  "standing": "the records built from the PS's OWN evidence log (b4q_ring, pulled through the console, held to the board's digest): the carrier-window events, the DMA tuples, the staged words and the frames the PS read back are what the executing side did and received; a device effect (a frame store, a bus response beyond the PS's own abort flag) is not witnessed; the MMIO was answered by an emulation on this host \u2014 not silicon, not a physical link",
  "source": {
   "kind": "ps-evidence-log-v1",
   "raw": "raw/evidence_log.bin",
   "bytes": 35104,
-  "sha256": "fa83b98810e123c49d1af6648947f354d45b236c51d52ffe435be0100c148dc3",
+  "sha256": "2af12ebb0c967aeda1d74244c20d0a7e0f447d3aa688c844e2fdb55b2a3d31d6",
   "records": 2194,
   "board": {
    "used": 35104,
    "capacity": 16777216,
    "overflow": 0,
-   "sha256": "fa83b98810e123c49d1af6648947f354d45b236c51d52ffe435be0100c148dc3"
+   "sha256": "2af12ebb0c967aeda1d74244c20d0a7e0f447d3aa688c844e2fdb55b2a3d31d6"
   },
   "digest_equal": true,
   "end_log": null,
@@ -374,14 +374,14 @@
   "kind": "console-emulated",
   "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
   "protocol": "b4q-v2",
-  "token": "4c6fd32660fd269fbd60c18fade8febd",
+  "token": "c10374ef5f1195d04d41216854a864db",
   "page_words": [
    "42345149",
    "00000001",
-   "4c6fd326",
-   "60fd269f",
-   "bd60c18f",
-   "ade8febd",
+   "c10374ef",
+   "5f1195d0",
+   "4d412168",
+   "54a864db",
    "6553f100",
    "07d5555f",
    "4e406f12",
@@ -399,7 +399,7 @@
    "00000000",
    "00000000",
    "00000000",
-   "927f0f2d"
+   "299e612a"
   ],
   "page_flags": 2,
   "time_origin": "console entries' `t`: this host's wall clock (time.time()) at the line's receipt / send \u2014 a host timestamp, never a device time",
@@ -415,7 +415,7 @@
    "replay_tx": 0
   },
   "stats": {
-   "hb": 2,
+   "hb": 3,
    "nack": 0,
    "signreq": 2,
    "signreply": 2,
@@ -431,7 +431,7 @@
   "end": null,
   "ident": {
    "protocol": "b4q-v2",
-   "token": "4c6fd32660fd269fbd60c18fade8febd",
+   "token": "c10374ef5f1195d04d41216854a864db",
    "uboot_epoch": 1700000000,
    "app_image_sha_lo32": 131421535,
    "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
@@ -455,10 +455,10 @@
     "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
    }
   },
-  "console_lines": 114,
+  "console_lines": 115,
   "findings": [],
   "host_seq_last": 52,
-  "board_seq_last": 61,
+  "board_seq_last": 62,
   "refused_commands": [],
   "evidence_log": {
    "pulled_bytes": 35104,
@@ -467,8 +467,8 @@
      "used": 6816,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "ed8b4480699c58f1410156353dc8becc1b65728b044ce3d390e0d8fee5945bda",
-     "pulled_sha256": "ed8b4480699c58f1410156353dc8becc1b65728b044ce3d390e0d8fee5945bda",
+     "sha256": "ca55aea4d62300228e47a3752f389903b5731bd4ba17397d3ab93554cfa61858",
+     "pulled_sha256": "ca55aea4d62300228e47a3752f389903b5731bd4ba17397d3ab93554cfa61858",
      "digest_equal": true,
      "upto": 6816
     },
@@ -476,8 +476,8 @@
      "used": 35104,
      "capacity": 16777216,
      "overflow": 0,
-     "sha256": "fa83b98810e123c49d1af6648947f354d45b236c51d52ffe435be0100c148dc3",
-     "pulled_sha256": "fa83b98810e123c49d1af6648947f354d45b236c51d52ffe435be0100c148dc3",
+     "sha256": "2af12ebb0c967aeda1d74244c20d0a7e0f447d3aa688c844e2fdb55b2a3d31d6",
+     "pulled_sha256": "2af12ebb0c967aeda1d74244c20d0a7e0f447d3aa688c844e2fdb55b2a3d31d6",
      "digest_equal": true,
      "upto": 35104
     }

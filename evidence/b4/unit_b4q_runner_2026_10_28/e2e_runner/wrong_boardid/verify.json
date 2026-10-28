@@ -35,12 +35,38 @@
     "boardid": "17A6",
     "role": "verify",
     "boardid_ok": false,
-    "role_ok": true
+    "role_ok": true,
+    "prefix_end": 417
    },
    "clock": {
-    "fpga0_ctrl": null,
-    "derived": null,
-    "ok": false
+    "inputs": {
+     "fpga0": null,
+     "arm": null,
+     "ddr": null,
+     "io": null,
+     "status": null,
+     "boot_mode": null
+    },
+    "eligibility": {
+     "eligible": false,
+     "why": [
+      "word(s) not read: fpga0, arm, ddr, io, status, boot_mode"
+     ],
+     "missing": [
+      "fpga0",
+      "arm",
+      "ddr",
+      "io",
+      "status",
+      "boot_mode"
+     ],
+     "nominal": null,
+     "state": null,
+     "pll": null,
+     "srcsel": null
+    },
+    "ok": false,
+    "prefix_end": 417
    },
    "variant": null
   },

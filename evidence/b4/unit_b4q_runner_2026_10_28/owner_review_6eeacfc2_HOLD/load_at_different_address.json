@@ -1,0 +1,345 @@
+{
+ "dir": "/tmp/owner_b4q_runner_round3_0lq94x7h/build/owner_coordinated_final/load_at_different_address",
+ "session": [
+  "runner: state: the load / crc / go / start addresses are not one address bound to the context: context=0x02000000, go=0x02000000, loady=0x04000000, crc_start=0x04000000, started_at=0x02000000"
+ ],
+ "transactions": [
+  {
+   "dir": "tx_001",
+   "findings": [],
+   "stored_findings": [],
+   "outcome": "O complete; X closed",
+   "executing_side": {
+    "status": 0,
+    "phase": "",
+    "reason": "closed"
+   },
+   "view_findings": [],
+   "unmodelled_reads": 0,
+   "halt_expected": false,
+   "agrees": true
+  },
+  {
+   "dir": "tx_002",
+   "findings": [],
+   "stored_findings": [],
+   "outcome": "O complete; X closed",
+   "executing_side": {
+    "status": 0,
+    "phase": "",
+    "reason": "closed"
+   },
+   "view_findings": [],
+   "unmodelled_reads": 0,
+   "halt_expected": false,
+   "agrees": true
+  },
+  {
+   "dir": "tx_003",
+   "findings": [],
+   "stored_findings": [],
+   "outcome": "O complete; X closed",
+   "executing_side": {
+    "status": 0,
+    "phase": "",
+    "reason": "closed"
+   },
+   "view_findings": [],
+   "unmodelled_reads": 0,
+   "halt_expected": false,
+   "agrees": true
+  },
+  {
+   "dir": "tx_004",
+   "findings": [],
+   "stored_findings": [],
+   "outcome": "O complete; X closed",
+   "executing_side": {
+    "status": 0,
+    "phase": "",
+    "reason": "closed"
+   },
+   "view_findings": [],
+   "unmodelled_reads": 0,
+   "halt_expected": false,
+   "agrees": true
+  }
+ ],
+ "a7": {
+  "findings": [],
+  "slverr": 0,
+  "carrier_reads": [
+   "0x2004",
+   "0x2014",
+   "0x2018",
+   "0x2020",
+   "0x2024",
+   "0x2028",
+   "0x202c",
+   "0x2030",
+   "0x2034",
+   "0x2038",
+   "0x203c",
+   "0x2040",
+   "0x2200",
+   "0x2204",
+   "0x2208",
+   "0x220c",
+   "0x2210",
+   "0x2214",
+   "0x2218",
+   "0x221c"
+  ],
+  "carrier_writes": [
+   "0x2000",
+   "0x201c",
+   "0x2038",
+   "0x2100",
+   "0x2104",
+   "0x2108",
+   "0x210c",
+   "0x2110",
+   "0x2114",
+   "0x2118",
+   "0x211c",
+   "0x2120",
+   "0x2124",
+   "0x2128",
+   "0x212c",
+   "0x2130",
+   "0x2134",
+   "0x2138",
+   "0x213c",
+   "0x2140",
+   "0x2144",
+   "0x2148",
+   "0x214c",
+   "0x2150",
+   "0x2154",
+   "0x2158",
+   "0x215c"
+  ],
+  "rtl_reads_untouched": [
+   "0x2008",
+   "0x2010",
+   "0x201c"
+  ],
+  "rtl_writes_untouched": [
+   "0x2160",
+   "0x2164",
+   "0x2168",
+   "0x216c"
+  ],
+  "devc_reads": [
+   "CTRL",
+   "INT_STS"
+  ],
+  "devc_writes": [
+   "DMA_DEST_ADDR",
+   "DMA_DEST_LEN",
+   "DMA_SRC_ADDR",
+   "DMA_SRC_LEN",
+   "INT_STS"
+  ],
+  "buffer_reads": {
+   "PAGE": 24,
+   "DST_BUF": 31512,
+   "WR_BUF": 8544
+  },
+  "buffer_writes": {
+   "DST_BUF": 21008,
+   "CMD_BUF": 4992,
+   "WR_BUF": 8544
+  },
+  "slcr_reads": [
+   "0xf8000530"
+  ],
+  "accesses": 77794
+ },
+ "agree": false,
+ "refused": null,
+ "runner": {
+  "findings": [
+   "state: the load / crc / go / start addresses are not one address bound to the context: context=0x02000000, go=0x02000000, loady=0x04000000, crc_start=0x04000000, started_at=0x02000000"
+  ],
+  "limitations": [],
+  "kind": "console-pty-surrogate",
+  "provenance": {
+   "kind": "console-pty-surrogate",
+   "observed_on_device": false,
+   "qualification": false,
+   "synthetic": null,
+   "fixture": {
+    "profile": "pty-surrogate",
+    "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+   },
+   "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+  },
+  "phase": "ended",
+  "witnesses": {
+   "board": {
+    "model": "Ebang EBAZ4203 (surrogate)",
+    "dram_mib": 512,
+    "prompt_seen": true,
+    "model_ok": true,
+    "dram_ok": true
+   },
+   "identity": {
+    "boardid": "F8B3",
+    "role": "verify",
+    "boardid_ok": true,
+    "role_ok": true
+   },
+   "clock": {
+    "fpga0_ctrl": "00200a00",
+    "derived": {
+     "srcsel": 0,
+     "pll": "io",
+     "pll_ctrl": "0001e000",
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "pll_reset": false,
+     "pll_bypass": false,
+     "mhz": 50.0
+    },
+    "ok": true
+   },
+   "variant": "42340001",
+   "image": {
+    "transferred_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "bytes": 98324,
+    "host_crc32": "f5d2dd33",
+    "ymodem": {
+     "name": "b4q_app_v2.bin",
+     "size": 98324,
+     "blocks": 97,
+     "end": 100074
+    },
+    "total": 98324,
+    "device_crc": {
+     "range": [
+      "04000000",
+      "04018013"
+     ],
+     "value": "f5d2dd33"
+    },
+    "equal": true
+   },
+   "page": {
+    "written": [
+     "42345149",
+     "00000001",
+     "17a53e04",
+     "0209d83a",
+     "3136520b",
+     "38ed1912",
+     "6553f100",
+     "4d989ee8",
+     "4e406f12",
+     "80d3cf5c",
+     "abf43d00",
+     "1278ef3b",
+     "807a9ce4",
+     "a7d03644",
+     "5122f563",
+     "6e3d18a9",
+     "7f4a7c15",
+     "9e3779b9",
+     "00000000",
+     "00000002",
+     "00000000",
+     "00000000",
+     "00000000",
+     "f85fa336"
+    ],
+    "read_back": [
+     "42345149",
+     "00000001",
+     "17a53e04",
+     "0209d83a",
+     "3136520b",
+     "38ed1912",
+     "6553f100",
+     "4d989ee8",
+     "4e406f12",
+     "80d3cf5c",
+     "abf43d00",
+     "1278ef3b",
+     "807a9ce4",
+     "a7d03644",
+     "5122f563",
+     "6e3d18a9",
+     "7f4a7c15",
+     "9e3779b9",
+     "00000000",
+     "00000002",
+     "00000000",
+     "00000000",
+     "00000000",
+     "f85fa336"
+    ],
+    "equal": true
+   },
+   "addresses": {
+    "context": "0x02000000",
+    "go": "0x02000000",
+    "loady": "0x04000000",
+    "crc_start": "0x04000000",
+    "started_at": "0x02000000"
+   }
+  },
+  "stop": null
+ },
+ "provenance": {
+  "kind": "console-pty-surrogate",
+  "observed_on_device": false,
+  "qualification": false,
+  "synthetic": null,
+  "fixture": {
+   "profile": "pty-surrogate",
+   "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+  },
+  "standing": "a declared host fixture on a PTY: the device surrogate; never physical provenance"
+ },
+ "source": {
+  "findings": [],
+  "limitations": [],
+  "kind": "ps-evidence-log-v1",
+  "raw_bytes": 123344,
+  "records": 7709
+ },
+ "qualification": {
+  "findings": [],
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
+ "console": {
+  "findings": [],
+  "board_lines": 214,
+  "host_lines": 180,
+  "noted": {
+   "corrupted": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "dropped": 0,
+   "stale_board": 0,
+   "replayed": 0,
+   "other": 0
+  },
+  "ident": true,
+  "results": 4,
+  "signreqs": 4,
+  "ends": 1,
+  "admitted": 4
+ },
+ "chain": [],
+ "session_findings_stored": [],
+ "session_only_here": [
+  "runner: state: the load / crc / go / start addresses are not one address bound to the context: context=0x02000000, go=0x02000000, loady=0x04000000, crc_start=0x04000000, started_at=0x02000000"
+ ],
+ "session_only_stored": [],
+ "clean": false
+}

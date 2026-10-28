@@ -1,6 +1,6 @@
 {
  "name": "malformed_tx",
- "wall_s": 2.465,
+ "wall_s": 2.33,
  "records": [
   {
    "seq": 1,
@@ -50,13 +50,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 117,
-  "hb": 5,
+  "lines": 116,
+  "hb": 4,
   "nacks": 6,
   "sign_requests": 2,
   "sign_replies": 2,
   "transactions": 2,
-  "kicks": 117,
+  "kicks": 116,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -66,10 +66,10 @@
   "log": 64400,
   "log_overflow": 0,
   "log_records": 4025,
-  "log_sha256": "f8d088dae0c7a4500e76127cdb69f2770a44c857a8074198e8a8823ba1be76eb"
+  "log_sha256": "3ebeb2e464150f3510a93e7590ab929abb8ed5972887b73c1dd651b094198658"
  },
  "stats": {
-  "hb": 5,
+  "hb": 4,
   "nack": 6,
   "signreq": 2,
   "signreply": 2,
@@ -82,10 +82,10 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 220,
+ "console_lines": 219,
  "halted": null,
  "open_findings": [],
- "platform_kicks": 119,
+ "platform_kicks": 118,
  "malformed": [
   {
    "cmd": "TX mystery 00000000 0",

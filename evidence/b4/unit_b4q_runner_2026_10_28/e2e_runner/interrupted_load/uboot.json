@@ -1,8 +1,8 @@
 {
  "schema": "b4q_runner_uboot",
  "schema_version": 2,
- "port": "/tmp/b4q-runner-e2e-934550-interrupted_load",
- "port_real": "/dev/pts/14",
+ "port": "/tmp/b4q-runner-e2e-946397-interrupted_load",
+ "port_real": "/dev/pts/15",
  "kind": "console-pty-surrogate",
  "phase": "stopped",
  "context": {
@@ -34,7 +34,7 @@
  "load_addr": 33554432,
  "stops": [
   {
-   "t": 1793208937.968,
+   "t": 1793211949.283,
    "why": "loady: the ymodem transfer failed: cancelled by the receiver at block 20",
    "kind": "TransportStop"
   }
@@ -71,32 +71,81 @@
     "verify",
     "sacrificial"
    ],
+   "policy_floor": [
+    "verify",
+    "sacrificial"
+   ],
    "boardid_ok": true,
    "role_ok": true,
    "purpose": "bringup-rehearsal"
   },
   "clock": {
-   "fpga0_ctrl_addr": "0xf8000170",
-   "fpga0_ctrl": "00200a00",
-   "pll_ctrl": {
-    "arm": "0001a000",
-    "ddr": "00020000",
-    "io": "0001e000"
+   "inputs": {
+    "fpga0": {
+     "addr": "0xf8000170",
+     "word": "00200a00"
+    },
+    "arm": {
+     "addr": "0xf8000100",
+     "word": "0001a000"
+    },
+    "ddr": {
+     "addr": "0xf8000104",
+     "word": "00020000"
+    },
+    "io": {
+     "addr": "0xf8000108",
+     "word": "0001e000"
+    },
+    "status": {
+     "addr": "0xf800010c",
+     "word": "0000003f"
+    },
+    "boot_mode": {
+     "addr": "0xf800025c",
+     "word": "00000005"
+    }
    },
-   "derived": {
+   "eligibility": {
+    "eligible": true,
+    "why": [],
+    "missing": [],
     "srcsel": 0,
     "pll": "io",
-    "pll_ctrl": "0001e000",
-    "fdiv": 30,
-    "div0": 10,
-    "div1": 2,
-    "pll_reset": false,
-    "pll_bypass": false,
-    "mhz": 50.0
+    "state": {
+     "pll": "io",
+     "ctrl": "0001e000",
+     "reset": false,
+     "pwrdwn": false,
+     "bypass_force": false,
+     "bypass_qual": false,
+     "boot_pll_bypass": false,
+     "bypassed": false,
+     "locked": true,
+     "stable": true,
+     "eligible": true,
+     "why": []
+    },
+    "nominal": {
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "mhz": 50.0
+    },
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "ps_clk_mhz": 33.333333
    },
    "expected_mhz": 50.0,
    "expected_ctrl": null,
-   "ok": true
+   "ok": true,
+   "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
   },
   "carrier": {
    "variant_addr": "0x43c02034",
@@ -112,7 +161,7 @@
  "uboot_steps": [
   {
    "what": "prompt",
-   "t": 1793208937.396,
+   "t": 1793211948.719,
    "rx_at": 0,
    "tx_at": 0,
    "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
@@ -125,7 +174,7 @@
   },
   {
    "what": "printenv",
-   "t": 1793208937.904,
+   "t": 1793211949.226,
    "rx_at": 345,
    "tx_at": 2,
    "sent": "printenv boardid",
@@ -137,7 +186,7 @@
   },
   {
    "what": "printenv",
-   "t": 1793208937.905,
+   "t": 1793211949.226,
    "rx_at": 383,
    "tx_at": 19,
    "sent": "printenv role",
@@ -149,7 +198,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208937.907,
+   "t": 1793211949.228,
    "rx_at": 417,
    "tx_at": 33,
    "sent": "md.l f8000170 1",
@@ -163,7 +212,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208937.908,
+   "t": 1793211949.229,
    "rx_at": 468,
    "tx_at": 49,
    "sent": "md.l f8000100 1",
@@ -177,7 +226,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208937.909,
+   "t": 1793211949.23,
    "rx_at": 519,
    "tx_at": 65,
    "sent": "md.l f8000104 1",
@@ -191,7 +240,7 @@
   },
   {
    "what": "md.l",
-   "t": 1793208937.91,
+   "t": 1793211949.231,
    "rx_at": 570,
    "tx_at": 81,
    "sent": "md.l f8000108 1",
@@ -205,37 +254,65 @@
   },
   {
    "what": "md.l",
-   "t": 1793208937.913,
+   "t": 1793211949.232,
    "rx_at": 621,
    "tx_at": 97,
-   "sent": "md.l 43c02034 1",
-   "reply": "43c02034: 42340001    ..4B\r\n",
+   "sent": "md.l f800010c 1",
+   "reply": "f800010c: 0000003f    ?...\r\n",
    "ok": true,
    "rx_end": 672,
    "tx_end": 113,
+   "words": [
+    "0000003f"
+   ]
+  },
+  {
+   "what": "md.l",
+   "t": 1793211949.232,
+   "rx_at": 672,
+   "tx_at": 113,
+   "sent": "md.l f800025c 1",
+   "reply": "f800025c: 00000005    ....\r\n",
+   "ok": true,
+   "rx_end": 723,
+   "tx_end": 129,
+   "words": [
+    "00000005"
+   ]
+  },
+  {
+   "what": "md.l",
+   "t": 1793211949.234,
+   "rx_at": 723,
+   "tx_at": 129,
+   "sent": "md.l 43c02034 1",
+   "reply": "43c02034: 42340001    ..4B\r\n",
+   "ok": true,
+   "rx_end": 774,
+   "tx_end": 145,
    "words": [
     "42340001"
    ]
   },
   {
    "what": "loady",
-   "t": 1793208937.918,
-   "rx_at": 672,
-   "tx_at": 113,
+   "t": 1793211949.236,
+   "rx_at": 774,
+   "tx_at": 145,
    "sent": "loady 02000000",
    "bytes": 98324,
    "ok": false,
    "ymodem": "cancelled by the receiver at block 20",
    "reply": "\u0018xyzModem - CRC mode, 0(SOH)/0(STX)/2(CAN) packets, 0 retries\r\n## Total Size = 0x00000000 = 0 Bytes\r\nZynq> ",
-   "rx_end": 888,
-   "tx_end": 20841
+   "rx_end": 990,
+   "tx_end": 20873
   }
  ],
  "raw": {
-  "console_bin_sha256": "ec42cba581247ead1071cb3f9f96d7dc388550f785bd06d0786954f9de1fe6b5",
-  "console_bin_bytes": 888,
-  "console_tx_bin_sha256": "3697de1519150ca032e5e641f6817e6692009c20893217a05fbacbfc694f7449",
-  "console_tx_bin_bytes": 20841,
+  "console_bin_sha256": "58209f11881a77b56afa9a2ac488fdd8845b8ab643eef6f4812124f0f2a27809",
+  "console_bin_bytes": 990,
+  "console_tx_bin_sha256": "5922e6bd5d527d7199e5138ab83e8d43ba76d1b3d74842f20c468555cefde279",
+  "console_tx_bin_bytes": 20873,
   "incomplete_writes": []
  },
  "break_s": 20.0,

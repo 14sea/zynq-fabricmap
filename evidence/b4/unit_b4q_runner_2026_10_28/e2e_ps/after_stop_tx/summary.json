@@ -1,6 +1,6 @@
 {
  "name": "after_stop_tx",
- "wall_s": 1.466,
+ "wall_s": 1.612,
  "records": [
   {
    "seq": 1,
@@ -52,13 +52,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 69,
-  "hb": 3,
+  "lines": 68,
+  "hb": 2,
   "nacks": 1,
   "sign_requests": 2,
   "sign_replies": 2,
   "transactions": 2,
-  "kicks": 69,
+  "kicks": 68,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 1,
@@ -68,10 +68,10 @@
   "log": 35168,
   "log_overflow": 0,
   "log_records": 2198,
-  "log_sha256": "7acaff325c90e15be81f176fb2fbadf9d0c0232d82c92e61b55ea78a784e495a"
+  "log_sha256": "7f6e0f3de62b81738c714dcdb5762dd38085c4c87844a438276a1b78e5d7e419"
  },
  "stats": {
-  "hb": 3,
+  "hb": 2,
   "nack": 1,
   "signreq": 2,
   "signreply": 2,
@@ -84,10 +84,10 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 129,
+ "console_lines": 128,
  "halted": "transaction 2: no observation sealed (STOP_SIGN: the notary refused the candidate)",
  "open_findings": [],
- "platform_kicks": 71,
+ "platform_kicks": 70,
  "failed": {
   "status": 1,
   "reason": "STOP_SIGN: the notary refused the candidate",

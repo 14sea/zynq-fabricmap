@@ -7,8 +7,8 @@
   "runner": {
    "schema": "b4q_runner_uboot",
    "schema_version": 2,
-   "port": "/tmp/b4q-runner-e2e-934550-clock_gated",
-   "port_real": "/dev/pts/14",
+   "port": "/tmp/b4q-runner-e2e-946397-clock_gated",
+   "port_real": "/dev/pts/15",
    "kind": "console-pty-surrogate",
    "phase": "stopped",
    "context": {
@@ -40,8 +40,8 @@
    "load_addr": 33554432,
    "stops": [
     {
-     "t": 1793208855.132,
-     "why": "clock: FPGA0_CLK_CTRL 0x00200a00 with io PLL 0001e001 gives no running clock (reset=True, bypass=False, divisors 10/2): no PL access",
+     "t": 1793211859.607,
+     "why": "clock: the selected io PLL is not an eligible running source (PLL_RESET): no PL access",
      "kind": "AdmissionStop"
     }
    ],
@@ -77,32 +77,85 @@
       "verify",
       "sacrificial"
      ],
+     "policy_floor": [
+      "verify",
+      "sacrificial"
+     ],
      "boardid_ok": true,
      "role_ok": true,
      "purpose": "bringup-rehearsal"
     },
     "clock": {
-     "fpga0_ctrl_addr": "0xf8000170",
-     "fpga0_ctrl": "00200a00",
-     "pll_ctrl": {
-      "arm": "0001a000",
-      "ddr": "00020000",
-      "io": "0001e001"
+     "inputs": {
+      "fpga0": {
+       "addr": "0xf8000170",
+       "word": "00200a00"
+      },
+      "arm": {
+       "addr": "0xf8000100",
+       "word": "0001a000"
+      },
+      "ddr": {
+       "addr": "0xf8000104",
+       "word": "00020000"
+      },
+      "io": {
+       "addr": "0xf8000108",
+       "word": "0001e001"
+      },
+      "status": {
+       "addr": "0xf800010c",
+       "word": "0000003f"
+      },
+      "boot_mode": {
+       "addr": "0xf800025c",
+       "word": "00000005"
+      }
      },
-     "derived": {
+     "eligibility": {
+      "eligible": false,
+      "why": [
+       "PLL_RESET"
+      ],
+      "missing": [],
       "srcsel": 0,
       "pll": "io",
-      "pll_ctrl": "0001e001",
-      "fdiv": 30,
-      "div0": 10,
-      "div1": 2,
-      "pll_reset": true,
-      "pll_bypass": false,
-      "mhz": null
+      "state": {
+       "pll": "io",
+       "ctrl": "0001e001",
+       "reset": true,
+       "pwrdwn": false,
+       "bypass_force": false,
+       "bypass_qual": false,
+       "boot_pll_bypass": false,
+       "bypassed": false,
+       "locked": true,
+       "stable": true,
+       "eligible": false,
+       "why": [
+        "PLL_RESET"
+       ]
+      },
+      "nominal": {
+       "fdiv": 30,
+       "div0": 10,
+       "div1": 2,
+       "mhz": 50.0
+      },
+      "inputs": {
+       "fpga0": "00200a00",
+       "arm": "0001a000",
+       "ddr": "00020000",
+       "io": "0001e001",
+       "status": "0000003f",
+       "boot_mode": "00000005"
+      },
+      "ps_clk_mhz": 33.333333
      },
      "expected_mhz": 50.0,
      "expected_ctrl": null,
-     "ok": false
+     "ok": false,
+     "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
     },
     "carrier": null,
     "ok": false
@@ -113,7 +166,7 @@
    "uboot_steps": [
     {
      "what": "prompt",
-     "t": 1793208854.615,
+     "t": 1793211859.089,
      "rx_at": 0,
      "tx_at": 0,
      "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
@@ -126,7 +179,7 @@
     },
     {
      "what": "printenv",
-     "t": 1793208855.123,
+     "t": 1793211859.596,
      "rx_at": 345,
      "tx_at": 2,
      "sent": "printenv boardid",
@@ -138,7 +191,7 @@
     },
     {
      "what": "printenv",
-     "t": 1793208855.124,
+     "t": 1793211859.597,
      "rx_at": 383,
      "tx_at": 19,
      "sent": "printenv role",
@@ -150,7 +203,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208855.126,
+     "t": 1793211859.599,
      "rx_at": 417,
      "tx_at": 33,
      "sent": "md.l f8000170 1",
@@ -164,7 +217,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208855.127,
+     "t": 1793211859.6,
      "rx_at": 468,
      "tx_at": 49,
      "sent": "md.l f8000100 1",
@@ -178,7 +231,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208855.128,
+     "t": 1793211859.602,
      "rx_at": 519,
      "tx_at": 65,
      "sent": "md.l f8000104 1",
@@ -192,7 +245,7 @@
     },
     {
      "what": "md.l",
-     "t": 1793208855.129,
+     "t": 1793211859.603,
      "rx_at": 570,
      "tx_at": 81,
      "sent": "md.l f8000108 1",
@@ -203,20 +256,48 @@
      "words": [
       "0001e001"
      ]
+    },
+    {
+     "what": "md.l",
+     "t": 1793211859.604,
+     "rx_at": 621,
+     "tx_at": 97,
+     "sent": "md.l f800010c 1",
+     "reply": "f800010c: 0000003f    ?...\r\n",
+     "ok": true,
+     "rx_end": 672,
+     "tx_end": 113,
+     "words": [
+      "0000003f"
+     ]
+    },
+    {
+     "what": "md.l",
+     "t": 1793211859.605,
+     "rx_at": 672,
+     "tx_at": 113,
+     "sent": "md.l f800025c 1",
+     "reply": "f800025c: 00000005    ....\r\n",
+     "ok": true,
+     "rx_end": 723,
+     "tx_end": 129,
+     "words": [
+      "00000005"
+     ]
     }
    ],
    "raw": {
-    "console_bin_sha256": "1c99b0d88debd3d312520c032d7bcb86a4fbfcb4c5bf7e4fea542bc8c9850920",
-    "console_bin_bytes": 621,
-    "console_tx_bin_sha256": "908f5f76d0a91b93fca9ad35305654c803e15028aba532f3fa8aabbaffd8bf37",
-    "console_tx_bin_bytes": 97,
+    "console_bin_sha256": "5608cad000542fc9353c16536940e94a05c41d6c8d3dc34df5307006a3bdce07",
+    "console_bin_bytes": 723,
+    "console_tx_bin_sha256": "16a2b1ef497e7372a835b893c849b76bac1bb3036eee260e53de189bd2e15997",
+    "console_tx_bin_bytes": 129,
     "incomplete_writes": []
    },
    "break_s": 20.0,
    "phase_at_stop": "prompt"
   },
   "protocol": "b4q-v2",
-  "token": "6e9d09e38a90ef3094f2e3284283c2e8",
+  "token": "c15fd7574f473c08bf2dfc77ca9726ec",
   "page_words": [],
   "page_flags": 2,
   "knobs": {

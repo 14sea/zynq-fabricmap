@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-md_garbage",
- "wall_s": 1.07,
+ "wall_s": 1.057,
  "stop": {
   "kind": "TransportStop",
   "why": "md.l 0xf8000170 1: 0 words parsed, not 1"
@@ -57,6 +57,10 @@
     "verify",
     "sacrificial"
    ],
+   "policy_floor": [
+    "verify",
+    "sacrificial"
+   ],
    "boardid_ok": true,
    "role_ok": true,
    "purpose": "bringup-rehearsal"
@@ -70,7 +74,7 @@
  "source": null,
  "transport_stops": [
   {
-   "t": 1793208941.022,
+   "t": 1793211952.335,
    "why": "md.l 0xf8000170 1: 0 words parsed, not 1",
    "kind": "TransportStop"
   }

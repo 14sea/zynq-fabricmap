@@ -1,6 +1,6 @@
 {
  "name": "pre_event_corrupt",
- "wall_s": 1.807,
+ "wall_s": 1.721,
  "records": [
   {
    "seq": 1,
@@ -52,13 +52,13 @@
  "end": {
   "kind": "COMPLETED",
   "reason": "the host closed the session",
-  "lines": 81,
-  "hb": 3,
+  "lines": 80,
+  "hb": 2,
   "nacks": 0,
   "sign_requests": 2,
   "sign_replies": 2,
   "transactions": 2,
-  "kicks": 81,
+  "kicks": 80,
   "flushed": 0,
   "stale_frames": 0,
   "refused_tx": 0,
@@ -68,10 +68,10 @@
   "log": 46208,
   "log_overflow": 0,
   "log_records": 2888,
-  "log_sha256": "046e153404e1e873481b5effe4b560af51fbb74cc134088599e45697d78993ec"
+  "log_sha256": "d2de6db28896bb97bda29ad6cb81014a927f964db2d021eb96e5e4867188e2f7"
  },
  "stats": {
-  "hb": 3,
+  "hb": 2,
   "nack": 0,
   "signreq": 2,
   "signreply": 2,
@@ -84,10 +84,10 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 154,
+ "console_lines": 153,
  "halted": "transaction 2: no observation sealed (STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it))",
  "open_findings": [],
- "platform_kicks": 83,
+ "platform_kicks": 82,
  "tx": {
   "status": 1,
   "reason": "STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)",

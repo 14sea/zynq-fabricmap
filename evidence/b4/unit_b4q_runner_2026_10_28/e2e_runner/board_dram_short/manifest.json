@@ -7,8 +7,8 @@
   "runner": {
    "schema": "b4q_runner_uboot",
    "schema_version": 2,
-   "port": "/tmp/b4q-runner-e2e-934550-board_dram_short",
-   "port_real": "/dev/pts/14",
+   "port": "/tmp/b4q-runner-e2e-946397-board_dram_short",
+   "port_real": "/dev/pts/15",
    "kind": "console-pty-surrogate",
    "phase": "stopped",
    "context": {
@@ -40,7 +40,7 @@
    "load_addr": 33554432,
    "stops": [
     {
-     "t": 1793208850.991,
+     "t": 1793211855.464,
      "why": "board: DRAM 256 MiB is below the 512 MiB the image's map needs (the page, the buffers and the log lie above 256 MiB)",
      "kind": "AdmissionStop"
     }
@@ -80,7 +80,7 @@
    "uboot_steps": [
     {
      "what": "prompt",
-     "t": 1793208850.483,
+     "t": 1793211854.96,
      "rx_at": 0,
      "tx_at": 0,
      "reply": "\r\n\r\nU-Boot 2014.01 (surrogate) (Oct 28 2026 - 00:00:00)\r\n\r\nI2C:   ready\r\nMemory: ECC disabled\r\nDRAM:  256 MiB\r\nMMC:   zynq_sdhci: 0\r\nNAND:  128 MiB\r\nIn:    serial\r\nOut:   serial\r\nErr:   serial\r\nModel: Ebang EBAZ4205 (surrogate)\r\nNet:   Gem.e000b000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nzynq-uboot> ",
@@ -103,7 +103,7 @@
    "phase_at_stop": "prompt"
   },
   "protocol": "b4q-v2",
-  "token": "fcc8197d8dc6c3242cf608e70eb6427e",
+  "token": "6c24d7c103f4cee0d9c75a47ed04d67d",
   "page_words": [],
   "page_flags": 2,
   "knobs": {

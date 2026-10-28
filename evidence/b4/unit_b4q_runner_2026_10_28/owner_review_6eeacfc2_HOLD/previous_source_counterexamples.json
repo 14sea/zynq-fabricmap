@@ -1,0 +1,32 @@
+{
+  "synthetic_device_control": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "session": [],
+    "provenance": {
+      "kind": "uart-board",
+      "observed_on_device": false,
+      "qualification": false,
+      "synthetic": {
+        "kind": "device-format fixture",
+        "from": "/tmp/owner_b4q_runner_round3_0lq94x7h/evidence/b4/unit_b4q_runner_2026_10_28/e2e_runner/valid",
+        "from_manifest_sha256": "315bae7b9366f052b9f17f66c996c31ef989ff1c1a7cac9d7f31bc8fd6922db1",
+        "note": "made by host/b4q_device_fixture.py from a PTY (surrogate) archive: structural consistency only; not observed on a device; grants nothing"
+      },
+      "fixture": null,
+      "standing": "a SYNTHETIC device-format fixture (the manifest says so): structural consistency only; never board evidence"
+    },
+    "selected_source": "ps-evidence-log-v1"
+  },
+  "device_without_source": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "manifest.source: absent on a runner archive \u2014 the PS evidence-log source (ps-evidence-log-v1) is required there; the emulated contract is the pipe session's alone",
+    "session": [],
+    "provenance": null,
+    "selected_source": null
+  }
+}

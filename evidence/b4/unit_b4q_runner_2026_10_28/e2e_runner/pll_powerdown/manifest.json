@@ -1,0 +1,347 @@
+{
+ "schema": "b4q_session",
+ "label": "B4Q-runner-pll_powerdown",
+ "records": [],
+ "transport": {
+  "kind": "console-pty-surrogate",
+  "runner": {
+   "schema": "b4q_runner_uboot",
+   "schema_version": 2,
+   "port": "/tmp/b4q-runner-e2e-946397-pll_powerdown",
+   "port_real": "/dev/pts/15",
+   "kind": "console-pty-surrogate",
+   "phase": "stopped",
+   "context": {
+    "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+    "image_path": "/home/test/zynq_fabricmap/build/b4q_image/b4q_app_v2.bin",
+    "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+    "board_models": [
+     "Ebang EBAZ4203"
+    ],
+    "dram_min_mib": 512,
+    "variant_word": 1110704129,
+    "fclk0_ctrl_expected": null,
+    "load_addr": 33554432,
+    "purpose": "bringup-rehearsal",
+    "expected_boardid": "F8B3",
+    "allowed_roles": [
+     "verify",
+     "sacrificial"
+    ],
+    "fclk0_mhz": 50.0,
+    "ps_clk_mhz": 33.333333,
+    "fixture": {
+     "profile": "pty-surrogate",
+     "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+    }
+   },
+   "image": "build/b4q_image/b4q_app_v2.bin",
+   "image_sha256_file": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+   "load_addr": 33554432,
+   "stops": [
+    {
+     "t": 1793211862.373,
+     "why": "clock: the selected io PLL is not an eligible running source (PLL_PWRDWN): no PL access",
+     "kind": "AdmissionStop"
+    }
+   ],
+   "silence_s": 20.0,
+   "admission": {
+    "image": {
+     "file": "build/b4q_image/b4q_app_v2.bin",
+     "file_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+     "pin": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+     "pin_source": "build evidence evidence/b4/unit_b4q_runner_2026_10_28/build_evidence.json",
+     "equal": true,
+     "bytes": 98324
+    },
+    "board": {
+     "model": "Ebang EBAZ4203 (surrogate)",
+     "dram_mib": 512,
+     "permitted_models": [
+      "Ebang EBAZ4203"
+     ],
+     "dram_min_mib": 512,
+     "fixture": {
+      "profile": "pty-surrogate",
+      "note": "a host fixture on a PTY (host/b4q_device_surrogate.py): never physical provenance"
+     },
+     "model_ok": true,
+     "dram_ok": true
+    },
+    "identity": {
+     "boardid": "F8B3",
+     "role": "verify",
+     "expected_boardid": "F8B3",
+     "allowed_roles": [
+      "verify",
+      "sacrificial"
+     ],
+     "policy_floor": [
+      "verify",
+      "sacrificial"
+     ],
+     "boardid_ok": true,
+     "role_ok": true,
+     "purpose": "bringup-rehearsal"
+    },
+    "clock": {
+     "inputs": {
+      "fpga0": {
+       "addr": "0xf8000170",
+       "word": "00200a00"
+      },
+      "arm": {
+       "addr": "0xf8000100",
+       "word": "0001a000"
+      },
+      "ddr": {
+       "addr": "0xf8000104",
+       "word": "00020000"
+      },
+      "io": {
+       "addr": "0xf8000108",
+       "word": "0001e002"
+      },
+      "status": {
+       "addr": "0xf800010c",
+       "word": "0000003f"
+      },
+      "boot_mode": {
+       "addr": "0xf800025c",
+       "word": "00000005"
+      }
+     },
+     "eligibility": {
+      "eligible": false,
+      "why": [
+       "PLL_PWRDWN"
+      ],
+      "missing": [],
+      "srcsel": 0,
+      "pll": "io",
+      "state": {
+       "pll": "io",
+       "ctrl": "0001e002",
+       "reset": false,
+       "pwrdwn": true,
+       "bypass_force": false,
+       "bypass_qual": false,
+       "boot_pll_bypass": false,
+       "bypassed": false,
+       "locked": true,
+       "stable": true,
+       "eligible": false,
+       "why": [
+        "PLL_PWRDWN"
+       ]
+      },
+      "nominal": {
+       "fdiv": 30,
+       "div0": 10,
+       "div1": 2,
+       "mhz": 50.0
+      },
+      "inputs": {
+       "fpga0": "00200a00",
+       "arm": "0001a000",
+       "ddr": "00020000",
+       "io": "0001e002",
+       "status": "0000003f",
+       "boot_mode": "00000005"
+      },
+      "ps_clk_mhz": 33.333333
+     },
+     "expected_mhz": 50.0,
+     "expected_ctrl": null,
+     "ok": false,
+     "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
+    },
+    "carrier": null,
+    "ok": false
+   },
+   "load_witness": null,
+   "page_witness": null,
+   "go": null,
+   "uboot_steps": [
+    {
+     "what": "prompt",
+     "t": 1793211861.853,
+     "rx_at": 0,
+     "tx_at": 0,
+     "reply": "\r\n\r\nU-Boot SPL 2026.04-rc5 (surrogate)\r\n\r\nU-Boot 2026.04-rc5 (surrogate) (Oct 28 2026 - 00:00:00 +0000)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203 (surrogate)\r\nDRAM:  ECC disabled 512 MiB\r\nMMC:   mmc@e0100000: 0\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nHit any key to stop autoboot:  2 \b\b\b\r\nZynq> ",
+     "banner_seen": true,
+     "ok": true,
+     "model": "Ebang EBAZ4203 (surrogate)",
+     "dram_mib": 512,
+     "rx_end": 345,
+     "tx_end": 2
+    },
+    {
+     "what": "printenv",
+     "t": 1793211862.361,
+     "rx_at": 345,
+     "tx_at": 2,
+     "sent": "printenv boardid",
+     "reply": "boardid=F8B3\r\n",
+     "ok": true,
+     "rx_end": 383,
+     "tx_end": 19,
+     "value": "F8B3"
+    },
+    {
+     "what": "printenv",
+     "t": 1793211862.362,
+     "rx_at": 383,
+     "tx_at": 19,
+     "sent": "printenv role",
+     "reply": "role=verify\r\n",
+     "ok": true,
+     "rx_end": 417,
+     "tx_end": 33,
+     "value": "verify"
+    },
+    {
+     "what": "md.l",
+     "t": 1793211862.365,
+     "rx_at": 417,
+     "tx_at": 33,
+     "sent": "md.l f8000170 1",
+     "reply": "f8000170: 00200a00    .. .\r\n",
+     "ok": true,
+     "rx_end": 468,
+     "tx_end": 49,
+     "words": [
+      "00200a00"
+     ]
+    },
+    {
+     "what": "md.l",
+     "t": 1793211862.366,
+     "rx_at": 468,
+     "tx_at": 49,
+     "sent": "md.l f8000100 1",
+     "reply": "f8000100: 0001a000    ....\r\n",
+     "ok": true,
+     "rx_end": 519,
+     "tx_end": 65,
+     "words": [
+      "0001a000"
+     ]
+    },
+    {
+     "what": "md.l",
+     "t": 1793211862.367,
+     "rx_at": 519,
+     "tx_at": 65,
+     "sent": "md.l f8000104 1",
+     "reply": "f8000104: 00020000    ....\r\n",
+     "ok": true,
+     "rx_end": 570,
+     "tx_end": 81,
+     "words": [
+      "00020000"
+     ]
+    },
+    {
+     "what": "md.l",
+     "t": 1793211862.368,
+     "rx_at": 570,
+     "tx_at": 81,
+     "sent": "md.l f8000108 1",
+     "reply": "f8000108: 0001e002    ....\r\n",
+     "ok": true,
+     "rx_end": 621,
+     "tx_end": 97,
+     "words": [
+      "0001e002"
+     ]
+    },
+    {
+     "what": "md.l",
+     "t": 1793211862.369,
+     "rx_at": 621,
+     "tx_at": 97,
+     "sent": "md.l f800010c 1",
+     "reply": "f800010c: 0000003f    ?...\r\n",
+     "ok": true,
+     "rx_end": 672,
+     "tx_end": 113,
+     "words": [
+      "0000003f"
+     ]
+    },
+    {
+     "what": "md.l",
+     "t": 1793211862.37,
+     "rx_at": 672,
+     "tx_at": 113,
+     "sent": "md.l f800025c 1",
+     "reply": "f800025c: 00000005    ....\r\n",
+     "ok": true,
+     "rx_end": 723,
+     "tx_end": 129,
+     "words": [
+      "00000005"
+     ]
+    }
+   ],
+   "raw": {
+    "console_bin_sha256": "619296ef6a3dc74e6a965f69d20d61caaf7242c9a26b88973803198ec35b08b8",
+    "console_bin_bytes": 723,
+    "console_tx_bin_sha256": "16a2b1ef497e7372a835b893c849b76bac1bb3036eee260e53de189bd2e15997",
+    "console_tx_bin_bytes": 129,
+    "incomplete_writes": []
+   },
+   "break_s": 20.0,
+   "phase_at_stop": "prompt"
+  },
+  "protocol": "b4q-v2",
+  "token": "289ec023aca7aa2eed6ea3b5dadc68ac",
+  "page_words": [],
+  "page_flags": 2,
+  "knobs": {
+   "corrupt_replies": 0,
+   "drop_replies": 0,
+   "bad_page": null,
+   "garbage_before_tx": 0,
+   "watchdog_fail": false,
+   "wrong_token_lines": 0,
+   "stale_reply_first": 0,
+   "seq_gap": 0,
+   "replay_tx": 0
+  },
+  "stats": {
+   "hb": 0,
+   "nack": 0,
+   "signreq": 0,
+   "signreply": 0,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "console_lines": 0,
+  "findings": [],
+  "ident": null,
+  "end": null
+ },
+ "emulated": true,
+ "standing": "a runner archive WITHOUT a session: the control plane stopped before the opening (uboot.json names the step)",
+ "instrument": {
+  "variant": "42340001",
+  "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "image_sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b"
+ },
+ "executing_side": {
+  "binary": "build/b4q_image/b4q_app_v2.bin",
+  "sha256": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b"
+ },
+ "halted": null,
+ "interrupted": null,
+ "no_session": true
+}

@@ -1,0 +1,38 @@
+{
+  "reviewed_head": "6eeacfc2f306bf6aabcacabca4036fec82439ec3",
+  "code_heads": [
+    "b9b5496a",
+    "e49836b0"
+  ],
+  "previous_review": "30c5ccba",
+  "verdict": "HOLD",
+  "utc": "2026-10-28T17:49:24.585451+00:00",
+  "tracked_changes_by_reviewer": false,
+  "physical_device_contact": false,
+  "production_seed_derivation": false,
+  "tests": {
+    "bench_prerequisite": 1,
+    "suite": 121,
+    "result": "OK",
+    "exit": 0,
+    "seconds": 391.69
+  },
+  "fresh_e2e": {
+    "ps_cases": 19,
+    "ps_agree": 19,
+    "runner_cases": 43,
+    "runner_agree": 43,
+    "expectation_failures": 0,
+    "emulated": "valid control and module regression; no independent full 19-case emulated rerun"
+  },
+  "terminal_race": "both liveness states forced; no liveness consultation for terminal END",
+  "image": "4d989ee84757f60965d2a43da9c61981366893423e3b96bd559b575edf07da5b",
+  "image_build": "reused exact previously independently reproduced image; firmware unchanged; no redundant rebuild",
+  "mutants": "author 59-case table inspected, not independently repeated",
+  "findings": [
+    "R1 non-overridable role policy",
+    "R2 PLL state and complete clock-prefix admission"
+  ],
+  "canonical_porcelain": "",
+  "final_canonical_porcelain": ""
+}

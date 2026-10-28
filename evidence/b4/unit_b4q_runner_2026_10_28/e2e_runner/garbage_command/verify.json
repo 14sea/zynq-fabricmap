@@ -154,22 +154,56 @@
     "boardid": "F8B3",
     "role": "verify",
     "boardid_ok": true,
-    "role_ok": true
+    "role_ok": true,
+    "prefix_end": 740
    },
    "clock": {
-    "fpga0_ctrl": "00200a00",
-    "derived": {
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
-    "ok": true
+    "ok": true,
+    "prefix_end": 740
    },
    "variant": "42340001",
    "image": {
@@ -180,7 +214,7 @@
      "name": "b4q_app_v2.bin",
      "size": 98324,
      "blocks": 97,
-     "end": 100074
+     "end": 100106
     },
     "total": 98324,
     "device_crc": {
@@ -196,10 +230,10 @@
     "written": [
      "42345149",
      "00000001",
-     "4622f0a2",
-     "89b4b1fb",
-     "775885e1",
-     "51bde5de",
+     "fdbe40a1",
+     "2a88ae4a",
+     "ba3e7550",
+     "4e94d9e3",
      "6553f100",
      "4d989ee8",
      "4e406f12",
@@ -217,15 +251,15 @@
      "00000000",
      "00000000",
      "00000000",
-     "0d5b2f77"
+     "c7b44c49"
     ],
     "read_back": [
      "42345149",
      "00000001",
-     "4622f0a2",
-     "89b4b1fb",
-     "775885e1",
-     "51bde5de",
+     "fdbe40a1",
+     "2a88ae4a",
+     "ba3e7550",
+     "4e94d9e3",
      "6553f100",
      "4d989ee8",
      "4e406f12",
@@ -243,7 +277,7 @@
      "00000000",
      "00000000",
      "00000000",
-     "0d5b2f77"
+     "c7b44c49"
     ],
     "equal": true
    },
@@ -283,7 +317,7 @@
  },
  "console": {
   "findings": [],
-  "board_lines": 113,
+  "board_lines": 114,
   "host_lines": 95,
   "noted": {
    "corrupted": 0,

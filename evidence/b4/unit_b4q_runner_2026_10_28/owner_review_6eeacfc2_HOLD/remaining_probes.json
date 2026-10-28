@@ -1,0 +1,283 @@
+{
+  "positive": {
+    "phase": "admitted",
+    "stop": null,
+    "identity": {
+      "boardid": "F8B3",
+      "role": "verify",
+      "expected_boardid": "F8B3",
+      "allowed_roles": [
+        "verify",
+        "sacrificial"
+      ],
+      "boardid_ok": true,
+      "role_ok": true,
+      "purpose": "bringup-rehearsal"
+    },
+    "clock": {
+      "fpga0_ctrl_addr": "0xf8000170",
+      "fpga0_ctrl": "00200a00",
+      "pll_ctrl": {
+        "arm": "0001a000",
+        "ddr": "00020000",
+        "io": "0001e000"
+      },
+      "derived": {
+        "srcsel": 0,
+        "pll": "io",
+        "pll_ctrl": "0001e000",
+        "fdiv": 30,
+        "div0": 10,
+        "div1": 2,
+        "pll_reset": false,
+        "pll_bypass": false,
+        "mhz": 50.0
+      },
+      "expected_mhz": 50.0,
+      "expected_ctrl": null,
+      "ok": true
+    },
+    "pl_read_issued": true,
+    "commands": "\rprintenv boardid\rprintenv role\rmd.l f8000170 1\rmd.l f8000100 1\rmd.l f8000104 1\rmd.l f8000108 1\rmd.l 43c02034 1\r"
+  },
+  "reference_default": {
+    "phase": "stopped",
+    "stop": {
+      "kind": "AdmissionStop",
+      "why": "identity: the board's role 'reference' is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"
+    },
+    "identity": {
+      "boardid": "F8B3",
+      "role": "reference",
+      "expected_boardid": "F8B3",
+      "allowed_roles": [
+        "verify",
+        "sacrificial"
+      ],
+      "boardid_ok": true,
+      "role_ok": false,
+      "purpose": "bringup-rehearsal"
+    },
+    "clock": null,
+    "pl_read_issued": false,
+    "commands": "\rprintenv boardid\rprintenv role\r"
+  },
+  "reference_override": {
+    "phase": "admitted",
+    "stop": null,
+    "identity": {
+      "boardid": "F8B3",
+      "role": "reference",
+      "expected_boardid": "F8B3",
+      "allowed_roles": [
+        "reference"
+      ],
+      "boardid_ok": true,
+      "role_ok": true,
+      "purpose": "bringup-rehearsal"
+    },
+    "clock": {
+      "fpga0_ctrl_addr": "0xf8000170",
+      "fpga0_ctrl": "00200a00",
+      "pll_ctrl": {
+        "arm": "0001a000",
+        "ddr": "00020000",
+        "io": "0001e000"
+      },
+      "derived": {
+        "srcsel": 0,
+        "pll": "io",
+        "pll_ctrl": "0001e000",
+        "fdiv": 30,
+        "div0": 10,
+        "div1": 2,
+        "pll_reset": false,
+        "pll_bypass": false,
+        "mhz": 50.0
+      },
+      "expected_mhz": 50.0,
+      "expected_ctrl": null,
+      "ok": true
+    },
+    "pl_read_issued": true,
+    "commands": "\rprintenv boardid\rprintenv role\rmd.l f8000170 1\rmd.l f8000100 1\rmd.l f8000104 1\rmd.l f8000108 1\rmd.l 43c02034 1\r"
+  },
+  "missing_role_override": {
+    "phase": "admitted",
+    "stop": null,
+    "identity": {
+      "boardid": "F8B3",
+      "role": null,
+      "expected_boardid": "F8B3",
+      "allowed_roles": [
+        null
+      ],
+      "boardid_ok": true,
+      "role_ok": true,
+      "purpose": "bringup-rehearsal"
+    },
+    "clock": {
+      "fpga0_ctrl_addr": "0xf8000170",
+      "fpga0_ctrl": "00200a00",
+      "pll_ctrl": {
+        "arm": "0001a000",
+        "ddr": "00020000",
+        "io": "0001e000"
+      },
+      "derived": {
+        "srcsel": 0,
+        "pll": "io",
+        "pll_ctrl": "0001e000",
+        "fdiv": 30,
+        "div0": 10,
+        "div1": 2,
+        "pll_reset": false,
+        "pll_bypass": false,
+        "mhz": 50.0
+      },
+      "expected_mhz": 50.0,
+      "expected_ctrl": null,
+      "ok": true
+    },
+    "pl_read_issued": true,
+    "commands": "\rprintenv boardid\rprintenv role\rmd.l f8000170 1\rmd.l f8000100 1\rmd.l f8000104 1\rmd.l f8000108 1\rmd.l 43c02034 1\r"
+  },
+  "pll_powerdown": {
+    "phase": "admitted",
+    "stop": null,
+    "identity": {
+      "boardid": "F8B3",
+      "role": "verify",
+      "expected_boardid": "F8B3",
+      "allowed_roles": [
+        "verify",
+        "sacrificial"
+      ],
+      "boardid_ok": true,
+      "role_ok": true,
+      "purpose": "bringup-rehearsal"
+    },
+    "clock": {
+      "fpga0_ctrl_addr": "0xf8000170",
+      "fpga0_ctrl": "00200a00",
+      "pll_ctrl": {
+        "arm": "0001a000",
+        "ddr": "00020000",
+        "io": "0001e002"
+      },
+      "derived": {
+        "srcsel": 0,
+        "pll": "io",
+        "pll_ctrl": "0001e002",
+        "fdiv": 30,
+        "div0": 10,
+        "div1": 2,
+        "pll_reset": false,
+        "pll_bypass": false,
+        "mhz": 50.0
+      },
+      "expected_mhz": 50.0,
+      "expected_ctrl": null,
+      "ok": true
+    },
+    "pl_read_issued": true,
+    "commands": "\rprintenv boardid\rprintenv role\rmd.l f8000170 1\rmd.l f8000100 1\rmd.l f8000104 1\rmd.l f8000108 1\rmd.l 43c02034 1\r"
+  },
+  "pll_bypass_qualified": {
+    "phase": "admitted",
+    "stop": null,
+    "identity": {
+      "boardid": "F8B3",
+      "role": "verify",
+      "expected_boardid": "F8B3",
+      "allowed_roles": [
+        "verify",
+        "sacrificial"
+      ],
+      "boardid_ok": true,
+      "role_ok": true,
+      "purpose": "bringup-rehearsal"
+    },
+    "clock": {
+      "fpga0_ctrl_addr": "0xf8000170",
+      "fpga0_ctrl": "00200a00",
+      "pll_ctrl": {
+        "arm": "0001a000",
+        "ddr": "00020000",
+        "io": "0001e008"
+      },
+      "derived": {
+        "srcsel": 0,
+        "pll": "io",
+        "pll_ctrl": "0001e008",
+        "fdiv": 30,
+        "div0": 10,
+        "div1": 2,
+        "pll_reset": false,
+        "pll_bypass": false,
+        "mhz": 50.0
+      },
+      "expected_mhz": 50.0,
+      "expected_ctrl": null,
+      "ok": true
+    },
+    "pl_read_issued": true,
+    "commands": "\rprintenv boardid\rprintenv role\rmd.l f8000170 1\rmd.l f8000100 1\rmd.l f8000104 1\rmd.l f8000108 1\rmd.l 43c02034 1\r"
+  },
+  "clock_helpers_powerdown": {
+    "runner": {
+      "srcsel": 0,
+      "pll": "io",
+      "pll_ctrl": "0001e002",
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "pll_reset": false,
+      "pll_bypass": false,
+      "mhz": 50.0
+    },
+    "verifier": {
+      "srcsel": 0,
+      "pll": "io",
+      "pll_ctrl": "0001e002",
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "pll_reset": false,
+      "pll_bypass": false,
+      "mhz": 50.0
+    }
+  },
+  "archive_positive": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  "archive_reference_override": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  "archive_pll_powerdown": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  },
+  "archive_pll_read_after_pl": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "verifier_error": null,
+    "session": []
+  }
+}

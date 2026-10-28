@@ -35,22 +35,56 @@
     "boardid": "F8B3",
     "role": "verify",
     "boardid_ok": true,
-    "role_ok": true
+    "role_ok": true,
+    "prefix_end": 740
    },
    "clock": {
-    "fpga0_ctrl": "00200a00",
-    "derived": {
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "eligibility": {
+     "eligible": true,
+     "why": [],
+     "missing": [],
      "srcsel": 0,
      "pll": "io",
-     "pll_ctrl": "0001e000",
-     "fdiv": 30,
-     "div0": 10,
-     "div1": 2,
-     "pll_reset": false,
-     "pll_bypass": false,
-     "mhz": 50.0
+     "state": {
+      "pll": "io",
+      "ctrl": "0001e000",
+      "reset": false,
+      "pwrdwn": false,
+      "bypass_force": false,
+      "bypass_qual": false,
+      "boot_pll_bypass": false,
+      "bypassed": false,
+      "locked": true,
+      "stable": true,
+      "eligible": true,
+      "why": []
+     },
+     "nominal": {
+      "fdiv": 30,
+      "div0": 10,
+      "div1": 2,
+      "mhz": 50.0
+     },
+     "inputs": {
+      "fpga0": "00200a00",
+      "arm": "0001a000",
+      "ddr": "00020000",
+      "io": "0001e000",
+      "status": "0000003f",
+      "boot_mode": "00000005"
+     },
+     "ps_clk_mhz": 33.333333
     },
-    "ok": true
+    "ok": true,
+    "prefix_end": 740
    },
    "variant": "42340001",
    "image": {

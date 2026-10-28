@@ -7,16 +7,16 @@
    "verdict": "KILLED",
    "note": "source: the PS log's window events (482) are not the emulation's trace (562) after its provisioning prefix",
    "probe": "the emulated valid scenario retains the PS log beside the fake's trace: the verifier holds the two witnesses equal",
-   "seconds": 4.7
+   "seconds": 5.0
   },
   {
    "id": "R2",
    "file": "firmware/b4q/target/b4q_ring.c",
    "what": "the digest over all but the last record (the board's digest is not of the bytes it exports)",
    "verdict": "KILLED",
-   "note": "the scenario aborted on the guard: \u2026sion is halted: the pulled evidence log does not hash to the board's digest (cc45bd016375 vs 083bae68c20c) \u2014 nothing further is signed without a ruling | ",
+   "note": "the scenario aborted on the guard: \u2026sion is halted: the pulled evidence log does not hash to the board's digest (81e1342179d6 vs 663c2a7243f9) \u2014 nothing further is signed without a ruling | ",
    "probe": "the PS-source valid scenario halts on 'does not hash to the board's digest'",
-   "seconds": 0.9
+   "seconds": 0.7
   },
   {
    "id": "R3",
@@ -32,9 +32,9 @@
    "file": "firmware/b4q/target/b4q_app.c",
    "what": "RING under-reports the log by one record (its digest still covers the whole: the host's digest check fires first)",
    "verdict": "KILLED",
-   "note": "halted: the pulled evidence log does not hash to the board's digest (e16c5360fad0 vs 4d286078d02a)",
+   "note": "halted: the pulled evidence log does not hash to the board's digest (f2fc73fd6665 vs 208e24b16c26)",
    "probe": "the PS-source opening halts on 'does not hash to the board's digest'",
-   "seconds": 0.4
+   "seconds": 0.8
   },
   {
    "id": "A2",
@@ -43,7 +43,7 @@
    "verdict": "KILLED",
    "note": "verify: console: the words of request 13 were never staged into PAYLOAD / TAG after the reply",
    "probe": "the PS-source valid archive's verification finds 'never staged'",
-   "seconds": 5.3
+   "seconds": 4.8
   },
   {
    "id": "A3",
@@ -52,14 +52,14 @@
    "verdict": "KILLED",
    "note": "halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks",
    "probe": "the PS-source opening halts on 'too many bad chunks'",
-   "seconds": 0.5
+   "seconds": 0.6
   },
   {
    "id": "A3b",
    "file": "firmware/b4q/target/b4q_app.c",
    "what": "PULL returns the first bytes whatever the offset (the chunk lines keep their offsets: the digest is the guard)",
    "verdict": "KILLED",
-   "note": "halted: the pulled evidence log does not hash to the board's digest (7be9d25ffb71 vs dc05e7f9b562)",
+   "note": "halted: the pulled evidence log does not hash to the board's digest (0170f691854e vs 1e17f67aaa03)",
    "probe": "the PS-source opening halts on 'does not hash to the board's digest'",
    "seconds": 0.7
   },
@@ -88,7 +88,7 @@
    "verdict": "KILLED",
    "note": "the TX after the overflow answered with status 0 (closed)",
    "probe": "after the log overflows the application NACKs the next TX 'the evidence log is full' (the emulated-source host does not pull, so it sends one)",
-   "seconds": 2.7
+   "seconds": 2.3
   },
   {
    "id": "E1",
@@ -140,7 +140,7 @@
    "file": "host/b4q_verify.py",
    "what": "a raw log that is not the declared bytes accepted",
    "verdict": "KILLED",
-   "note": "not refused by name: refused=None findings=[\"source: the raw log (123344 bytes, 30c1d986c754) is not the log the board's last RING reported (123344 bytes, eb42a8fcd6e1)\", \"source: the raw log is not the log the END reports (its digest differs at the END's position)\"]",
+   "note": "not refused by name: refused=None findings=[\"source: the raw log (123344 bytes, c16f1596a1fc) is not the log the board's last RING reported (123344 bytes, 43515520d0a6)\", \"source: the raw log is not the log the END reports (its digest differs at the END's position)\"]",
    "probe": "the mutated valid archive is refused: 'not the bytes the manifest's source declares'",
    "seconds": 0.5
   },
@@ -151,7 +151,7 @@
    "verdict": "KILLED",
    "note": "not found: agree=True findings=[]",
    "probe": "a PTY archive rewritten into the device format but keeping the surrogate's banner is found by the provenance check",
-   "seconds": 7.0
+   "seconds": 7.3
   },
   {
    "id": "V4",
@@ -221,9 +221,9 @@
    "file": "host/b4q_runner.py",
    "what": "a boot banner mid-session no longer named as the cut",
    "verdict": "KILLED",
-   "note": "expectations: ['verify rc 1 (expected 0): [\"runner: console accounting: the received stream after `go` holds 51 line(s), the retained console 50 board line(s); they differ at line 50: stream b\\'Hit any key to stop autoboot:  2 \\\\\\\\x08\\\\\\\\x08\\\\\\\\x08\\'\", \"source: the raw log (21408 bytes, dd82fc4ed52b) is not the log the board\\'s last RING reported (35104 bytes, b48e92c4603d)\", \"source: the manifest\\'s source declares 1338 records / digest_equal=False; the raw log holds 1338 records\", \\'console: no END line and the session was not interrupted\\']', \"transport stop 'a boot banner on the console mid-session' not among ['the session is halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks \u2014 nothing further is signed without a ruling']\"]",
+   "note": "expectations: ['verify rc 1 (expected 0): [\"runner: console accounting: the received stream after `go` holds 51 line(s), the retained console 50 board line(s); they differ at line 50: stream b\\'Hit any key to stop autoboot:  2 \\\\\\\\x08\\\\\\\\x08\\\\\\\\x08\\'\", \"source: the raw log (20640 bytes, 44817d9faecd) is not the log the board\\'s last RING reported (35104 bytes, 4f906ae6fbfb)\", \"source: the manifest\\'s source declares 1290 records / digest_equal=False; the raw log holds 1290 records\", \\'console: no END line and the session was not interrupted\\']', \"transport stop 'a boot banner on the console mid-session' not among ['the session is halted: the evidence log could not be pulled: the log could not be pulled: too many bad chunks \u2014 nothing further is signed without a ruling']\"]",
    "probe": "the runner scenario reset_mid_session: stop None / opened None",
-   "seconds": 3.4
+   "seconds": 3.6
   },
   {
    "id": "N4",
@@ -266,7 +266,7 @@
    "file": "host/b4q_verify_runner.py",
    "what": "the sent frames no longer held to the retained host lines",
    "verdict": "KILLED",
-   "note": "not found: agree=False refused=None findings=['console: host line at line 22: bad crc', 'console: board SIGNREQ at line 24: outside an admitted transaction']",
+   "note": "not found: agree=False refused=None findings=['console: host line at line 22: bad crc', 'console: board SIGNREQ at line 25: outside an admitted transaction']",
    "probe": "the mutated runner valid archive is found: 'console accounting: the sent stream'",
    "seconds": 0.4
   },
@@ -277,7 +277,7 @@
    "verdict": "KILLED",
    "note": "the application's first line lost: buf=b''",
    "probe": "the runner against a scripted U-Boot: go_tail",
-   "seconds": 0.1
+   "seconds": 0.2
   },
   {
    "id": "P2",
@@ -295,7 +295,7 @@
    "verdict": "SURVIVED",
    "note": "ended at 3.35 s (the deadline)",
    "probe": "a receiver flooding junk (slowly): the transfer ends at its deadline (2 s), not after the retries' worth of junk (a hang observed in a subprocess)",
-   "seconds": 3.5
+   "seconds": 3.6
   },
   {
    "id": "Y2",
@@ -383,7 +383,7 @@
    "file": "host/b4q_verify_runner.py",
    "what": "the load / crc / go addresses no longer bound to one address",
    "verdict": "KILLED",
-   "note": "not found: agree=True refused=None findings=[]",
+   "note": "not found: agree=False refused=None findings=[\"runner: the command echoes in the received stream are not the sent commands in order (they differ at command 9: echoed 'loady 02000000', sent 'loady 04000000')\"]",
    "probe": "the mutated runner valid archive is found: 'not one address'",
    "seconds": 0.4
   },
@@ -408,9 +408,9 @@
   {
    "id": "V17",
    "file": "host/b4q_verify_runner.py",
-   "what": "a PL read before the clock words no longer found",
+   "what": "a PL read before the clock words no longer found by the order check (its own finding gone; the prefix binding still refuses the archive \u2014 V20+V21 is the combined)",
    "verdict": "KILLED",
-   "note": "not found: agree=True refused=None findings=[]",
+   "note": "not found: agree=False refused=None findings=[\"runner: admission.clock: the recorded inputs / eligibility / verdict are not what the stream's prefix before the first PL read and the context give\", 'runner: state: `go` was issued although the clock derivation does not admit a PL access (execution after a failed or missing prerequisite)']",
    "probe": "the mutated runner valid archive is found: 'a PL read was issued before'",
    "seconds": 0.4
   },
@@ -469,9 +469,54 @@
    "seconds": 0.4
   },
   {
+   "id": "N18",
+   "file": "host/b4q_zynq_clk.py",
+   "what": "a powered-down PLL (PLL_PWRDWN) counted as an eligible source (the owner's R2a)",
+   "verdict": "KILLED",
+   "note": "proceeded: stop=None pl_read=True loady=True",
+   "probe": "the runner's own barrier: pwrdwn",
+   "seconds": 0.4
+  },
+  {
+   "id": "N19",
+   "file": "host/b4q_zynq_clk.py",
+   "what": "an unlocked PLL counted as an eligible source",
+   "verdict": "KILLED",
+   "note": "proceeded: stop=None pl_read=True loady=True",
+   "probe": "the runner's own barrier: unlocked",
+   "seconds": 0.4
+  },
+  {
+   "id": "N20",
+   "file": "host/b4q_zynq_clk.py",
+   "what": "a qualified bypass with the boot pin's PLL_BYPASS sampled counted as not bypassed (the owner's R2b)",
+   "verdict": "KILLED",
+   "note": "proceeded: stop=None pl_read=True loady=True",
+   "probe": "the runner's own barrier: bypass_qual",
+   "seconds": 0.4
+  },
+  {
+   "id": "N21",
+   "file": "host/b4q_runner.py",
+   "what": "the runtime role check lets a reference board through",
+   "verdict": "KILLED",
+   "note": "proceeded: stop=None pl_read=True",
+   "probe": "the runner's own barrier: role_floor",
+   "seconds": 0.4
+  },
+  {
+   "id": "V19b",
+   "file": "host/b4q_verify_runner.py",
+   "what": "a widened context list no longer found",
+   "verdict": "KILLED",
+   "note": "not found: agree=False refused=None findings=[\"runner: admission.identity: uboot.json says boardid 'F8B3' / role 'reference', the received stream shows 'F8B3' / 'reference' against the context\", \"runner: state: `go` was issued although the board's identity / role does not admit this run (execution after a failed or missing prerequisite)\"]",
+   "probe": "the mutated runner valid archive is found: 'widens the fixed content-class policy'",
+   "seconds": 0.5
+  },
+  {
    "id": "N15",
    "file": "host/b4q_runner.py",
-   "what": "a PLL in reset (no running FCLK0) no longer refused before the PL read",
+   "what": "an ineligible source (a PLL in reset) no longer refused before the PL read",
    "verdict": "KILLED",
    "note": "proceeded: stop=None pl_read=True loady=True",
    "probe": "the runner's own barrier: clock",
@@ -493,7 +538,7 @@
    "verdict": "KILLED",
    "note": "expectations: [\"verify rc 1 (expected 0): ['source: the board reports its log overflowed and the session did not halt on it']\"]",
    "probe": "the runner scenario log_overflow: stop None / opened None",
-   "seconds": 3.4
+   "seconds": 3.7
   },
   {
    "id": "A3+S1",
@@ -535,13 +580,43 @@
     "N7",
     "N7b"
    ]
+  },
+  {
+   "id": "N21+N22",
+   "verdict": "KILLED",
+   "what": "the runtime role floor AND the context's narrowing rule removed: a widened context admits a reference board",
+   "note": "a reference board admitted under a widened context: stop=None pl_read=True",
+   "combined": [
+    "N21",
+    "N22"
+   ]
+  },
+  {
+   "id": "V19+V19b",
+   "verdict": "KILLED",
+   "what": "the verifier's role floor AND its context check removed: a coherently widened reference archive verifies",
+   "note": "not found: agree=True refused=None findings=[]",
+   "combined": [
+    "V19",
+    "V19b"
+   ]
+  },
+  {
+   "id": "V20+V21",
+   "verdict": "KILLED",
+   "what": "the prefix binding AND the order check removed: a PLL read moved after the first PL read verifies",
+   "note": "not found: agree=True refused=None findings=[]",
+   "combined": [
+    "V20",
+    "V21"
+   ]
   }
  ],
  "counts": {
-  "KILLED": 53,
+  "KILLED": 61,
   "SURVIVED": 6,
   "EDIT-MISS": 0,
   "PROBE-ERROR": 0
  },
- "at": "2026-10-28T17:19:49Z"
+ "at": "2026-10-28T18:17:17Z"
 }

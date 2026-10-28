@@ -23,7 +23,7 @@ R = Path(__file__).resolve().parents[3]
 FW = R / "firmware/b4q"
 RING, APP = FW / "target/b4q_ring.c", FW / "target/b4q_app.c"
 ADAPTER, VERIFY, SESSION, RUNNER = R / "host/b4q_evidence_log.py", R / "host/b4q_verify.py", R / "host/b4q_console_session.py", R / "host/b4q_runner.py"
-VRUNNER, YMODEM = R / "host/b4q_verify_runner.py", R / "host/b4q_ymodem.py"
+VRUNNER, YMODEM, ZCLK = R / "host/b4q_verify_runner.py", R / "host/b4q_ymodem.py", R / "host/b4q_zynq_clk.py"
 BUILD = ["make", "-C", str(FW), f"BUILD={R / 'build/b4q_firmware'}", "apphost", "wiretwin", "waittwin", "seqcut"]
 for p in (R / "host", R / "b4/host"):
     if str(p) not in sys.path:
@@ -382,7 +382,7 @@ def _tests():
     sys.path.insert(0, str(R / "tests"))
     T = importlib.import_module("test_b4q_runner")
     T.setUpModule = lambda: None
-    for mod in ("b4q_runner", "b4q_verify_runner", "b4q_verify", "b4q_ymodem", "b4q_console_session", "b4q_device_fixture"):
+    for mod in ("b4q_zynq_clk", "b4q_runner", "b4q_verify_runner", "b4q_verify", "b4q_ymodem", "b4q_console_session", "b4q_device_fixture"):
         if mod in sys.modules:
             importlib.reload(sys.modules[mod])
     importlib.reload(T)
@@ -409,21 +409,62 @@ def valid_runner_archive() -> Path:
 def _runner_edit(d: Path, fn):
     u = json.loads((d / "uboot.json").read_text()); m = json.loads((d / "manifest.json").read_text())
     fn(u, m)
+    u["raw"] = {**u["raw"], "console_bin_sha256": hashlib.sha256((d / "raw/console.bin").read_bytes()).hexdigest(), "console_bin_bytes": (d / "raw/console.bin").stat().st_size,
+                "console_tx_bin_sha256": hashlib.sha256((d / "raw/console_tx.bin").read_bytes()).hexdigest(), "console_tx_bin_bytes": (d / "raw/console_tx.bin").stat().st_size}
     m["transport"]["runner"] = u
     (d / "uboot.json").write_text(json.dumps(u, indent=1) + "\n"); (d / "manifest.json").write_text(json.dumps(m, indent=1) + "\n")
 
 
-def probe_runner_archive(mutate, expect: str):
+def _m_reference_widened(d: Path):
+    rx = (d / "raw/console.bin").read_bytes().replace(b"role=verify", b"role=reference", 1); (d / "raw/console.bin").write_bytes(rx)
+    def fix(u, mf):
+        u["context"]["allowed_roles"] = ["reference"]
+        u["admission"]["identity"].update({"role": "reference", "allowed_roles": ["reference"], "role_ok": True})
+        for s in u["uboot_steps"]:
+            if s.get("sent") == "printenv role":
+                s["value"] = "reference"; s["reply"] = s["reply"].replace("role=verify", "role=reference")
+    _runner_edit(d, fix)
+
+
+def _m_pll_after_pl(d: Path):
+    import re as _re
+    tx = (d / "raw/console_tx.bin").read_bytes(); rx = (d / "raw/console.bin").read_bytes()
+    io_cmd, var_cmd = b"md.l f8000108 1\r", b"md.l 43c02034 1\r"
+    i, j = tx.find(io_cmd), tx.find(var_cmd); assert 0 <= i < j
+    tx2 = tx[:i] + tx[i + len(io_cmd):j + len(var_cmd)] + io_cmd + tx[j + len(var_cmd):]
+    io_line = _re.search(rb"md\.l f8000108 1\r\n[^\n]*\n[^\n]*Zynq> ", rx); var_line = _re.search(rb"md\.l 43c02034 1\r\n[^\n]*\n[^\n]*Zynq> ", rx)
+    rx2 = rx[:io_line.start()] + rx[io_line.end():var_line.end()] + rx[io_line.start():io_line.end()] + rx[var_line.end():]
+    (d / "raw/console_tx.bin").write_bytes(tx2); (d / "raw/console.bin").write_bytes(rx2)
+    _runner_edit(d, lambda u, mf: None)
+
+
+def probe_role_widening(root):
+    """a context that widens the role policy to `reference` with a reference board: refused (by the context, or by the runtime floor)"""
+    T = _tests(); rn = T.rn
+    pin = hashlib.sha256(rn.IMAGE.read_bytes()).hexdigest()
+    try:
+        ctx = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), expected_boardid="F8B3", allowed_roles=("reference",))
+    except Exception:
+        return False, "the context refused the widening"
+    port = T.FakePort(T.scripted_uboot(role="reference"))
+    s = rn.run("fake", fresh() / "run", rn.body_control_plane, context=ctx, port=port)
+    if (s.get("stop") or {}).get("kind") == "AdmissionStop" and b"md.l 43c" not in port.tx_log:
+        return False, "the runtime floor refused the reference board"
+    return True, f"a reference board admitted under a widened context: stop={s.get('stop')} pl_read={b'md.l 43c' in port.tx_log}"
+
+
+def probe_runner_archive(mutate, expect: str, alt: str | None = None):
     def probe(root):
         import importlib
         import b4q_verify as vf
-        importlib.reload(sys.modules["b4q_verify_runner"]) if "b4q_verify_runner" in sys.modules else None
+        for mod in ("b4q_zynq_clk", "b4q_verify_runner"):
+            importlib.reload(sys.modules[mod]) if mod in sys.modules else None
         importlib.reload(vf)
         d = valid_runner_archive()
         mutate(d)
         rep = vf.verify(d)
         pool = rep.get("session", []) + ([rep["refused"]] if rep.get("refused") else [])
-        if any(expect in x for x in pool):
+        if any(expect in x for x in pool) or (alt is not None and any(alt in x for x in pool)):
             return False, "found by name"
         return True, f"not found: agree={rep.get('agree')} refused={rep.get('refused')!r} findings={pool[:2]}"
     probe.__doc__ = f"the mutated runner valid archive is found: '{expect}'"
@@ -735,8 +776,19 @@ def probe_producer(kind: str):
                     pass
             committed = bytes(port.tx_log); port.close(); os.close(m_)
             return (False, "only the accepted prefix committed") if committed == b"go" else (True, f"tx_log holds {committed!r} although the OS accepted 2 bytes")
-        if kind in ("role", "boardid", "clock"):
-            script = {"role": T.scripted_uboot(role=None), "boardid": T.scripted_uboot(boardid="17A6"), "clock": T.scripted_uboot(io_pll=0x0001E001)}[kind]
+        if kind in ("role", "boardid", "clock", "pwrdwn", "unlocked", "bypass_qual", "role_floor"):
+            script = {"role": T.scripted_uboot(role=None), "boardid": T.scripted_uboot(boardid="17A6"), "clock": T.scripted_uboot(io_pll=0x0001E001), "pwrdwn": T.scripted_uboot(io_pll=0x0001E002),
+                      "unlocked": T.scripted_uboot(pll_status=0x3B), "bypass_qual": T.scripted_uboot(io_pll=0x0001E008, boot_mode=0x15), "role_floor": T.scripted_uboot(role="reference")}[kind]
+            if kind == "role_floor":                                             # the floor alone: a context cannot widen, so the mutant must be the runtime check
+                try:
+                    ctx = rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), expected_boardid="F8B3")
+                except Exception as e:
+                    return True, f"the context refused unexpectedly: {e}"
+                port = T.FakePort(script)
+                s = rn.run("fake", fresh() / "run", rn.body_control_plane, context=ctx, port=port)
+                if (s.get("stop") or {}).get("kind") == "AdmissionStop" and b"md.l 43c" not in port.tx_log:
+                    return False, "the reference board refused before any PL read"
+                return True, f"proceeded: stop={s.get('stop')} pl_read={b'md.l 43c' in port.tx_log}"
             port = T.FakePort(script)
             s = rn.run("fake", fresh() / "run", rn.body_control_plane, context=rn.ExecutionContext(image_sha256=pin, image_path=str(rn.IMAGE), expected_boardid="F8B3"), port=port)
             if (s.get("stop") or {}).get("kind") == "AdmissionStop" and b"md.l 43c" not in port.tx_log and b"loady" not in port.tx_log:
@@ -888,7 +940,8 @@ MUTANTS = [
     ("V16", VRUNNER, '''                elif rep["stop"]["demonstrated"] is None:
                     F.append(f"no session: the named stop ({why[:60]}…) is of a class this verifier cannot demonstrate from the streams: unverified")''', '''                elif False:
                     pass''', "an unknown stop class accepted as demonstrated", probe_cp_unknown_stop),
-    ("V17", VRUNNER, '''        if clk_cmd < 0 or clk_cmd > first_pl.start() or env_cmd < 0 or env_cmd > first_pl.start():''', '''        if False:''', "a PL read before the clock words no longer found", probe_runner_archive(_m_pl_before_clock, "a PL read was issued before")),
+    ("V17", VRUNNER, '''        if late:
+            F.append(f"admission: a PL read was issued before the identity / clock inputs were all read ({', '.join(late)} missing or later): the order a stopped clock forbids")''', '''        pass''', "a PL read before the clock words no longer found by the order check (its own finding gone; the prefix binding still refuses the archive — V20+V21 is the combined)", probe_runner_archive(_m_pll_after_pl, "a PL read was issued before")),
     ("V18", VERIFY, '''    if source is None and isinstance(tr, dict) and tr.get("kind") in vr.RUNNER_KINDS:''', '''    if False:''', "a runner archive without its source declaration verified under the emulated contract", probe_source_required),
     # the runner's barriers (C2 / C3)
     ("N11", RUNNER, '''        if self.persist_failed is not None:
@@ -902,11 +955,24 @@ MUTANTS = [
                 off += n''', "the sent-byte log commits the whole command on the first partial write", probe_producer("tx_commit")),
     ("N13", RUNNER, '''        if not adm["identity"]["role_ok"]:''', '''        if False:''', "a board without a permitted role admitted", probe_producer("role")),
     ("N14", RUNNER, '''        if not adm["identity"]["boardid_ok"]:''', '''        if False:''', "another board's boardid admitted", probe_producer("boardid")),
-    ("N15", RUNNER, '''        if d["mhz"] is None:
-            raise AdmissionStop(f"clock: FPGA0_CLK_CTRL {f:#010x} with {d['pll']} PLL {d['pll_ctrl']} gives no running clock (reset={d['pll_reset']}, bypass={d['pll_bypass']}, divisors {d['div0']}/{d['div1']}): no PL access")
-        if c.fclk0_mhz is not None and abs(d["mhz"] - c.fclk0_mhz) >= 0.5:''', '''        if False:
-            pass
-        if c.fclk0_mhz is not None and d["mhz"] is not None and abs(d["mhz"] - c.fclk0_mhz) >= 0.5:''', "a PLL in reset (no running FCLK0) no longer refused before the PL read", probe_producer("clock")),
+    ("N18", ZCLK, '''    if pwrdwn:
+        why.append("PLL_PWRDWN")''', '''    pass''', "a powered-down PLL (PLL_PWRDWN) counted as an eligible source (the owner's R2a)", probe_producer("pwrdwn")),
+    ("N19", ZCLK, '''    if not locked:
+        why.append(f"{which.upper()}_PLL_LOCK clear")''', '''    pass''', "an unlocked PLL counted as an eligible source", probe_producer("unlocked")),
+    ("N20", ZCLK, '''    if qual and boot_bypass:
+        why.append("PLL_BYPASS_QUAL with the boot pin's PLL_BYPASS sampled")''', '''    pass''', "a qualified bypass with the boot pin's PLL_BYPASS sampled counted as not bypassed (the owner's R2b)", probe_producer("bypass_qual")),
+    ("N21", RUNNER, '''                           "role_ok": role in ROLES_CONTENT and role in c.allowed_roles, "purpose": c.purpose}   # the floor first, then the context's narrowing''',
+     '''                           "role_ok": role in c.allowed_roles or role == "reference", "purpose": c.purpose}''', "the runtime role check lets a reference board through", probe_producer("role_floor")),
+    ("N22", RUNNER, '''        if not roles or any(r not in ROLES_CONTENT for r in roles):''', '''        if not roles:''', "a context may widen the role policy (allowed_roles outside the floor accepted)", None),   # combined with N21 below: the two layers of R1
+    ("V19", VRUNNER, '''    role_ok = role in ROLES_CONTENT and role in ctx["allowed_roles"]      # the floor first, independently of the context''',
+     '''    role_ok = role in ctx["allowed_roles"]''', "the verifier's role verdict follows the context's list alone (no floor)", None),   # combined with V19b below
+    ("V19b", VRUNNER, '''    if not roles_in_floor:
+        F.append(f"context: allowed_roles {ctx['allowed_roles']} widens the fixed content-class policy {list(ROLES_CONTENT)} (a context narrows it, never widens it)")''',
+     '''    pass''', "a widened context list no longer found", probe_runner_archive(_m_reference_widened, "widens the fixed content-class policy")),
+    ("V20", VRUNNER, '''    words = {k: md_value(rx, zc.ADDR[k], before=prefix_end) for k in zc.WORDS}   # every input from the prefix BEFORE the first PL reply: a later good state is no earlier admission''',
+     '''    words = {k: md_value(rx, zc.ADDR[k], before=go_rx_off) for k in zc.WORDS}''', "the clock inputs taken from anywhere before go (a later good state admits an earlier PL read)", None),   # combined with V21
+    ("V21", VRUNNER, '''        late = [c.decode().strip() for c in required if tx.find(c) < 0 or tx.find(c) > first_pl.start()]''', '''        late = []''', "the order of the identity / clock commands before the first PL read no longer checked", None),   # combined with V20
+    ("N15", RUNNER, '''        if not el_["eligible"]:''', '''        if False:''', "an ineligible source (a PLL in reset) no longer refused before the PL read", probe_producer("clock")),
     ("N17", RUNNER, '''        data = self.image_bytes
         self._guard("the load")''', '''        data = self.binary.read_bytes()
         self._guard("the load")''', "the image re-read from the file at the transfer (a file replaced after its hash check reaches the wire)", probe_producer("image_swap")),
@@ -928,6 +994,9 @@ COMBINED = [
     ("Y1+Y2+Y3", [("Y1", YMODEM), ("Y2", YMODEM), ("Y3", YMODEM)], "the inner deadline check, the junk limit AND the per-read clock bound removed: a junk-flooding receiver holds the transfer forever (observed as a hang in a subprocess)", probe_junk_deadline),
     ("N11+N11b", [("N11", RUNNER), ("N11b", RUNNER)], "both publication barriers made diagnostic: `go` is issued after the evidence could not be written", probe_producer("persist_barrier")),
     ("N7+N7b", [("N7", RUNNER), ("N7b", RUNNER)], "both image pin checks removed: a file that is not the pinned image is loaded", probe_fake("pin")),
+    ("N21+N22", [("N21", RUNNER), ("N22", RUNNER)], "the runtime role floor AND the context's narrowing rule removed: a widened context admits a reference board", probe_role_widening),
+    ("V19+V19b", [("V19", VRUNNER), ("V19b", VRUNNER)], "the verifier's role floor AND its context check removed: a coherently widened reference archive verifies", probe_runner_archive(_m_reference_widened, "widens the fixed content-class policy", alt="identity / role")),
+    ("V20+V21", [("V20", VRUNNER), ("V21", VRUNNER)], "the prefix binding AND the order check removed: a PLL read moved after the first PL read verifies", probe_runner_archive(_m_pll_after_pl, "before the identity / clock inputs were all read", alt="state: `go` was issued although")),
 ]
 
 

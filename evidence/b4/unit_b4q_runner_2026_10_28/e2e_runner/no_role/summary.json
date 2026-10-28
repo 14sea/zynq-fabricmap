@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-no_role",
- "wall_s": 1.093,
+ "wall_s": 1.082,
  "stop": {
   "kind": "AdmissionStop",
   "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)"
@@ -57,6 +57,10 @@
     "verify",
     "sacrificial"
    ],
+   "policy_floor": [
+    "verify",
+    "sacrificial"
+   ],
    "boardid_ok": true,
    "role_ok": false,
    "purpose": "bringup-rehearsal"
@@ -70,7 +74,7 @@
  "source": null,
  "transport_stops": [
   {
-   "t": 1793208857.914,
+   "t": 1793211867.897,
    "why": "identity: the board's role None is not one of ['verify', 'sacrificial'] (no role = reference = refused; docs/board_roles.md)",
    "kind": "AdmissionStop"
   }

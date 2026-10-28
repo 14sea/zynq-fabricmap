@@ -1,6 +1,6 @@
 {
  "label": "B4Q-runner-reset_mid_session",
- "wall_s": 3.155,
+ "wall_s": 3.052,
  "stop": {
   "kind": "SessionRefusal",
   "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling"
@@ -30,7 +30,7 @@
    ],
    "pcap_range": [
     48,
-    118
+    123
    ]
   }
  ],
@@ -38,7 +38,7 @@
  "halted": "transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
  "end": null,
  "stats": {
-  "hb": 1,
+  "hb": 0,
   "nack": 0,
   "signreq": 1,
   "signreply": 1,
@@ -51,7 +51,7 @@
   "refused_halted": 0,
   "replayed": 0
  },
- "console_lines": 73,
+ "console_lines": 74,
  "admission": {
   "image": {
    "file": "build/b4q_image/b4q_app_v2.bin",
@@ -83,32 +83,81 @@
     "verify",
     "sacrificial"
    ],
+   "policy_floor": [
+    "verify",
+    "sacrificial"
+   ],
    "boardid_ok": true,
    "role_ok": true,
    "purpose": "bringup-rehearsal"
   },
   "clock": {
-   "fpga0_ctrl_addr": "0xf8000170",
-   "fpga0_ctrl": "00200a00",
-   "pll_ctrl": {
-    "arm": "0001a000",
-    "ddr": "00020000",
-    "io": "0001e000"
+   "inputs": {
+    "fpga0": {
+     "addr": "0xf8000170",
+     "word": "00200a00"
+    },
+    "arm": {
+     "addr": "0xf8000100",
+     "word": "0001a000"
+    },
+    "ddr": {
+     "addr": "0xf8000104",
+     "word": "00020000"
+    },
+    "io": {
+     "addr": "0xf8000108",
+     "word": "0001e000"
+    },
+    "status": {
+     "addr": "0xf800010c",
+     "word": "0000003f"
+    },
+    "boot_mode": {
+     "addr": "0xf800025c",
+     "word": "00000005"
+    }
    },
-   "derived": {
+   "eligibility": {
+    "eligible": true,
+    "why": [],
+    "missing": [],
     "srcsel": 0,
     "pll": "io",
-    "pll_ctrl": "0001e000",
-    "fdiv": 30,
-    "div0": 10,
-    "div1": 2,
-    "pll_reset": false,
-    "pll_bypass": false,
-    "mhz": 50.0
+    "state": {
+     "pll": "io",
+     "ctrl": "0001e000",
+     "reset": false,
+     "pwrdwn": false,
+     "bypass_force": false,
+     "bypass_qual": false,
+     "boot_pll_bypass": false,
+     "bypassed": false,
+     "locked": true,
+     "stable": true,
+     "eligible": true,
+     "why": []
+    },
+    "nominal": {
+     "fdiv": 30,
+     "div0": 10,
+     "div1": 2,
+     "mhz": 50.0
+    },
+    "inputs": {
+     "fpga0": "00200a00",
+     "arm": "0001a000",
+     "ddr": "00020000",
+     "io": "0001e000",
+     "status": "0000003f",
+     "boot_mode": "00000005"
+    },
+    "ps_clk_mhz": 33.333333
    },
    "expected_mhz": 50.0,
    "expected_ctrl": null,
-   "ok": true
+   "ok": true,
+   "note": "software register consistency: the configured nominal rate of an eligible source \u2014 not a measured clock (the bring-up's M3)"
   },
   "carrier": {
    "variant_addr": "0x43c02034",
@@ -133,7 +182,7 @@
    "retries": 0,
    "naks": 0,
    "junk": 33,
-   "seconds": 0.213
+   "seconds": 0.215
   }
  },
  "page_witness": {
@@ -141,26 +190,26 @@
   "equal": true
  },
  "source": {
-  "bytes": 20640,
-  "records": 1290,
+  "bytes": 21408,
+  "records": 1338,
   "digest_equal": false
  },
  "transport_stops": [
   {
-   "t": 1793208969.796,
+   "t": 1793211980.689,
    "why": "a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable)",
    "awaiting": "CHUNK",
    "kind": "TransportStop"
   },
   {
-   "t": 1793208969.812,
+   "t": 1793211980.707,
    "why": "the session is halted: transport: a boot banner on the console mid-session: the PS reset (the session is cut; its log is unobtainable) \u2014 nothing further is signed without a ruling",
    "kind": "SessionRefusal"
   }
  ],
  "stats_pull": {
   "pulls": 1,
-  "chunks": 27,
+  "chunks": 28,
   "bad_chunks": 0
  },
  "tail_unobtainable": null,
@@ -176,7 +225,7 @@
  "verify_agree": true,
  "verify_session": [],
  "verify_limitations": [
-  "the export was cut by the transport (a boot banner on the console mid-session: the PS reset (the session is cut; its ): 20640 of the 35104 bytes the board's last RING reported were pulled; the records after the cut have no PS evidence"
+  "the export was cut by the transport (a boot banner on the console mid-session: the PS reset (the session is cut; its ): 21408 of the 35104 bytes the board's last RING reported were pulled; the records after the cut have no PS evidence"
  ],
  "expect": {
   "opened": true,
