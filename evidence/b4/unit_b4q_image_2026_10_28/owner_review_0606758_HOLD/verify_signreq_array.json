@@ -1,0 +1,21 @@
+{
+ "dir": "/tmp/owner_b4q_repair_i_m6wlns/build/owner_archive_probes/signreq_array",
+ "verifier_error": "AttributeError: 'list' object has no attribute 'get'",
+ "where": [
+  "    by_req.setdefault(q.get(\"req\"), []).append((i, f, q))",
+  "                      ^^^^^",
+  "AttributeError: 'list' object has no attribute 'get'"
+ ],
+ "clean": false,
+ "agree": false,
+ "refused": null,
+ "session": [],
+ "transactions": [],
+ "chain": [],
+ "a7": {
+  "findings": []
+ },
+ "qualification": {
+  "findings": []
+ }
+}

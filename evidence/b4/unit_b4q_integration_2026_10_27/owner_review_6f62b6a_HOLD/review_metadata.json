@@ -1,0 +1,51 @@
+{
+  "reviewed_tip": "6f62b6ae22dd85a434ce7db97bddd6b6f750adf6",
+  "implementation_tip": "93cb570",
+  "utc": "2026-10-27T21:01:06.085370+00:00",
+  "verdict": "HOLD",
+  "accepted_within_scope": [
+    "R4 full DMA tuple",
+    "R5 raw type-exact configuration",
+    "narrow carrier manifest correction",
+    "host failure non-success retention",
+    "latch emulation limit"
+  ],
+  "blocking_residuals": [
+    "R1 read/HAL failure command admission",
+    "R2 PCAP range gaps and nested refusal boundary",
+    "R3 qualification index identity and full data-bearing conclusions"
+  ],
+  "test_suite": {
+    "ran": 70,
+    "skipped": 1,
+    "status": "OK",
+    "seconds": 97.043,
+    "skipped_test_focused_rerun": "1 test OK, no skip"
+  },
+  "fidelity": "zero mismatch across submitted 27-trace comparison, same coverage limits",
+  "regenerated_e2e_scenarios": 16,
+  "fresh_process_verifications": 32,
+  "new_production_seed_derivation": false,
+  "new_physical_observation": false,
+  "formal_manifest_overwritten_by_reviewer": false,
+  "manifest_independently_regenerated_only_to_disposable_output": true,
+  "tracked_changes_by_reviewer": false,
+  "source_and_snapshot_clean": true,
+  "push_merge_performed": false,
+  "mutants": "submitted31/44 kills inspected; not independently rerun",
+  "frozen_332_tests": "not rerun",
+  "repair_authorised_in_same_unit": true,
+  "board_or_production_execution_authorised": false,
+  "commands": [
+    "python3 -B -m unittest tests.test_b4q_derive tests.test_b4q_emu tests.test_b4q_schema tests.test_b4q_view tests.test_b4q_firmware tests.test_b4q_session tests.test_b4carrier_records tests.test_b4carrier_regmap tests.test_b4carrier_benches",
+    "python3 -B -m unittest tests.test_b4q_schema.AgainstTheCodeValidators.test_the_bench_traces_records_validate_when_present",
+    "python3 -B host/b4q_e2e.py build/owner_e2e",
+    "python3 -B host/b4q_emu_fidelity.py --json <review>/fidelity.json",
+    "make -C firmware/b4q xcheck",
+    "python3 -B host/b4carrier_manifest.py builds/b4/b4.bit --json build/owner_manifest_regenerated.json",
+    "python3 -B <review>/verify_scenarios.py",
+    "python3 -B <review>/probes.py",
+    "python3 -B <review>/read_error_supplement.py",
+    "python3 -B <review>/scope_checks.py"
+  ]
+}

@@ -1,0 +1,659 @@
+{
+ "commit": "185a415b51b57931cb70ca7ace9e7f0960ec4408d67dd2a934ccb0728aa1bbf7",
+ "config": [
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "config_sha256": "629849861904ff8b9bec174728f6c61749ddd3cc3152bb4cdb52261523d1fa78",
+ "elements": [
+  "AFF",
+  "A5FF",
+  "BFF",
+  "B5FF",
+  "CFF",
+  "C5FF",
+  "DFF",
+  "D5FF"
+ ],
+ "fabric_readback_sha256_post_event": "185a415b51b57931cb70ca7ace9e7f0960ec4408d67dd2a934ccb0728aa1bbf7",
+ "fabric_readback_sha256_pre_event": "185a415b51b57931cb70ca7ace9e7f0960ec4408d67dd2a934ccb0728aa1bbf7",
+ "init_event": {
+  "mechanism": "gsr_startupe2",
+  "parameters": {
+   "assert_delay": 8,
+   "gsr_count_after": 9,
+   "pre_init_cleanup": false,
+   "pulse_clocks": 2
+  }
+ },
+ "initial": {
+  "ce": 0,
+  "clock": 0,
+  "context": "idle",
+  "d": 0,
+  "q": [
+   1,
+   null,
+   1,
+   null,
+   1,
+   null,
+   1,
+   null
+  ],
+  "sr": 0
+ },
+ "instrument": {
+  "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "image_sha256": "61c0e2711bb08db1ae557c968fb1cef5933e0c7e041ff30c4475e580a8afc52c",
+  "variant": "42340001"
+ },
+ "nonce": "305f050c368dcc74",
+ "predecessor": {
+  "close_sha256": "acdcb065778f76cc1d484cf41feead6347a26ae4c88b4ae45cb8c7535c9f75b5",
+  "kind": "closed",
+  "seq": 4
+ },
+ "schema": "ff_observation_carrier",
+ "schema_version": "1.0.0",
+ "seq": 5,
+ "session": "B4Q-host-a2_pairs",
+ "staging_readback_sha256": "185a415b51b57931cb70ca7ace9e7f0960ec4408d67dd2a934ccb0728aa1bbf7",
+ "status": "complete",
+ "steps": [
+  {
+   "ce": 0,
+   "clock_after": 0,
+   "clock_before": 0,
+   "d": 0,
+   "edge": null,
+   "kind": "init",
+   "prev_event": "none",
+   "q_after": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "q_before": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "sr": 0,
+   "step": 0
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 0,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "init",
+   "q_after": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "q_before": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "sr": 0,
+   "step": 1
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 0,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "q_before": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "sr": 0,
+   "step": 2
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 255,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "q_before": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "sr": 0,
+   "step": 3
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 255,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "q_before": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "sr": 0,
+   "step": 4
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 255,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "q_before": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "sr": 0,
+   "step": 5
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 255,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "q_before": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "sr": 0,
+   "step": 6
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 0,
+   "d": 0,
+   "edge": null,
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "q_before": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "sr": 255,
+   "step": 7
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 0,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "level",
+   "q_after": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "q_before": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "sr": 255,
+   "step": 8
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 0,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "q_before": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "sr": 0,
+   "step": 9
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 0,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "q_before": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "sr": 0,
+   "step": 10
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 0,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "q_before": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "sr": 0,
+   "step": 11
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 0,
+   "d": 255,
+   "edge": null,
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "q_before": [
+    0,
+    null,
+    0,
+    null,
+    0,
+    null,
+    0,
+    null
+   ],
+   "sr": 255,
+   "step": 12
+  },
+  {
+   "ce": 255,
+   "clock_after": 1,
+   "clock_before": 0,
+   "d": 255,
+   "edge": "rising",
+   "kind": "set",
+   "prev_event": "level",
+   "q_after": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "q_before": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "sr": 255,
+   "step": 13
+  },
+  {
+   "ce": 255,
+   "clock_after": 0,
+   "clock_before": 1,
+   "d": 255,
+   "edge": "falling",
+   "kind": "set",
+   "prev_event": "edge",
+   "q_after": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "q_before": [
+    1,
+    null,
+    1,
+    null,
+    1,
+    null,
+    1,
+    null
+   ],
+   "sr": 0,
+   "step": 14
+  }
+ ],
+ "stimulus": [
+  {
+   "kind": "init"
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 0,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 0,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 255,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 255,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 255,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 255,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 0,
+   "kind": "set",
+   "sr": 255
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 0,
+   "kind": "set",
+   "sr": 255
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 0,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 0,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 0,
+   "kind": "set",
+   "sr": 0
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 255,
+   "kind": "set",
+   "sr": 255
+  },
+  {
+   "ce": 255,
+   "clock": 1,
+   "d": 255,
+   "kind": "set",
+   "sr": 255
+  },
+  {
+   "ce": 255,
+   "clock": 0,
+   "d": 255,
+   "kind": "set",
+   "sr": 0
+  }
+ ],
+ "stimulus_sha256": "e802147e2ac5c7ea9b7edb94c154e9b59f8eac5045032c7246c6ab26cef599f0",
+ "timing": {
+  "hold": 4,
+  "release": 16,
+  "sample_offset": 4,
+  "settle": 4
+ }
+}

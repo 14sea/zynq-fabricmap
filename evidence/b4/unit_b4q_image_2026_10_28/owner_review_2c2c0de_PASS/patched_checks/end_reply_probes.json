@@ -1,0 +1,31 @@
+[
+  {
+    "case": "untouched",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "session": [],
+    "END_seq": 34,
+    "last_host_frame": "QUIT"
+  },
+  {
+    "case": "quit_answered_protocol",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "session": [
+      "console: board END at line 43: sequence 34 is below the exhaustion limit 4294967280"
+    ],
+    "END_seq": 34,
+    "last_host_frame": "QUIT"
+  },
+  {
+    "case": "quit_answered_stop",
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "session": [],
+    "END_seq": 34,
+    "last_host_frame": "QUIT"
+  }
+]

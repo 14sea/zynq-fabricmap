@@ -1,0 +1,142 @@
+{
+ "AFF": {
+  "row": 2,
+  "verdict": "both demonstrated",
+  "init_samples": {
+   "00": 1,
+   "01": 1,
+   "10": 0,
+   "11": 0
+  },
+  "sr_readings": {
+   "00": {
+    "reading": "restore",
+    "value": 1,
+    "samples": {
+     "K0": 0,
+     "K1": 1,
+     "P0": 1,
+     "R0": 1,
+     "P1": 0,
+     "R1": 1
+    }
+   },
+   "01": {
+    "reading": "restore",
+    "value": 0,
+    "samples": {
+     "K0": 0,
+     "K1": 1,
+     "P0": 1,
+     "R0": 0,
+     "P1": 0,
+     "R1": 0
+    }
+   },
+   "10": {
+    "reading": "restore",
+    "value": 1,
+    "samples": {
+     "K0": 0,
+     "K1": 1,
+     "P0": 1,
+     "R0": 1,
+     "P1": 0,
+     "R1": 1
+    }
+   },
+   "11": {
+    "reading": "restore",
+    "value": 0,
+    "samples": {
+     "K0": 0,
+     "K1": 1,
+     "P0": 1,
+     "R0": 0,
+     "P1": 0,
+     "R1": 0
+    }
+   }
+  },
+  "quantities": {
+   "not_assessable": false,
+   "init_effect": true,
+   "init_absent": false,
+   "srval_effect": true,
+   "srval_absent": false,
+   "cross_tracking": false,
+   "inconsistent": false
+  },
+  "limit": "a reading of the records under the fixed rule; attribution (mechanism, timing, instrumentation, model) is left to independent evidence"
+ },
+ "BFF": {
+  "row": 5,
+  "verdict": "neither demonstrated",
+  "init_samples": {
+   "00": 1,
+   "01": 1,
+   "10": 1,
+   "11": 1
+  },
+  "sr_readings": {
+   "00": {
+    "reading": "restore",
+    "value": 1,
+    "samples": {
+     "K0": 0,
+     "K1": 1,
+     "P0": 1,
+     "R0": 1,
+     "P1": 0,
+     "R1": 1
+    }
+   },
+   "01": {
+    "reading": "restore",
+    "value": 1,
+    "samples": {
+     "K0": 0,
+     "K1": 1,
+     "P0": 1,
+     "R0": 1,
+     "P1": 0,
+     "R1": 1
+    }
+   },
+   "10": {
+    "reading": "restore",
+    "value": 1,
+    "samples": {
+     "K0": 0,
+     "K1": 1,
+     "P0": 1,
+     "R0": 1,
+     "P1": 0,
+     "R1": 1
+    }
+   },
+   "11": {
+    "reading": "restore",
+    "value": 1,
+    "samples": {
+     "K0": 0,
+     "K1": 1,
+     "P0": 1,
+     "R0": 1,
+     "P1": 0,
+     "R1": 1
+    }
+   }
+  },
+  "quantities": {
+   "not_assessable": false,
+   "init_effect": false,
+   "init_absent": true,
+   "srval_effect": false,
+   "srval_absent": true,
+   "cross_tracking": false,
+   "inconsistent": false
+  },
+  "limit": "a reading of the records under the fixed rule; attribution (mechanism, timing, instrumentation, model) is left to independent evidence"
+ }
+}

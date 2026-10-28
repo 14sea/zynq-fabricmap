@@ -1,0 +1,42 @@
+{
+  "reviewed_tip": "3723b91db0bbeb3aaaa84ba7e8889940759d2170",
+  "base": "dd8a7b9",
+  "verdict": "HOLD",
+  "blocking_findings": [
+    "R1 fail-closed sequencing",
+    "R2 archive completeness/staging witness/refusal boundary",
+    "R3 qualification conclusion recomputation and required witnesses",
+    "R4 complete DMA tuple binding",
+    "R5 type-exact raw configuration before coercion"
+  ],
+  "utc": "2026-10-27T20:08:59.566957+00:00",
+  "snapshot": "/tmp/owner_b4q_7w3a_pwh",
+  "source_tree_clean": true,
+  "snapshot_tracked_tree_clean": true,
+  "protected_diff_empty": true,
+  "owner_authorisation_payloads_equal": 2,
+  "independent_tests": {
+    "initial": "62 tests, 5 errors, 1 failure; missing build fixture and ignored netlist",
+    "prepared": "65 tests OK; explicit setup and unchanged netlist dependency supplied"
+  },
+  "fidelity": "27 scenarios; zero mismatches; three hand-driven handshake coverage limits retained",
+  "e2e_generated_scenarios": 11,
+  "fresh_scenario_verifications": 22,
+  "mutant_battery": "submitted 17/23 inspected; not independently rerun",
+  "frozen_332_suite": "submitted result inspected; not rerun",
+  "new_production_seed_derivation": false,
+  "new_physical_observation": false,
+  "formal_manifest_regeneration": false,
+  "tracked_changes_by_reviewer": false,
+  "push_merge_performed": false,
+  "repair_authorised": true,
+  "board_or_production_execution_authorised": false,
+  "commands": [
+    "python3 -B -m unittest tests.test_b4q_derive tests.test_b4q_emu tests.test_b4q_schema tests.test_b4q_view tests.test_b4q_firmware tests.test_b4q_session tests.test_b4carrier_records tests.test_b4carrier_regmap tests.test_b4carrier_benches",
+    "python3 -B host/b4q_e2e.py build/owner_e2e_all",
+    "python3 -B host/b4q_emu_fidelity.py --json <review>/fidelity.json",
+    "make -C firmware/b4q xcheck",
+    "python3 -B <review>/verify_scenarios.py",
+    "python3 -B <review>/probes.py <prepared-clone> <output-directory>"
+  ]
+}

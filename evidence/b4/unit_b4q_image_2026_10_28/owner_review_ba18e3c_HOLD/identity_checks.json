@@ -1,0 +1,56 @@
+{
+  "head": "ba18e3ca8c7260450a40daa2d7651cbc19c1f707",
+  "status": "",
+  "transaction_unchanged": true,
+  "protected_since_e267405": [],
+  "protected_since_main": [
+    "builds/b4/b4_carrier_manifest.json"
+  ],
+  "imports": {
+    "b4/IMPORT.json": {
+      "entries": 59,
+      "hashed": 59,
+      "mismatch": []
+    },
+    "firmware/b4q/IMPORT.json": {
+      "entries": 34,
+      "hashed": 33,
+      "mismatch": []
+    }
+  },
+  "build": {
+    "image_sha256": "048f9ab9499db86496128c1893497ef0f7127332528c0437b014e136c292fb1b",
+    "submitted_image_matches": true,
+    "reviewer_two_builds_equal": true,
+    "sources_equal": true,
+    "verbatim": {
+      "bsp/lscript.ld": {
+        "base": "firmware/b1/bsp/lscript.ld",
+        "equal": true
+      },
+      "bsp/src/console.c": {
+        "base": "firmware/b1/bsp/src/console.c",
+        "equal": true
+      },
+      "bsp/include/bspconfig.h": {
+        "base": "firmware/b1/bsp/include/bspconfig.h",
+        "equal": true
+      },
+      "bsp/include/xmem_config.h": {
+        "base": "firmware/b1/bsp/include/xmem_config.h",
+        "equal": true
+      },
+      "bsp/include/xparameters.h": {
+        "base": "firmware/b1/bsp/include/xparameters.h",
+        "equal": true
+      }
+    },
+    "bsp_inputs_equal_after_path_normalization": true,
+    "translation_units": 49,
+    "headers": 90,
+    "entry": "0x20000cc",
+    "elf_equal": false,
+    "map_equal": false,
+    "note": "Independent .bin matches submitted bytes. ELF/map differ across checkout paths; ELF LOAD segments are checked separately. Reproducibility flag hashes only .bin, not all three artifacts."
+  }
+}

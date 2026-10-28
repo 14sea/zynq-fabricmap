@@ -1,0 +1,104 @@
+B4Q mutant battery — 2026-10-27T21:38:19Z HEAD 6f62b6a
+BASELINE valid: green
+BASELINE wrong_key: green
+BASELINE tamper: green
+BASELINE a5: green
+BASELINE fail_closed: green
+BASELINE archive: green
+BASELINE a7_tuple: green
+BASELINE raw_float: green
+BASELINE a5_witnesses: green
+BASELINE bench_records: green
+BASELINE read_admission: green
+BASELINE tiling: green
+BASELINE nested: green
+BASELINE binding: green
+C1 KILLED — a step's sample read from the wrong slot: the executing side failed:     ^^^^^^
+  File "/home/test/zynq_fabricmap/host/b4q_e2e.py", line 264, in main
+    summaries.append(run_session(root, name, body, *
+C2 KILLED — P9 (the restore event) skipped before CLOSE: the executing side failed: home/test/zynq_fabricmap/host/b4q_e2e.py", line 264, in main
+    summaries.append(run_session(root, name, body, **kw))
+              
+C3 KILLED — the cleanup skipped: the executing side failed: est/zynq_fabricmap/host/b4q_e2e.py", line 264, in main
+    summaries.append(run_session(root, name, body, **kw))
+                    
+C4 KILLED — the A5 context flag on every ARM: the executing side failed: abricmap/host/b4q_e2e.py", line 264, in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^
+C5 KILLED — the tag words staged rotated: the executing side failed: abricmap/host/b4q_e2e.py", line 264, in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^
+C6 KILLED — the executing side's fitness off by one: the executing side failed:  in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/
+C7 KILLED — the frames derived for another genome than signed: the executing side failed: ne 264, in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  
+C8 KILLED — the pre-event readback skipped, its digest fabricated from the commit: the executing side failed:     ^^^^^^
+  File "/home/test/zynq_fabricmap/host/b4q_e2e.py", line 264, in main
+    summaries.append(run_session(root, name, body, *
+C9 SURVIVED — the link-2 comparison removed (observable only beside a corruption: C9+C10): clean
+C10 KILLED — one staged frame word corrupted in DDR: the executing side failed: py", line 264, in main
+    summaries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C11 SURVIVED — the idle check after CLOSE removed (equivalent on every available probe: the valid path's CLOSE always leaves idle): clean
+C12 KILLED — a write into the key window: A7: write of 0x2160: the KEY window (the signer principal's, never the application's); A7: 4 access(es) of the carrier window answered SLVERR; write of 0x2160: 
+C13 SURVIVED — an ARM refusal ignored by the executing side (silent by the record layer's authority over the trace): as expected
+R1a KILLED — the pre-event comparison before the init event removed: pre_event_corrupt: phase P4 ctrl ['0x40', '0x200', '0x400'] next_refused True signed_after 0
+R1b SURVIVED — the STEP_IN write response ignored again (masked by the read-back check: see R1b+R1b2): as expected
+R1b2 SURVIVED — the STEP_IN read-back check removed (masked by the response check: see R1b+R1b2): as expected
+R1c SURVIVED — the accessor no longer propagates a refused write (masked by the explicit STEP_IN checks): as expected
+R1d SURVIVED — the session's halt latch no longer refuses the next transaction (masked by the previous-close rule: see R1d+prev): as expected
+R1e SURVIVED — a refused opening no longer withholds the root (masked by the halt latch: see R1d+R1e): as expected
+R2a KILLED — undeclared record directories accepted again: an undeclared record directory was NOT refused: /tmp/b4q_mut_16fcd6by/R2a/valid: clean=True agree=True session=[] chain=0 a7=0 qualification=[]
+   tx_001: O com
+R2a2 SURVIVED — a declared record directory missing no longer refuses (masked by the per-record file checks: see R2a2+files): found
+R2c SURVIVED — the manifest's top-level check removed (since round 2 masked by the field validator's object check: see R2c+R2e): found
+R3a KILLED — the qualification conclusions no longer recomputed: an altered A8 conclusion was NOT found
+P1 KILLED — the stored O's seq altered after sealing: the executing side failed: e "/home/test/zynq_fabricmap/host/b4q_e2e.py", line 264, in main
+    summaries.append(run_session(root, name, body, **kw))
+          
+P2 SURVIVED — the session no longer holds the executing side's fitness to the host's (observable only beside C6: P2+C6): clean
+P3 KILLED — the verifier no longer compares the stored O to the rebuilt one: the tamper was NOT found
+P4 KILLED — the verifier skips A7: A7 findings []
+R1f SURVIVED — the write accessor's admission gate removed (masked on the tested fault conditions by the explicit pre-signing / pre-event / DMA checks: see R1f+R1j): as expected
+R1g KILLED — a refused PS-map read no longer stops (DEVCFG CTRL read SLVERR -> the DMA proceeds): devc_ctrl_read_slverr: status 0 writes_after 16047 o True ctrl ['0x40', '0x200', '0x400', '0x800', '0x800', '0x800', '0x800', '0x800', '0x800', '0x800', '0x1000
+R1h SURVIVED — the PS-map write gate removed (masked by devcfg_dma's own admission checks: see R1h+R1k): as expected
+R1i KILLED — the pre-signing admission check removed (a signature requested on a refused nonce): nonce_read_slverr: signed_in_tx 1 (want 0)
+R1j SURVIVED — the pre-event admission check removed (masked by the write accessor's gate: see R1f+R1j): as expected
+R1k SURVIVED — the DEVCFG CTRL read's admission check removed (masked by the PS-map write gate: see R1h+R1k): as expected
+R2d KILLED — the exact PCAP tiling relaxed to no-overlap again (a gap accepted): an internal PCAP gap was clean / agreed: []
+R2d2 KILLED — the opening's PCAP range no longer held to the first record: a shortened opening range was not found
+R2e SURVIVED — the field validator's object check removed (masked by the JSON-object check of the reader: see R2e+R2e2): named
+R2e2 SURVIVED — the reader's JSON-object check removed (masked by the field validator: see R2e+R2e2): named
+R2e3 KILLED — the nested executing_side shape no longer validated (an indexing error instead of a named refusal): manifest.json: not a named refusal (exit 2): /tmp/b4q_mut_16fcd6by/R2e3/valid_nested: VERIFIER ERROR — KeyError: 'binary' (the verifier's own defect on this arc
+R3c SURVIVED — the element / index correspondence no longer checked (masked by the corner binding under the mapping's bits: see R3c+R3d+R3e+R3f): every relabelling / partial conclusion found
+R3d SURVIVED — the varied bits no longer held to the mapping's addresses (masked by the corner / background bindings: see R3d+R3e+R3f): every relabelling / partial conclusion found
+R3e KILLED — a corner's record no longer held to its (INIT, SRVAL) label: A8 corners 00 / 11 swapped WITH the conclusion recomputed to match (only the corner binding can find it): accepted (agree True, findings [])
+R3f KILLED — the corners no longer held to the declared background: A8 background alone: accepted (agree True, findings [])
+R3g KILLED — the A8 conclusion compared on row / verdict only again (init_samples / quantities unbound): A8 init_samples / quantities: accepted (agree True, findings [])
+R3h KILLED — the A2 semantic no longer bound to the endpoints' differing address: A2 semantic ff_init (index + conclusion): accepted (agree True, findings [])
+R3i KILLED — the A5 conclusion compared on the verdict only again: A5 injection witness altered: accepted (agree True, findings [])
+R3j KILLED — the A2 row compared on the verdict only again (differing points unbound): A2 differing_points truncated: accepted (agree True, findings [])
+R1f+R1j KILLED — the write accessor's gate AND the pre-event check removed: an INIT_REQ after a refused read: heartbeat_read_slverr: status 1 writes_after 1 o False ctrl ['0x40', '0x200', '0x400']
+R1h+R1k KILLED — the PS-map write gate AND the CTRL-read check removed: a DMA queued after a refused DEVCFG read: devc_ctrl_read_slverr: status 1 writes_after 1 o False ctrl ['0x40']
+R2e+R2e2 KILLED — both object checks removed: a list where an object is consumed is a verifier error, not a named refusal: tx_001/record.json: not a named refusal (exit 2): /tmp/b4q_mut_16fcd6by/R2e_R2e2/valid_nested: VERIFIER ERROR — AttributeError: 'list' object has no attribute '
+R3c+R3d SURVIVED — the element order AND the varied-bits binding removed (still masked: the corner binding uses the MAPPING's bits of the relabelled element, so the corners fail: see R3c+R3d+R3e+R3f): every relabelling / partial conclusion found
+R3d+R3e+R3f KILLED — the bits, corner and background bindings removed: another cross accepted under the declared labels: A8 bits / background: accepted (agree True, findings [])
+R3c+R3d+R3e+R3f KILLED — the element order, bits, corner and background bindings removed: AFF relabelled A5FF accepted: A8 label A5FF (index + conclusion): accepted (agree True, findings [])
+R2c+R2e SURVIVED — the top-level manifest check AND the field validator's object check removed: manifest = [] is a verifier error, not a named refusal: named
+C9+C10 KILLED — the link-2 comparison removed AND a staged word corrupted: the corrupted candidate is written: the executing side failed: maries.append(run_session(root, name, body, **kw))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/test/zynq_f
+P2+C6 KILLED — the session no longer holds the fitness AND the executing side's is off by one: the verifier must still find it and the two must disagree: F: the executing side's fitness 29 is not the host's recomputation 28 over the full physical grid; F: the executing side's fitness 21 is not the host's recomput
+R1b+R1b2 SURVIVED — the STEP_IN response check AND the read-back check removed (killed at 6f62b6a; since round 2 masked by the write accessor's admission gate, which refuses the STEP after the accessor's own stop: see R1c+R1b+R1b2): as expected
+R1c+R1b+R1b2 KILLED — the accessor's propagation AND both STEP_IN checks removed: step_in_slverr: launches 2 status 0
+R1d+prev KILLED — the halt latch AND the previous-close rule removed: the next candidate is signed after an unclosed transaction: pre_event_corrupt: phase P2 ctrl ['0x40', '0x40'] next_refused False signed_after 1
+R1d+R1e KILLED — the halt latch AND the opening rule removed: the root is signed after a refused opening: startup_corrupt: signatures 1 root_refused False
+R2a2+files SURVIVED — the declared-directory check AND the per-record file checks removed (killed at 6f62b6a; since round 2 masked by the per-record reader, where a missing file is a named refusal): found
+TOTAL killed 37 survived 23 edit-miss 0 of 60
+ROUND-2 MUTANTS (the owner's HOLD on 6f62b6a, R1-R3 residuals): R1f-k (the admission invariant: the write accessors' gates, the PS-map read propagation, the pre-signing / pre-event / CTRL-read checks), R2d/R2d2 (exact PCAP tiling, the opening's range), R2e/R2e2/R2e3 (the nested shapes), R3c-j (the index bound to the mapping and the records' O.config; the conclusions compared in full) and their combined ones — probed by the read-failure scenarios, the coordinated range / label / conclusion mutations and the nested malformed files. Masked on the tested fault conditions (each by its named twin, the combined mutant killed): R1f (by the explicit pre-signing / pre-event / DMA checks; R1f+R1j killed), R1h (by devcfg_dma's own checks; R1h+R1k killed), R1j (by the write accessor's gate), R1k (by the PS-map write gate), R2e / R2e2 (each by the other; R2e+R2e2 killed), R2c (since round 2 by the field validator's object check; R2c+R2e killed), R3c / R3d (by the corner binding, which uses the mapping's bits of the relabelled element; R3c+R3d+R3e+R3f killed), R3d also by the background binding (R3d+R3e+R3f killed). Two combined mutants killed at 6f62b6a are masked since round 2 by the new guards — R1b+R1b2 by the write accessor's admission gate (R1c+R1b+R1b2 still killed), R2a2+files by the per-record reader — named, not recounted.
+REPAIR MUTANTS (R1-R5, 2026-10-27): R1a-e, R2a/R2a2/R2c, R3a/R3b, R4a/R4b, R5a/R5b and the combined ones — each probed by the fault condition it guards (a corrupted readback, a refused write, a refused opening, a dropped / undeclared record, a malformed manifest, an altered conclusion, missing close witnesses, a bad DMA tuple, a float bit). Where a single repair guard survives, its redundant twin masks it on every probe and the COMBINED mutant removing both is killed: R1b (the STEP_IN read-back check), R1c (the explicit STEP_IN response check and the read-back check), R1d (the previous-close rule), R1e (the halt latch), R2a2 (the per-record file checks), R5b (the raw schema file validated first) — proven redundancy under the explicit contract, each named here, none counted as a tested guard by itself.
+SURVIVORS acknowledged (each an equivalent or a redundancy on every available probe, named with what masks it): C9 (the link-2 comparison alone: on a correct executing side the re-read always equals the commit — its removal is observable only beside a corruption, C9+C10, killed), P2 (the session's fitness hold alone: the verifier recomputes it independently and the executing side's is correct — observable only beside C6, P2+C6, killed), P5 (the applied-vector realisability rule: the declared-step equality check catches a non-uniform applied vector first, since the declared stimulus is uniform by task-v0.3), P7 (A7's key-window line: the key window is also outside the application's write allowlist, which the next line reports), C11 (the idle check after CLOSE: the valid path's CLOSE always leaves idle, so its removal is equivalent on every available probe — the RTL's idle semantics are the carrier bench's finding, scenario open_close_refused), C13 (an ARM refusal ignored by the executing side: the record layer judges the TRACE, not the executing side's claim, so the O is still invalid at P1 with arm_auth — the mutant is silent by the record layer's authority, which is the design)

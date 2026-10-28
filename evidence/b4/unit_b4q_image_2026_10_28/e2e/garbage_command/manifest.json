@@ -1,0 +1,420 @@
+{
+ "schema": "b4q_session",
+ "schema_version": "1.0.0",
+ "label": "B4Q-console-garbage_command",
+ "generated_utc": "2026-10-28T10:01:57Z",
+ "emulated": true,
+ "standing": "an OFFLINE end-to-end transaction on a host emulation of the carrier and the PCAP path: the executing side's sequence, arithmetic and record production against the real record / validation path \u2014 not a physical link, not silicon, not A8",
+ "instrument": {
+  "variant": "42340001",
+  "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "image_sha256": "393a8fe5a8f806e582b9b7ea22ad66091e43a2b8ea11241949855f2205f7cffb"
+ },
+ "executing_side": {
+  "binary": "build/b4q_firmware/b4q_apphost",
+  "sha256": "393a8fe5a8f806e582b9b7ea22ad66091e43a2b8ea11241949855f2205f7cffb",
+  "build": {
+   "compiler": "/usr/bin/cc",
+   "version": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+   "flags": "-std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion",
+   "binaries": {
+    "b4q_host": "6109cd86b797140407f4c2bb4c3a4e932d8634ed01aed7ea89c2391416dbd424",
+    "b4q_derive_twin": "15da92797a3bd25c5f6499600c04b5610e936442bc297b690679fff64da48906"
+   }
+  }
+ },
+ "loaded_frames_reference_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+ "base_readback_reference_sha256": "ee4226080c4f8cd9f0711269a861c0858dc2256fea279a29b360306215b53ad7",
+ "write_set": {
+  "bitstream": "builds/b4/b4.bit",
+  "bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "build_record": "builds/b4/b4_build.json",
+  "idcode": "0x03722093",
+  "carrier_manifest": "builds/b4/b4_carrier_manifest.json",
+  "carrier_manifest_bitstream_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+  "carrier_manifest_file_digest_matches": true,
+  "carrier_manifest_column_frames_differing": [],
+  "envelopes": [
+   {
+    "far_set": "0x00400a00",
+    "targets": [
+     "0x00400a00",
+     "0x00400a01",
+     "0x00400a02",
+     "0x00400a03"
+    ],
+    "flush": "0x00400a04"
+   },
+   {
+    "far_set": "0x00400a1c",
+    "targets": [
+     "0x00400a1c",
+     "0x00400a1d",
+     "0x00400a1e",
+     "0x00400a1f"
+    ],
+    "flush": "0x00400a20"
+   }
+  ],
+  "target_fars": [
+   "0x00400a00",
+   "0x00400a01",
+   "0x00400a02",
+   "0x00400a03",
+   "0x00400a1c",
+   "0x00400a1d",
+   "0x00400a1e",
+   "0x00400a1f"
+  ],
+  "flush_fars": [
+   "0x00400a04",
+   "0x00400a20"
+  ],
+  "whitelist": [
+   {
+    "bit": 0,
+    "far": "0x00400a00",
+    "word": 52,
+    "bit_in_word": 16
+   },
+   {
+    "bit": 1,
+    "far": "0x00400a01",
+    "word": 51,
+    "bit_in_word": 7
+   },
+   {
+    "bit": 2,
+    "far": "0x00400a01",
+    "word": 51,
+    "bit_in_word": 19
+   },
+   {
+    "bit": 3,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 3
+   },
+   {
+    "bit": 4,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 7
+   },
+   {
+    "bit": 5,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 15
+   },
+   {
+    "bit": 6,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 19
+   },
+   {
+    "bit": 7,
+    "far": "0x00400a01",
+    "word": 52,
+    "bit_in_word": 23
+   },
+   {
+    "bit": 8,
+    "far": "0x00400a1e",
+    "word": 51,
+    "bit_in_word": 12
+   },
+   {
+    "bit": 9,
+    "far": "0x00400a1e",
+    "word": 51,
+    "bit_in_word": 30
+   },
+   {
+    "bit": 10,
+    "far": "0x00400a1e",
+    "word": 52,
+    "bit_in_word": 0
+   },
+   {
+    "bit": 11,
+    "far": "0x00400a1e",
+    "word": 52,
+    "bit_in_word": 1
+   },
+   {
+    "bit": 12,
+    "far": "0x00400a1e",
+    "word": 52,
+    "bit_in_word": 18
+   },
+   {
+    "bit": 13,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 3
+   },
+   {
+    "bit": 14,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 6
+   },
+   {
+    "bit": 15,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 22
+   },
+   {
+    "bit": 16,
+    "far": "0x00400a1f",
+    "word": 51,
+    "bit_in_word": 28
+   },
+   {
+    "bit": 17,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 1
+   },
+   {
+    "bit": 18,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 9
+   },
+   {
+    "bit": 19,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 19
+   },
+   {
+    "bit": 20,
+    "far": "0x00400a1f",
+    "word": 52,
+    "bit_in_word": 26
+   }
+  ],
+  "base_frame_sha256": {
+   "0x00400a00": "83ea11e246f4beb9ceb66684eb64408088e3a1fafaeb0cda3c21f5446d3b5859",
+   "0x00400a01": "2d705f7fbb987efe04cd5bd23195d9b0de7b55ca4a2caecaaeacffa5e692ae28",
+   "0x00400a02": "0dff7b369a72b99746a29eed6537b9ae18d90903050de9cc7f0d71876b63cc03",
+   "0x00400a03": "72ed9a71c4070863a17688ff7ccab7029494a8e499720cb6aa72ba9877f6527e",
+   "0x00400a1c": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "0x00400a1d": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "0x00400a1e": "1746621f0f6e2a2a9e4ff88f9a055c1aabebe9a20dd1cd2a27ed47dcc79fb280",
+   "0x00400a1f": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "0x00400a04": "d6e51aae5cb3e4aab20921655785af00ae1bc68f4094b9a753d90b9716ac3b00",
+   "0x00400a20": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+  },
+  "base_genome_of_loaded_image": 24,
+  "loaded_image_target_frames_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+  "note": "the loaded image is the natural build (CEUSEDMUX = SRUSEDMUX = 1); the signed base genome 0 differs from it in exactly those two bits and their frames' ECC",
+  "header_sha256": "2e296151a14dd083383393cad40b1ed1e4c8ae2089ebab3d67c8d9b6ea2e644e",
+  "generator": "host/b4q_gen_data.py"
+ },
+ "timing": {
+  "assert_delay": 8,
+  "release": 16,
+  "sample_offset": 4,
+  "settle": 4,
+  "hold": 4,
+  "pulse": 2
+ },
+ "hypothesis": {
+  "path": "b4/hypothesis/ff_behaviour_v0.3.json",
+  "sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "version": "0.3.0"
+ },
+ "mapping": {
+  "site": "SLICE_X2Y25",
+  "certificate": "gate_runs/run_2026_08_05_ff/certificate.json",
+  "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+ },
+ "notary": {
+  "key_id": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+  "contract": "zero tables, no attestation (fixture key)"
+ },
+ "backend": {
+  "power_on": "init",
+  "nonce_seed": "9e3779b97f4a7c15",
+  "devc_faults": {},
+  "fault_injections": {
+   "refuse_writes": [],
+   "corrupt_frame_reads": [],
+   "refuse_reads": [],
+   "refuse_mem_reads": [],
+   "note": "the bench's declared fault injections \u2014 a SIMULATION, never evidence that hardware refused or corrupted anything"
+  }
+ },
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    97,
+    252
+   ],
+   "pcap_range": [
+    204,
+    360
+   ]
+  }
+ ],
+ "open_trace_range": [
+  0,
+  12
+ ],
+ "open_pcap_range": [
+  0,
+  48
+ ],
+ "halted": null,
+ "qualification_plan": {
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
+ "notary_deny": [],
+ "interrupted": null,
+ "chain_findings": [],
+ "accesses": 41186,
+ "trace_events": 252,
+ "transport": {
+  "kind": "console-emulated",
+  "standing": "the board application's host harness on a pipe: its framed console lines are the bytes the image would put on UART1; not a board, not on-target evidence",
+  "protocol": "b4q-v1",
+  "token": "e33b3da9745b3de5b1277ae9efc7961c",
+  "page_words": [
+   "42345149",
+   "00000001",
+   "e33b3da9",
+   "745b3de5",
+   "b1277ae9",
+   "efc7961c",
+   "6553f100",
+   "393a8fe5",
+   "4e406f12",
+   "80d3cf5c",
+   "abf43d00",
+   "1278ef3b",
+   "807a9ce4",
+   "a7d03644",
+   "5122f563",
+   "6e3d18a9",
+   "7f4a7c15",
+   "9e3779b9",
+   "00000000",
+   "00000002",
+   "00000000",
+   "00000000",
+   "00000000",
+   "590af3a5"
+  ],
+  "page_flags": 2,
+  "knobs": {
+   "corrupt_replies": 0,
+   "drop_replies": 0,
+   "bad_page": null,
+   "garbage_before_tx": 1,
+   "watchdog_fail": false,
+   "wrong_token_lines": 0,
+   "stale_reply_first": 0,
+   "seq_gap": 0,
+   "replay_tx": 0
+  },
+  "stats": {
+   "hb": 0,
+   "nack": 1,
+   "signreq": 2,
+   "signreply": 2,
+   "corrupted": 0,
+   "dropped": 0,
+   "garbage": 1,
+   "wrong_token": 0,
+   "stale": 0,
+   "stale_board": 0,
+   "refused_halted": 0,
+   "replayed": 0
+  },
+  "end": {
+   "kind": "COMPLETED",
+   "reason": "the host closed the session",
+   "lines": 19,
+   "hb": 0,
+   "nacks": 1,
+   "sign_requests": 2,
+   "sign_replies": 2,
+   "transactions": 2,
+   "kicks": 19,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 1,
+   "opened": 1,
+   "halted": ""
+  },
+  "ident": {
+   "protocol": "b4q-v1",
+   "token": "e33b3da9745b3de5b1277ae9efc7961c",
+   "uboot_epoch": 1700000000,
+   "app_image_sha_lo32": 960139237,
+   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+   "flags": 2,
+   "page_nonce_seen": "9e3779b97f4a7c15",
+   "page_status_seen": 0,
+   "nonce_echo_equal": 1,
+   "watchdog": "armed",
+   "open": {
+    "status": 0,
+    "reason": "opened",
+    "idcode": 326246547,
+    "variant": 1110704129,
+    "timing": 1141116936,
+    "witness": 131584,
+    "status_word": 6400,
+    "heartbeat": 44,
+    "nonce": "9e3779b97f4a7c15",
+    "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
+   }
+  },
+  "console_lines": 26,
+  "findings": [],
+  "host_seq_last": 5,
+  "board_seq_last": 19,
+  "refused_commands": []
+ }
+}

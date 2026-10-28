@@ -1,0 +1,52 @@
+{
+ "record": {
+  "schema": "ff_session_open",
+  "schema_version": "1.0.0",
+  "instrument": {
+   "variant": "42340001",
+   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+   "image_sha256": "393a8fe5a8f806e582b9b7ea22ad66091e43a2b8ea11241949855f2205f7cffb"
+  },
+  "startup_readback_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+  "base_frames_reference_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+  "status": "open"
+ },
+ "findings": [],
+ "executing_side": {
+  "status": 0,
+  "reason": "opened",
+  "idcode": 326246547,
+  "variant": 1110704129,
+  "timing": 1141116936,
+  "witness": 131584,
+  "status_word": 6400,
+  "heartbeat": 44,
+  "nonce": "9e3779b97f4a7c15",
+  "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+  "ident": {
+   "protocol": "b4q-v1",
+   "token": "678ecefb0ea9d555db50af7d048a1eac",
+   "uboot_epoch": 1700000000,
+   "app_image_sha_lo32": 960139237,
+   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+   "flags": 2,
+   "page_nonce_seen": "9e3779b97f4a7c15",
+   "page_status_seen": 0,
+   "nonce_echo_equal": 1,
+   "watchdog": "armed",
+   "open": {
+    "status": 0,
+    "reason": "opened",
+    "idcode": 326246547,
+    "variant": 1110704129,
+    "timing": 1141116936,
+    "witness": 131584,
+    "status_word": 6400,
+    "heartbeat": 44,
+    "nonce": "9e3779b97f4a7c15",
+    "startup_readback": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
+   }
+  }
+ },
+ "host_view_target_frames_hash": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
+}

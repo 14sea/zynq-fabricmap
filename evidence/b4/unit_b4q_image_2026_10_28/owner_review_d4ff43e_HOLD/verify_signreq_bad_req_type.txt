@@ -1,0 +1,7 @@
+COMMAND ['/usr/bin/python3', '-B', '/tmp/owner_b4q_r3_gskm2dvv/host/b4q_verify.py', '/tmp/owner_b4q_r3_gskm2dvv/build/owner_archive_probes/signreq_bad_req_type', '--json', '/home/test/zynq_fabricmap/build/wip/owner_review_d4ff43e_2026_10_28/verify_signreq_bad_req_type.json']
+EXIT 1
+/tmp/owner_b4q_r3_gskm2dvv/build/owner_archive_probes/signreq_bad_req_type: clean=False agree=False session=['console: board SIGNREQ at line 4: payload: req: not an int', 'console: host SIGNREPLY at line 5: answers request 3, which is not an open request of the current transaction', 'console: board RESULT at line 11: a closed transaction without any SIGNREQ', 'console: END.lines is 34, the lines say 33', 'console: END.sign_requests is 4, the lines say 3', "console: the transport's stats.signreq is 4, the lines say 3"] chain=0 a7=0 qualification=[]
+   tx_001: O complete; X closed | findings 0 agrees=True
+   tx_002: O complete; X closed | findings 0 agrees=True
+   tx_003: O complete; X closed | findings 0 agrees=True
+   tx_004: O complete; X closed | findings 0 agrees=True

@@ -1,0 +1,96 @@
+{
+ "name": "latch_unmodelled",
+ "wall_s": 2.093,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000450",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [
+    "O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[1].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[2].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[2].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[3].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+    "O: O.steps[7].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+   ],
+   "trace_range": [
+    97,
+    252
+   ],
+   "pcap_range": [
+    204,
+    360
+   ]
+  }
+ ],
+ "chain_findings": [
+  "chain[1]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[1].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[2].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[2].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[3].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: O.steps[7].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+  "chain[1]: a malformed record; the chain ends here"
+ ],
+ "accesses": 41162,
+ "status": 0,
+ "o_status": "complete",
+ "findings": [
+  "O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+  "O: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+  "O: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+ ],
+ "unmodelled_reads": 10,
+ "next_refused": "the session is halted: transaction 2: O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None] \u2014 nothing further is signed without a ruling"
+}

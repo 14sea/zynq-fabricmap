@@ -1,0 +1,322 @@
+{
+  "baseline": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "session": [],
+    "qualification": {
+      "findings": [],
+      "a5": [],
+      "a8": [],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/baseline: clean=True agree=True session=[] chain=0 a7=0 qualification=[]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "old_drop_final_tx": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "tx_004: declared in the manifest, not present",
+    "session": [],
+    "qualification": null,
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/old_drop_final_tx: REFUSED \u2014 tx_004: declared in the manifest, not present\n",
+    "stderr": ""
+  },
+  "old_change_A5_verdict": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "session": [
+      "qualification: A5: the retained conclusion (pass) is not the one recomputed from the records (fail)"
+    ],
+    "qualification": {
+      "findings": [
+        "A5: the retained conclusion (pass) is not the one recomputed from the records (fail)"
+      ],
+      "a5": [
+        {
+          "recomputed": "fail",
+          "stored": "pass"
+        }
+      ],
+      "a8": [],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/old_change_A5_verdict: clean=False agree=False session=['qualification: A5: the retained conclusion (pass) is not the one recomputed from the records (fail)'] chain=0 a7=0 qualification=['A5: the retained conclusion (pass) is not the one recomputed from the records (fail)']\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X injection_open | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "old_change_A8_verdict": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": null,
+    "session": [
+      "qualification: A8 AFF: the retained conclusion (row 5) is not the one recomputed from the records (row 2)"
+    ],
+    "qualification": {
+      "findings": [
+        "A8 AFF: the retained conclusion (row 5) is not the one recomputed from the records (row 2)"
+      ],
+      "a5": [],
+      "a8": [
+        {
+          "AFF": {
+            "recomputed": "both demonstrated",
+            "stored": "neither demonstrated"
+          },
+          "BFF": {
+            "recomputed": "neither demonstrated",
+            "stored": "neither demonstrated"
+          }
+        }
+      ],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/old_change_A8_verdict: clean=False agree=False session=['qualification: A8 AFF: the retained conclusion (row 5) is not the one recomputed from the records (row 2)'] chain=0 a7=0 qualification=['A8 AFF: the retained conclusion (row 5) is not the one recomputed from the records (row 2)']\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "pcap_internal_gap": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "session": [],
+    "qualification": {
+      "findings": [],
+      "a5": [],
+      "a8": [],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/pcap_internal_gap: clean=True agree=True session=[] chain=0 a7=0 qualification=[]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "A8_element_label": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "session": [],
+    "qualification": {
+      "findings": [],
+      "a5": [],
+      "a8": [
+        {
+          "BFF": {
+            "recomputed": "neither demonstrated",
+            "stored": "neither demonstrated"
+          },
+          "A5FF": {
+            "recomputed": "both demonstrated",
+            "stored": "both demonstrated"
+          }
+        }
+      ],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/A8_element_label: clean=True agree=True session=[] chain=0 a7=0 qualification=[]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "A8_background_bits": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "session": [],
+    "qualification": {
+      "findings": [],
+      "a5": [],
+      "a8": [
+        {
+          "AFF": {
+            "recomputed": "both demonstrated",
+            "stored": "both demonstrated"
+          },
+          "BFF": {
+            "recomputed": "neither demonstrated",
+            "stored": "neither demonstrated"
+          }
+        }
+      ],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/A8_background_bits: clean=True agree=True session=[] chain=0 a7=0 qualification=[]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "A8_partial_conclusion_binding": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "refused": null,
+    "session": [],
+    "qualification": {
+      "findings": [],
+      "a5": [],
+      "a8": [
+        {
+          "AFF": {
+            "recomputed": "both demonstrated",
+            "stored": "both demonstrated"
+          },
+          "BFF": {
+            "recomputed": "neither demonstrated",
+            "stored": "neither demonstrated"
+          }
+        }
+      ],
+      "a2": []
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/A8_partial_conclusion_binding: clean=True agree=True session=[] chain=0 a7=0 qualification=[]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "A2_semantic_label": {
+    "exit": 0,
+    "clean": false,
+    "agree": true,
+    "refused": null,
+    "session": [],
+    "qualification": {
+      "findings": [],
+      "a5": [],
+      "a8": [],
+      "a2": [
+        {
+          "semantic": "ff_init",
+          "recomputed": "differs",
+          "stored": "differs"
+        },
+        {
+          "semantic": "storage_kind",
+          "recomputed": "not_assessable",
+          "stored": "not_assessable"
+        }
+      ]
+    },
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/A2_semantic_label: clean=False agree=True session=[] chain=32 a7=0 qualification=[]\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 31 agrees=True\n",
+    "stderr": ""
+  },
+  "manifest_list": {
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "refused": "manifest.json: not a b4q_session manifest object",
+    "session": [],
+    "qualification": null,
+    "traceback": false,
+    "stdout": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_review_probes/manifest_list: REFUSED \u2014 manifest.json: not a b4q_session manifest object\n",
+    "stderr": ""
+  },
+  "record_list": {
+    "exit": 1,
+    "clean": null,
+    "agree": null,
+    "refused": null,
+    "session": null,
+    "qualification": null,
+    "traceback": true,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 447, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 433, in main\n    reps = [verify(Path(a)) for a in argv]\n            ^^^^^^^^^^^^^^^\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 131, in verify\n    A = load_archive(d)\n        ^^^^^^^^^^^^^^^\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 118, in load_archive\n    if rj.get(\"seq\") != r[\"seq\"] or rj.get(\"trace_range\") != r[\"trace_range\"] or rj.get(\"pcap_range\") != r[\"pcap_range\"]:\n       ^^^^^^\nAttributeError: 'list' object has no attribute 'get'\n"
+  },
+  "ctx_list": {
+    "exit": 1,
+    "clean": null,
+    "agree": null,
+    "refused": null,
+    "session": null,
+    "qualification": null,
+    "traceback": true,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 447, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 433, in main\n    reps = [verify(Path(a)) for a in argv]\n            ^^^^^^^^^^^^^^^\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 248, in verify\n    o = rec.observation(evs, links, manifest[\"timing\"], seq=record[\"seq\"], session=manifest[\"label\"], predecessor=pred, declared_stimulus=ctx[\"stimulus\"])\n                                                                                                                                          ~~~^^^^^^^^^^^^\nTypeError: list indices must be integers or slices, not str\n"
+  },
+  "nested_binary_missing": {
+    "exit": 1,
+    "clean": null,
+    "agree": null,
+    "refused": null,
+    "session": null,
+    "qualification": null,
+    "traceback": true,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 447, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 433, in main\n    reps = [verify(Path(a)) for a in argv]\n            ^^^^^^^^^^^^^^^\n  File \"/tmp/owner_b4q_repair_3ogm8sq4/host/b4q_verify.py\", line 147, in verify\n    binary = repo_root / manifest[\"executing_side\"][\"binary\"]\n                         ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'binary'\n"
+  },
+  "nonce_read_slverr": {
+    "injected": 1,
+    "signatures": 1,
+    "firmware_status": 1,
+    "reason": "STOP_AXI: a read of the pinned map answered SLVERR",
+    "ctrl_words": [
+      256,
+      64
+    ],
+    "init_req_word": 1024,
+    "arm_word": 64,
+    "findings": [
+      "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ]
+  },
+  "heartbeat_read_slverr": {
+    "injected": 1,
+    "signatures": 1,
+    "firmware_status": 1,
+    "reason": "STOP_AXI: a read of the pinned map answered SLVERR",
+    "ctrl_words": [
+      256,
+      64,
+      512,
+      1024
+    ],
+    "init_req_word": 1024,
+    "arm_word": 64,
+    "findings": [
+      "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ]
+  },
+  "A7": {
+    "valid": [],
+    "alien_source": [
+      "DMA submission 0: not one of the four legal transactions \u2014 source 0xdead0001 / length 534 is not an envelope, a readback command or the cleanup (src 0xdead0001, dst 0xffffffff, 534/0)"
+    ],
+    "missing_hold_tag": [
+      "DMA submission 0: not one of the four legal transactions \u2014 a write to the PCAP endpoint without the HOLD tag on its source (src 0x10400000, dst 0xffffffff, 534/0)"
+    ],
+    "unaligned_offset": [
+      "DMA submission 0: not one of the four legal transactions \u2014 the source 0x10400003 is not word-aligned (src 0x10400003, dst 0xffffffff, 534/0)"
+    ]
+  },
+  "raw_config": {
+    "float": {
+      "schema_findings": [
+        "$.config.0x00400a00/52/16: not of type integer"
+      ],
+      "adapter": "M-raw: not an instance of the raw schema: $.config.0x00400a00/52/16: not of type integer"
+    },
+    "bool": {
+      "schema_findings": [
+        "$.config.0x00400a00/52/16: not of type integer"
+      ],
+      "adapter": "M-raw: not an instance of the raw schema: $.config.0x00400a00/52/16: not of type integer"
+    },
+    "out_of_range": {
+      "schema_findings": [
+        "$.config.0x00400a00/52/16: above the maximum 1"
+      ],
+      "adapter": "M-raw: not an instance of the raw schema: $.config.0x00400a00/52/16: above the maximum 1"
+    }
+  },
+  "A5_missing_X": {
+    "verdict": "not_demonstrated",
+    "why": "J1's transaction close with its cleanup witness is absent: the post-init projection cannot be compared",
+    "per_element": null
+  }
+}

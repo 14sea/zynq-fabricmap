@@ -1,0 +1,55 @@
+{
+  "head": "0606758275f5828cd3594c3b689866e6a1060ce6",
+  "status": "",
+  "transaction_unchanged": true,
+  "protected_since_e267405": [],
+  "protected_since_main": [
+    "builds/b4/b4_carrier_manifest.json"
+  ],
+  "imports": {
+    "b4/IMPORT.json": {
+      "entries": 59,
+      "hashed": 59,
+      "mismatch": []
+    },
+    "firmware/b4q/IMPORT.json": {
+      "entries": 35,
+      "hashed": 34,
+      "mismatch": []
+    }
+  },
+  "build": {
+    "image_sha256": "f50930a19981c13e16351582a2fc353cab7fdcc2bd3bba2f205e565452ea8c63",
+    "submitted_image_matches": true,
+    "reviewer_two_builds_equal": true,
+    "sources_equal": true,
+    "verbatim": {
+      "bsp/lscript.ld": {
+        "base": "firmware/b1/bsp/lscript.ld",
+        "equal": true
+      },
+      "bsp/src/console.c": {
+        "base": "firmware/b1/bsp/src/console.c",
+        "equal": true
+      },
+      "bsp/include/bspconfig.h": {
+        "base": "firmware/b1/bsp/include/bspconfig.h",
+        "equal": true
+      },
+      "bsp/include/xmem_config.h": {
+        "base": "firmware/b1/bsp/include/xmem_config.h",
+        "equal": true
+      },
+      "bsp/include/xparameters.h": {
+        "base": "firmware/b1/bsp/include/xparameters.h",
+        "equal": true
+      }
+    },
+    "bsp_inputs_equal_after_path_normalization": true,
+    "translation_units": 49,
+    "headers": 90,
+    "entry": "0x20000cc",
+    "elf_equal": false,
+    "map_equal": false
+  }
+}

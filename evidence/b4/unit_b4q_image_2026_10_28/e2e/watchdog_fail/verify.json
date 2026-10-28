@@ -1,0 +1,123 @@
+{
+ "dir": "/home/test/zynq_fabricmap/build/b4q_console_evidence/watchdog_fail",
+ "session": [
+  "session_open: session_open.startup_readback_sha256: bad value ''",
+  "session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'",
+  "session_open: no startup readback group in the PCAP log before the first record",
+  "session_open: the executing side refused to open: the session ended: STOPPED: the watchdog could not be armed"
+ ],
+ "transactions": [],
+ "a7": {
+  "findings": [],
+  "slverr": 0,
+  "carrier_reads": [],
+  "carrier_writes": [],
+  "rtl_reads_untouched": [
+   "0x2004",
+   "0x2008",
+   "0x2010",
+   "0x2014",
+   "0x2018",
+   "0x201c",
+   "0x2020",
+   "0x2024",
+   "0x2028",
+   "0x202c",
+   "0x2030",
+   "0x2034",
+   "0x2038",
+   "0x203c",
+   "0x2040",
+   "0x2200",
+   "0x2204",
+   "0x2208",
+   "0x220c",
+   "0x2210",
+   "0x2214",
+   "0x2218",
+   "0x221c"
+  ],
+  "rtl_writes_untouched": [
+   "0x2000",
+   "0x201c",
+   "0x2038",
+   "0x2100",
+   "0x2104",
+   "0x2108",
+   "0x210c",
+   "0x2110",
+   "0x2114",
+   "0x2118",
+   "0x211c",
+   "0x2120",
+   "0x2124",
+   "0x2128",
+   "0x212c",
+   "0x2130",
+   "0x2134",
+   "0x2138",
+   "0x213c",
+   "0x2140",
+   "0x2144",
+   "0x2148",
+   "0x214c",
+   "0x2150",
+   "0x2154",
+   "0x2158",
+   "0x215c",
+   "0x2160",
+   "0x2164",
+   "0x2168",
+   "0x216c"
+  ],
+  "devc_reads": [],
+  "devc_writes": [],
+  "buffer_reads": {
+   "PAGE": 24
+  },
+  "buffer_writes": {},
+  "slcr_reads": [],
+  "accesses": 24
+ },
+ "agree": true,
+ "refused": null,
+ "qualification": {
+  "findings": [],
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
+ "console": {
+  "findings": [],
+  "board_lines": 1,
+  "host_lines": 0,
+  "noted": {
+   "corrupted": 0,
+   "garbage": 0,
+   "wrong_token": 0,
+   "stale": 0,
+   "dropped": 0,
+   "stale_board": 0,
+   "replayed": 0,
+   "other": 0
+  },
+  "ident": false,
+  "results": 0,
+  "signreqs": 0,
+  "ends": 1,
+  "admitted": 0
+ },
+ "chain": [
+  "session_open.startup_readback_sha256: bad value ''",
+  "chain: the session-opening record is malformed; no transaction can be bound to it"
+ ],
+ "session_findings_stored": [
+  "session_open: session_open.startup_readback_sha256: bad value ''",
+  "session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'",
+  "session_open: no startup readback group in the PCAP log before the first record",
+  "session_open: the executing side refused to open: the session ended: STOPPED: the watchdog could not be armed"
+ ],
+ "session_only_here": [],
+ "session_only_stored": [],
+ "clean": false
+}

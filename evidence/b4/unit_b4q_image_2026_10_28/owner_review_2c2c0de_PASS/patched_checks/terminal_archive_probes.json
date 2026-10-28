@@ -1,0 +1,66 @@
+[
+  {
+    "case": "untouched",
+    "exit": 0,
+    "clean": false,
+    "agree": true,
+    "session": [],
+    "refused": null,
+    "verifier_error": null,
+    "END_i": 80,
+    "END_pcap_n": 150,
+    "END_seq": 4294967280
+  },
+  {
+    "case": "terminal_low_sequence",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "session": [
+      "console: board END at line 8: sequence 101 is below the exhaustion limit 4294967280"
+    ],
+    "refused": null,
+    "verifier_error": null,
+    "END_i": 80,
+    "END_pcap_n": 150,
+    "END_seq": 101
+  },
+  {
+    "case": "terminal_trace_origin",
+    "exit": 0,
+    "clean": false,
+    "agree": true,
+    "session": [],
+    "refused": null,
+    "verifier_error": null,
+    "END_i": 0,
+    "END_pcap_n": 150,
+    "END_seq": 4294967280
+  },
+  {
+    "case": "terminal_pcap_origin",
+    "exit": 0,
+    "clean": false,
+    "agree": true,
+    "session": [],
+    "refused": null,
+    "verifier_error": null,
+    "END_i": 80,
+    "END_pcap_n": 0,
+    "END_seq": 4294967280
+  },
+  {
+    "case": "terminal_bad_reason_control",
+    "exit": 1,
+    "clean": false,
+    "agree": false,
+    "session": [
+      "console: board END at line 8: inside transaction 1 (no RESULT) and the session was not interrupted"
+    ],
+    "refused": null,
+    "verifier_error": null,
+    "END_i": 80,
+    "END_pcap_n": 150,
+    "END_seq": 4294967280
+  }
+]

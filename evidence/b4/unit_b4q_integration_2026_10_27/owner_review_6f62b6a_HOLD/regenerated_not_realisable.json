@@ -1,0 +1,145 @@
+{
+ "dir": "/tmp/owner_b4q_repair_3ogm8sq4/build/owner_e2e/not_realisable",
+ "session": [],
+ "transactions": [
+  {
+   "dir": "tx_001",
+   "findings": [],
+   "stored_findings": [],
+   "outcome": "O complete; X closed",
+   "executing_side": {
+    "status": 0,
+    "phase": "",
+    "reason": "closed"
+   },
+   "view_findings": [],
+   "unmodelled_reads": 0,
+   "halt_expected": false,
+   "agrees": true
+  },
+  {
+   "dir": "tx_002",
+   "findings": [
+    "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)"
+   ],
+   "stored_findings": [
+    "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)"
+   ],
+   "outcome": "O invalid at P5 (not_realisable); no X (no transaction close: the acquisition never reached the P6 seal (stopped))",
+   "executing_side": {
+    "status": 1,
+    "phase": "P5",
+    "reason": "STOP_P5: STEP refused"
+   },
+   "view_findings": [],
+   "unmodelled_reads": 0,
+   "halt_expected": true,
+   "agrees": true
+  }
+ ],
+ "a7": {
+  "findings": [],
+  "slverr": 0,
+  "carrier_reads": [
+   "0x2004",
+   "0x2008",
+   "0x2014",
+   "0x2018",
+   "0x2020",
+   "0x2024",
+   "0x2028",
+   "0x202c",
+   "0x2030",
+   "0x2034",
+   "0x2038",
+   "0x203c",
+   "0x2040",
+   "0x2200",
+   "0x2204",
+   "0x2208",
+   "0x220c",
+   "0x2210",
+   "0x2214",
+   "0x2218",
+   "0x221c"
+  ],
+  "carrier_writes": [
+   "0x2000",
+   "0x201c",
+   "0x2038",
+   "0x2100",
+   "0x2104",
+   "0x2108",
+   "0x210c",
+   "0x2110",
+   "0x2114",
+   "0x2118",
+   "0x211c",
+   "0x2120",
+   "0x2124",
+   "0x2128",
+   "0x212c",
+   "0x2130",
+   "0x2134",
+   "0x2138",
+   "0x213c",
+   "0x2140",
+   "0x2144",
+   "0x2148",
+   "0x214c",
+   "0x2150",
+   "0x2154",
+   "0x2158",
+   "0x215c"
+  ],
+  "rtl_reads_untouched": [
+   "0x2010",
+   "0x201c"
+  ],
+  "rtl_writes_untouched": [
+   "0x2160",
+   "0x2164",
+   "0x2168",
+   "0x216c"
+  ],
+  "devc_reads": [
+   "CTRL",
+   "INT_STS"
+  ],
+  "devc_writes": [
+   "DMA_DEST_ADDR",
+   "DMA_DEST_LEN",
+   "DMA_SRC_ADDR",
+   "DMA_SRC_LEN",
+   "INT_STS"
+  ],
+  "buffer_reads": {
+   "DST_BUF": 14544,
+   "WR_BUF": 3204
+  },
+  "buffer_writes": {
+   "DST_BUF": 9696,
+   "CMD_BUF": 2304,
+   "WR_BUF": 3204
+  },
+  "slcr_reads": [
+   "0xf8000530"
+  ],
+  "accesses": 34333
+ },
+ "agree": true,
+ "refused": null,
+ "qualification": {
+  "findings": [],
+  "a5": [],
+  "a8": [],
+  "a2": []
+ },
+ "chain": [
+  "chain[1]: no transaction close; the chain ends here"
+ ],
+ "session_findings_stored": [],
+ "session_only_here": [],
+ "session_only_stored": [],
+ "clean": false
+}

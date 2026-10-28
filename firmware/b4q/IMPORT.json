@@ -1,0 +1,215 @@
+{
+ "files": {
+  "firmware/b4q/IMPORT.json": {
+   "kind": "new",
+   "role": "this table"
+  },
+  "firmware/b4q/Makefile": {
+   "kind": "new",
+   "note": "host builds only (twin, host, xcheck) into the top-level ignored build/; no image.",
+   "role": "build",
+   "sha256": "87b4ae7c595ec3c9db40a9a22f67361b2ef9716ce7def67d7e4dcda5f75de17a"
+  },
+  "firmware/b4q/b4q_cmd.c": {
+   "kind": "new",
+   "role": "the executing side's command parser and RESULT writers, one pure unit shared by the host driver and the board application (the PS-image unit, 2026-10-28)",
+   "sha256": "1972db994677a2e5963be44f09a27ff0fd10a30528301873d39adb21bbfd6ea4"
+  },
+  "firmware/b4q/b4q_cmd.h": {
+   "kind": "new",
+   "role": "b4q_cmd.c's interface",
+   "sha256": "686c2305b58e1728c6684aa0370ab5cd9b3f1e1d65ff4be1f4b658a70d237df6"
+  },
+  "firmware/b4q/b4q_data.h": {
+   "generator": "host/b4q_gen_data.py",
+   "kind": "generated",
+   "note": "the write set and the loaded image's frames (builds/b4/b4.bit at b4_build.json's digest); held equal to a fresh generation.",
+   "sha256": "2e296151a14dd083383393cad40b1ed1e4c8ae2089ebab3d67c8d9b6ea2e644e"
+  },
+  "firmware/b4q/b4q_data.json": {
+   "generator": "host/b4q_gen_data.py",
+   "kind": "generated",
+   "note": "the reviewable record of the write set, the base frame digests and the stale-manifest finding.",
+   "sha256": "dd22c6aa38863ff74b34da2bfb09e9b2bfc4138f35abc2500085afa08e5dfa27"
+  },
+  "firmware/b4q/b4q_derive.c": {
+   "base": "firmware/b1/p3_derive.c",
+   "base_sha256": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
+   "kind": "derived",
+   "note": "DERIVED: sha256 / hex / CRC / frame ECC / stream builder and parser / frames hash / readback and cleanup commands / nonce step VERBATIM (tests/test_b4q_derive.py holds each function's text); the genome codec rewritten for 21 bits in one word; base64url and the identity page removed (unused).",
+   "sha256": "63c2206b8e43b393ac33ca90da429b40c4c2e2bc167248d61012c3ddbd44f4d6"
+  },
+  "firmware/b4q/b4q_derive.h": {
+   "base": "firmware/b1/p3_derive.h",
+   "base_sha256": "38ee462f8b242bac2adc140ed3ca45dd86ce232415a65f00dc1b92d24100f091",
+   "kind": "derived",
+   "note": "DERIVED: the counts (8 target frames, 2 envelopes, 21 genome bits, 1 word); the identity-page and base64 declarations removed.",
+   "sha256": "65f55a81948730f04b24ec35c32ed19abf3f38c4b9c67fcd24d25067543a3c69"
+  },
+  "firmware/b4q/b4q_derive_twin.c": {
+   "kind": "new",
+   "note": "the parity driver of tests/test_b4q_derive.py.",
+   "role": "host twin driver",
+   "sha256": "0c5f726def1a5068ab758a0360a85aca197ea0265a1323f759e393bd3b4c264d"
+  },
+  "firmware/b4q/b4q_hal.h": {
+   "kind": "new",
+   "note": "the five calls through which the transaction logic reaches the outside world (MMIO read / write, the notary, the event sink).",
+   "role": "the injected transport",
+   "sha256": "3081bb5869e63c1658ed541aa7f290218eeea46b1d4292041c31788020fcd013"
+  },
+  "firmware/b4q/b4q_host_main.c": {
+   "kind": "new",
+   "note": "the line protocol on stdin / stdout to host/b4q_session.py and the command loop; not a board image.",
+   "role": "host driver",
+   "sha256": "3b40065fc7f33219c4683a0bdc85564b1614052b2f83d78702fb09826237a7f8"
+  },
+  "firmware/b4q/b4q_regmap.h": {
+   "generator": "host/b4q_gen_regmap.py",
+   "kind": "generated",
+   "note": "from host/b4carrier_regmap.py, the one register table of record.",
+   "sha256": "aecebb92744c4a5a4d27d1f5a8b5a8f84e336442121261554dbd086f87d3e7ce"
+  },
+  "firmware/b4q/b4q_tx.c": {
+   "kind": "new",
+   "note": "the transaction logic: the allowlist at the accessor, bounded polls of STATUS / FAULT, the four legal DMA transactions, link 2 / link 3, fail-closed stops; derived nothing from firmware/b1/b1_app.c textually \u2014 the same discipline (the DMA tuples, the sentinel prefill, the link-2 re-read, the settle condition) re-expressed for the v2 register map. Repair of 2026-10-27 (R1): the pre-event readback compared to the signed candidate before the init event, the post-event to the pre-event before the steps, the restored base to the derived base before the restore event; every write response propagated (a refused STEP_IN launches no STEP).",
+   "role": "the executing side",
+   "sha256": "2e7891d4e21b7ad1bb01778b765ed76ddc38b91d8664eb3db73a3b60f2b8156a"
+  },
+  "firmware/b4q/b4q_tx.h": {
+   "kind": "new",
+   "note": "the session opening and the transaction (P1-P10, A5 J2 / J3) on the carrier v2 register map; the result structs.",
+   "role": "the executing side",
+   "sha256": "5dfbe89abc450f8bffb765c5c3a3ae5600ca4f873a30cae1db07d677d5b8e712"
+  },
+  "firmware/b4q/bsp/build.sh": {
+   "base": "firmware/b1/bsp/build.sh",
+   "base_sha256": "6d06bca4897192a04b9755c71f27190f022c12970a346efb3064b3735facfc50",
+   "kind": "derived",
+   "role": "the image build (B1's, re-pointed at the B4Q sources and the top-level build/)",
+   "sha256": "0ea019a8f1f23898da0049e9a6db93d9dde2a3e2d3111991de14bb2bb4598aee"
+  },
+  "firmware/b4q/bsp/include/bspconfig.h": {
+   "base": "firmware/b1/bsp/include/bspconfig.h",
+   "base_sha256": "06307d4353e828e6be911e20a5e508fbf8139bf7fb50cf443e832fb82bd91617",
+   "kind": "verbatim",
+   "role": "the hand-written BSP configuration",
+   "sha256": "06307d4353e828e6be911e20a5e508fbf8139bf7fb50cf443e832fb82bd91617"
+  },
+  "firmware/b4q/bsp/include/xmem_config.h": {
+   "base": "firmware/b1/bsp/include/xmem_config.h",
+   "base_sha256": "5c0e0747268b8c7b46258559987659fca77f147f828873aff2e31e38274ba1bc",
+   "kind": "verbatim",
+   "role": "the BSP memory configuration",
+   "sha256": "5c0e0747268b8c7b46258559987659fca77f147f828873aff2e31e38274ba1bc"
+  },
+  "firmware/b4q/bsp/include/xparameters.h": {
+   "base": "firmware/b1/bsp/include/xparameters.h",
+   "base_sha256": "04e7da5c306dcb8596da3d20a51472cd33b167d5d197b90de9558bec150ec522",
+   "kind": "verbatim",
+   "role": "the fixed Zynq-7000 addresses the BSP uses (UART1, SCU watchdog, DDR)",
+   "sha256": "04e7da5c306dcb8596da3d20a51472cd33b167d5d197b90de9558bec150ec522"
+  },
+  "firmware/b4q/bsp/lscript.ld": {
+   "base": "firmware/b1/bsp/lscript.ld",
+   "base_sha256": "96942701c80022fc4a83672166ebe6a7573094aef541ed93f9d4e1deda5dd8d8",
+   "kind": "verbatim",
+   "role": "the linker script (DDR at 0x02000000)",
+   "sha256": "96942701c80022fc4a83672166ebe6a7573094aef541ed93f9d4e1deda5dd8d8"
+  },
+  "firmware/b4q/bsp/src/console.c": {
+   "base": "firmware/b1/bsp/src/console.c",
+   "base_sha256": "fb9ebd5e22de514d13e85a6b4ef246796da0b2b75b9a0d9c2b87913ca4858b83",
+   "kind": "verbatim",
+   "role": "UART1 as U-Boot left it: the one UART-touching unit",
+   "sha256": "fb9ebd5e22de514d13e85a6b4ef246796da0b2b75b9a0d9c2b87913ca4858b83"
+  },
+  "firmware/b4q/build.sh": {
+   "kind": "new",
+   "note": "make host + twin and the build record (compiler path / version / flags / binary digests) in build/b4q_firmware/build.json.",
+   "role": "build",
+   "sha256": "da9bd8c158745dbf5315dad6be7886e21a5857b0fa41e57555a2a832a03286dc"
+  },
+  "firmware/b4q/target/b4q_app.c": {
+   "kind": "new",
+   "role": "the board application's session over the console / platform / HAL interfaces (pure: runs on the host harness and on the board)",
+   "sha256": "57591a4ccee6b961b9b4d35cefb7c51111cef204cf373921777ccb2a5042affc"
+  },
+  "firmware/b4q/target/b4q_app.h": {
+   "kind": "new",
+   "role": "b4q_app.c's interface and bounds",
+   "sha256": "2427c6de8f7ac0ab700d1c4383b7477a64a37b63fc39f8c8368f8139629f1983"
+  },
+  "firmware/b4q/target/b4q_app_host.c": {
+   "kind": "new",
+   "role": "the host harness of the board application (MMIO on stdio, the console on inherited descriptors)",
+   "sha256": "6e373e6b9687e5bc0c0fa6c585ab30ab6edce5c7a2585d4e42ee4011b9232320"
+  },
+  "firmware/b4q/target/b4q_board_console.c": {
+   "kind": "new",
+   "role": "the console primitives over B1's UART1 glue",
+   "sha256": "bf4c2fa1d7276c1c6223656d5681b56b5e6a96ed5db4bd1233b5ee35e01ccb18"
+  },
+  "firmware/b4q/target/b4q_board_hal.c": {
+   "kind": "new",
+   "role": "the MMIO half of the HAL on the board behind the allowlist",
+   "sha256": "450af9b9485a37f8d3837c03d1e526c6df06b8cb1494a4cbecf6766640a469dc"
+  },
+  "firmware/b4q/target/b4q_board_main.c": {
+   "kind": "new",
+   "role": "the image's platform layer: MMU attributes, exception handlers, watchdog, halt (compiled, never board-run)",
+   "sha256": "efca46089a94091a1e5d3caadb2ec9e375546c26e3ef6a1c5b092b05bdc2b6d5"
+  },
+  "firmware/b4q/target/b4q_console.h": {
+   "kind": "new",
+   "role": "the console primitives' interface",
+   "sha256": "a15f3098f3c5b36563eab77e1ea181cf077cafd81a1e040ca7f34520b52c07db"
+  },
+  "firmware/b4q/target/b4q_platform.h": {
+   "kind": "new",
+   "role": "the platform acts' interface (watchdog, kick, halt)",
+   "sha256": "a5af2ed223d1e85f026fd00854e5c4f973040f408189d693b636181a435775ac"
+  },
+  "firmware/b4q/target/b4q_psmap.c": {
+   "kind": "new",
+   "role": "the board HAL's address allowlist (pure), held to the A7 regions and the register table",
+   "sha256": "8a4f7ad78cf5b187bf7d2ffc683f2e20991dcabf7acb02083932fa4d3a2d0611"
+  },
+  "firmware/b4q/target/b4q_psmap.h": {
+   "kind": "new",
+   "role": "b4q_psmap.c's interface and the PS addresses",
+   "sha256": "842676811f7c41a7874f5e3ec4cc8a5804aa15bd989b8eea97f7186a552abc29"
+  },
+  "firmware/b4q/target/b4q_seqcut_twin.c": {
+   "kind": "new",
+   "role": "the sequence-cut twin: the harness with the line sequence cut to its limit inside a transaction (R2 of the fourth review; tests/test_b4q_app.py::test_r2)",
+   "sha256": "6c8b01adf878638ffb404dc2728a05a83854af9a54717078c7fbf88aac623583"
+  },
+  "firmware/b4q/target/b4q_wait_twin.c": {
+   "kind": "new",
+   "role": "the receive-budget twin: the application's own waits under injected console fixtures (tests/test_b4q_app.py::test_r1)",
+   "sha256": "6f12d1e4f7d242004e4dd2acee13485cc3acc940d17e60acef77c3a855ec17e0"
+  },
+  "firmware/b4q/target/b4q_wire.c": {
+   "base": "firmware/b1/p3_derive.c",
+   "base_sha256": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
+   "kind": "derived",
+   "role": "the console framing, base64url, CRC and the identity page; p3_crc32 / p3_base64url / p3_base64url_decode / b64val copied byte for byte (tests/test_b4q_wire.py), the page parser derived from p3_parse_identity_page on the B4Q layout",
+   "sha256": "7d976893da836d47371927cc57d30889b227023e3771df62c385f3399189698b"
+  },
+  "firmware/b4q/target/b4q_wire.h": {
+   "kind": "new",
+   "role": "b4q_wire.c's interface and the page layout",
+   "sha256": "2b2e88f2c2fc50f67e5d791dd8be645abf5910d2e43bf48d846c7b7159771e26"
+  },
+  "firmware/b4q/target/b4q_wire_twin.c": {
+   "kind": "new",
+   "role": "the stdin / stdout driver of the wire and allowlist units for the tests",
+   "sha256": "0656b4d2df434fa626fc5b654325ef9ba8187d0b56c834c45d205d39c6b91f74"
+  }
+ },
+ "schema": "b4q_firmware_import",
+ "schema_version": "1.0.0",
+ "scope": "firmware/b4q: the B4Q executing side, host-built; nothing cross-compiled into an image (a compile-only check of the pure units with the pinned cross toolchain is in the Makefile)",
+ "source": "firmware/b1 (the B1 image's pure units, themselves copied from zynq-psoracle 689dde1 per firmware/b1/IMPORT.json)"
+}

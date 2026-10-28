@@ -1,0 +1,28 @@
+regs                         reads    17 writes    14 mismatches 0
+flow                         reads   658 writes   439 mismatches 0
+fault_not_armed              reads     3 writes     6 mismatches 0
+fault_nokey                  reads     5 writes    25 mismatches 0
+fault_unsigned               reads    17 writes    30 mismatches 0
+fault_wrong_commit           reads    17 writes    30 mismatches 0
+fault_wrong_key              reads    17 writes    30 mismatches 0
+fault_sequence               reads    18 writes    32 mismatches 0
+fault_double_arm             reads    21 writes    55 mismatches 0
+fault_realisable             reads    40 writes    47 mismatches 0
+a5                           reads   169 writes   139 mismatches 0
+a5_persist                   reads    50 writes    67 mismatches 0
+a5_wrong_context             reads    26 writes    60 mismatches 0
+a5_flag_without_injection    reads     3 writes    30 mismatches 0
+open_close_refused           reads    30 writes    60 mismatches 0
+p9                           reads    31 writes    36 mismatches 0
+p9_ok                        reads    34 writes    37 mismatches 0
+busy_refused                 reads    21 writes    36 mismatches 0
+step_atomic                  reads    24 writes    36 mismatches 0
+backpressure                 reads    16 writes    31 mismatches 0  (compared 47 of 50 accesses: the INIT_REQ write with BREADY held low is driven by hand and not logged)
+read_during_window           reads    19 writes    32 mismatches 0
+read_at_launch               reads   150 writes   185 mismatches 0
+session                      reads   148 writes   105 mismatches 0
+post_fault                   reads   185 writes   129 mismatches 0
+w_first                      reads    17 writes    32 mismatches 0  (compared 49 of 62 accesses: the W-first STEP_IN beat is driven by hand and not logged)
+w_first_early                reads    17 writes    31 mismatches 0  (compared 48 of 51 accesses: the INIT_REQ and the early W are driven by hand and not logged)
+early_cleanup                reads   131 writes    98 mismatches 0
+TOTAL mismatches 0 | ENGINE_LATENCY 1 GATE_TAG_AT 49

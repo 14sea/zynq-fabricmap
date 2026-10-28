@@ -1,0 +1,43 @@
+{
+ "record": {
+  "schema": "ff_session_open",
+  "schema_version": "1.0.0",
+  "instrument": {
+   "variant": "42340001",
+   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+   "image_sha256": "393a8fe5a8f806e582b9b7ea22ad66091e43a2b8ea11241949855f2205f7cffb"
+  },
+  "startup_readback_sha256": "",
+  "base_frames_reference_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+  "status": "refused"
+ },
+ "findings": [
+  "session_open: session_open.startup_readback_sha256: bad value ''",
+  "session_open: $.startup_readback_sha256: does not match '[0-9a-f]{64}'",
+  "session_open: no startup readback group in the PCAP log before the first record",
+  "session_open: the executing side refused to open: the session ended: STOPPED: the watchdog could not be armed"
+ ],
+ "executing_side": {
+  "status": 1,
+  "reason": "the session ended: STOPPED: the watchdog could not be armed",
+  "startup_readback": "",
+  "end": {
+   "kind": "STOPPED",
+   "reason": "the watchdog could not be armed",
+   "lines": 0,
+   "hb": 0,
+   "nacks": 0,
+   "sign_requests": 0,
+   "sign_replies": 0,
+   "transactions": 0,
+   "kicks": 0,
+   "flushed": 0,
+   "stale_frames": 0,
+   "refused_tx": 0,
+   "watchdog_armed": 0,
+   "opened": 0,
+   "halted": ""
+  }
+ },
+ "host_view_target_frames_hash": null
+}

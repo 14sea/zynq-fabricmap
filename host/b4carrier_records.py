@@ -282,9 +282,17 @@ def _stim_item(applied: dict) -> dict:
 def observation(evs: list[dict], links: dict, timing: dict, seq: int, session: str, predecessor: dict, declared_stimulus: list) -> dict:
     """Build `O` from one transaction's register trace and the task's DECLARED stimulus. The steps are the carrier's
     applied record (a sample and its applied inputs per slot); the declared stimulus is kept whole."""
-    for k in ("instrument", "nonce", "commit", "staging_readback_sha256", "fabric_readback_sha256_pre_event", "fabric_readback_sha256_post_event", "config"):
+    for k in ("instrument", "nonce", "config"):
         if k not in links:
             raise RecordRefusal(f"links: {k} missing (the instrument's PCAP path / manifest supplies it)")
+    # the PCAP-side witnesses exist only when their link completed (contract 4.2's phase table): an absent one is never written as
+    # a placeholder, and the stop phase cannot lie beyond the last link that completed (B4Q, 2026-10-27: the builder reads the
+    # links the instrument's path actually produced; a complete O still requires all four)
+    LINK_PHASE = (("commit", "P1"), ("staging_readback_sha256", "P1"), ("fabric_readback_sha256_pre_event", "P2"), ("fabric_readback_sha256_post_event", "P4"))
+    cap = None
+    for k, ph in LINK_PHASE:
+        if k not in links:
+            cap = ph if cap is None or PHASES.index(ph) < PHASES.index(cap) else cap
     if not isinstance(declared_stimulus, list) or not declared_stimulus:
         raise RecordRefusal("the declared stimulus is a non-empty list (its step 0 is the init event)")
     boundary, how = acquisition_boundary(evs, len(declared_stimulus))
@@ -296,9 +304,8 @@ def observation(evs: list[dict], links: dict, timing: dict, seq: int, session: s
     faults = [e["data"] & 0xF for e in _reads(evs, rm.FAULT)]
     witness = [rm.decode_witness(e["data"]) for e in _reads(evs, rm.WITNESS)]
     o = {"schema": SCHEMA_O, "schema_version": VERSION, "instrument": dict(links["instrument"]), "session": session, "seq": seq,
-         "nonce": links["nonce"], "commit": links["commit"], "staging_readback_sha256": links["staging_readback_sha256"],
-         "fabric_readback_sha256_pre_event": links["fabric_readback_sha256_pre_event"],
-         "fabric_readback_sha256_post_event": links["fabric_readback_sha256_post_event"],
+         "nonce": links["nonce"],
+         **{k: links[k] for k, _ in LINK_PHASE if k in links},
          "init_event": {"mechanism": MECHANISM_NAMES[rm.MECHANISM], "parameters": {"assert_delay": timing["assert_delay"], "pulse_clocks": timing.get("pulse", 2),
                                                                                   "gsr_count_after": (witness[-1]["gsr_count"] if witness else 0),
                                                                                   "pre_init_cleanup": bool(witness and witness[-1].get("pre_init_cleanup"))}},
@@ -334,8 +341,12 @@ def observation(evs: list[dict], links: dict, timing: dict, seq: int, session: s
     code = rm.FAULT_CODES[faults[-1]] if (faults and faults[-1] != 0) else ("premature_operation" if how == "premature_accepted" else None)
     if code is None and how == "open" and len(steps) < len(declared_stimulus):
         raise RecordRefusal("the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet")
+    if code is None and cap is not None:
+        raise RecordRefusal(f"a complete observation needs every PCAP-side witness; the link of {cap} did not complete and no fault stopped the acquisition: nothing to seal")
     if code is not None:
         phase = "P5" if init_done else ("P3" if pre_sampled else "P2")
+        if cap is not None and PHASES.index(cap) < PHASES.index(phase):
+            phase = cap                                    # the stop lies where the instrument's path stopped producing witnesses
         o["status"] = "invalid"
         o["fault"] = {"code": code, "phase_reached": phase,
                       "step_reached": (final["step_index"] if (final and phase == "P5") else (0 if phase == "P3" else None))}

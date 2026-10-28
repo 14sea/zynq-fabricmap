@@ -1,0 +1,156 @@
+{
+  "startup": {
+    "open_status": "refused",
+    "open_findings": [
+      "the executing side's startup readback digest is not the host's view of the frames it was given"
+    ],
+    "firmware_status": 0,
+    "firmware_phase": "",
+    "mismatch": null,
+    "root_X": "closed",
+    "root_findings": [],
+    "notary_signatures": 1
+  },
+  "pre_event": {
+    "open_status": "open",
+    "open_findings": [],
+    "firmware_status": 0,
+    "firmware_phase": "",
+    "mismatch": true,
+    "root_X": "closed",
+    "root_findings": [
+      "link: the executing side's pre_event digest is not the host's view"
+    ],
+    "notary_signatures": 1,
+    "next_transaction_firmware_status": 0,
+    "next_transaction_signed": 2
+  },
+  "post_event": {
+    "open_status": "open",
+    "open_findings": [],
+    "firmware_status": 0,
+    "firmware_phase": "",
+    "mismatch": null,
+    "root_X": "closed",
+    "root_findings": [
+      "link: the executing side's post_event digest is not the host's view"
+    ],
+    "notary_signatures": 1
+  },
+  "base_readback": {
+    "open_status": "open",
+    "open_findings": [],
+    "firmware_status": 0,
+    "firmware_phase": "",
+    "mismatch": null,
+    "root_X": "closed",
+    "root_findings": [
+      "link: the executing side's base_readback digest is not the host's view"
+    ],
+    "notary_signatures": 1
+  },
+  "STEP_IN_SLVERR": {
+    "refused_writes": 1,
+    "firmware_status": 0,
+    "firmware_phase": "",
+    "findings": [
+      "O: O.steps[1]: the applied step is not the declared step 1"
+    ]
+  },
+  "baseline_valid": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "transactions": 4,
+    "session": [],
+    "stdout": "/tmp/owner_b4q_7w3a_pwh/build/owner_probes/baseline_valid: clean=True agree=True session=[] chain=0 a7=0\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "dropped_final_tx": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "transactions": 3,
+    "session": [],
+    "stdout": "/tmp/owner_b4q_7w3a_pwh/build/owner_probes/dropped_final_tx: clean=True agree=True session=[] chain=0 a7=0\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "altered_A8_conclusion": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "transactions": 5,
+    "session": [],
+    "stdout": "/tmp/owner_b4q_7w3a_pwh/build/owner_probes/altered_A8_conclusion: clean=True agree=True session=[] chain=0 a7=0\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "altered_A5_conclusion": {
+    "exit": 0,
+    "clean": true,
+    "agree": true,
+    "transactions": 5,
+    "session": [],
+    "stdout": "/tmp/owner_b4q_7w3a_pwh/build/owner_probes/altered_A5_conclusion: clean=True agree=True session=[] chain=0 a7=0\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X injection_open | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 0 agrees=True\n",
+    "stderr": ""
+  },
+  "altered_A2_conclusion": {
+    "exit": 0,
+    "clean": false,
+    "agree": true,
+    "transactions": 5,
+    "session": [],
+    "stdout": "/tmp/owner_b4q_7w3a_pwh/build/owner_probes/altered_A2_conclusion: clean=False agree=True session=[] chain=32 a7=0\n   tx_001: O complete; X closed | findings 0 agrees=True\n   tx_002: O complete; X closed | findings 0 agrees=True\n   tx_003: O complete; X closed | findings 0 agrees=True\n   tx_004: O complete; X closed | findings 0 agrees=True\n   tx_005: O complete; X closed | findings 31 agrees=True\n",
+    "stderr": ""
+  },
+  "A7_tuple_checks": {
+    "valid": [],
+    "alien_source": [],
+    "missing_hold_tag": [],
+    "unaligned_offset": []
+  },
+  "raw_float_config": {
+    "raw_findings": [],
+    "adapter_accepted": true,
+    "view_findings": [],
+    "converted_config_bit": 0
+  },
+  "A5_without_close_witnesses": {
+    "verdict": "pass",
+    "why": "this adversarial state arrived and was cleared by the initialisation",
+    "injection_witness": {
+      "arrived": true,
+      "c1_initial_q": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "c2_initial_q": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "injected_state": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "differing_positions": [],
+    "limit": "a pass establishes that THIS specified state does not reach the next record; not that no leftover state can"
+  }
+}

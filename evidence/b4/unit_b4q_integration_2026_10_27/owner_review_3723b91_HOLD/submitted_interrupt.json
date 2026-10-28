@@ -1,0 +1,131 @@
+{
+ "dir": "/tmp/owner_b4q_7w3a_pwh/evidence/b4/unit_b4q_integration_2026_10_27/e2e/interrupt",
+ "session": [],
+ "transactions": [
+  {
+   "dir": "tx_001",
+   "findings": [],
+   "stored_findings": [],
+   "outcome": "O complete; X closed",
+   "executing_side": {
+    "status": 0,
+    "phase": "",
+    "reason": "closed"
+   },
+   "view_findings": [],
+   "unmodelled_reads": 0,
+   "agrees": true
+  },
+  {
+   "dir": "tx_002",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "stored_findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "outcome": "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet",
+   "executing_side": {
+    "status": 5,
+    "phase": "?",
+    "reason": "interrupted: the transport closed mid-transaction"
+   },
+   "unmodelled_reads": 0,
+   "agrees": true
+  }
+ ],
+ "a7": {
+  "findings": [],
+  "slverr": 0,
+  "carrier_reads": [
+   "0x2004",
+   "0x2014",
+   "0x2018",
+   "0x2020",
+   "0x2024",
+   "0x2028",
+   "0x202c",
+   "0x2030",
+   "0x2034",
+   "0x203c",
+   "0x2040",
+   "0x2200",
+   "0x2204",
+   "0x2208",
+   "0x220c",
+   "0x2210",
+   "0x2214",
+   "0x2218",
+   "0x221c"
+  ],
+  "carrier_writes": [
+   "0x2000",
+   "0x201c",
+   "0x2100",
+   "0x2104",
+   "0x2108",
+   "0x210c",
+   "0x2110",
+   "0x2114",
+   "0x2118",
+   "0x211c",
+   "0x2120",
+   "0x2124",
+   "0x2128",
+   "0x212c",
+   "0x2130",
+   "0x2134",
+   "0x2138",
+   "0x213c",
+   "0x2140",
+   "0x2144",
+   "0x2148",
+   "0x214c",
+   "0x2150",
+   "0x2154",
+   "0x2158",
+   "0x215c"
+  ],
+  "rtl_reads_untouched": [
+   "0x2008",
+   "0x2010",
+   "0x201c",
+   "0x2038"
+  ],
+  "rtl_writes_untouched": [
+   "0x2038",
+   "0x2160",
+   "0x2164",
+   "0x2168",
+   "0x216c"
+  ],
+  "devc_reads": [
+   "CTRL",
+   "INT_STS"
+  ],
+  "devc_writes": [
+   "DMA_DEST_ADDR",
+   "DMA_DEST_LEN",
+   "DMA_SRC_ADDR",
+   "DMA_SRC_LEN",
+   "INT_STS"
+  ],
+  "buffer_reads": {
+   "DST_BUF": 10017,
+   "WR_BUF": 3204
+  },
+  "buffer_writes": {
+   "DST_BUF": 6868,
+   "CMD_BUF": 1584,
+   "WR_BUF": 3204
+  },
+  "slcr_reads": [
+   "0xf8000530"
+  ],
+  "accesses": 25858
+ },
+ "agree": true,
+ "chain": [],
+ "session_findings_stored": [],
+ "clean": false
+}

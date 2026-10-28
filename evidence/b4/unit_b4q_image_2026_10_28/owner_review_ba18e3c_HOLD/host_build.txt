@@ -1,0 +1,6 @@
+make: Entering directory '/tmp/owner_b4q_image_2skt9o2b/firmware/b4q'
+cc -std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion -o /tmp/owner_b4q_image_2skt9o2b/build/b4q_firmware/b4q_host b4q_host_main.c b4q_tx.c b4q_derive.c b4q_cmd.c
+cc -std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion -D_POSIX_C_SOURCE=200809L -DB4Q_APP_IDLE_POLLS=400000u -DB4Q_APP_REPLY_POLLS=200000u -DB4Q_APP_HB_EVERY=50000u -I. -Itarget -o /tmp/owner_b4q_image_2skt9o2b/build/b4q_firmware/b4q_apphost target/b4q_app_host.c target/b4q_app.c target/b4q_wire.c target/b4q_psmap.c b4q_tx.c b4q_derive.c b4q_cmd.c
+cc -std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion -I. -Itarget -o /tmp/owner_b4q_image_2skt9o2b/build/b4q_firmware/b4q_wire_twin target/b4q_wire_twin.c target/b4q_wire.c target/b4q_psmap.c
+cc -std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion -o /tmp/owner_b4q_image_2skt9o2b/build/b4q_firmware/b4q_derive_twin b4q_derive_twin.c b4q_derive.c
+make: Leaving directory '/tmp/owner_b4q_image_2skt9o2b/firmware/b4q'

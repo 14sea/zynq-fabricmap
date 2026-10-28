@@ -1,0 +1,30 @@
+{
+  "approved_files": {
+    "host/b4q_verify.py": {
+      "sha256": "f96f452e186aa61fc3a16acaf1a84887eae8cc6b7d7e2c55258fabeab4b5a709",
+      "expected": "f96f452e186aa61fc3a16acaf1a84887eae8cc6b7d7e2c55258fabeab4b5a709"
+    },
+    "tests/test_b4q_app.py": {
+      "sha256": "e72681e4831623d5568514dcade41b57c5be2b915b4bf6d3841aa4912198f0a6",
+      "expected": "e72681e4831623d5568514dcade41b57c5be2b915b4bf6d3841aa4912198f0a6"
+    },
+    "evidence/b4/unit_b4q_image_2026_10_28/assemble.sh": {
+      "sha256": "94c6f704d3fb2c587c623a82dcf2dab3d18c6c1864ff9d16e99941236dbde46e",
+      "expected": "94c6f704d3fb2c587c623a82dcf2dab3d18c6c1864ff9d16e99941236dbde46e"
+    }
+  },
+  "unexpected_runtime_changes": [],
+  "imports": {
+    "b4/IMPORT.json": {
+      "hashed": 59,
+      "mismatch": []
+    },
+    "firmware/b4q/IMPORT.json": {
+      "hashed": 35,
+      "mismatch": []
+    }
+  },
+  "source_diff_check_exit": 0,
+  "source_diff_check_output": "",
+  "exact_followup_checks_pass": true
+}

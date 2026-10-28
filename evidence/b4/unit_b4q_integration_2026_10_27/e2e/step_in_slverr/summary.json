@@ -1,0 +1,59 @@
+{
+ "name": "step_in_slverr",
+ "wall_s": 1.784,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000000",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 1,
+   "phase": "P5",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    97,
+    166
+   ],
+   "pcap_range": [
+    204,
+    306
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 34309,
+ "status": 1,
+ "phase": "P5",
+ "reason": "STOP_AXI: a write of the pinned map answered SLVERR (the register is not what this side meant to stage)",
+ "step_launches": 0,
+ "o": false,
+ "o_status": null,
+ "halted": "transaction 2: no observation sealed (STOP_AXI: a write of the pinned map answered SLVERR (the register is not what this side meant to stage))"
+}

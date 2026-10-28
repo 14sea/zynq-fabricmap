@@ -1,0 +1,16 @@
+{
+ "name": "startup_corrupt",
+ "wall_s": 0.206,
+ "records": [],
+ "chain_findings": [
+  "chain: the session did not open"
+ ],
+ "accesses": 4624,
+ "open_status": "refused",
+ "open_findings": [
+  "session_open: the executing side's startup readback digest is not the host's view of the frames it was given"
+ ],
+ "root_refused": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
+ "signatures": 0,
+ "halted": "the session did not open: session_open: the executing side's startup readback digest is not the host's view of the frames it was given"
+}

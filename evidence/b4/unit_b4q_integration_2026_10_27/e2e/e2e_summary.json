@@ -1,0 +1,1475 @@
+[
+ {
+  "name": "startup_corrupt",
+  "wall_s": 0.206,
+  "records": [],
+  "chain_findings": [
+   "chain: the session did not open"
+  ],
+  "accesses": 4624,
+  "open_status": "refused",
+  "open_findings": [
+   "session_open: the executing side's startup readback digest is not the host's view of the frames it was given"
+  ],
+  "root_refused": "no open session: nothing is signed before the session-opening record is open (contract 5.5)",
+  "signatures": 0,
+  "halted": "the session did not open: session_open: the executing side's startup readback digest is not the host's view of the frames it was given"
+ },
+ {
+  "name": "pre_event_corrupt",
+  "wall_s": 1.843,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P2",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet",
+     "link: the executing side's pre_event digest is not the host's view"
+    ],
+    "trace_range": [
+     97,
+     150
+    ],
+    "pcap_range": [
+     204,
+     259
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 29677,
+  "status": 1,
+  "phase": "P2",
+  "reason": "STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)",
+  "o": false,
+  "o_status": null,
+  "x": null,
+  "ctrl_writes_in_tx": [
+   "0x40"
+  ],
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_LINK3: the pre-event readback is not the signed candidate (no event is raised on it)) \u2014 nothing further is signed without a ruling",
+  "signed_after": 0,
+  "want_phase": "P2"
+ },
+ {
+  "name": "post_event_corrupt",
+  "wall_s": 1.773,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P4",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet",
+     "link: the executing side's post_event digest is not the host's view"
+    ],
+    "trace_range": [
+     97,
+     165
+    ],
+    "pcap_range": [
+     204,
+     307
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 34308,
+  "status": 1,
+  "phase": "P4",
+  "reason": "STOP_LINK3: the post-event readback is not the pre-event one (the event changed a frame): no step is applied",
+  "o": false,
+  "o_status": null,
+  "x": null,
+  "ctrl_writes_in_tx": [
+   "0x40",
+   "0x200",
+   "0x400"
+  ],
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_LINK3: the post-event readback is not the pre-event one (the event changed a frame): no step is applied) \u2014 nothing further is signed without a ruling",
+  "signed_after": 0,
+  "want_phase": "P4"
+ },
+ {
+  "name": "base_readback_corrupt",
+  "wall_s": 2.296,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": null,
+    "o_status": "complete",
+    "executing_side_status": 2,
+    "phase": "P8",
+    "findings": [
+     "no transaction close: the transaction is not closed: no completed CLOSE / CLOSE_INJECTION and no fault after the observation",
+     "link: the executing side's base_readback digest is not the host's view"
+    ],
+    "trace_range": [
+     97,
+     245
+    ],
+    "pcap_range": [
+     204,
+     361
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[1]: no transaction close; the chain ends here"
+  ],
+  "accesses": 41155,
+  "status": 2,
+  "phase": "P8",
+  "reason": "STOP_P8: the restored base's readback is not the derived base: no restore event is raised on it",
+  "o": true,
+  "o_status": "complete",
+  "x": null,
+  "ctrl_writes_in_tx": [
+   "0x40",
+   "0x200",
+   "0x400",
+   "0x800",
+   "0x800",
+   "0x800",
+   "0x800",
+   "0x800",
+   "0x800",
+   "0x800",
+   "0x1000"
+  ],
+  "next_refused": "the session is halted: transaction 2: not closed (no X; STOP_P8: the restored base's readback is not the derived base: no restore event is raised on it) \u2014 nothing further is signed without a ruling",
+  "signed_after": 0,
+  "want_phase": "P8"
+ },
+ {
+  "name": "step_in_slverr",
+  "wall_s": 1.784,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P5",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     166
+    ],
+    "pcap_range": [
+     204,
+     306
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 34309,
+  "status": 1,
+  "phase": "P5",
+  "reason": "STOP_AXI: a write of the pinned map answered SLVERR (the register is not what this side meant to stage)",
+  "step_launches": 0,
+  "o": false,
+  "o_status": null,
+  "halted": "transaction 2: no observation sealed (STOP_AXI: a write of the pinned map answered SLVERR (the register is not what this side meant to stage))"
+ },
+ {
+  "name": "nonce_read_slverr",
+  "wall_s": 1.276,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     101
+    ],
+    "pcap_range": [
+     204,
+     204
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 22860,
+  "status": 1,
+  "phase": "P1",
+  "reason": "STOP_AXI: a read of the pinned map answered SLVERR",
+  "want_phase": "P1",
+  "o": false,
+  "x": null,
+  "signed_in_tx": 0,
+  "ctrl_writes_in_tx": [],
+  "dma_submits_in_tx": 0,
+  "writes_after_the_refused_read": 0,
+  "refused_read_seen": true,
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_AXI: a read of the pinned map answered SLVERR) \u2014 nothing further is signed without a ruling",
+  "halted": "transaction 2: no observation sealed (STOP_AXI: a read of the pinned map answered SLVERR)"
+ },
+ {
+  "name": "heartbeat_read_slverr",
+  "wall_s": 1.837,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P3",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     157
+    ],
+    "pcap_range": [
+     204,
+     258
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 29684,
+  "status": 1,
+  "phase": "P3",
+  "reason": "STOP_AXI: a read of the pinned map answered SLVERR",
+  "want_phase": "P3",
+  "o": false,
+  "x": null,
+  "signed_in_tx": 1,
+  "ctrl_writes_in_tx": [
+   "0x40",
+   "0x200"
+  ],
+  "dma_submits_in_tx": 26,
+  "writes_after_the_refused_read": 0,
+  "refused_read_seen": true,
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_AXI: a read of the pinned map answered SLVERR) \u2014 nothing further is signed without a ruling",
+  "halted": "transaction 2: no observation sealed (STOP_AXI: a read of the pinned map answered SLVERR)"
+ },
+ {
+  "name": "devc_ctrl_read_slverr",
+  "wall_s": 1.614,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P2",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     150
+    ],
+    "pcap_range": [
+     204,
+     204
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 25046,
+  "status": 1,
+  "phase": "P2",
+  "reason": "STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence",
+  "want_phase": "P2",
+  "o": false,
+  "x": null,
+  "signed_in_tx": 1,
+  "ctrl_writes_in_tx": [
+   "0x40"
+  ],
+  "dma_submits_in_tx": 0,
+  "writes_after_the_refused_read": 0,
+  "refused_read_seen": true,
+  "next_refused": "the session is halted: transaction 2: no observation sealed (STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence) \u2014 nothing further is signed without a ruling",
+  "halted": "transaction 2: no observation sealed (STOP_MEM: a read of the PS memory map (DEVCFG / DDR) answered SLVERR: the word is not evidence)"
+ },
+ {
+  "name": "valid",
+  "wall_s": 3.732,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     97,
+     252
+    ],
+    "pcap_range": [
+     204,
+     360
+    ]
+   },
+   {
+    "seq": 3,
+    "dir": "tx_003",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     252,
+     407
+    ],
+    "pcap_range": [
+     360,
+     516
+    ]
+   },
+   {
+    "seq": 4,
+    "dir": "tx_004",
+    "kind": "normal",
+    "genome_hex": "02011d",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     407,
+     562
+    ],
+    "pcap_range": [
+     516,
+     672
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 77770
+ },
+ {
+  "name": "a5",
+  "wall_s": 4.223,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     97,
+     252
+    ],
+    "pcap_range": [
+     204,
+     360
+    ]
+   },
+   {
+    "seq": 3,
+    "dir": "tx_003",
+    "kind": "inject",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "injection_open",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     252,
+     334
+    ],
+    "pcap_range": [
+     360,
+     462
+    ]
+   },
+   {
+    "seq": 4,
+    "dir": "tx_004",
+    "kind": "a5",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     334,
+     489
+    ],
+    "pcap_range": [
+     462,
+     618
+    ]
+   },
+   {
+    "seq": 5,
+    "dir": "tx_005",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     489,
+     644
+    ],
+    "pcap_range": [
+     618,
+     774
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 89233,
+  "a5": "pass",
+  "a5_why": "this adversarial state arrived and was cleared by the initialisation"
+ },
+ {
+  "name": "a5_persist",
+  "wall_s": 4.279,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     97,
+     252
+    ],
+    "pcap_range": [
+     204,
+     360
+    ]
+   },
+   {
+    "seq": 3,
+    "dir": "tx_003",
+    "kind": "inject",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "injection_open",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     252,
+     334
+    ],
+    "pcap_range": [
+     360,
+     462
+    ]
+   },
+   {
+    "seq": 4,
+    "dir": "tx_004",
+    "kind": "a5",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     334,
+     489
+    ],
+    "pcap_range": [
+     462,
+     618
+    ]
+   },
+   {
+    "seq": 5,
+    "dir": "tx_005",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": true,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     489,
+     644
+    ],
+    "pcap_range": [
+     618,
+     774
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 89233,
+  "a5": "fail",
+  "a5_why": "persistence after initialisation; the differing positions are the finding"
+ },
+ {
+  "name": "a8_cross",
+  "wall_s": 4.666,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     97,
+     322
+    ],
+    "pcap_range": [
+     204,
+     360
+    ]
+   },
+   {
+    "seq": 3,
+    "dir": "tx_003",
+    "kind": "normal",
+    "genome_hex": "000118",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     322,
+     547
+    ],
+    "pcap_range": [
+     360,
+     516
+    ]
+   },
+   {
+    "seq": 4,
+    "dir": "tx_004",
+    "kind": "normal",
+    "genome_hex": "002018",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     547,
+     772
+    ],
+    "pcap_range": [
+     516,
+     672
+    ]
+   },
+   {
+    "seq": 5,
+    "dir": "tx_005",
+    "kind": "normal",
+    "genome_hex": "002118",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     772,
+     997
+    ],
+    "pcap_range": [
+     672,
+     828
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 96354,
+  "a8_AFF": "both demonstrated",
+  "a8_BFF": "neither demonstrated"
+ },
+ {
+  "name": "a2_pairs",
+  "wall_s": 4.579,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     97,
+     222
+    ],
+    "pcap_range": [
+     204,
+     360
+    ]
+   },
+   {
+    "seq": 3,
+    "dir": "tx_003",
+    "kind": "normal",
+    "genome_hex": "000010",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     222,
+     347
+    ],
+    "pcap_range": [
+     360,
+     516
+    ]
+   },
+   {
+    "seq": 4,
+    "dir": "tx_004",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     347,
+     572
+    ],
+    "pcap_range": [
+     516,
+     672
+    ]
+   },
+   {
+    "seq": 5,
+    "dir": "tx_005",
+    "kind": "normal",
+    "genome_hex": "000400",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [
+     "O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[1].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[2].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[2].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[3].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[7].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[8].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[8].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[9].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[9].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[10].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[10].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[11].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[11].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[12].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+     "O: O.steps[12].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[13].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[13].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[14].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[14].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+    ],
+    "trace_range": [
+     572,
+     797
+    ],
+    "pcap_range": [
+     672,
+     828
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[4]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[1].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[2].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[2].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[3].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[7].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[8].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[8].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[9].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[9].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[10].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[10].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[11].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[11].q_after: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[12].q_before: bad value [0, None, 0, None, 0, None, 0, None]",
+   "chain[4]: O.steps[12].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[13].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[13].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[14].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: O.steps[14].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[4]: a malformed record; the chain ends here"
+  ],
+  "accesses": 96154,
+  "a2": {
+   "ce_mode": "differs",
+   "storage_kind": "not_assessable"
+  }
+ },
+ {
+  "name": "not_realisable",
+  "wall_s": 1.773,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": null,
+    "o_status": "invalid",
+    "executing_side_status": 1,
+    "phase": "P5",
+    "findings": [
+     "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)"
+    ],
+    "trace_range": [
+     97,
+     190
+    ],
+    "pcap_range": [
+     204,
+     306
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[1]: no transaction close; the chain ends here"
+  ],
+  "accesses": 34333,
+  "invalid_phase": "P5",
+  "invalid_code": "not_realisable",
+  "next_refused": "the session is halted: transaction 2: not closed (no X; STOP_P5: STEP refused) \u2014 nothing further is signed without a ruling",
+  "signed_after": 0,
+  "halted": "transaction 2: not closed (no X; STOP_P5: STEP refused)"
+ },
+ {
+  "name": "wrong_key",
+  "wall_s": 0.353,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": null,
+    "o_status": "invalid",
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)"
+    ],
+    "trace_range": [
+     12,
+     55
+    ],
+    "pcap_range": [
+     48,
+     48
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[0]: no transaction close; the chain ends here"
+  ],
+  "accesses": 4665,
+  "root_status": 1,
+  "root_reason": "STOP_ARM: the gate refused (FAULT latched)",
+  "o_status": "invalid",
+  "o_phase": "P1"
+ },
+ {
+  "name": "notary_refuses",
+  "wall_s": 1.204,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000018",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P1",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     101
+    ],
+    "pcap_range": [
+     204,
+     204
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 22860,
+  "status": 1,
+  "reason": "STOP_SIGN: the notary refused the candidate",
+  "o": false,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ },
+ {
+  "name": "dma_never",
+  "wall_s": 6.073,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 1,
+    "phase": "P2",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     150
+    ],
+    "pcap_range": [
+     204,
+     225
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 126677,
+  "status": 1,
+  "phase": "P2",
+  "reason": "STOP_DMA: DEVCFG D_P_DONE never asserted",
+  "o": false,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ },
+ {
+  "name": "latch_unmodelled",
+  "wall_s": 2.093,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000450",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [
+     "O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[1].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[2].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[2].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[3].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+     "O: O.steps[7].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+    ],
+    "trace_range": [
+     97,
+     252
+    ],
+    "pcap_range": [
+     204,
+     360
+    ]
+   }
+  ],
+  "chain_findings": [
+   "chain[1]: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[1].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[1].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[2].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[2].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[3].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[3].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[4].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[4].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[5].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[5].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[6].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[6].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[7].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: O.steps[7].q_after: bad value [1, None, 1, None, 1, None, 1, None]",
+   "chain[1]: a malformed record; the chain ends here"
+  ],
+  "accesses": 41162,
+  "status": 0,
+  "o_status": "complete",
+  "findings": [
+   "O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None]",
+   "O: O.steps[0].q_before: bad value [1, None, 1, None, 1, None, 1, None]",
+   "O: O.steps[0].q_after: bad value [1, None, 1, None, 1, None, 1, None]"
+  ],
+  "unmodelled_reads": 10,
+  "next_refused": "the session is halted: transaction 2: O: O.initial.q: bad value [1, None, 1, None, 1, None, 1, None] \u2014 nothing further is signed without a ruling"
+ },
+ {
+  "name": "interrupt",
+  "wall_s": 1.407,
+  "records": [
+   {
+    "seq": 1,
+    "dir": "tx_001",
+    "kind": "root",
+    "genome_hex": "000000",
+    "o": true,
+    "f": false,
+    "x": "closed",
+    "o_status": "complete",
+    "executing_side_status": 0,
+    "phase": "",
+    "findings": [],
+    "trace_range": [
+     12,
+     97
+    ],
+    "pcap_range": [
+     48,
+     204
+    ]
+   },
+   {
+    "seq": 2,
+    "dir": "tx_002",
+    "kind": "normal",
+    "genome_hex": "000000",
+    "o": false,
+    "f": false,
+    "x": null,
+    "o_status": null,
+    "executing_side_status": 5,
+    "phase": "?",
+    "findings": [
+     "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+    ],
+    "trace_range": [
+     97,
+     150
+    ],
+    "pcap_range": [
+     204,
+     216
+    ]
+   }
+  ],
+  "chain_findings": [],
+  "accesses": 25858,
+  "status": 5,
+  "interrupted": {
+   "after_accesses": 3000,
+   "last_request": "R 10300048"
+  },
+  "o": false,
+  "findings": [
+   "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+  ]
+ }
+]

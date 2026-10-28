@@ -1,0 +1,22 @@
+{
+ "seq": 2,
+ "kind": "normal",
+ "genome": 24,
+ "genome_hex": "000018",
+ "findings": [
+  "no transaction close: the transaction is not closed: no completed CLOSE / CLOSE_INJECTION and no fault after the observation",
+  "link: the executing side's base_readback digest is not the host's view"
+ ],
+ "trace_range": [
+  97,
+  245
+ ],
+ "pcap_range": [
+  204,
+  361
+ ],
+ "emulation": {
+  "unmodelled_cells": 0
+ },
+ "interrupted": null
+}

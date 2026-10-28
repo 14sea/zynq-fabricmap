@@ -1,0 +1,37 @@
+{
+ "name": "wrong_key",
+ "wall_s": 0.353,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": null,
+   "o_status": "invalid",
+   "executing_side_status": 1,
+   "phase": "P1",
+   "findings": [
+    "no transaction close: no transaction close: the acquisition never reached the P6 seal (stopped)"
+   ],
+   "trace_range": [
+    12,
+    55
+   ],
+   "pcap_range": [
+    48,
+    48
+   ]
+  }
+ ],
+ "chain_findings": [
+  "chain[0]: no transaction close; the chain ends here"
+ ],
+ "accesses": 4665,
+ "root_status": 1,
+ "root_reason": "STOP_ARM: the gate refused (FAULT latched)",
+ "o_status": "invalid",
+ "o_phase": "P1"
+}

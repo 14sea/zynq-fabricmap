@@ -1,0 +1,85 @@
+{
+  "completed_utc": "2026-10-28T08:12:19.030297+00:00",
+  "reviewed_tip": "d4ff43e6feb45c238f4c2fd8c1d80b2df338cfb1",
+  "implementation": "e32e0d1fcf4a8f7cfa043b511b877d3c8c360bb7",
+  "decision": "HOLD",
+  "accepted": [
+    "C1 source anchor",
+    "C3 message shapes/types",
+    "C2 previously reproduced bindings",
+    "C4 no sequence reuse",
+    "earlier R1/R3/R5 repairs"
+  ],
+  "remaining": {
+    "R1": {
+      "priority": "P1",
+      "prior_item": "C2",
+      "contract": "successful signing exchange requires accepted reply; notes are not evidence authority"
+    },
+    "R2": {
+      "priority": "P2",
+      "prior_item": "C4",
+      "contract": "terminal END must stop effects in active transaction"
+    }
+  },
+  "owner_wording_correction": "b4q_tx.c has one candidate_in b4q_sign call site; P8 restore does not add another signature. Do not change the core to add one.",
+  "independent": {
+    "tests": 99,
+    "tests_exit": 0,
+    "fresh_cases": 36,
+    "fresh_all_exit0_agree": true,
+    "old_negatives": 14,
+    "all_old_negatives_rejected_exit1": true,
+    "new_contradictory_exchange_cases_wrongly_clean": 6,
+    "raw_bin_sha256": "ee7076a03d602ad1025fb698d213f98a111449d623012a29c3147e0d7e867770",
+    "raw_bin_matches_submitted": true,
+    "two_clean_builds_equal": true,
+    "imports": {
+      "b4/IMPORT.json": {
+        "entries": 59,
+        "hashed": 59,
+        "mismatch": []
+      },
+      "firmware/b4q/IMPORT.json": {
+        "entries": 35,
+        "hashed": 34,
+        "mismatch": []
+      }
+    },
+    "a7_findings": [],
+    "xcheck_exit": 0,
+    "mutants": "Author log 36 killed/1 named masked/0 edit-miss of 37 inspected; not independently rerun",
+    "terminal_effects": {
+      "trace_index_at_END": 79,
+      "pcap_index_at_END": 150,
+      "trace_events_after_END": 16,
+      "register_writes_after_END": 4,
+      "pcap_log_entries_after_END": 54,
+      "emulated_dma_submissions_after_END": 26,
+      "emulated_envelope_writes_after_END": 2,
+      "submit_kinds": {
+        "env": 2,
+        "cmd": 8,
+        "frame": 8,
+        "clean": 8
+      },
+      "new_TX_or_signature_sent_after_END": false,
+      "standing": "Original app/core, injected sequence boundary and emulated HAL; no physical DMA or board observation."
+    },
+    "previous_review_integrity": {
+      "payloads": 131,
+      "mismatch": [],
+      "checksum_file_equal_to_original": true
+    }
+  },
+  "canonical_status": "",
+  "canonical_main": "dd8a7b9b0bea5acc37e55ef92513303af2b0fcec",
+  "snapshot_status": "",
+  "tracked_changes_by_reviewer": false,
+  "production_seed_derivation": false,
+  "board_connection": false,
+  "image_load": false,
+  "physical_PCAP": false,
+  "push_or_merge": false,
+  "limits": "Host-only engineering review and specific fixtures; no general proof or silicon qualification. Existing netlist dependency copied, not resynthesised."
+}

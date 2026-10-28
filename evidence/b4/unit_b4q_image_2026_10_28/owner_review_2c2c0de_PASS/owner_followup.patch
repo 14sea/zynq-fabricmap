@@ -1,0 +1,75 @@
+diff --git a/evidence/b4/unit_b4q_image_2026_10_28/assemble.sh b/evidence/b4/unit_b4q_image_2026_10_28/assemble.sh
+index b8264aa6..6ec33e07 100755
+--- a/evidence/b4/unit_b4q_image_2026_10_28/assemble.sh
++++ b/evidence/b4/unit_b4q_image_2026_10_28/assemble.sh
+@@ -11,7 +11,7 @@ cd "$R"
+ { echo "HEAD $(git rev-parse HEAD)"; echo "UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)"; } > "$U/run_header.txt"
+ python3 -B host/b4q_build_evidence.py --build --out "$U/build_evidence.json" > "$U/build_evidence.txt" 2>&1
+ bash firmware/b4q/build.sh > /dev/null
+-make -C firmware/b4q BUILD="$R/build/b4q_firmware" apphost wiretwin > "$U/host_build.txt" 2>&1
++make -C firmware/b4q BUILD="$R/build/b4q_firmware" apphost wiretwin seqcut > "$U/host_build.txt" 2>&1
+ (cd firmware/b4q && make BUILD="$R/build/b4q_firmware" xcheck) > "$U/xcheck.txt" 2>&1 || true
+ rm -rf "$E"; python3 -B host/b4q_console_e2e.py "$E" > "$U/e2e_run.log" 2>&1
+ rm -rf "$U/e2e"; mkdir -p "$U/e2e"
+diff --git a/host/b4q_verify.py b/host/b4q_verify.py
+index 6bb7f32d..4ebd479d 100644
+--- a/host/b4q_verify.py
++++ b/host/b4q_verify.py
+@@ -44,6 +44,7 @@ import b4q_view as vw  # noqa: E402
+ import b4_ff_hypothesis as hy  # noqa: E402
+ import b4_ff_mapping as bm  # noqa: E402
+ import b4q_wire as wire  # noqa: E402
++from b4q_console_session import SEQ_LIMIT  # noqa: E402
+ 
+ 
+ def canon(o) -> str:
+@@ -943,6 +944,8 @@ def verify_console(console: list, manifest: dict, so_doc: dict, files: dict, not
+             ends.append(m)
+             o = m["obj"]
+             terminal = o["kind"] == "PROTOCOL" and "sequence is exhausted" in o["reason"]   # the emitter's terminal END (C4): it may fall inside a transaction
++            if terminal and m["seq"] < SEQ_LIMIT:
++                F.append(f"board END at line {m['idx']}: sequence {m['seq']} is below the exhaustion limit {SEQ_LIMIT}")
+             if phase == "admitted" and manifest.get("interrupted") is None and not terminal:
+                 F.append(f"board END at line {m['idx']}: inside transaction {cur['k'] + 1} (no RESULT) and the session was not interrupted")
+             if phase == "admitted":
+diff --git a/tests/test_b4q_app.py b/tests/test_b4q_app.py
+index c5904cc0..cbbe0db2 100644
+--- a/tests/test_b4q_app.py
++++ b/tests/test_b4q_app.py
+@@ -30,7 +30,7 @@ TC = Path("/home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1
+ 
+ 
+ def setUpModule():
+-    for target in ("host", "apphost", "wiretwin", "waittwin"):
++    for target in ("host", "apphost", "wiretwin", "waittwin", "seqcut"):
+         p = subprocess.run(["make", "-C", str(R / "firmware/b4q"), f"BUILD={R / 'build/b4q_firmware'}", target], capture_output=True, text=True)
+         if p.returncode != 0:
+             raise AssertionError(p.stdout[-2000:] + p.stderr[-2000:])
+@@ -453,6 +453,27 @@ class ConsoleScenarios(unittest.TestCase):
+         end = next(e for e in lines if e.get("type") == "END"); self.assertEqual(end["seq"], 0xFFFFFFF0)
+         self.assertFalse(any(e.get("type") == "RESULT" for e in lines)); self.assertEqual([e for e in lines if e["dir"] == "board"][-1]["type"], "END")
+ 
++    def test_exhaustion_end_requires_the_publishers_limit(self):
++        """An exhaustion label cannot replace the publisher's sequence witness, on complete or cut archives."""
++        import shutil
++        for name in ("valid", "sequence_cut"):
++            with tempfile.TemporaryDirectory(prefix="b4q_end_limit_") as tmp:
++                d = Path(tmp) / "session"; shutil.copytree(_S["root"] / name, d)
++                lines = [json.loads(x) for x in (d / "console.jsonl").read_text().splitlines()]
++                board = [e for e in lines if e["dir"] == "board" and e.get("line")]
++                end = board[-1]; f = w.parse(end["line"]); body = json.loads(f["payload"])
++                body["kind"] = "PROTOCOL"; body["reason"] = "this side's line sequence is exhausted"
++                if name == "sequence_cut":
++                    prev = board[-2]; pf = w.parse(prev["line"])
++                    prev["line"] = w.frame(pf["type"], 100, pf["token"], pf["payload"]).rstrip("\n"); prev["seq"] = 100
++                end["line"] = w.frame("END", 101, f["token"], json.dumps(body)).rstrip("\n"); end["seq"] = 101
++                m = json.loads((d / "manifest.json").read_text()); m["transport"]["end"] = body; m["transport"]["board_seq_last"] = 101
++                (d / "manifest.json").write_text(json.dumps(m)); (d / "console.jsonl").write_text("".join(json.dumps(e) + "\n" for e in lines))
++                rep = vf.verify(d)
++                self.assertFalse(rep["clean"], name); self.assertFalse(rep["agree"], name)
++                self.assertTrue(any("below the exhaustion limit" in x for x in rep["session"]), (name, rep["session"]))
++        self.assertTrue(_S["verify"]["sequence_cut"][1]["agree"])
++
+     def test_the_executing_sides_own_stop_reaches_the_host_through_the_console(self):
+         s = self.summary("pre_event_corrupt")
+         self.assertEqual((s["tx"]["status"], s["tx"]["phase"], s["tx"]["o"]), (1, "P2", False)); self.assertIn("STOP_LINK3", s["tx"]["reason"]); self.assertIsNotNone(s["next_refused"])

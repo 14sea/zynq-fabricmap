@@ -1,0 +1,77 @@
+{
+ "name": "base_readback_corrupt",
+ "wall_s": 2.296,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": true,
+   "f": false,
+   "x": null,
+   "o_status": "complete",
+   "executing_side_status": 2,
+   "phase": "P8",
+   "findings": [
+    "no transaction close: the transaction is not closed: no completed CLOSE / CLOSE_INJECTION and no fault after the observation",
+    "link: the executing side's base_readback digest is not the host's view"
+   ],
+   "trace_range": [
+    97,
+    245
+   ],
+   "pcap_range": [
+    204,
+    361
+   ]
+  }
+ ],
+ "chain_findings": [
+  "chain[1]: no transaction close; the chain ends here"
+ ],
+ "accesses": 41155,
+ "status": 2,
+ "phase": "P8",
+ "reason": "STOP_P8: the restored base's readback is not the derived base: no restore event is raised on it",
+ "o": true,
+ "o_status": "complete",
+ "x": null,
+ "ctrl_writes_in_tx": [
+  "0x40",
+  "0x200",
+  "0x400",
+  "0x800",
+  "0x800",
+  "0x800",
+  "0x800",
+  "0x800",
+  "0x800",
+  "0x800",
+  "0x1000"
+ ],
+ "next_refused": "the session is halted: transaction 2: not closed (no X; STOP_P8: the restored base's readback is not the derived base: no restore event is raised on it) \u2014 nothing further is signed without a ruling",
+ "signed_after": 0,
+ "want_phase": "P8"
+}

@@ -1,0 +1,58 @@
+{
+ "name": "notary_refuses",
+ "wall_s": 1.204,
+ "records": [
+  {
+   "seq": 1,
+   "dir": "tx_001",
+   "kind": "root",
+   "genome_hex": "000000",
+   "o": true,
+   "f": false,
+   "x": "closed",
+   "o_status": "complete",
+   "executing_side_status": 0,
+   "phase": "",
+   "findings": [],
+   "trace_range": [
+    12,
+    97
+   ],
+   "pcap_range": [
+    48,
+    204
+   ]
+  },
+  {
+   "seq": 2,
+   "dir": "tx_002",
+   "kind": "normal",
+   "genome_hex": "000018",
+   "o": false,
+   "f": false,
+   "x": null,
+   "o_status": null,
+   "executing_side_status": 1,
+   "phase": "P1",
+   "findings": [
+    "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+   ],
+   "trace_range": [
+    97,
+    101
+   ],
+   "pcap_range": [
+    204,
+    204
+   ]
+  }
+ ],
+ "chain_findings": [],
+ "accesses": 22860,
+ "status": 1,
+ "reason": "STOP_SIGN: the notary refused the candidate",
+ "o": false,
+ "findings": [
+  "no observation sealed: the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet"
+ ]
+}

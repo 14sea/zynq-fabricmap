@@ -1,0 +1,134 @@
+{
+  "completed_utc": "2026-10-28T09:59:32.764404+00:00",
+  "reviewed_tip": "2c2c0dec461c184abd9935a3d47055d1e21c0014",
+  "implementation": "b1e59434c4b8ffcd318c429c58f823e5ffdeef8b",
+  "decision": "R1_R2_ACCEPTED_EXACT_FOLLOWUP_PREAPPROVED_FOR_CLOSURE",
+  "submitted_tip_contains_followup": false,
+  "closure_authority": "README section 4: after exact patch hashes and unchanged other runtime/protected paths/imports, author may document/archive and close; no repeat owner round or unchanged full test/image/mutant run required. Different functional changes are not covered.",
+  "accepted_repairs": [
+    "successful transaction requires one accepted candidate OK reply",
+    "ignored/stale/corrupted notes validated against bytes/state",
+    "HAL refuses effectful writes after terminal END"
+  ],
+  "followups": {
+    "F1": {
+      "priority": "P2",
+      "contract": "cold test/assemble declare seqcut prerequisite"
+    },
+    "F2": {
+      "priority": "P2",
+      "contract": "exhaustion END sequence must satisfy existing publisher limit"
+    }
+  },
+  "exact_patch_sha256": "6e57ee2b52e229504384302cc1b6ef3c40156dea25ff15e168de88ba3cf0048b",
+  "approved_file_hashes": {
+    "host/b4q_verify.py": {
+      "base_sha256": "53330dd175ffe4af4fc992512921514f505b7fd8f9c573e7296a566a9e826d23",
+      "repaired_sha256": "f96f452e186aa61fc3a16acaf1a84887eae8cc6b7d7e2c55258fabeab4b5a709"
+    },
+    "tests/test_b4q_app.py": {
+      "base_sha256": "06f7b927aef85aedc9272bf3c1d92bfc9d0858cb6c624e7a3e977fb084dba5c7",
+      "repaired_sha256": "e72681e4831623d5568514dcade41b57c5be2b915b4bf6d3841aa4912198f0a6"
+    },
+    "evidence/b4/unit_b4q_image_2026_10_28/assemble.sh": {
+      "base_sha256": "02def686d840568593d0315267dbf9082499a7a6451c951449cdac8485ee84a5",
+      "repaired_sha256": "94c6f704d3fb2c587c623a82dcf2dab3d18c6c1864ff9d16e99941236dbde46e"
+    }
+  },
+  "independent_checks": {
+    "baseline_fresh_suite": "79 tests then app setUpModule error: missing undeclared seqcut binary",
+    "baseline_app_after_manual_prebuild": "22 tests OK",
+    "baseline_fresh_archives": 38,
+    "baseline_fresh_all_agree": true,
+    "previous_archive_negatives_rejected": 14,
+    "previous_exchange_negatives_rejected": 6,
+    "active_terminal_probe": [
+      {
+        "mode": "baseline",
+        "opening_findings": [],
+        "first_return_status": 0,
+        "end": null,
+        "new_trace_events_after_END": 0,
+        "write_ops_after_END": 0,
+        "pcap_entries_after_END": 0,
+        "drain": null,
+        "post_end_write_examples": []
+      },
+      {
+        "mode": "sequence_cut",
+        "opening_findings": [],
+        "first_return_status": 6,
+        "end": {
+          "kind": "PROTOCOL",
+          "reason": "this side's line sequence is exhausted",
+          "lines": 5,
+          "hb": 0,
+          "nacks": 0,
+          "sign_requests": 1,
+          "sign_replies": 1,
+          "transactions": 1,
+          "kicks": 5,
+          "flushed": 0,
+          "stale_frames": 0,
+          "refused_tx": 0,
+          "watchdog_armed": 1,
+          "opened": 1,
+          "halted": ""
+        },
+        "new_trace_events_after_END": 1,
+        "write_ops_after_END": 0,
+        "pcap_entries_after_END": 0,
+        "drain": {
+          "exception": "SessionRefusal: the console closed"
+        },
+        "post_end_write_examples": []
+      }
+    ],
+    "raw_bin_sha256": "010f6a05651e3db644a500d9e2081ecbc176bab04fcc526cc5af08d46dce1713",
+    "raw_bin_matches_submitted": true,
+    "two_clean_builds_equal": true,
+    "imports": {
+      "b4/IMPORT.json": {
+        "entries": 59,
+        "hashed": 59,
+        "mismatch": []
+      },
+      "firmware/b4q/IMPORT.json": {
+        "entries": 36,
+        "hashed": 35,
+        "mismatch": []
+      }
+    },
+    "protected_since_e267405": [],
+    "transaction_unchanged": true,
+    "a7_findings": [],
+    "xcheck_exit": 0,
+    "patched_fresh_suite": "102 tests OK, no prebuilt seqcut binary",
+    "patched_fresh_archives": 38,
+    "patched_fresh_all_agree": true,
+    "exact_followup_check_pass": true,
+    "patch_apply_check_on_canonical_exit": 0,
+    "mutants": "author 39 killed/1 named masked/0 edit-miss/0 probe-error of 40 inspected, not independently rerun",
+    "previous_review_integrity": {
+      "payloads": 158,
+      "mismatch": [],
+      "checksum_file_equal_to_original": true
+    }
+  },
+  "scope_limits": [
+    "END observer i/pcap_n annotations not independently validated by archive verifier; source audit and drained host fixture demonstrate effect gate",
+    "STOPPED following a sent QUIT is not automatically invalid: receive/timeout race not ruled out",
+    "no general proof, physical qualification or silicon witness"
+  ],
+  "canonical_status_final": "",
+  "canonical_main": "dd8a7b9b0bea5acc37e55ef92513303af2b0fcec",
+  "baseline_snapshot_status": "",
+  "patched_snapshot_status": "M evidence/b4/unit_b4q_image_2026_10_28/assemble.sh\n M host/b4q_verify.py\n M tests/test_b4q_app.py",
+  "canonical_tracked_changes_by_reviewer": false,
+  "reviewer_changed_only_disposable_repair_snapshot": true,
+  "production_seed_derivation": false,
+  "board_connection": false,
+  "image_load": false,
+  "physical_PCAP": false,
+  "push_or_merge": false
+}

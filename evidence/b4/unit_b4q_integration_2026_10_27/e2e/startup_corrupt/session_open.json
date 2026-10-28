@@ -1,0 +1,30 @@
+{
+ "record": {
+  "schema": "ff_session_open",
+  "schema_version": "1.0.0",
+  "instrument": {
+   "variant": "42340001",
+   "carrier_sha256": "4e406f1280d3cf5cabf43d001278ef3b807a9ce4a7d036445122f5636e3d18a9",
+   "image_sha256": "61c0e2711bb08db1ae557c968fb1cef5933e0c7e041ff30c4475e580a8afc52c"
+  },
+  "startup_readback_sha256": "547fdbcbab8a675fae5d8b081b733f12f5548c1dad125638ef5640a75e98b935",
+  "base_frames_reference_sha256": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421",
+  "status": "refused"
+ },
+ "findings": [
+  "session_open: the executing side's startup readback digest is not the host's view of the frames it was given"
+ ],
+ "executing_side": {
+  "status": 0,
+  "reason": "opened",
+  "idcode": 326246547,
+  "variant": 1110704129,
+  "timing": 1141116936,
+  "witness": 131584,
+  "status_word": 6400,
+  "heartbeat": 44,
+  "nonce": "9e3779b97f4a7c15",
+  "startup_readback": "547fdbcbab8a675fae5d8b081b733f12f5548c1dad125638ef5640a75e98b935"
+ },
+ "host_view_target_frames_hash": "e1d505d6a46f28c2b223beeec24f9308bb6f9a5cc5d7923667ec275c51cf5421"
+}
