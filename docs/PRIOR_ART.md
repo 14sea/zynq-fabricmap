@@ -1,7 +1,7 @@
 # Prior art
 
 Added 2026-11-03 after a full-text literature review (≈75 papers, 8 external code
-bases, AMD UG470/UG585/UG480/PG134/DS187/XAPP538/UG908). This file is additive: it does
+bases, AMD UG470/UG585/UG480/PG134/PG036/DS187/XAPP538/UG908). This file is additive: it does
 not change any preregistration, pinned document, ruling or result.
 
 **Bottom line:** knowledge-guided mutation beating standard mutation in circuit
@@ -31,7 +31,7 @@ about safety against raw mutation. The preregistered wording is left as written.
 | Safe-address filter for configuration edits | Fleming & Thomas, "Injecting FPGA configuration faults in parallel" (FPT 2018 per Fibich 2023's citation): a static word-50 filter learned from exhaustive fault injection on 7-series | Fault injection, not evolution; our writes already avoid word 50 structurally (all 292 addresses are in words 51/52) |
 | Constrained representation instead of raw bits | Fritzsch, Hoffmann, Bogdan, CEC 2022 (iCE40: routing fixed, every gene a LUT truth table); Levi & Guccione 1999 (XC4000 single-driver local routing); Upegui 2006 (LUT-as-mux, no PIP edits) | Same safety idea; Fritzsch claims the routing problem "can be considered solved" by legal encodings, with no raw baseline |
 | Short circuits from partial reconfiguration | Beckhoff, Koch, Torresen, FPL 2010 | Relevant to B4: intermediate states of multi-frame writes must also be legal |
-| Configuration-bit maps | prjxray (symbolic, fuzzing); AMD essential bits (XAPP538 v1.0: "an algorithm", not published; ISE BitGen flow; UG908 v2026.1 lists no 7-series/Zynq-7000 essential-bits option); Fibich et al., DATE 2023 (iCE40/Artix-7 single-bit statistics) | Our map is behavioural and device-local; it can be cross-checked against essential bits, not replaced by them |
+| Configuration-bit maps | prjxray (symbolic, fuzzing); AMD essential bits (XAPP538 v1.0: "an algorithm", not published; ISE BitGen flow; UG908 v2026.1 lists no 7-series/Zynq-7000 essential-bits option, but PG036 v4.1 p.10 gives the 7-series flow: `set_property bitstream.seu.essentialbits yes [current_design]`, regenerate the bitstream, and Vivado writes the `.ebc`/`.ebd` files and logs the essential-bit percentage — not yet run here); Fibich et al., DATE 2023 (iCE40/Artix-7 single-bit statistics) | Our map is behavioural and device-local; it can be cross-checked against essential bits, not replaced by them |
 | On-chip LUT rewriting via ICAP / PCAP readback | Blodget et al. 2003 (XPART/HWICAP); ZyEHW 2013–15; García et al. 2020 (IMPRESS); SEM IP / readback CRC (UG470) | Mechanism inherited |
 | Evolving native routing (B4 routing class) | Thompson 1996 (XC6200); Levi & Guccione 1999 (XC4000 local lines); Yao et al., IEICE ELEX 20(13), 2023 (Virtex-5: on-chip MicroBlaze + HWICAP, LUT + routing co-evolution from a restricted PIP database); Bozzoli & Sterpone, AHS 2017 (Z-7010 on-chip router core; results evaluated in XDL/Timing Analyzer, not written back to silicon) | On 7-series, routing **evolution** was not found; routing via a legal-code allowlist is not a new mechanism |
 
@@ -72,4 +72,4 @@ would itself be a useful negative result.
 - Yao, Liang, Qian, Zhang, Tian. IEICE Electronics Express 20(13), 2023, doi:10.1587/elex.20.20220518.
 - Bozzoli, Sterpone. AHS 2017, doi:10.1109/AHS.2017.8046362.
 - Le. Soft error mitigation using prioritized essential bits. Xilinx XAPP538 v1.0, 2012.
-- AMD UG470 v1.17, UG480 v1.11, UG908 v2026.1, PG134 v3.0, DS187 v1.21.
+- AMD UG470 v1.17, UG480 v1.11, UG908 v2026.1, PG134 v3.0, PG036 v4.1 (2022), DS187 v1.21.
