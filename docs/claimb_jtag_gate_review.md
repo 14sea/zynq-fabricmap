@@ -225,6 +225,9 @@ raise `configuration_valid` in the carrier's fabric. It additionally fails to of
 capture at all, and the prior art's own suggested fixes are a deeper HWICAP read FIFO (**not a
 parameter on the stock IP**) or a bench-side drain faster than the ICAP stream (the transport is
 U-Boot `md`, one word per UART command at 115200 — short by orders of magnitude).
+*(Added 2026-11-03: the quoted "not a parameter on the stock IP" is wrong — PG134 offers a
+read FIFO depth of 128 or 256 (actual depth one less). The conclusion of this paragraph does
+not depend on it. See `docs/PRIOR_ART.md` §4.)*
 
 An additive, dated note has been added to `docs/claimb_icape2_readback_sequence.md` §4c so that
 the citation there carries these limits alongside the precedent it legitimately supplies.
