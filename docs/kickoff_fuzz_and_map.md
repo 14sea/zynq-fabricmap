@@ -86,7 +86,11 @@ best-tested rules in the prjxray ecosystem. Zynq7-specific data all present:
 
 What zynq7 actually lacks vs artix7 (full diff of file lists):
 - **GTP transceivers + PCIe** — the 7z010 die has neither. Irrelevant.
-- **XADC MONITOR tile jsons** — die has XADC; evolution never touches it.
+- ~~**XADC MONITOR tile jsons** — die has XADC; evolution never touches it.~~
+  *(Corrected 2026-11-03: zynq7 has them under different names —
+  `tile_type_MONITOR_{BOT,MID,TOP}_PELE1.json` instead of artix7's
+  `tile_type_MONITOR_{BOT,MID,TOP}.json` — so a file-name diff reports them missing.
+  Nothing downstream depended on this line.)*
 - **`cells_data/`** — techmap metadata for `fasm2bels` (netlist back-inference
   only). Not needed.
 - **`gridinfo/`, `harness/`** — ROI harnesses; we have our own DFX flow.
