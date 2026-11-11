@@ -17,7 +17,7 @@ barrel; swapping them destroys a board, so only one supply is out at a time).
 | **EBAZ4205** (NAND, `/home/test/xilinx`) | **reference — out of the pool** | Holds the M1 golden environment and the NAND Buildroot/DFX flow. Recovery is JTAG-only, and its BOOT.BIN/FSBL is irreplaceable. Never a sacrifice candidate. |
 | **EBAZ4203 `17A6`** | **verification** | The only board with the full manual acceptance *and* the board-verified TF-card U-Boot control plane. FCLK0 is already 50 MHz at POR and `bootdelay=-1` is saved, so it is the lowest-friction board for real results. |
 | **EBAZ4203 `08EB`** | **sacrificial** (proposed) | Auto-accepted PASS like its siblings; the choice among `F8B3`/`3671`/`08EB` is arbitrary and must be **physically labelled** once made. |
-| **EBAZ4203 `F8B3`, `3671`** | **spares** | Untouched replacements. Provision one as a second verification board only if `17A6` is lost. |
+| **EBAZ4203 `F8B3`, `3671`** | **spares** | Untouched replacements. Provision one as a second verification board only if `17A6` is lost. *(Added 2026-11-03: since the owner's disposition on `4e06c136` (2026-10-28), `F8B3` is the board of the P4 (2d) unit on branch `b4-p4-f8b3`; this table predates that and is not a role ruling.)* |
 
 A 4203 is the right sacrifice, not the 4205: the 4203 boots from a TF card, so any
 configuration disaster is recovered by writing a fresh card. There is no NAND image to

@@ -158,6 +158,19 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
 The full running log that used to be this README is preserved verbatim at
 `docs/README_archive_2026_09_14.md`.
 
+## Prior art
+
+Added 2026-11-03 (`docs/PRIOR_ART.md`). Knowledge-guided mutation beating standard
+mutation in circuit evolution is established in simulation (Hodaň, Mrázek, Vašíček, SOMO,
+GECCO 2020 / GPEM 2021, and later work); safe-address filters (Fleming & Thomas) and
+legal-encoding representations (Fritzsch et al. 2022, Levi & Guccione 1999) exist; on-chip
+ICAP LUT rewriting goes back to 2003. Not found in the 2026-11 search: a map built by the
+device itself on silicon, guiding intrinsic evolution there, against a same-range
+random-safe arm at equal budget, under preregistration. The supported B3 statement is about
+search quality versus random-safe, not safety versus raw mutation (the preregistered wording
+"more safely than raw bit mutation" was never the tested comparison). The open question is
+what the device map adds over semantic guidance on a substrate prjxray already decodes.
+
 ## Related repositories
 
 Successor to [zynq-autoehw](https://github.com/14sea/zynq-autoehw) (M1 closed at

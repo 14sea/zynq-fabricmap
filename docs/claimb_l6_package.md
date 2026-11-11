@@ -50,7 +50,9 @@ review.
 
 Author: Claude. Evidence repository pinned: `zynq-psoracle` archive head `689dde1` — the
 adjudication commit is `32d1460` (`origin/main` until the 2026-09-05 archive-narrative
-correction is pushed); independent read-only backup at
+correction is pushed; *added 2026-11-03: that correction, `689dde1`, was pushed, and
+psoracle `origin/main` is now `11ec534` = `689dde1` plus a docs-only prior-art note — the
+adjudication commit and the pinned evidence are unchanged*); independent read-only backup at
 `/home/test/psoracle_backups/2026-09-04_S3_v0.7/` (taken at the adjudication commit). Earlier pins unchanged: `zynq-psmap`
 `191ab05`; this repository's artifacts at `71666b02` as imported by P3. This repository is
 at `d7708a1` when this is written.
