@@ -9,7 +9,8 @@ pins the inventory of sites that can reach the wire.
 
 Five independent facts, each of which a second entrypoint would have to break:
 
-  1. the carrier's AXI window addresses are named in exactly ONE module;
+  1. the carrier's AXI window addresses are named in exactly ONE Claim-B module (plus the
+     separately reviewed B4Q path, exempted by exact bytes — see `B4Q_WINDOW_NAMERS`);
   2. `WRITE_CAPABILITY` — the token `execute_transaction` demands — is held at exactly ONE
      site, and that site is `BoardSession.write_sequence`;
   3. `session.write_sequence(...)` is called from exactly ONE site;
@@ -26,6 +27,7 @@ device it does not have. What must not exist is a *production* path with a choic
 from __future__ import annotations
 
 import ast
+import hashlib
 import unittest
 from pathlib import Path
 
@@ -37,6 +39,21 @@ TRANSPORT = "board_uboot_axi.py"
 SESSION = "gate_board_identity.py"
 EXEC = "board_carrier_exec.py"
 POSTFAULT_CAPTURE = "board_claimb_postfault_capture.py"
+
+# B4Q (merged into main at e34432ea / b5be7ef8) is a second, separately reviewed path to the
+# board: a PS application driven over its own U-Boot command transport, with its own
+# admission, binding and archive guards (tests/test_b4q_*; owner conditional PASS on
+# 315f6935, follow-up bd7cef03, closure 4e06c136). It names the carrier window because the
+# PS image addresses it, and it does NOT use WRITE_CAPABILITY, write_sequence, run_candidate
+# or board_uboot_transmit (the other tests in this file still hold for it). The exemption is
+# for these exact bytes, the ones the B4Q runner unit accepted: any edit to one of them fails
+# here and has to be re-reviewed (owner ruling 2026-11-11), so a new writer cannot hide in a
+# B4Q module either.
+B4Q_WINDOW_NAMERS = {
+    "host/b4q_backend.py": "f033c21f1ef2611bf54fd632de2b4e2c4e1439cfef776d72e530a32e1dfccc68",
+    "host/b4q_runner.py": "53eb29e6f1fb227368208d666eeec5df53cbc0e41d021fa5dc72b5b01d9cd92b",
+    "host/b4q_verify_runner.py": "f1ebd9e37a8ee76918031abd380ffe60ad2f51fed31c401db5e842870cc2e3b0",
+}
 
 
 def source_files() -> list[Path]:
@@ -106,10 +123,24 @@ class WindowIsNamedOnce(unittest.TestCase):
         for path in source_files():
             text = path.read_text(encoding="utf-8").lower()
             if "0x43c0" in text or "43c00000" in text:
-                naming.append(path.name)
+                naming.append(path.relative_to(REPO_ROOT).as_posix())
+        allowed = sorted([f"scripts/{TRANSPORT}", *B4Q_WINDOW_NAMERS])
         self.assertEqual(
-            naming, [TRANSPORT],
-            f"the carrier AXI window is named in {naming}; it belongs in {TRANSPORT} alone")
+            sorted(naming), allowed,
+            f"the carrier AXI window is named in {naming}; it belongs in scripts/{TRANSPORT} "
+            f"alone (B4Q's reviewed modules {sorted(B4Q_WINDOW_NAMERS)} excepted)")
+
+    def test_the_b4q_exemption_covers_only_the_accepted_bytes(self) -> None:
+        """The B4Q exemption is not a directory or a name pattern: it is three files whose
+        bytes were accepted. A changed B4Q module is a new reviewer question, not an exempt one."""
+        for relative, expected in B4Q_WINDOW_NAMERS.items():
+            with self.subTest(file=relative):
+                path = REPO_ROOT / relative
+                self.assertTrue(path.is_file(), f"{relative} is exempted but absent")
+                self.assertEqual(
+                    hashlib.sha256(path.read_bytes()).hexdigest(), expected,
+                    f"{relative} changed since the B4Q runner unit accepted it; re-review it "
+                    f"and only then update B4Q_WINDOW_NAMERS")
 
     def test_the_transport_offers_no_command_line(self) -> None:
         """`board_uboot_axi` must not be runnable. A CLI is an entrypoint by definition."""
